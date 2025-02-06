@@ -8,13 +8,14 @@ import Dashboard from "./pages/DashboardFormateur";
 import ForgotPassword from "./pages/ForgotPassword";
 import NotFound from "./pages/NotFound";
 import FormateurRoutes from "./routes/FormateurRoutes";
-
+import { ToastContainer } from "react-toastify";
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
+      <ToastContainer />
       <Sonner />
       <BrowserRouter>
       <Routes>
