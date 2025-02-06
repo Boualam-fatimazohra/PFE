@@ -7,8 +7,7 @@ const Login = async (req, res) => {
 
     try {
         const user = await User.findOne({ email });
-
-        // If user is not found, return an error
+        // If user is not found, return an error 
         if (!user) {
             return res.status(400).json({ message: 'Invalid email or password' });
         }
@@ -46,3 +45,5 @@ const Login = async (req, res) => {
 };
 
 module.exports = { Login };
+//jD5IDdTVLoITMCpL mot de passe mongo 
+//mongodb+srv://salouaouissa:<db_password>@cluster0.nwqo9.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
