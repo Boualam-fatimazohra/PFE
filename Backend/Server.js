@@ -1,15 +1,14 @@
 const express = require('express');
 // const cors = require('cors');
 const dotenv = require('dotenv');
-// const connectDB = require('./Config/config.js');
+ const connectDB = require('./Config/config.js');
 // const Auth = require('./Routes/auth.js')
 // const cookieParser = require('cookie-parser');
 
 dotenv.config();
-
 const app = express();
 const PORT = process.env.PORT || 5000;
-
+console.log()
 // Middleware --
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -22,8 +21,7 @@ app.use(express.urlencoded({ extended: true }));
 // );
 
 // Connect to the database
-// connectDB();
-
+  
 
 // app.use('/api/auth', Auth);
 
@@ -31,5 +29,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Start server
 app.listen(PORT, () => {
+  connectDB();
+
   console.log(`Server is running on port ${PORT}`);
 });
