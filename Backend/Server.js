@@ -1,8 +1,8 @@
 const express = require('express');
-// const cors = require('cors');
+const cors = require('cors');
 const dotenv = require('dotenv');
  const connectDB = require('./Config/config.js');
-// const Auth = require('./Routes/auth.js')
+const Auth = require('./Routes/auth.js');
 // const cookieParser = require('cookie-parser');
 
 dotenv.config();
@@ -13,17 +13,17 @@ console.log()
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 //app.use(cookieParser());
-// app.use(
-//   cors({
-//     origin: "http://localhost:5173",
-//     credentials: true,
-//   })
-// );
+app.use(
+  cors({
+    origin: "http://localhost:8080",
+    credentials: true,
+  })
+);
 
 // Connect to the database
   
 
-// app.use('/api/auth', Auth);
+app.use('/api/auth', Auth);
 
 
 
