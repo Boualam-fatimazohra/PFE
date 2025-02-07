@@ -24,6 +24,5 @@ const authenticated = async (req, res, next) => {
         res.clearCookie('token');
         res.status(401).json({ message: 'Invalid or expired token' });
     }
-};
-
+}; 
 module.exports = authenticated;
