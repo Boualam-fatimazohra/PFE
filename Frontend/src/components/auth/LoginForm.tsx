@@ -12,7 +12,7 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 const loginSchema = z.object({
   email: z.string().email("Email invalide"),
-  password: z.string().min(6, "Le mot de passe doit avoir au moins 6 caractères"),
+  password: z.string(),
 });
 
 export function LoginForm() {
@@ -25,23 +25,26 @@ export function LoginForm() {
     handleSubmit,
     formState: { errors },
   } = useForm({ resolver: zodResolver(loginSchema) });
-
-
 const onSubmit = async (data) => {
   setLoading(true);
   try {
     const response = await axios.post("http://localhost:5000/api/auth/signIn", data, { withCredentials: true });
     console.log("Réponse API :", response.data);
+    if (response.data.role === "Mentor") {
+      toast.success(response.data.message, { position: "top-right", autoClose: 3000 });
+      navigate("/formateur/dashboardFormateur");
+    }
+    else if (response.data.role === "Admin") {
+     //todo 
+  } }
+   catch (error) {
+    if (error.response && error.response.status === 400) {
+      toast.error(error.response.data.message, { position: "top-right", autoClose: 3000 });
 
-    // Afficher un message de succès
-    toast.success("Connexion réussie !", { position: "top-right", autoClose: 3000 });
-
-    navigate("/formateur/dashboardFormateur");
-  } catch (error) {
-    console.error("Erreur lors de la connexion :", error);
-
-    // Afficher un message d'erreur
-    toast.error("Échec de la connexion. Vérifiez vos informations.", { position: "top-right", autoClose: 3000 });
+    } else {
+      toast.error("Server error. Please try again later");
+      console.error(error);
+    }
   } finally {
     setLoading(false);
   }
