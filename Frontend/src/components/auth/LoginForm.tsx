@@ -12,7 +12,7 @@ export function LoginForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); // Empêcher le rechargement de la page
-            console.log("debut de fct handelsubmit *************");
+            console.log("debut de fct handelsubmit ")
     try {
       const response = await axios.post(
         "http://localhost:5000/api/auth/signIn",
