@@ -11,7 +11,8 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-// Schéma de validation avec Zod
+
+// Validation avec Zod
 const loginSchema = z.object({
   email: z.string().email("Email invalide"),
   password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères"),
@@ -22,29 +23,30 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Gestion du formulaire avec react-hook-form
+
+  // useForm avec Zod Resolver
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm({ resolver: zodResolver(loginSchema) });
 
-  // Soumission du formulaire
-  const onSubmit = async (data: { email: string; password: string }) => {
+
+  // Fonction de soumission du formulaire
+  const onSubmit = async (data) => {
     setLoading(true);
     try {
       const response = await axios.post("http://localhost:5000/api/auth/signIn", data, { withCredentials: true });
-
       console.log("Réponse API :", response.data);
-      toast.success(response.data.message, { position: "top-right", autoClose: 3000 });
 
       if (response.data.role === "Mentor") {
+        toast.success(response.data.message, { position: "top-right", autoClose: 3000 });
         navigate("/formateur/dashboardFormateur");
       } else if (response.data.role === "Admin") {
-        navigate("/admin/dashboard");
+        // TODO : Ajouter une redirection pour l'Admin
       }
-    } catch (error: any) {
-      if (error.response?.status === 400) {
+    } catch (error) {
+      if (error.response && error.response.status === 400) {
         toast.error(error.response.data.message, { position: "top-right", autoClose: 3000 });
       } else {
         toast.error("Erreur serveur. Veuillez réessayer plus tard.");
@@ -64,15 +66,18 @@ export function LoginForm() {
             Adresse email<span className="text-red-500 ml-1">*</span>
           </Label>
           <Input id="email" type="email" {...register("email")} className="w-full" />
-          {errors.email?.message && ( <p className="text-red-500 text-sm">{String(errors.email.message)}</p>
+
+          {errors.email?.message && (
+  <p className="text-red-500 text-sm">{String(errors.email.message)}</p>
+
 )}
         </div>
 
         {/* Mot de passe */}
-        <div className="space-y-2 relative">
-          <Label htmlFor="password">
-            Mot de passe<span className="text-red-500 ml-1">*</span>
-          </Label>
+
+        <div className="space-y-2">
+          <Label htmlFor="password">Mot de passe<span className="text-red-500 ml-1">*</span></Label>
+
           <div className="relative">
             <Input
               id="password"
@@ -88,9 +93,10 @@ export function LoginForm() {
               {showPassword ? <EyeOff /> : <Eye />}
             </button>
           </div>
-          {errors.password?.message && ( <p className="text-red-500 text-sm">{String(errors.password.message)}</p>
-)}        </div>
-
+          {errors.password?.message && (
+  <p className="text-red-500 text-sm">{String(errors.email.message)}</p>
+)}
+        </div>
         {/* Lien mot de passe oublié */}
         <Link to="/forgot-password" className="block text-sm text-orange-500 hover:text-orange-600">
           Mot de passe oublié ?
