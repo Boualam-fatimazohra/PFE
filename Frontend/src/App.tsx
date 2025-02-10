@@ -12,6 +12,7 @@ import NotFound from "./pages/NotFound";
 import FormateurRoutes from "./routes/FormateurRoutes";
 import CoordinateurRoutes from "./routes/CoordinateurRoutes";
 import ManagerRoutes from "./routes/ManagerRoutes ";
+import TechnicienRoutes from "./routes/TechnecienRoutes.js";
 
 import { ToastContainer } from "react-toastify";
 const queryClient = new QueryClient();
@@ -31,6 +32,8 @@ const App = () => (
           <Route path="/formateur/*" element={<FormateurRoutes />} />
           <Route path="/manager/*" element={<ManagerRoutes />} />
           <Route path="/coordinateur/*" element={<CoordinateurRoutes />} />
+          <Route path="/Technicien/*" element={<TechnicienRoutes />} />
+
           <Route path="*" element={<NotFound />} />
         </Routes>
 
