@@ -1,10 +1,12 @@
 const express = require('express');
-const {Login} = require('../Controllers/Login');
+const {Login ,createUser} = require('../Controllers/Auth');
+
 // const authenticated = require('../Middlewares/Authmiddleware')
 // const verifyRole = require('../Middlewares/verifyRole')
 const router = express.Router();
 
 router.post('/signIn', Login);
+router.post('/signup',createUser);
 
 // router.get('/validate-token', authenticated, verifyRole(['Mentor']), (req, res) => {
 //     res.status(200).json({ message: 'Token is valid.', user: req.user });
