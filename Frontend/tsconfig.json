@@ -6,8 +6,11 @@
   ],
   "compilerOptions": {
     "baseUrl": ".",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
     "paths": {
       "@/*": ["./src/*"]
+
     },
     "noImplicitAny": false,
     "noUnusedParameters": false,
