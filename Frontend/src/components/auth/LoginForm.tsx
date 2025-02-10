@@ -15,7 +15,7 @@ import "react-toastify/dist/ReactToastify.css";
 // Validation avec Zod
 const loginSchema = z.object({
   email: z.string().email("Email invalide"),
-  password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères"),
+  password: z.string(),
 });
 
 export function LoginForm() {
@@ -38,7 +38,7 @@ export function LoginForm() {
       const response = await axios.post("http://localhost:5000/api/auth/signIn", data, { withCredentials: true });
       console.log("Réponse API :", response.data);
 
-      if (response.data.role === "Mentor") {
+      if (response.data.role === "Formateur") {
         toast.success(response.data.message, { position: "top-right", autoClose: 3000 });
         navigate("/formateur/dashboardFormateur");
       } else if (response.data.role === "Admin") {

@@ -7,7 +7,7 @@ const formationSchema = new mongoose.Schema({
   dateDebut: { type: Date, required: true },
   dateFin: { type: Date, required: true },
   lienInscription: { type: String },
-  status: { type: String, enum: ["Ouverte", "Fermée"], required: true },
+  tags: {type:String,required:true},
   tauxSatisfaction: { type: Number, min: 0, max: 100 },
   formateur: { type: mongoose.Schema.Types.ObjectId, ref: "Formateur", required: true },
   classes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Classe" }]

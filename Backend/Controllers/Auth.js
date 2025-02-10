@@ -8,6 +8,8 @@ const Login = async (req, res) => {
     try {
         console.log("debut de login avant findOne");
         const user = await Utilisateur.findOne({ email });
+        console.log("aprés  findOne");
+
         // If user is not found, return an error 
         if (!user) {
             console.log("Invalid email or password");
@@ -41,6 +43,7 @@ const Login = async (req, res) => {
             message: 'Login successful',
             role: user.role
         });
+        console.log("success de login")
 
     } catch (error) {
         console.error('Login error:', error);
