@@ -5,7 +5,6 @@ const Course = require('../Models/courseModel');
 
 const AddFormation = async (req, res) => {
   const { title, description, startDate, endDate, type, tags} = req.body;
-
   const mentors = req.user.userId
   try {
     const newCourse = new Course({ 

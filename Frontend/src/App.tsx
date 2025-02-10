@@ -31,8 +31,6 @@ const App = () => (
           <Route path="/formateur/*" element={<FormateurRoutes />} />
           <Route path="/manager/*" element={<ManagerRoutes />} />
           <Route path="/coordinateur/*" element={<CoordinateurRoutes />} />
-
-
           <Route path="*" element={<NotFound />} />
         </Routes>
 
