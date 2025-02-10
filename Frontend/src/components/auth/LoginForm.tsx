@@ -15,14 +15,13 @@ import "react-toastify/dist/ReactToastify.css";
 // Validation avec Zod
 const loginSchema = z.object({
   email: z.string().email("Email invalide"),
-  password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères"),
+  password: z.string(),
 });
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
 
   // useForm avec Zod Resolver
   const {
@@ -39,7 +38,7 @@ export function LoginForm() {
       const response = await axios.post("http://localhost:5000/api/auth/signIn", data, { withCredentials: true });
       console.log("Réponse API :", response.data);
 
-      if (response.data.role === "Mentor") {
+      if (response.data.role === "Formateur") {
         toast.success(response.data.message, { position: "top-right", autoClose: 3000 });
         navigate("/formateur/dashboardFormateur");
       } else if (response.data.role === "Admin") {
@@ -94,8 +93,8 @@ export function LoginForm() {
             </button>
           </div>
           {errors.password?.message && (
-  <p className="text-red-500 text-sm">{String(errors.email.message)}</p>
-)}
+            <p className="text-red-500 text-sm">{String(errors.password.message)}</p>
+          )}
         </div>
         {/* Lien mot de passe oublié */}
         <Link to="/forgot-password" className="block text-sm text-orange-500 hover:text-orange-600">

@@ -34,7 +34,8 @@
     "jsonwebtoken": "^9.0.2",
     "mailtrap": "^3.4.0",
     "mongoose": "^8.10.0",
-    "mongose": "^0.0.2-security"
+    "mongose": "^0.0.2-security",
+    "nodemailer": "^6.10.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",
