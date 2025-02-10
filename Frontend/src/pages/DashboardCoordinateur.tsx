@@ -6,7 +6,7 @@ import { SearchBar } from "@/components/dashboardElement/SearchBar";
 import { FormationsTable } from "@/components/dashboardElement/FormationTable";
 import KitFormateur from "@/components/dashboardElement/KitFormateur";
 import RapportCard from "@/components/dashboardElement/RapportCard";
-const DashboardFormateur  = () => {
+const DashboardCoordinateur  = () => {
   const formationsData = [
     { title: "Conception d'application mobile", date: "25/02/2025", status: "En Cours"  as const },
     { title: "Conception d'application mobile", date: "25/02/2025", status: "En Cours"  as const},
@@ -82,4 +82,4 @@ const DashboardFormateur  = () => {
   );
 };
 
-export default DashboardFormateur;
+export default DashboardCoordinateur;
