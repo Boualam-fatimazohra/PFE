@@ -75,7 +75,7 @@ export function LoginForm() {
               {showPassword ? <EyeOff /> : <Eye />}
             </button>
           </div>
-          {errors.email?.message && (
+          {errors.password?.message && (
   <p className="text-red-500 text-sm">{String(errors.email.message)}</p>
 )}
         </div>
