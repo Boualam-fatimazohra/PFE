@@ -22,7 +22,7 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Gestion du formulaire avec react-hook-form
+  // useForm avec Zod Resolver
   const {
     register,
     handleSubmit,
@@ -43,6 +43,7 @@ export function LoginForm() {
       } else if (response.data.role === "Admin") {
         navigate("/admin/dashboard");
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       if (error.response?.status === 400) {
         toast.error(error.response.data.message, { position: "top-right", autoClose: 3000 });
@@ -64,12 +65,13 @@ export function LoginForm() {
             Adresse email<span className="text-red-500 ml-1">*</span>
           </Label>
           <Input id="email" type="email" {...register("email")} className="w-full" />
-          {errors.email?.message && ( <p className="text-red-500 text-sm">{String(errors.email.message)}</p>
-)}
+          {errors.email?.message && (
+            <p className="text-red-500 text-sm">{String(errors.email.message)}</p>
+          )}
         </div>
 
         {/* Mot de passe */}
-        <div className="space-y-2 relative">
+        <div className="space-y-2">
           <Label htmlFor="password">
             Mot de passe<span className="text-red-500 ml-1">*</span>
           </Label>
@@ -88,8 +90,10 @@ export function LoginForm() {
               {showPassword ? <EyeOff /> : <Eye />}
             </button>
           </div>
-          {errors.password?.message && ( <p className="text-red-500 text-sm">{String(errors.password.message)}</p>
-)}        </div>
+          {errors.password?.message && (
+            <p className="text-red-500 text-sm">{String(errors.password.message)}</p>
+          )}
+        </div>
 
         {/* Lien mot de passe oublié */}
         <Link to="/forgot-password" className="block text-sm text-orange-500 hover:text-orange-600">
