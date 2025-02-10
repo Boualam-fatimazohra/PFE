@@ -49,7 +49,7 @@ const DashboardFormateur  = () => {
               </CardContent>
             </Card>
             {/* Évaluations */}
-            <Card>
+            <Card  className="mb-6">
               <CardContent className="p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-semibold">Évaluations</h2>
@@ -66,11 +66,13 @@ const DashboardFormateur  = () => {
                     </button>
                   </div>
                 </div>
+                 {/* Rapport & Statistiques */}
+                <div className="mt-6">
+                <RapportCard/>
+                </div>
               </CardContent>
             </Card>
           </div>
-          {/* Rapport & Statistiques */}
-          <RapportCard/>
           {/* Kit Formateur */}
           <KitFormateur/>
         </div>
