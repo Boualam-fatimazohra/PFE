@@ -8,6 +8,7 @@ import Dashboard from "./pages/DashboardFormateur";
 import ForgotPassword from "./pages/ForgotPassword";
 import NotFound from "./pages/NotFound";
 import FormateurRoutes from "./routes/FormateurRoutes";
+import CoordinateurRoutes from "./routes/CoordinateurRoutes";
 import { ToastContainer } from "react-toastify";
 const queryClient = new QueryClient();
 
@@ -24,7 +25,8 @@ const App = () => (
           
           {/* Route parent pour les formateurs */}
           <Route path="/formateur/*" element={<FormateurRoutes />} />
-          
+          <Route path="/coordinateur/*" element={<CoordinateurRoutes />} />
+
 
           <Route path="*" element={<NotFound />} />
         </Routes>

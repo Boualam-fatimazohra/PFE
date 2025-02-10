@@ -12,7 +12,7 @@ export function Footer() {
               Contact
             </a>
           </div>
-          <button className="flex items-center space-x-2 text-sm text-gray-600 hover:text-orange-500">
+          <button className="flex items-center space-x-2 text-sm text-white hover:text-orange-500">
             <span>Déconnexion</span>
             <svg
               xmlns="http://www.w3.org/2000/svg"
