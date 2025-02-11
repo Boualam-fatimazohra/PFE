@@ -6,5 +6,5 @@ const evaluationSchema = new mongoose.Schema({
     questions: { type: String, required: true },
     formation: { type: mongoose.Schema.Types.ObjectId, ref: "Formation", required: true }
   }, { timestamps: true });
-  const Evaluation = mongoose.model("Evaluation", evaluationSchema);
+  export const Evaluation = mongoose.model("Evaluation", evaluationSchema);
   

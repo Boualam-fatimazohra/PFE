@@ -15,7 +15,7 @@ console.log()
 // Middleware --
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-//app.use(cookieParser());
+app.use(cookieParser());
 app.use(
   cors({
     origin: "http://localhost:8080",
