@@ -13,8 +13,8 @@ import FormateurRoutes from "./routes/FormateurRoutes";
 import CoordinateurRoutes from "./routes/CoordinateurRoutes";
 import ManagerRoutes from "./routes/ManagerRoutes ";
 import TechnicienRoutes from "./routes/TechnecienRoutes.js";
-// import GenerateLink from "./components/dashboardElement/GenerationLien";
-// import FormulaireEvaluation from "./components/dashboardElement/FormulaireEvaluation";
+import GenerateLink from "./components/dashboardElement/GenerationLien";
+import FormulaireEvaluation from "./components/dashboardElement/FormulaireEvaluation";
 
 import { ToastContainer } from "react-toastify";
 const queryClient = new QueryClient();
@@ -37,9 +37,9 @@ const App = () => (
           <Route path="/Technicien/*" element={<TechnicienRoutes />} />
 
           <Route path="*" element={<NotFound />} />
-{/*           
+          
         <Route path="/" element={<GenerateLink  />} />
-        <Route path="/formulaire-evaluation" element={<FormulaireEvaluation />} />  */}
+        <Route path="/formulaire-evaluation" element={<FormulaireEvaluation />} /> 
     
         </Routes>
 
