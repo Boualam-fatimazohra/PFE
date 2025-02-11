@@ -93,7 +93,7 @@ const DashboardManager = () => {
             </Card>
 
             {/* Évaluations */}
-            <Card>
+            <Card> 
               <CardContent className="p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-semibold">Suivi d'achat</h2>

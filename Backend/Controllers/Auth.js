@@ -27,7 +27,8 @@ const Login = async (req, res) => {
 
         // Generate a JWT token
         const token = jwt.sign(
-            { userId: user._id, role: user.role },
+            { userId: user._id,
+              role: user.role },
             process.env.JWT_SECRET,
             { expiresIn: '1w' } // Token expiration time
         );
@@ -35,7 +36,8 @@ const Login = async (req, res) => {
         // Set the token in a cookie
         res.cookie('token', token, {
             httpOnly: true, // Cookie is not accessible via JavaScript
-            sameSite: 'strict', // Prevent CSRF attacks
+            sameSite: 'strict',// Prevent CSRF attacks
+            secure: false,
             maxAge: 300000000 // Cookie expiration time in milliseconds (1 hour)
         });
 
@@ -55,10 +57,11 @@ const Login = async (req, res) => {
 //jD5IDdTVLoITMCpL mot de passe mongo 
 //mongodb+srv://salouaouissa:<db_password>@cluster0.nwqo9.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
 const createUser = async (req, res) => {
-    const {firstName,lastName,email,password}=req.body;
+    const { firstName, lastName, email, password } = req.body;
+
     try {
-        // Vérifier si l'utilisateur existe déjà
-        const existingUser = await Utilisateur.findOne({email});
+        // Vérification de l'existence de l'utilisateur
+        const existingUser = await Utilisateur.findOne({ email });
         if (existingUser) {
             return res.status(400).json({ message: "L'utilisateur existe déjà" });
         }
@@ -72,16 +75,49 @@ const createUser = async (req, res) => {
             lastName,
             email,
             password: hashedPassword,
-            role:"Formateur"
+            role: "Formateur"
         });
 
         await newUser.save();
 
-        res.status(201).json({ message: "Utilisateur créé avec succès", user: newUser });
+        // Génération du JWT après la sauvegarde de l'utilisateur
+        const token = jwt.sign(
+            { 
+                userId: newUser._id, // Utilisation de newUser au lieu de user
+                role: newUser.role 
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: '1w' }
+        );
+
+        // Configuration du cookie
+        res.cookie('token', token, {
+            httpOnly: true,
+            sameSite: 'strict',
+              secure: false ,
+            maxAge: 604800000 // 1 semaine en millisecondes
+        });
+
+        // Réponse sans le mot de passe
+        const userResponse = {
+            _id: newUser._id,
+            firstName: newUser.firstName,
+            lastName: newUser.lastName,
+            email: newUser.email,
+            role: newUser.role
+        };
+
+        res.status(201).json({ 
+            message: "Utilisateur créé avec succès", 
+            user: userResponse 
+        });
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Erreur serveur" });
+        console.error("Erreur détaillée:", error);
+        res.status(500).json({ 
+            message: "Erreur serveur",
+            error:error.message 
+        });
     }
 };
 

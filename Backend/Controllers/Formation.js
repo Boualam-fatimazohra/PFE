@@ -1,29 +1,39 @@
-const Course = require('../Models/courseModel');  
 
-///////////////////////////////////////////////////////////////////////////////////////
-//Api For Add a Formation
-
+const Formation = require('../Models/formation.model.js');
 const AddFormation = async (req, res) => {
-  const { title, description, startDate, endDate, type, tags} = req.body;
-  const mentors = req.user.userId
+  const {nom, dateDebut, dateFin, lienInscription,tags} = req.body;
+  console.log("debut de fonctionn")
+  const id = req.user?.userId; // Vérification de la présence de req.user
+  const role = req.user?.role;
+
+  if (!id || role !== "Formateur"){
+    console.log("Accès refusé. Seuls les formateurs peuvent créer une formation.");
+    return res.status(403).json({ message: "Accès refusé. Seuls les formateurs peuvent créer une formation." });
+  }
+
   try {
-    const newCourse = new Course({ 
-      title,
-      description,
-      startDate,
-      endDate,
-      type,
-      mentors,
-      tags
+    const newFormation = new Formation({
+      nom,
+      dateDebut,
+      dateFin,
+      lienInscription,
+      tags,
+      formateur: id,
+      
     });
 
-    await newCourse.save();
+    await newFormation.save();
 
-    res.status(200).json({ message: 'Course created successfully', course: newCourse });
+    res.status(201).json({ message: "Formation créée avec succès", formation: newFormation });
+    console.log("Formation créée avec succès");
+
   } catch (error) {
-    res.status(500).json({ message: 'Error creating course', error: error.message });
+    console.log("Erreur lors de la création de la formation");
+
+    res.status(500).json({ message: "Erreur lors de la création de la formation", error: error.message });
   }
 };
+
 
 ////////////////////////////////////////////////////////////////////////////////////////
 //Api For Get All Formations
