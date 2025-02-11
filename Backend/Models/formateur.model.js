@@ -1,18 +1,43 @@
 const mongoose = require('mongoose');
+const Utilisateur = require('./Utilisateur'); 
 
-const formateurSchema = new mongoose.Schema({
+const managerSchema = new mongoose.Schema({
     utilisateur: { 
         type: mongoose.Schema.Types.ObjectId, 
         ref: "Utilisateur", 
-        required: true 
+        required: true,
+        validate: {
+            validator: async function(value) {
+                // Check if the referenced utilisateur is valid and exists in the Utilisateur collection
+                const utilisateur = await Utilisateur.findById(value);
+                return utilisateur && utilisateur.role === 'Formateur'; 
+            },
+            message: 'Invalid utilisateur reference or the utilisateur is not a Manager.'
+        }
     },
-    formations: [{ 
+    formateurs: [{ 
         type: mongoose.Schema.Types.ObjectId, 
-        ref: "Formation", 
-        default: [] // default to an empty array if no formations
+        ref: "Utilisateur",
+        validate: {
+            validator: function(value) {
+                return Array.isArray(value) && value.every(item => mongoose.Types.ObjectId.isValid(item));
+            },
+            message: 'Each formateur must be a valid ObjectId reference to an Utilisateur.'
+        }
+    }],
+    coordinateurs: [{ 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: "Utilisateur", 
+        required: true,
+        validate: {
+            validator: function(value) {
+                return Array.isArray(value) && value.every(item => mongoose.Types.ObjectId.isValid(item));
+            },
+            message: 'Each coordinateur must be a valid ObjectId reference to an Utilisateur.'
+        }
     }]
 }, { timestamps: true });
 
-const Formateur = mongoose.model("Formateur", formateurSchema);
+const Manager = mongoose.model("Manager", managerSchema);
 
-module.exports = { Formateur };
+module.exports = { Manager };
