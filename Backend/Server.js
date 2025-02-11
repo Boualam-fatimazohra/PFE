@@ -16,10 +16,12 @@ const PORT = process.env.PORT || 5000;
 app.use(express.json());  // Permet à Express de parser les requêtes JSON
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(cors({
-  origin: "http://localhost:8080",
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: "http://localhost:8080",
+    credentials: true,
+  })
+);
 
 // ✅ Connexion à la base de données
 connectDB();

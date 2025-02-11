@@ -1,23 +1,29 @@
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-  } from "@/components/ui/table";
-  
-  interface FormationItem {
-    title: string;
-    date: string;
-    status: "En Cours" | "Terminer" | "Replanifier";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useFormations } from "../../contexts/FormationContext";
+
+interface Formation {
+  _id: string;
+  title: string;
+  dateDebut: string;
+  dateFin: string;
+  status: string;
+}
+
+export const FormationsTable = () => {
+  const { formations, loading } = useFormations();
+
+  if (loading) {
+    return <p>Chargement des formations...</p>;
   }
-  
-  interface FormationsTableProps {
-    data: FormationItem[];
-  }
-  
-  export const FormationsTable = ({ data }: FormationsTableProps) => (
+
+  return (
     <Table>
       <TableHeader>
         <TableRow>
@@ -28,10 +34,10 @@ import {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {data.map((formation, index) => (
+        {formations.map((formation: Formation, index: number) => (
           <TableRow key={index}>
             <TableCell>{formation.title}</TableCell>
-            <TableCell>{formation.date}</TableCell>
+            <TableCell>{formation.dateDebut}</TableCell>
             <TableCell>
               <StatusBadge status={formation.status} />
             </TableCell>
@@ -45,18 +51,19 @@ import {
       </TableBody>
     </Table>
   );
-  
-  // Composant helper pour le statut
-  const StatusBadge = ({ status }: { status: FormationItem["status"] }) => {
-    const statusStyles = {
-      "En Cours": "bg-orange-100 text-orange-700",
-      "Terminer": "bg-green-100 text-green-700",
-      "Replanifier": "bg-gray-100 text-gray-700"
-    };
-  
-    return (
-      <span className={`px-2 py-1 rounded-full text-xs ${statusStyles[status]}`}>
-        {status}
-      </span>
-    );
+};
+
+// Composant helper pour le statut
+const StatusBadge = ({ status }: { status: Formation["status"] }) => {
+  const statusStyles = {
+    "En Cours": "bg-orange-100 text-orange-700",
+    "Terminer": "bg-green-100 text-green-700",
+    "Replanifier": "bg-gray-100 text-gray-700",
   };
+
+  return (
+    <span className={`px-2 py-1 rounded-full text-xs ${statusStyles[status]}`}>
+      {status}
+    </span>
+  );
+};
