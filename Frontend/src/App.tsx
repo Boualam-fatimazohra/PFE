@@ -4,9 +4,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
-import Dashboard from "./pages/DashboardFormateur";
-import DashboardManager from "./pages/DashboardManager";
-
 import ForgotPassword from "./pages/ForgotPassword";
 import NotFound from "./pages/NotFound";
 import FormateurRoutes from "./routes/FormateurRoutes";
@@ -15,6 +12,9 @@ import ManagerRoutes from "./routes/ManagerRoutes ";
 import TechnicienRoutes from "./routes/TechnecienRoutes.js";
 
 import { ToastContainer } from "react-toastify";
+import { DashboardHeader } from "@/components/layout/DashboardHeader";
+import { Footer } from "@/components/layout/Footer";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -24,19 +24,29 @@ const App = () => (
       <ToastContainer />
       <Sonner />
       <BrowserRouter>
-      <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
+        <div className="pt-[70px] pb-[60px] min-h-screen">
+          {/* Header */}
+          <DashboardHeader />
+
+          {/* Main content */}
           
-          {/* Route parent pour les formateurs */}
-          <Route path="/formateur/*" element={<FormateurRoutes />} />
-          <Route path="/manager/*" element={<ManagerRoutes />} />
-          <Route path="/coordinateur/*" element={<CoordinateurRoutes />} />
-          <Route path="/Technicien/*" element={<TechnicienRoutes />} />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              
+              {/* Routes pour les différents types d'utilisateurs */}
+              <Route path="/formateur/*" element={<FormateurRoutes />} />
+              <Route path="/manager/*" element={<ManagerRoutes />} />
+              <Route path="/coordinateur/*" element={<CoordinateurRoutes />} />
+              <Route path="/Technicien/*" element={<TechnicienRoutes />} />
+              
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          
 
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-
+          {/* Footer */}
+          <Footer />
+        </div>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
