@@ -7,36 +7,54 @@ import { FormationsTable } from "@/components/dashboardElement/FormationTable";
 import KitFormateur from "@/components/dashboardElement/KitFormateur";
 import RapportCard from "@/components/dashboardElement/RapportCard";
 import { FormationProvider } from "@/contexts/FormationContext";
-const DashboardFormateur  = () => {
-  const formationsData = [
-    { title: "Conception d'application mobile", date: "25/02/2025", status: "En Cours"  as const },
-    { title: "Conception d'application mobile", date: "25/02/2025", status: "En Cours"  as const},
-    { title: "Conception d'application mobile", date: "25/02/2025", status: "En Cours" as const },
-    { title: "Conception d'application mobile", date: "25/02/2025", status: "En Cours" as const }
+import { FormationModal } from "@/components/dashboardElement/formationModal";
 
-  ];
+const DashboardFormateur = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formationData, setFormationData] = useState({
+    nom: "",
+    dateDebut: "",
+    dateFin: "",
+    lienInscription: "",
+    tags: "",
+  });
+  const handleOpenModal = () => setIsModalOpen(true);
+  const handleCloseModal = () => setIsModalOpen(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormationData({ ...formationData, [e.target.name]: e.target.value });
+  };
+
+  const handleSaveFormation = () => {
+    console.log("Formation enregistrée:", formationData);
+    setIsModalOpen(false);
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
-      <DashboardHeader/>
+      <DashboardHeader />
       <main className="flex-grow bg-gray-50">
         <div className="container mx-auto px-4 py-8">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-2xl font-bold">Vue d'Ensemble</h1>
-            <SearchBar 
-              onSearch={(value) => console.log(value)} 
-              onCreate={() => alert("Create")}
-            />
+            <button
+              className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors"
+              onClick={handleOpenModal}
+            >
+              Créer une Formation
+            </button>
           </div>
-          {/* Cartes statistiques   en haut de dashboard*/}
+
+          {/* Cartes statistiques */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <StatsCard title="Total Bénéficiares" value={250}/>
-            <StatsCard title="Total Formations" value={64}/>
-            <StatsCard title="Prochain événement" value="07"/>
-            <StatsCard title="Satisfaction moyenne" value="95%"/>
+            <StatsCard title="Total Bénéficiaires" value={250} />
+            <StatsCard title="Total Formations" value={64} />
+            <StatsCard title="Prochain événement" value="07" />
+            <StatsCard title="Satisfaction moyenne" value="95%" />
           </div>
+
           {/* Mes Formations et Évaluations */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            {/* Mes Formations */}
             <Card>
               <CardContent className="p-6">
                 <div className="flex justify-between items-center mb-4">
@@ -45,14 +63,13 @@ const DashboardFormateur  = () => {
                     Découvrir
                   </button>
                 </div>
-               {/* formations */}
-               <FormationProvider>
-      <FormationsTable />
-    </FormationProvider>
+                {/* Formations */}
+                <FormationProvider>
+                  <FormationsTable />
+                </FormationProvider>
               </CardContent>
             </Card>
-            {/* Évaluations */}
-            <Card  className="mb-6">
+            <Card>
               <CardContent className="p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-semibold">Évaluations</h2>
@@ -64,26 +81,32 @@ const DashboardFormateur  = () => {
                   <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
                     <span>Conception d'application mobile</span>
                     <span className="text-orange-500">En Cours</span>
-                    {/* <button className="bg-black text-white px-3 py-1 rounded-md text-sm">
-                      Générer Lien
-                    </button> */}
-                    {/* <GenerateLink /> */}
-
                   </div>
                 </div>
-                 {/* Rapport & Statistiques */}
+                {/* Rapport & Statistiques */}
                 <div className="mt-6">
-                <RapportCard/>
+                  <RapportCard />
                 </div>
               </CardContent>
             </Card>
           </div>
+
           {/* Kit Formateur */}
-          <KitFormateur/>
+          <KitFormateur />
         </div>
       </main>
 
       <Footer />
+
+      {/* Modal de création de formation */}
+      <FormationModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onChange={handleChange}
+        onSave={handleSaveFormation}
+        formationData={formationData}
+        setFormationData={setFormationData}
+      />
     </div>
   );
 };

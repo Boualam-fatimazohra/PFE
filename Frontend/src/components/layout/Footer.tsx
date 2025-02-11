@@ -1,7 +1,7 @@
 export function Footer() {
   return (
-    <footer className="w-full bg-black border-t border-gray-200 mt-auto">
-      <div className="container mx-auto px-4 py-6">
+    <footer className="fixed bottom-0 w-full bg-black border-t border-gray-200 z-50">
+      <div className="container mx-auto px-4 py-4">
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="flex space-x-6 mb-4 md:mb-0">
             <span className="text-sm text-white">© Orange 2025</span>
