@@ -5,15 +5,15 @@ const evaluationSchema = new mongoose.Schema({
         type: Number, 
         min: 0, 
         max: 100, 
-        required: true 
+        required: false  // Peut être optionnel selon tes besoins
     },
     lienEvaluation: { 
         type: String, 
         required: true,
-        match: /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/i // Optional: URL validation
+        match: /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/i // Vérification d'URL valide
     },
     questions: { 
-        type: [String],  
+        type: String,  // Si `questions` est censé être un tableau, mets `type: [String]`
         required: true 
     },
     formation: { 
@@ -23,6 +23,8 @@ const evaluationSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
+// ✅ Définition unique du modèle
 const Evaluation = mongoose.model("Evaluation", evaluationSchema);
 
-module.exports = { Evaluation };
+// ✅ Exportation correcte
+module.exports = Evaluation;

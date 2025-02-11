@@ -6,6 +6,7 @@ import { SearchBar } from "@/components/dashboardElement/SearchBar";
 import { FormationsTable } from "@/components/dashboardElement/FormationTable";
 import KitFormateur from "@/components/dashboardElement/KitFormateur";
 import RapportCard from "@/components/dashboardElement/RapportCard";
+// import GenerateLink from "@/components/dashboardElement/GenerationLien";
 const DashboardFormateur  = () => {
   const formationsData = [
     { title: "Conception d'application mobile", date: "25/02/2025", status: "En Cours"  as const },
@@ -61,9 +62,11 @@ const DashboardFormateur  = () => {
                   <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
                     <span>Conception d'application mobile</span>
                     <span className="text-orange-500">En Cours</span>
-                    <button className="bg-black text-white px-3 py-1 rounded-md text-sm">
+                    {/* <button className="bg-black text-white px-3 py-1 rounded-md text-sm">
                       Générer Lien
-                    </button>
+                    </button> */}
+                    {/* <GenerateLink /> */}
+
                   </div>
                 </div>
                  {/* Rapport & Statistiques */}
