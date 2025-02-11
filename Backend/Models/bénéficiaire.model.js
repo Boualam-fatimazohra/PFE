@@ -1,3 +1,4 @@
+
 const mongoose = require('mongoose');
 
 const beneficiaireSchema = new mongoose.Schema({
@@ -7,8 +8,6 @@ const beneficiaireSchema = new mongoose.Schema({
     niveau: { type: String, required: true },
     isBlack: { type: Boolean, default: false },
     isSuturate: { type: Boolean, default: false }
-}, { timestamps: true });
-
-const Beneficiaire = mongoose.model("Beneficiaire", beneficiaireSchema);
-
-module.exports = Beneficiaire;
+  }, { timestamps: true });
+  export const Beneficiaire = mongoose.model("Beneficiaire", beneficiaireSchema);
+  

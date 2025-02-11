@@ -6,7 +6,7 @@ import { SearchBar } from "@/components/dashboardElement/SearchBar";
 import { FormationsTable } from "@/components/dashboardElement/FormationTable";
 import KitFormateur from "@/components/dashboardElement/KitFormateur";
 import RapportCard from "@/components/dashboardElement/RapportCard";
-// import GenerateLink from "@/components/dashboardElement/GenerationLien";
+import GenerateLink from "@/components/dashboardElement/GenerationLien";
 const DashboardFormateur  = () => {
   const formationsData = [
     { title: "Conception d'application mobile", date: "25/02/2025", status: "En Cours"  as const },
@@ -65,7 +65,7 @@ const DashboardFormateur  = () => {
                     {/* <button className="bg-black text-white px-3 py-1 rounded-md text-sm">
                       Générer Lien
                     </button> */}
-                    {/* <GenerateLink /> */}
+                    <GenerateLink />
 
                   </div>
                 </div>
