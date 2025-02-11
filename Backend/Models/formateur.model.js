@@ -6,3 +6,4 @@ const formateurSchema = new mongoose.Schema({
   }, { timestamps: true });
  const Formateur = mongoose.model("Formateur", formateurSchema);
  module.exports = {Formateur};
+ 

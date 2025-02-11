@@ -6,6 +6,7 @@ import { SearchBar } from "@/components/dashboardElement/SearchBar";
 import { FormationsTable } from "@/components/dashboardElement/FormationTable";
 import KitFormateur from "@/components/dashboardElement/KitFormateur";
 import RapportCard from "@/components/dashboardElement/RapportCard";
+import { FormationProvider } from "@/contexts/FormationContext";
 const DashboardFormateur  = () => {
   const formationsData = [
     { title: "Conception d'application mobile", date: "25/02/2025", status: "En Cours"  as const },
@@ -45,7 +46,9 @@ const DashboardFormateur  = () => {
                   </button>
                 </div>
                {/* formations */}
-                <FormationsTable data={formationsData} />
+               <FormationProvider>
+      <FormationsTable />
+    </FormationProvider>
               </CardContent>
             </Card>
             {/* Évaluations */}
