@@ -1,12 +1,14 @@
+import { useState } from "react";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatsCard } from "@/components/dashboardElement/StatsCard";
-import { SearchBar } from "@/components/dashboardElement/SearchBar";
 import { FormationsTable } from "@/components/dashboardElement/FormationTable";
 import KitFormateur from "@/components/dashboardElement/KitFormateur";
 import RapportCard from "@/components/dashboardElement/RapportCard";
+
 import { FormationProvider } from "@/contexts/FormationContext";
+
 import { FormationModal } from "@/components/dashboardElement/formationModal";
 
 const DashboardFormateur = () => {
@@ -16,8 +18,10 @@ const DashboardFormateur = () => {
     dateDebut: "",
     dateFin: "",
     lienInscription: "",
-    tags: "",
+    tags:""
   });
+
+
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
 
@@ -27,7 +31,11 @@ const DashboardFormateur = () => {
 
   const handleSaveFormation = () => {
     console.log("Formation enregistrée:", formationData);
+
     setIsModalOpen(false);
+
+    handleCloseModal();
+
   };
 
   return (
@@ -63,10 +71,12 @@ const DashboardFormateur = () => {
                     Découvrir
                   </button>
                 </div>
+
                 {/* Formations */}
                 <FormationProvider>
                   <FormationsTable />
                 </FormationProvider>
+
               </CardContent>
             </Card>
             <Card>
@@ -77,6 +87,7 @@ const DashboardFormateur = () => {
                     Découvrir
                   </button>
                 </div>
+
                 <div className="space-y-4">
                   <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
                     <span>Conception d'application mobile</span>
@@ -87,6 +98,9 @@ const DashboardFormateur = () => {
                 <div className="mt-6">
                   <RapportCard />
                 </div>
+
+                <RapportCard />
+
               </CardContent>
             </Card>
           </div>

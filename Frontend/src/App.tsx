@@ -44,12 +44,17 @@ const App = () => (
               <Route path="/Technicien/*" element={<TechnicienRoutes />} />
               
               <Route path="*" element={<NotFound />} />
+
            
           
             <Route path="/" element={<GenerateLink  />} />
             <Route path="/formulaire-evaluation" element={<FormulaireEvaluation />} /> 
     
         </Routes>
+
+            
+          
+
 
           {/* Footer */}
           <Footer />
