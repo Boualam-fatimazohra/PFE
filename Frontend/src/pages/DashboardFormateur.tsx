@@ -64,9 +64,11 @@ const DashboardFormateur  = () => {
                   <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
                     <span>Conception d'application mobile</span>
                     <span className="text-orange-500">En Cours</span>
-                    <button className="bg-black text-white px-3 py-1 rounded-md text-sm">
+                    {/* <button className="bg-black text-white px-3 py-1 rounded-md text-sm">
                       Générer Lien
-                    </button>
+                    </button> */}
+                    {/* <GenerateLink /> */}
+
                   </div>
                 </div>
                  {/* Rapport & Statistiques */}
