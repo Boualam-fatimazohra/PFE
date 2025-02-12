@@ -8,14 +8,6 @@ import {
 } from "@/components/ui/table";
 import { useFormations } from "../../contexts/FormationContext";
 
-interface Formation {
-  _id: string;
-  title: string;
-  dateDebut: string;
-  dateFin: string;
-  status: "En Cours" | "Terminer" | "Replanifier";
-}
-
 export const FormationsTable = () => {
   const { formations, loading } = useFormations();
 
@@ -29,17 +21,15 @@ export const FormationsTable = () => {
         <TableRow>
           <TableHead>Titre</TableHead>
           <TableHead>Date Début</TableHead>
-          <TableHead>Date Fin</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>Action</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {formations.map((formation: Formation, index: number) => (
-          <TableRow key={index}>
+        {formations.map((formation) => (
+          <TableRow key={formation._id}>
             <TableCell>{formation.title}</TableCell>
             <TableCell>{formation.dateDebut}</TableCell>
-            <TableCell>{formation.dateFin}</TableCell>
             <TableCell>
               <StatusBadge status={formation.status} />
             </TableCell>
@@ -55,8 +45,8 @@ export const FormationsTable = () => {
   );
 };
 
-// Composant helper pour le statut
-const StatusBadge = ({ status }: { status: Formation["status"] }) => {
+// Composant helper pour afficher le statut
+const StatusBadge = ({ status }: { status: "En Cours" | "Terminer" | "Replanifier" }) => {
   const statusStyles = {
     "En Cours": "bg-orange-100 text-orange-700",
     "Terminer": "bg-green-100 text-green-700",

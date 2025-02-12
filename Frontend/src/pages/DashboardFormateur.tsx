@@ -99,8 +99,6 @@ const DashboardFormateur = () => {
                   <RapportCard />
                 </div>
 
-                <RapportCard />
-
               </CardContent>
             </Card>
           </div>
