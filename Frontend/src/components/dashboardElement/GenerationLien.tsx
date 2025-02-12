@@ -17,7 +17,7 @@ export default function GenerateLink() {
   };
 
   return (
-    <div className="space-y-4 p-6 bg-white rounded-lg shadow-md max-w-md mx-auto">
+    <div className="space-y-4 p-6 bg-gray-50 rounded-lg  max-w-md mx-auto">
       <Button 
         onClick={() => setOpen(true)} 
         className="bg-orange-500 text-white px-4 py-2 rounded-md w-full hover:bg-orange-600 transition-all"
