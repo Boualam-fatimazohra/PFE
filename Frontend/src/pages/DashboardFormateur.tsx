@@ -6,10 +6,18 @@ import { StatsCard } from "@/components/dashboardElement/StatsCard";
 import { FormationsTable } from "@/components/dashboardElement/FormationTable";
 import KitFormateur from "@/components/dashboardElement/KitFormateur";
 import RapportCard from "@/components/dashboardElement/RapportCard";
-
 import { FormationProvider } from "@/contexts/FormationContext";
-
+import GenerateLink from "@/components/dashboardElement/GenerationLien";
+import { Plus } from "lucide-react";
+import { SearchBar } from "@/components/dashboardElement/SearchBar";
 import { FormationModal } from "@/components/dashboardElement/formationModal";
+
+// 📌 Exemple de données
+const formationsData = [
+  { nom: "Conception d'application mobile", dateDebut: "25/02/2025", status: "En Cours" as const },
+  { nom: "Développement Web", dateDebut: "10/03/2025", status: "Terminer" as const },
+  { nom: "Cybersécurité", dateDebut: "05/04/2025", status: "Replanifier" as const },
+];
 
 const DashboardFormateur = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -18,9 +26,8 @@ const DashboardFormateur = () => {
     dateDebut: "",
     dateFin: "",
     lienInscription: "",
-    tags:""
+    tags: "",
   });
-
 
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
@@ -31,11 +38,7 @@ const DashboardFormateur = () => {
 
   const handleSaveFormation = () => {
     console.log("Formation enregistrée:", formationData);
-
     setIsModalOpen(false);
-
-    handleCloseModal();
-
   };
 
   return (
@@ -45,12 +48,16 @@ const DashboardFormateur = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-2xl font-bold">Vue d'Ensemble</h1>
-            <button
-              className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors"
-              onClick={handleOpenModal}
-            >
-              Créer une Formation
-            </button>
+            <div className="flex justify-between ">
+              <SearchBar onSearch={(value) => console.log(value)} />
+              <button 
+                onClick={handleOpenModal}
+                className="bg-orange-500 text-white px-4 py-2 rounded-md flex items-center space-x-2 hover:bg-orange-600 transition-colors"
+              >
+                <Plus size={20} />
+                <span>Créer une formation</span>
+              </button>
+            </div>
           </div>
 
           {/* Cartes statistiques */}
@@ -71,14 +78,12 @@ const DashboardFormateur = () => {
                     Découvrir
                   </button>
                 </div>
-
-                {/* Formations */}
                 <FormationProvider>
                   <FormationsTable />
                 </FormationProvider>
-
               </CardContent>
             </Card>
+
             <Card>
               <CardContent className="p-6">
                 <div className="flex justify-between items-center mb-4">
@@ -92,13 +97,12 @@ const DashboardFormateur = () => {
                   <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
                     <span>Conception d'application mobile</span>
                     <span className="text-orange-500">En Cours</span>
+                    <GenerateLink />
                   </div>
                 </div>
-                {/* Rapport & Statistiques */}
                 <div className="mt-6">
                   <RapportCard />
                 </div>
-
               </CardContent>
             </Card>
           </div>
@@ -107,7 +111,6 @@ const DashboardFormateur = () => {
           <KitFormateur />
         </div>
       </main>
-
       <Footer />
 
       {/* Modal de création de formation */}
