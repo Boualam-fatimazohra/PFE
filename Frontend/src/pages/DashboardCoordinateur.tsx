@@ -23,7 +23,6 @@ const DashboardCoordinateur  = () => {
             <h1 className="text-2xl font-bold">Vue d'Ensemble</h1>
             <SearchBar 
               onSearch={(value) => console.log(value)} 
-              onCreate={() => alert("Create")}
             />
           </div>
           {/* Cartes statistiques   en haut de dashboard*/}
