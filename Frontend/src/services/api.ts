@@ -15,5 +15,5 @@ export const fetchFormations = async (): Promise<Formation[]> => {
     } catch (error) {
       console.error('Erreur lors de la récupération des formations:', error);
       throw error; // Propager l'erreur pour gestion ultérieure
-    }
-  };
+}
+};
