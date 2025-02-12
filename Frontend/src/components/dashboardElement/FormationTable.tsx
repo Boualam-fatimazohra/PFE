@@ -13,7 +13,7 @@ interface Formation {
   title: string;
   dateDebut: string;
   dateFin: string;
-  status: string;
+  status: "En Cours" | "Terminer" | "Replanifier";
 }
 
 export const FormationsTable = () => {
@@ -28,7 +28,8 @@ export const FormationsTable = () => {
       <TableHeader>
         <TableRow>
           <TableHead>Titre</TableHead>
-          <TableHead>Date</TableHead>
+          <TableHead>Date Début</TableHead>
+          <TableHead>Date Fin</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>Action</TableHead>
         </TableRow>
@@ -38,6 +39,7 @@ export const FormationsTable = () => {
           <TableRow key={index}>
             <TableCell>{formation.title}</TableCell>
             <TableCell>{formation.dateDebut}</TableCell>
+            <TableCell>{formation.dateFin}</TableCell>
             <TableCell>
               <StatusBadge status={formation.status} />
             </TableCell>
