@@ -8,11 +8,10 @@ import ForgotPassword from "./pages/ForgotPassword";
 import NotFound from "./pages/NotFound";
 import FormateurRoutes from "./routes/FormateurRoutes";
 import CoordinateurRoutes from "./routes/CoordinateurRoutes";
-import ManagerRoutes from "./routes/ManagerRoutes ";
-import TechnicienRoutes from "./routes/TechnecienRoutes.js";
+import ManagerRoutes from "./routes/ManagerRoutes";
+import TechnicienRoutes from "./routes/TechnecienRoutes";
 import GenerateLink from "./components/dashboardElement/GenerationLien";
 import FormulaireEvaluation from "./components/dashboardElement/FormulaireEvaluation";
-
 
 import { ToastContainer } from "react-toastify";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
@@ -32,29 +31,23 @@ const App = () => (
           <DashboardHeader />
 
           {/* Main content */}
-          
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              
-              {/* Routes pour les différents types d'utilisateurs */}
-              <Route path="/formateur/*" element={<FormateurRoutes />} />
-              <Route path="/manager/*" element={<ManagerRoutes />} />
-              <Route path="/coordinateur/*" element={<CoordinateurRoutes />} />
-              <Route path="/Technicien/*" element={<TechnicienRoutes />} />
-              
-              <Route path="*" element={<NotFound />} />
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
 
-           
-          
-            <Route path="/" element={<GenerateLink  />} />
-            <Route path="/formulaire-evaluation" element={<FormulaireEvaluation />} /> 
-    
-        </Routes>
+            {/* Routes pour les différents types d'utilisateurs */}
+            <Route path="/formateur/*" element={<FormateurRoutes />} />
+            <Route path="/manager/*" element={<ManagerRoutes />} />
+            <Route path="/coordinateur/*" element={<CoordinateurRoutes />} />
+            <Route path="/technicien/*" element={<TechnicienRoutes />} />
 
-            
-          
+            {/* Autres pages */}
+            <Route path="/generate-link" element={<GenerateLink />} />
+            <Route path="/formulaire-evaluation" element={<FormulaireEvaluation />} />
 
+            {/* Page 404 */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
 
           {/* Footer */}
           <Footer />
