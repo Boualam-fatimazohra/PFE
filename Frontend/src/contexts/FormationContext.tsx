@@ -4,7 +4,7 @@ import { fetchFormations } from '../services/api'; // Fonction pour récupérer 
 // Définir le type des formations
 interface Formation {
   _id: string;
-  title: string;
+  nom: string;
   dateDebut: string;
   dateFin: string;
   status: "En Cours" | "Terminer" | "Replanifier"; // Type union des statuts
@@ -35,6 +35,7 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
         const data = await fetchFormations(); 
 
         // Cast des statuts pour correspondre à l'union type
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const formationsWithCorrectStatus = data.map((formation: any) => ({
           ...formation,
           status: formation.status as "En Cours" | "Terminer" | "Replanifier", // Casting explicite
@@ -64,5 +65,5 @@ export const useFormations = (): FormationContextType => {
   if (!context) {
     throw new Error('useFormations doit être utilisé dans un FormationProvider');
   }
-  return context;
+  return context;
 };

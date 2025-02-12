@@ -2,7 +2,7 @@ import axios from "axios";
 
 interface Formation {
   _id: string;
-  title: string;
+  nom: string;
   dateDebut: string;
   dateFin: string;
   status: string;
@@ -15,5 +15,5 @@ export const fetchFormations = async (): Promise<Formation[]> => {
     } catch (error) {
       console.error('Erreur lors de la récupération des formations:', error);
       throw error; // Propager l'erreur pour gestion ultérieure
-    }
-  };
+    }
+  };
