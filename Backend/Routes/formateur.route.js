@@ -1,6 +1,6 @@
 const express = require('express');
 const authenticated = require('../Middlewares/Authmiddleware.js')
-const {createFormation, GetOneFormation, UpdateFormation,GetFormations,DeleteFormations,DeleteFormation,GetFormationOFmentor} = require('../Controllers/Formation.js');
+const {createFormation, GetOneFormation, UpdateFormation,GetFormations,DeleteFormations,DeleteFormation,GetFormationOFmentor} = require('../Controllers/formation.controller.js');
 const router = express.Router();
 
 

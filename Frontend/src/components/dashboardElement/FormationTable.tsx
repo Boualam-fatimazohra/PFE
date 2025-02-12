@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/table";
 import { useFormations } from "../../contexts/FormationContext";
 
+<<<<<<< HEAD
 interface Formation {
   _id: string;
   nom: string;
@@ -16,6 +17,8 @@ interface Formation {
   status: string;
 }
 
+=======
+>>>>>>> 7ce34838897a5dddf93ba03cfd08d5e0cbcffdb4
 export const FormationsTable = () => {
   const { formations, loading } = useFormations();
 
@@ -28,15 +31,21 @@ export const FormationsTable = () => {
       <TableHeader>
         <TableRow>
           <TableHead>Titre</TableHead>
-          <TableHead>Date</TableHead>
+          <TableHead>Date Début</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>Action</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
+<<<<<<< HEAD
         {formations.map((formation: Formation, index: number) => (
           <TableRow key={index}>
             <TableCell>{formation.nom}</TableCell>
+=======
+        {formations.map((formation) => (
+          <TableRow key={formation._id}>
+            <TableCell>{formation.title}</TableCell>
+>>>>>>> 7ce34838897a5dddf93ba03cfd08d5e0cbcffdb4
             <TableCell>{formation.dateDebut}</TableCell>
             <TableCell>
               <StatusBadge status={formation.status} />
@@ -53,8 +62,8 @@ export const FormationsTable = () => {
   );
 };
 
-// Composant helper pour le statut
-const StatusBadge = ({ status }: { status: Formation["status"] }) => {
+// Composant helper pour afficher le statut
+const StatusBadge = ({ status }: { status: "En Cours" | "Terminer" | "Replanifier" }) => {
   const statusStyles = {
     "En Cours": "bg-orange-100 text-orange-700",
     "Terminer": "bg-green-100 text-green-700",

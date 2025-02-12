@@ -1,26 +1,48 @@
+import { useState } from "react";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatsCard } from "@/components/dashboardElement/StatsCard";
-import { SearchBar } from "@/components/dashboardElement/SearchBar";
 import { FormationsTable } from "@/components/dashboardElement/FormationTable";
 import KitFormateur from "@/components/dashboardElement/KitFormateur";
 import RapportCard from "@/components/dashboardElement/RapportCard";
 import { FormationProvider } from "@/contexts/FormationContext";
 import GenerateLink from "@/components/dashboardElement/GenerationLien";
 import { Plus } from "lucide-react";
+import { SearchBar } from "@/components/dashboardElement/SearchBar";
+import { FormationModal } from "@/components/dashboardElement/formationModal";
 
-const DashboardFormateur  = () => {
-  const formationsData = [
-    { title: "Conception d'application mobile", date: "25/02/2025", status: "En Cours"  as const },
-    { title: "Conception d'application mobile", date: "25/02/2025", status: "En Cours"  as const},
-    { title: "Conception d'application mobile", date: "25/02/2025", status: "En Cours" as const },
-    { title: "Conception d'application mobile", date: "25/02/2025", status: "En Cours" as const }
 
-  ];
+
+const DashboardFormateur = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formationData, setFormationData] = useState({
+    nom: "",
+    dateDebut: "",
+    dateFin: "",
+    lienInscription: "",
+    tags:""
+  });
+
+
+  const handleCloseModal = () => setIsModalOpen(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormationData({ ...formationData, [e.target.name]: e.target.value });
+  };
+
+  const handleSaveFormation = () => {
+    console.log("Formation enregistrée:", formationData);
+
+    setIsModalOpen(false);
+
+    handleCloseModal();
+
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
-      <DashboardHeader/>
+      <DashboardHeader />
       <main className="flex-grow bg-gray-50">
         <div className="container mx-auto px-4 py-8">
           <div className="flex justify-between items-center mb-8">
@@ -39,16 +61,17 @@ const DashboardFormateur  = () => {
             </div>
            
           </div>
-          {/* Cartes statistiques   en haut de dashboard*/}
+
+          {/* Cartes statistiques */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <StatsCard title="Total Bénéficiares" value={250}/>
-            <StatsCard title="Total Formations" value={64}/>
-            <StatsCard title="Prochain événement" value="07"/>
-            <StatsCard title="Satisfaction moyenne" value="95%"/>
+            <StatsCard title="Total Bénéficiaires" value={250} />
+            <StatsCard title="Total Formations" value={64} />
+            <StatsCard title="Prochain événement" value="07" />
+            <StatsCard title="Satisfaction moyenne" value="95%" />
           </div>
+
           {/* Mes Formations et Évaluations */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            {/* Mes Formations */}
             <Card>
               <CardContent className="p-6">
                 <div className="flex justify-between items-center mb-4">
@@ -57,14 +80,15 @@ const DashboardFormateur  = () => {
                     Découvrir
                   </button>
                 </div>
-               {/* formations */}
-               <FormationProvider>
-      <FormationsTable />
-    </FormationProvider>
+
+                {/* Formations */}
+                <FormationProvider>
+                  <FormationsTable />
+                </FormationProvider>
+
               </CardContent>
             </Card>
-            {/* Évaluations */}
-            <Card  className="mb-6">
+            <Card>
               <CardContent className="p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-semibold">Évaluations</h2>
@@ -72,6 +96,7 @@ const DashboardFormateur  = () => {
                     Découvrir
                   </button>
                 </div>
+
                 <div className="space-y-4">
                   <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
                     <span>Conception d'application mobile</span>
@@ -83,19 +108,31 @@ const DashboardFormateur  = () => {
 
                   </div>
                 </div>
-                 {/* Rapport & Statistiques */}
+                {/* Rapport & Statistiques */}
                 <div className="mt-6">
-                <RapportCard/>
+                  <RapportCard />
                 </div>
+
               </CardContent>
             </Card>
           </div>
+
           {/* Kit Formateur */}
-          <KitFormateur/>
+          <KitFormateur />
         </div>
       </main>
 
       <Footer />
+
+      {/* Modal de création de formation */}
+      <FormationModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onChange={handleChange}
+        onSave={handleSaveFormation}
+        formationData={formationData}
+        setFormationData={setFormationData}
+      />
     </div>
   );
 };
