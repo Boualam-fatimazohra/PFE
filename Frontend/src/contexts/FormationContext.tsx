@@ -65,5 +65,5 @@ export const useFormations = (): FormationContextType => {
   if (!context) {
     throw new Error('useFormations doit être utilisé dans un FormationProvider');
   }
-  return context;
+  return context;
 };

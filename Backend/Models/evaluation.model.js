@@ -10,4 +10,5 @@ const evaluationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Export du modèle
 module.exports = mongoose.model("Evaluation", evaluationSchema);
