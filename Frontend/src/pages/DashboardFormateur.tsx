@@ -7,6 +7,9 @@ import { FormationsTable } from "@/components/dashboardElement/FormationTable";
 import KitFormateur from "@/components/dashboardElement/KitFormateur";
 import RapportCard from "@/components/dashboardElement/RapportCard";
 import { FormationProvider } from "@/contexts/FormationContext";
+import GenerateLink from "@/components/dashboardElement/GenerationLien";
+import { Plus } from "lucide-react";
+
 const DashboardFormateur  = () => {
   const formationsData = [
     { title: "Conception d'application mobile", date: "25/02/2025", status: "En Cours"  as const },
@@ -22,10 +25,19 @@ const DashboardFormateur  = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-2xl font-bold">Vue d'Ensemble</h1>
+            <div className="flex justify-between ">
             <SearchBar 
               onSearch={(value) => console.log(value)} 
-              onCreate={() => alert("Create")}
             />
+            <button 
+           onClick={() => alert("Create")}
+          className="bg-orange-500 text-white px-4 py-2 rounded-md flex items-center space-x-2 hover:bg-orange-600 transition-colors"
+          >
+        <Plus size={20} />
+        <span>Créer une formation</span>
+        </button>
+            </div>
+           
           </div>
           {/* Cartes statistiques   en haut de dashboard*/}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -67,7 +79,7 @@ const DashboardFormateur  = () => {
                     {/* <button className="bg-black text-white px-3 py-1 rounded-md text-sm">
                       Générer Lien
                     </button> */}
-                    {/* <GenerateLink /> */}
+                    <GenerateLink />
 
                   </div>
                 </div>

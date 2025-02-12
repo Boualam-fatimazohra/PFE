@@ -15,7 +15,7 @@ interface FormationProviderProps {
 // Définir le type pour une formation
 interface Formation {
   _id: string;
-  title: string;
+  nom: string;
   dateDebut: string;
   dateFin: string;
   status: string;
