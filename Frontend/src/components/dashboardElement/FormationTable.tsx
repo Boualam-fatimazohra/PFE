@@ -10,7 +10,7 @@ import { useFormations } from "../../contexts/FormationContext";
 
 interface Formation {
   _id: string;
-  title: string;
+  nom: string;
   dateDebut: string;
   dateFin: string;
   status: string;
@@ -36,7 +36,7 @@ export const FormationsTable = () => {
       <TableBody>
         {formations.map((formation: Formation, index: number) => (
           <TableRow key={index}>
-            <TableCell>{formation.title}</TableCell>
+            <TableCell>{formation.nom}</TableCell>
             <TableCell>{formation.dateDebut}</TableCell>
             <TableCell>
               <StatusBadge status={formation.status} />

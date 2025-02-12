@@ -2,7 +2,7 @@ import axios from "axios";
 
 interface Formation {
   _id: string;
-  title: string;
+  nom: string;
   dateDebut: string;
   dateFin: string;
   status: string;

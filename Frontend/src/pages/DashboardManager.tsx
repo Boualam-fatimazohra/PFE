@@ -9,6 +9,7 @@ import RapportCard from "@/components/dashboardElement/RapportCard";
 import { AchatTable } from "@/components/dashboardElement/AchatTable";
 import { EvenementTable } from "@/components/dashboardElement/EvenementTable";
 import CalendarView from "@/components/dashboardElement/CalendarView";
+import { FormationProvider } from "@/contexts/FormationContext";
 
 
 const DashboardManager = () => {
@@ -65,7 +66,7 @@ const DashboardManager = () => {
             <h1 className="text-2xl font-bold">Vue d'Ensemble</h1>
             <SearchBar 
               onSearch={(value) => console.log(value)} 
-              onCreate={() => alert("Create")}
+              
             />
           </div>
 
@@ -118,11 +119,11 @@ const DashboardManager = () => {
                     Découvrir
                   </button>
                 </div>
-          <FormationsTable data={formationsData} />
-                
+              <FormationProvider>
+              <FormationsTable />
+              </FormationProvider>  
               </CardContent>
             </Card>
-
             {/* Évaluations */}
             <Card>
       <CardContent className="p-6">
