@@ -1,6 +1,6 @@
 const express = require('express');
 const authenticated = require('../Middlewares/Authmiddleware.js')
-const {createFormation, GetOneFormation, UpdateFormation,GetFormations,DeleteFormations,DeleteFormation,GetFormationOFmentor} = require('../Controllers/formation.controller.js');
+const {createFormation, GetOneFormation, UpdateFormation,GetFormations,DeleteFormations,DeleteFormation,GetFormationOfMentor} = require('../Controllers/formation.controller.js');
 const router = express.Router();
 
 
@@ -12,7 +12,7 @@ router.delete('/DeleteFormation/:id',DeleteFormation);
 router.post('/UpdateFormation/:id',UpdateFormation);
 router.get('/GetOneFormation/:id',GetOneFormation);
 router.put('/UpdateFormations/:id', authenticated, UpdateFormation);
-router.post('/DeleteFormations', authenticated, DeleteFormations);
-router.get('/GetFormationsOfMentor', authenticated, GetFormationOFmentor);
+// router.post('/DeleteFormations', authenticated, DeleteFormations);
+router.get('/GetFormationOfMentor',authenticated,GetFormationOfMentor);
 
 module.exports = router;
