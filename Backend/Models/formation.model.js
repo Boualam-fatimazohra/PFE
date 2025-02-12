@@ -9,7 +9,10 @@ const formationSchema = new mongoose.Schema({
   tags: { type: String, required: true },
   tauxSatisfaction: { type: Number, min: 0, max: 100,required: false },
   formateur: { type: mongoose.Schema.Types.ObjectId, ref: "Formateur", required: true },
-  classes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Classe" }]
-}, { timestamps: true });
+  classes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Classe" }],
+  evaluation:{type: mongoose.Schema.Types.ObjectId, ref: "Evaluation",required:false},
+  manger:{type: mongoose.Schema.Types.ObjectId, ref: "Manger",required:false}
 
+}, { timestamps: true });
+ 
 module.exports = mongoose.model("Formation", formationSchema);
