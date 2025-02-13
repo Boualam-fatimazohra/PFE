@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Index from "./pages/Index";
 import ForgotPassword from "./pages/ForgotPassword";
 import NotFound from "./pages/NotFound";
@@ -12,12 +12,29 @@ import ManagerRoutes from "./routes/ManagerRoutes";
 import TechnicienRoutes from "./routes/TechnecienRoutes";
 import GenerateLink from "./components/dashboardElement/GenerationLien";
 import FormulaireEvaluation from "./components/dashboardElement/FormulaireEvaluation";
+import DetailsFormation from "./components/dashboardElement/DetailsFormation";
 
 import { ToastContainer } from "react-toastify";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { Footer } from "@/components/layout/Footer";
-
+import FormationTerminer from "./pages/FormationTerminer";
+import { FormationAvenir } from "./pages/FormationAvenir";
 const queryClient = new QueryClient();
+
+const Layout = ({ children }: { children: React.ReactNode }) => {
+  const location = useLocation();
+  const isLoginPage = location.pathname === "/"; 
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      {!isLoginPage && <DashboardHeader />}
+      <div className={!isLoginPage ? "pt-[70px] pb-[60px] flex-grow" : "flex-grow"}>
+        {children}
+      </div>
+      {!isLoginPage && <Footer />}
+    </div>
+  );
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -26,11 +43,7 @@ const App = () => (
       <ToastContainer />
       <Sonner />
       <BrowserRouter>
-        <div className="pt-[70px] pb-[60px] min-h-screen">
-          {/* Header */}
-          <DashboardHeader />
-
-          {/* Main content */}
+        <Layout>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -44,14 +57,15 @@ const App = () => (
             {/* Autres pages */}
             <Route path="/generate-link" element={<GenerateLink />} />
             <Route path="/formulaire-evaluation" element={<FormulaireEvaluation />} />
+            <Route path="//DetailsFormation" element={<DetailsFormation />} />
+            <Route path="//FormationTerminer" element={<FormationTerminer />} />
+            <Route path="//FormationAvenir" element={<FormationAvenir />} />
+
 
             {/* Page 404 */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-
-          {/* Footer */}
-          <Footer />
-        </div>
+        </Layout>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
