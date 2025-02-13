@@ -13,6 +13,7 @@ const generateRandomPassword = (length = 12) => {
 };
 
 const createFormateur = async (req, res) => {
+    
     const { firstName, lastName, email} = req.body;
     
     try {
