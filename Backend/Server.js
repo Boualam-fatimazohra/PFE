@@ -10,6 +10,7 @@ const evaluationRoutes = require("./Routes/evaluationRoute.js");
 const beneficiaireRoutes = require("./Routes/beneficiaire.route.js");
 const coordinateurRoutes = require("./Routes/coordinateur.route.js");
 const managerRoutes = require("./Routes/manager.route");
+const formateursRoutes= require("./Routes/formateur.route")
 const cookieParser = require('cookie-parser');
 
 dotenv.config();
