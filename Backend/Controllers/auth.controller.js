@@ -58,7 +58,6 @@ const Login = async (req, res) => {
 //mongodb+srv://salouaouissa:<db_password>@cluster0.nwqo9.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
 const createUser = async (req, res) => {
     const { firstName, lastName, email, password } = req.body;
-
     try {
         // Vérification de l'existence de l'utilisateur
         const existingUser = await Utilisateur.findOne({ email });
