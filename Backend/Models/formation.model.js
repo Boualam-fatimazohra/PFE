@@ -5,14 +5,14 @@ const formationSchema = new mongoose.Schema({
   dateDebut: { type: Date, required: true },
   dateFin: { type: Date, required: true },
   lienInscription: { type: String },
-  status:{type:String,default:"En Cours",enum:["En Cours","Terminer","Replanifier"]},
+  status: { type: String, default: "En Cours", enum: ["En Cours", "Terminé", "Replanifié"] }, // Fixed enum values spelling
   tags: { type: String, required: true },
-  tauxSatisfaction: { type: Number, min: 0, max: 100,required: false },
+  tauxSatisfaction: { type: Number, min: 0, max: 100, required: false },
   formateur: { type: mongoose.Schema.Types.ObjectId, ref: "Formateur", required: true },
   classes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Classe" }],
-  evaluation:{type: mongoose.Schema.Types.ObjectId, ref: "Evaluation",required:false},
-  manger:{type: mongoose.Schema.Types.ObjectId, ref: "Manger",required:false}
+  evaluation: { type: mongoose.Schema.Types.ObjectId, ref: "Evaluation", required: false },
+  manager: { type: mongoose.Schema.Types.ObjectId, ref: "Manager", required: false } // Fixed field name 'manger' to 'manager' and corrected ref to "Manager"
 
 }, { timestamps: true });
- 
+
 module.exports = mongoose.model("Formation", formationSchema);

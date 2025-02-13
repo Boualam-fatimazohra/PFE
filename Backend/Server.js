@@ -2,8 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./Config/config.js');
-const Auth = require('./Routes/auth.js');
-const formateurRoute = require('./Routes/formateur.route.js');
+const Auth = require('./Routes/auth.route.js');
+const formationRoutes = require('./Routes/formation.route.js');
 const evaluationRoutes = require("./Routes/evaluationRoute.js");
 const cookieParser = require('cookie-parser');
 
@@ -24,7 +24,7 @@ app.use(
 
 connectDB();
 app.use('/api/auth', Auth);
-app.use('/api/formateur', formateurRoute);
+app.use('/api/formation', formationRoutes);
 app.use("/api/evaluation", evaluationRoutes);
 
 app.listen(PORT, () => {

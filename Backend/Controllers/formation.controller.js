@@ -1,6 +1,6 @@
 
 const Formation = require('../Models/formation.model.js');
-const { Formateur } = require('../Models/formateur.model.js');
+const Formateur  = require('../Models/formateur.model.js');
 //  debut : creation d'un formation par un formateur bien précis :
 const createFormation = async (req, res) => {
   try {
@@ -20,14 +20,24 @@ const createFormation = async (req, res) => {
           formateur = new Formateur({ utilisateur: id, formations: [] });
           await formateur.save();
       }
+
+      // Vérifier si toutes les données requises sont présentes
+      const { nom, dateDebut, dateFin, lienInscription, tags } = req.body;
+      if (!nom || !dateDebut || !dateFin || !tags) {
+        return res.status(400).json({ message: "Tous les champs obligatoires doivent être fournis." });
+      }
+
+      // Créer la formation
       const nouvelleFormation = new Formation({
-          nom: req.body.nom,
-          dateDebut: req.body.dateDebut,
-          dateFin: req.body.dateFin,
-          lienInscription: req.body.lienInscription,
-          tags: req.body.tags,
-          formateur: formateur._id 
+        nom,
+        dateDebut,
+        dateFin,
+        lienInscription,
+        tags,
+        formateur: formateur._id,
+        status: "En Cours" // Valeur par défaut
       });
+
       const formationEnregistree = await nouvelleFormation.save();
       res.status(201).json(formationEnregistree);
   } catch (error) {
@@ -116,14 +126,34 @@ const DeleteFormation = async (req, res) => {
 // debut : récupérer les formation d'un seule formateur 
 const GetFormationOfMentor = async (req, res) => {
   try {
-    const mentorId = req.user.userId;
-    console.log(req.user.userId);
-    const formations = await Formation.find({ formateur: mentorId })
-.populate('formateur');
+    // Get the mentor's userId from the cookie
+    const mentorId = req.user?.userId;
+    if (!mentorId) {
+      return res.status(401).json({ message: "Utilisateur non authentifié" });
+    }
+
+    // Find the formateur using the mentorId (utilisateur)
+    const formateur = await Formateur.findOne({ utilisateur: mentorId });
+
+    // Check if the formateur exists
+    if (!formateur) {
+      return res.status(404).json({ message: "Formateur non trouvé" });
+    }
+
+    // Find the formations by formateur ID (this will be the formateur reference in the 'Formation' schema)
+    const formations = await Formation.find({ formateur: formateur._id });
+
+    // Check if formations are found
+    if (formations.length === 0) {
+      return res.status(404).json({ message: "Aucune formation trouvée pour ce formateur" });
+    }
+
+    // Return the formations associated with the formateur
     res.status(200).json(formations);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching formations', error: error.message });
+    res.status(500).json({ message: 'Erreur lors de la récupération des formations', error: error.message });
   }
 };
+
 // fin:récupérer les formations d'un seule formateur
 module.exports = { createFormation, GetFormations, GetOneFormation, UpdateFormation,GetFormationOfMentor,DeleteFormation };
