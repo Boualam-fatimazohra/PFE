@@ -17,7 +17,7 @@ const authenticated = async (req, res, next) => {
             res.clearCookie('token');
             return res.status(401).json({ message: 'User no longer exists' });
         }
-
+        
         req.user = decoded;
         next();
     } catch (error) {

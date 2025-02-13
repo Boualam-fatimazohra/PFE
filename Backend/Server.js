@@ -5,6 +5,7 @@ const connectDB = require('./Config/config.js');
 const Auth = require('./Routes/auth.route.js');
 const formationRoutes = require('./Routes/formation.route.js');
 const evaluationRoutes = require("./Routes/evaluationRoute.js");
+const formateurRoutes=require("./Routes/formateur.route.js");
 const cookieParser = require('cookie-parser');
 
 dotenv.config();
@@ -26,6 +27,7 @@ connectDB();
 app.use('/api/auth', Auth);
 app.use('/api/formation', formationRoutes);
 app.use("/api/evaluation", evaluationRoutes);
+app.use("/api/formateur",formateurRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
