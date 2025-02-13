@@ -1,4 +1,11 @@
+import { useLocation } from "react-router-dom";
+
 export function Footer() {
+  const location = useLocation();
+  const isLoginPage = location.pathname === "/"; // Vérifie si on est sur la page de login
+
+  if (isLoginPage) return null; // ❌ Ne pas afficher le footer sur la page login
+
   return (
     <footer className="fixed bottom-0 w-full bg-black border-t border-gray-200 z-50">
       <div className="container mx-auto px-4 py-4">

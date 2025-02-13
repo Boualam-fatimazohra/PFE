@@ -1,85 +1,51 @@
 
 const Formation = require('../Models/formation.model.js');
-const { Formateur } = require('../Models/formateur.model.js');
-// const AddFormation = async (req, res) => {
-//   const {nom, dateDebut, dateFin, lienInscription,tags} = req.body;
-//   console.log("debut de fonctionn")
-//   const id = req.user?.userId; // Vérification de la présence de req.user
-//   const role = req.user?.role;
-
-//   if (!id || role !== "Formateur"){
-//     console.log("Accès refusé. Seuls les formateurs peuvent créer une formation.");
-//     return res.status(403).json({ message: "Accès refusé. Seuls les formateurs peuvent créer une formation." });
-//   }
-
-//   try {
-//     const newFormation = new Formation({
-//       nom,
-//       dateDebut,
-//       dateFin,
-//       lienInscription,
-//       tags,
-//       formateur: id,
-      
-//     });
-
-//     await newFormation.save();
-
-//     res.status(201).json({ message: "Formation créée avec succès", formation: newFormation });
-//     console.log("Formation créée avec succès");
-
-//   } catch (error) {
-//     console.log("Erreur lors de la création de la formation");
-
-//     res.status(500).json({ message: "Erreur lors de la création de la formation", error: error.message });
-//   }
-// };
+const Formateur  = require('../Models/formateur.model.js');
+//  debut : creation d'un formation par un formateur bien précis :
 const createFormation = async (req, res) => {
   try {
       // 1. Récupérer l'ID utilisateur depuis les cookies
       const id = req.user?.userId; // Vérification de la présence de req.user
       const role = req.user?.role;  
       if (!id) {
-          return res.status(401).json({ message: "Utilisateur non authentifié" });
+          return res.status(401).json({ message:"Utilisateur non authentifié" });
       }
       if (role !== "Formateur") {
         return res.status(403).json({ message: "Accès refusé. Seuls les formateurs peuvent créer une formation." });
-    }
+      }
       // 3. Vérifier si un document Formateur existe déjà
       let formateur = await Formateur.findOne({ utilisateur: id });
-
       // 4. Si le formateur n'existe pas, on le crée
       if (!formateur) {
           formateur = new Formateur({ utilisateur: id, formations: [] });
           await formateur.save();
       }
-     
-      // 5. Créer la formation avec l'ID du Formateur
+
+      // Vérifier si toutes les données requises sont présentes
+      const { nom, dateDebut, dateFin, lienInscription, tags } = req.body;
+      if (!nom || !dateDebut || !dateFin || !tags) {
+        return res.status(400).json({ message: "Tous les champs obligatoires doivent être fournis." });
+      }
+
+      // Créer la formation
       const nouvelleFormation = new Formation({
-          nom: req.body.nom,
-          dateDebut: req.body.dateDebut,
-          dateFin: req.body.dateFin,
-          lienInscription: req.body.lienInscription,
-          tags: req.body.tags,
-          formateur: formateur._id // Lier au Formateur et non à l'Utilisateur
+        nom,
+        dateDebut,
+        dateFin,
+        lienInscription,
+        tags,
+        formateur: formateur._id,
+        status: "En Cours" // Valeur par défaut
       });
 
-      // 6. Sauvegarder la formation
       const formationEnregistree = await nouvelleFormation.save();
-
-      // 7. Ajouter cette formation à la liste des formations du formateur
-      formateur.formations.push(formationEnregistree._id);
-      await formateur.save();
-
       res.status(201).json(formationEnregistree);
   } catch (error) {
       res.status(500).json({ message: "Erreur lors de la création de la formation", error: error.message });
   }
 };
-
-////////////////////////////////////////////////////////////////////////////////////////
-//Api For Get All Formations
-
+// fin : creation d'un formation par un formateur bien précis
+// debut : recupération de tout les formations de tous les formateurs
 const GetFormations = async (req, res) => {
   try {
     // Populate formateur (et l'utilisateur lié) + classes
@@ -94,20 +60,14 @@ const GetFormations = async (req, res) => {
     });
   }
 };
-
-
-//Api For Get one Formation Specifier Using Id Of Fomation
-
+// fin : recupération de tout les formations de tous les formateurs
+// debut :récupérer une formation par id passé en paramétre 
 const GetOneFormation = async (req, res) => {
   try {
     const { id } = req.params; 
-
-    // Vérifier si l'ID est valide
     if (!id || id.length !== 24) {
       return res.status(400).json({ message: "ID de formation invalide" });
-    }
-
-    // Rechercher la formation par ID et peupler les relations
+    };
     const formation = await Formation.findById(id)
       .populate({ path: 'formateur', populate: { path: 'utilisateur' } }); // Peupler formateur + utilisateur
     // Vérifier si la formation existe
@@ -123,9 +83,8 @@ const GetOneFormation = async (req, res) => {
     });
   }
 };
-////////////////////////////////////////////////////////////////////////////////////////
-//Api For Update a Formation
-
+// fin: récupérer une formation par id passé en paramétre 
+// todo => debut : modifier une formation 
 const UpdateFormation = async (req, res) => {
   const { id } = req.params;
   const { nom, dateDebut, dateFin, lienInscription, tags } = req.body;
@@ -146,26 +105,8 @@ const UpdateFormation = async (req, res) => {
     res.status(500).json({ message: 'Erreur lors de la mise à jour de la formation', error: error.message });
   }
 };
-
-
-////////////////////////////////////////////////////////////////////////////////////////
-//Api For Delete a Formtion or Many Formations
-
-const DeleteFormations = async (req, res) => {
-  const { ids } = req.body;
-  console.log("ids:",ids);
-  try {
-    const result = await Formation.deleteMany({ _id: { $in: ids } });
-
-    if (result.deletedCount === 0) {
-      return res.status(404).json({ message: 'No courses found for the provided IDs.' });
-    }
-
-    res.status(200).json({ message: `${result.deletedCount} course(s) deleted successfully` });
-  } catch (error) {
-    res.status(500).json({ message: 'Error deleting courses', error: error.message });
-  }
-};
+// fin : modifier une formation
+// debut : deleteFormation par id 
 const DeleteFormation = async (req, res) => {
   const { id } = req.params; 
   try {
@@ -181,18 +122,38 @@ const DeleteFormation = async (req, res) => {
     });
   }
 };
-////////////////////////////////////////////////////////////////////////////////////////
-//Api For Get Foramtions Of a Mentor 
-
-const GetFormationOFmentor = async (req, res) => {
+// fin  : deleteFormation par id 
+// debut : récupérer les formation d'un seule formateur 
+const GetFormationOfMentor = async (req, res) => {
   try {
-    const mentorId = req.user.userId;
-    const courses = await Course.find({ mentors: mentorId }).populate('mentors');
-    res.status(200).json(courses);
+    // Get the mentor's userId from the cookie
+    const mentorId = req.user?.userId;
+    if (!mentorId) {
+      return res.status(401).json({ message: "Utilisateur non authentifié" });
+    }
+
+    // Find the formateur using the mentorId (utilisateur)
+    const formateur = await Formateur.findOne({ utilisateur: mentorId });
+
+    // Check if the formateur exists
+    if (!formateur) {
+      return res.status(404).json({ message: "Formateur non trouvé" });
+    }
+
+    // Find the formations by formateur ID (this will be the formateur reference in the 'Formation' schema)
+    const formations = await Formation.find({ formateur: formateur._id });
+
+    // Check if formations are found
+    if (formations.length === 0) {
+      return res.status(404).json({ message: "Aucune formation trouvée pour ce formateur" });
+    }
+
+    // Return the formations associated with the formateur
+    res.status(200).json(formations);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching courses', error: error.message });
+    res.status(500).json({ message: 'Erreur lors de la récupération des formations', error: error.message });
   }
 };
 
-
-module.exports = { createFormation, GetFormations, GetOneFormation, UpdateFormation, DeleteFormations, GetFormationOFmentor,DeleteFormation };
+// fin:récupérer les formations d'un seule formateur
+module.exports = { createFormation, GetFormations, GetOneFormation, UpdateFormation,GetFormationOfMentor,DeleteFormation };
