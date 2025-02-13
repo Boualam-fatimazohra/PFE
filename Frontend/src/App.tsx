@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Index from "./pages/Index";
 import ForgotPassword from "./pages/ForgotPassword";
 import NotFound from "./pages/NotFound";
@@ -19,6 +19,21 @@ import { Footer } from "@/components/layout/Footer";
 
 const queryClient = new QueryClient();
 
+const Layout = ({ children }: { children: React.ReactNode }) => {
+  const location = useLocation();
+  const isLoginPage = location.pathname === "/"; 
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      {!isLoginPage && <DashboardHeader />}
+      <div className={!isLoginPage ? "pt-[70px] pb-[60px] flex-grow" : "flex-grow"}>
+        {children}
+      </div>
+      {!isLoginPage && <Footer />}
+    </div>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -26,11 +41,7 @@ const App = () => (
       <ToastContainer />
       <Sonner />
       <BrowserRouter>
-        <div className="pt-[70px] pb-[60px] min-h-screen">
-          {/* Header */}
-          <DashboardHeader />
-
-          {/* Main content */}
+        <Layout>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -48,10 +59,7 @@ const App = () => (
             {/* Page 404 */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-
-          {/* Footer */}
-          <Footer />
-        </div>
+        </Layout>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
