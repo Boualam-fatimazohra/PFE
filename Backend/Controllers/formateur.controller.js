@@ -14,26 +14,12 @@ const generateRandomPassword = (length = 12) => {
 
 const createFormateur = async (req, res) => {
     const { firstName, lastName, email, manager, coordinateur } = req.body;
-    
     try {
-        // Vérification de l'authentification et des autorisations
-        // const managerId = req.user?.userId;
-        // const managerRole = req.user?.role;
-
-        // if (!managerId) {
-        //     return res.status(401).json({ message: "Utilisateur non authentifié" });
-        // }
-
-        // if (managerRole !== "Manager") {
-        //     return res.status(403).json({ message: "Accès refusé. Réservé aux managers." });
-        // }
-
         // Vérification de l'existence de l'email
         const existingUser = await Utilisateur.findOne({ email });
         if (existingUser) {
             return res.status(400).json({ message: "Cet email est déjà utilisé" });
         }
-
         // Génération du mot de passe temporaire
         const temporaryPassword = generateRandomPassword();
         const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
@@ -46,18 +32,15 @@ const createFormateur = async (req, res) => {
             password: hashedPassword,
             role: "Formateur"
         });
-
         await newUser.save();
-
         // Création du formateur lié
         const newFormateur = new Formateur({
             utilisateur: newUser._id,
-            manager: manager._id,
-            coordinateur: coordinateur._id
+            manager: manager,
+            coordinateur: coordinateur
         });
 
         await newFormateur.save();
-
         // Préparation de la réponse
         const userResponse = {
             _id: newUser._id,
@@ -76,12 +59,10 @@ const createFormateur = async (req, res) => {
 
     } catch (error) {
         console.error("Erreur:", error);
-        
         // Nettoyage en cas d'erreur après création utilisateur
         if (newUser) {
             await Utilisateur.deleteOne({ _id: newUser._id });
         }
-
         res.status(500).json({ 
             message: "Erreur serveur",
             error: error.message 
@@ -131,8 +112,7 @@ const getFormateurs = async (req, res) => {
   
       // Update the corresponding Utilisateur
       const updatedUtilisateur = await Utilisateur.findByIdAndUpdate(
-        formateur.utilisateur, 
-        { firstName, lastName, email },
+        formateur.utilisateur, { firstName, lastName, email },
         { new: true, runValidators: true } // Ensure updated data is returned and validated
       );
   
