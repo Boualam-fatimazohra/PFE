@@ -67,18 +67,17 @@ const bcrypt = require('bcryptjs');
    };
 
 
-   //jD5IDdTVLoITMCpL mot de passe mongo 
-   //mongodb+srv://salouaouissa:<db_password>@cluster0.nwqo9.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
-   const createUser = async (req, res) => {
-   const { firstName, lastName, email, password } = req.body;
 
-   try {
-   const existingUser = await Utilisateur.findOne({ email });
-   if (existingUser) {
-   return res.status(400).json({ message: "L'utilisateur existe déjà" });
-   }
-
-   const hashedPassword = await bcrypt.hash(password, 10);
+//jD5IDdTVLoITMCpL mot de passe mongo 
+//mongodb+srv://salouaouissa:<db_password>@cluster0.nwqo9.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+const createUser = async (req, res) => {
+    const { firstName, lastName, email, password } = req.body;
+    try {
+        // Vérification de l'existence de l'utilisateur
+        const existingUser = await Utilisateur.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ message: "L'utilisateur existe déjà" });
+        }
 
 
         // Création de l'utilisateur
