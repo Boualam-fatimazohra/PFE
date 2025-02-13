@@ -6,5 +6,5 @@ const coordinateurSchema = new mongoose.Schema({
     
   }, { timestamps: true });
   
-  module.exports = mongoose.model("Coordinateur", coordinateurSchema);
+module.exports = mongoose.model("Coordinateur", coordinateurSchema);
   
