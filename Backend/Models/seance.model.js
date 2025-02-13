@@ -1,7 +1,7 @@
 const seanceSchema = new mongoose.Schema({
     formation: { type: mongoose.Schema.Types.ObjectId, ref: "Formation", required: true },
-    bénéficiaire: { type: mongoose.Schema.Types.ObjectId, ref: "bénéficiaire", required: true },
-    présence :[
+    beneficiaire: { type: mongoose.Schema.Types.ObjectId, ref: "Beneficiaire", required: true },
+    presence :[
       {date: { type: Date, required: true },
       present: { type: Boolean, default: false }}// Indique si le bénéficiaire était présent
     ]

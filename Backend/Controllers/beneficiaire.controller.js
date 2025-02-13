@@ -1,4 +1,4 @@
-const Beneficiaire = require("../Models/bénéficiaire.model");
+const Beneficiaire = require("../Models/beneficiaire.model");
 const Formation = require("../Models/formation.model");
 
 // Create a new Beneficiaire
