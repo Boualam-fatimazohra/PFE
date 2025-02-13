@@ -52,8 +52,8 @@ const createFormateur = async (req, res) => {
         // Création du formateur lié
         const newFormateur = new Formateur({
             utilisateur: newUser._id,
-            manager: manager._id,
-            coordinateur: coordinateur._id
+            manager: manager,
+            coordinateur: coordinateur
         });
 
         await newFormateur.save();
