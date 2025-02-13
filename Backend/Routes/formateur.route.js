@@ -4,7 +4,6 @@ const { createFormateur, getFormateurs,updateFormateur,deleteFormateur, getForma
 
 const router = express.Router();
 
-
 router.post('/Addformateur',createFormateur);
 router.get('/getFormateurs',getFormateurs);
 router.put('/updateFormateur/:id',updateFormateur);
