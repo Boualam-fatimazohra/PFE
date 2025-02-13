@@ -12,11 +12,13 @@ import ManagerRoutes from "./routes/ManagerRoutes";
 import TechnicienRoutes from "./routes/TechnecienRoutes";
 import GenerateLink from "./components/dashboardElement/GenerationLien";
 import FormulaireEvaluation from "./components/dashboardElement/FormulaireEvaluation";
+import DetailsFormation from "./components/dashboardElement/DetailsFormation";
 
 import { ToastContainer } from "react-toastify";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { Footer } from "@/components/layout/Footer";
-
+import FormationTerminer from "./pages/FormationTerminer";
+import { FormationAvenir } from "./pages/FormationAvenir";
 const queryClient = new QueryClient();
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
@@ -55,6 +57,10 @@ const App = () => (
             {/* Autres pages */}
             <Route path="/generate-link" element={<GenerateLink />} />
             <Route path="/formulaire-evaluation" element={<FormulaireEvaluation />} />
+            <Route path="//DetailsFormation" element={<DetailsFormation />} />
+            <Route path="//FormationTerminer" element={<FormationTerminer />} />
+            <Route path="//FormationAvenir" element={<FormationAvenir />} />
+
 
             {/* Page 404 */}
             <Route path="*" element={<NotFound />} />
