@@ -4,6 +4,8 @@ const dotenv = require('dotenv');
 const connectDB = require('./Config/config.js');
 const Auth = require('./Routes/auth.route.js');
 const formationRoutes = require('./Routes/formation.route.js');
+const formateurRoutes = require('./Routes/formateur.route.js');
+
 const evaluationRoutes = require("./Routes/evaluationRoute.js");
 const beneficiaireRoutes = require("./Routes/beneficiaire.route.js");
 //const coordinateurRoutes = require("./Routes/coordinateur.route.js");
@@ -32,7 +34,7 @@ app.use("/api/evaluation", evaluationRoutes);
 app.use("/api/beneficiaires", beneficiaireRoutes);
 //app.use("/api/coordinateurs", coordinateurRoutes);
 app.use("/api/managers", managerRoutes);
-
+app.use("/api/formateur",formateurRoutes)
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

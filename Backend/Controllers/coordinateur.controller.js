@@ -5,8 +5,6 @@ const Manager = require("../Models/manager.model");
 const createCoordinateur = async (req, res) => {
   try {
     const { utilisateur, manager } = req.body;
-
-    // Check if the referenced manager exists
     const managerExists = await Manager.findById(manager);
     if (!managerExists) {
       return res.status(404).json({ message: "Manager not found" });
