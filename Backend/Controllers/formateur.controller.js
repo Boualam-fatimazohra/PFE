@@ -13,7 +13,7 @@ const generateRandomPassword = (length = 12) => {
 };
 
 const createFormateur = async (req, res) => {
-    const { firstName, lastName, email} = req.body;
+    const { firstName, lastName, email, manager, coordinateur } = req.body;
     
     try {
         // Vérification de l'authentification et des autorisations
@@ -51,7 +51,9 @@ const createFormateur = async (req, res) => {
 
         // Création du formateur lié
         const newFormateur = new Formateur({
-            utilisateur: newUser._id
+            utilisateur: newUser._id,
+            manager: manager._id,
+            coordinateur: coordinateur._id
         });
 
         await newFormateur.save();
@@ -90,7 +92,7 @@ const createFormateur = async (req, res) => {
 
 const getFormateurs = async (req, res) => {
     try {
-      const formateurs = await Formateur.find().populate("utilisateur", "firstName lastName email  phoneNumber role");
+      const formateurs = await Formateur.find().populate("utilisateur", "firstName lastName email  phoneNumber role").populate("manager").populate("coordinateur");
       res.status(200).json(formateurs);
     } catch (error) {
       res.status(500).json({ message: "Erreur serveur", error: error.message });
@@ -104,31 +106,46 @@ const getFormateurs = async (req, res) => {
   const getFormateurById = async (req, res) => {
     const id=req.params.id;
     try {
-      const formateur = await Formateur.findById(id).populate("utilisateur", "firstName lastName email role");
+      const formateur = await Formateur.findById(id).populate("utilisateur", "firstName lastName email role").populate("manager").populate("coordinateur");
       if (!formateur) return res.status(404).json({ message: "Formateur non trouvé" });
       res.status(200).json(formateur);
     } catch (error) {
       res.status(500).json({ message: "Erreur serveur", error: error.message });
     }
   };
-  
+
   const updateFormateur = async (req, res) => {
-    const { firstName, lastName, email } = req.body;
     try {
-      // Vérification du manager
-      // const managerId = req.user?.userId;
-      // const managerRole = req.user?.role;
-      // if (!managerId || managerRole !== "Manager") return res.status(403).json({ message: "Accès refusé." });
-       
+      const { firstName, lastName, email } = req.body;
+  
+      // Check if at least one field is provided
+      if (!firstName && !lastName && !email) {
+        return res.status(400).json({ message: "At least one field is required for update." });
+      }
+  
+      // Find the Formateur by ID
       const formateur = await Formateur.findById(req.params.id);
-      if (!formateur) return res.status(404).json({ message:"Formateur non trouvé" });
-      
-      await Utilisateur.findByIdAndUpdate(formateur.utilisateur,{ firstName, lastName, email });
-      res.status(200).json({ message: "Formateur mis à jour avec succès" });
+      if (!formateur) {
+        return res.status(404).json({ message: "Formateur non trouvé" });
+      }
+  
+      // Update the corresponding Utilisateur
+      const updatedUtilisateur = await Utilisateur.findByIdAndUpdate(
+        formateur.utilisateur, 
+        { firstName, lastName, email },
+        { new: true, runValidators: true } // Ensure updated data is returned and validated
+      );
+  
+      res.status(200).json({
+        message: "Formateur mis à jour avec succès",
+        updatedUtilisateur
+      });
+  
     } catch (error) {
       res.status(500).json({ message: "Erreur serveur", error: error.message });
     }
   };
+  
   
   const deleteFormateur = async (req, res) => {
     try {
