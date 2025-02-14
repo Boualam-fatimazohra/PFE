@@ -7,8 +7,8 @@ const beneficiaireSchema = new mongoose.Schema({
     dateNaissance: { type: Date, required: true },
     niveau: { type: String, required: true },
     isBlack: { type: Boolean, default: false },
-    isSuturate: { type: Boolean, default: false },  
+    isSuturate: { type: Boolean, default: false },
+    nationalite: {type:String,required:true},  
   }, { timestamps: true });
 
 module.exports = mongoose.model("Beneficiaire", beneficiaireSchema);
-  

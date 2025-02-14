@@ -12,7 +12,7 @@ const formationSchema = new mongoose.Schema({
   classes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Classe" }],
   evaluation: { type: mongoose.Schema.Types.ObjectId, ref: "Evaluation", required: false },
   manager: { type: mongoose.Schema.Types.ObjectId, ref: "Manager", required: false } // Fixed field name 'manger' to 'manager' and corrected ref to "Manager"
-
+  ,image: { type: String, required: false }
 }, { timestamps: true });
 
 module.exports = mongoose.model("Formation", formationSchema);

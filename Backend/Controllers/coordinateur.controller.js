@@ -5,8 +5,6 @@ const Coordinateur = require("../Models/coordinateur.model");
 const createCoordinateur = async (req, res) => {
   try {
     const { utilisateurData, manager } = req.body;
-
-    // Ensure the manager exists
     const managerExists = await Manager.findById(manager);
     if (!managerExists) {
       return res.status(404).json({ message: "Manager not found" });

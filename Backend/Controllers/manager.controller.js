@@ -5,18 +5,12 @@ const { Utilisateur } = require("../Models/utilisateur.model");
 const createManager = async (req, res) => {
     try {
         const { firstName, lastName, email, phoneNumber, password, role } = req.body;
-
-        // Ensure required fields are provided
         if (!email || !password || !role) {
             return res.status(400).json({ message: "Email, password, and role are required" });
         }
-
-        // Ensure the role is Manager
         if (role !== "Manager") {
             return res.status(400).json({ message: "Role must be 'Manager'" });
         }
-
-        // Check if utilisateur already exists
         const existingUser = await Utilisateur.findOne({ email });
         if (existingUser) {
             return res.status(400).json({ message: "Utilisateur with this email already exists" });
