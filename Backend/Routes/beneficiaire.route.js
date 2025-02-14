@@ -5,8 +5,12 @@ const {
   getAllBeneficiaires,
   getBeneficiaireById,
   updateBeneficiaire,
-  deleteBeneficiaire
+  deleteBeneficiaire,
+  uploadBenificiaireExcel
 } = require("../Controllers/beneficiaire.controller");
+const upload = require("../utils/upload");
+
+router.post("/upload", upload.single("file"), uploadBenificiaireExcel);
 
 // Route to create a new Beneficiaire (Must be associated with a Formation)
 router.post("/", createBeneficiaire);

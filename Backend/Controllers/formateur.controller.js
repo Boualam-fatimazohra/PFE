@@ -2,7 +2,7 @@ const Formateur=require("../Models/formateur.model.js");
 const Formation=require("../Models/formation.model.js");
 
 const crypto = require('crypto');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const { Utilisateur } = require('../Models/utilisateur.model.js');
 
 // Fonction pour générer un mot de passe aléatoire
