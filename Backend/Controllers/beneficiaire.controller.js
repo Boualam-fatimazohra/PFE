@@ -1,5 +1,6 @@
 const Beneficiaire = require("../Models/beneficiaire.model");
 const Formation = require("../Models/formation.model");
+const readExcelFile = require("../utils/excelReader");
 
 // Create a new Beneficiaire
 const createBeneficiaire = async (req, res) => {
@@ -100,6 +101,28 @@ const deleteBeneficiaire = async (req, res) => {
   }
 };
 
+// Upload beinificiaire excel data directly to database
+const uploadBenificiaireExcel = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "Please upload an Excel file" });
+    }
+
+    const filePath = req.file.path;
+
+    console.log(`File uploaded to: ${filePath}`); // Log the file path to confirm where the file is stored
+
+    const data = readExcelFile(filePath);
+
+    console.log(data);
+
+    res.status(200).json({ message: "Data uploaded successfully", data });
+  } catch (error) {
+    console.error("Error processing file:", error);
+    res.status(500).json({ message: "Error processing file", error: error.message });
+  }
+}
+
 // Export the functions for use in routes
 module.exports = {
     createBeneficiaire,
@@ -107,4 +130,5 @@ module.exports = {
     getBeneficiaireById,
     updateBeneficiaire,
     deleteBeneficiaire,
+    uploadBenificiaireExcel,
 };
