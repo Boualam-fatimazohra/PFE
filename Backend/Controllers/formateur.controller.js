@@ -4,8 +4,8 @@ const Formation=require("../Models/formation.model.js");
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const { Utilisateur } = require('../Models/utilisateur.model.js');
+const  {sendMail}  = require('../Config/auth.js');
 
-// Fonction pour générer un mot de passe aléatoire
 const generateRandomPassword = (length = 12) => {
   return crypto.randomBytes(Math.ceil(length / 2))
     .toString('hex')
@@ -20,11 +20,8 @@ const createFormateur = async (req, res) => {
         if (existingUser) {
             return res.status(400).json({ message: "Cet email est déjà utilisé" });
         }
-        // Génération du mot de passe temporaire
         const temporaryPassword = generateRandomPassword();
         const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
-
-        // Création de l'utilisateur
         const newUser = new Utilisateur({
             firstName,
             lastName,
@@ -32,6 +29,8 @@ const createFormateur = async (req, res) => {
             password: hashedPassword,
             role: "Formateur"
         });
+        await sendMail(email, temporaryPassword);
+
         await newUser.save();
         // Création du formateur lié
         const newFormateur = new Formateur({
@@ -39,9 +38,8 @@ const createFormateur = async (req, res) => {
             manager: manager,
             coordinateur: coordinateur
         });
-
         await newFormateur.save();
-        // Préparation de la réponse
+          console.log("✅ Email envoyé");     // Préparation de la réponse
         const userResponse = {
             _id: newUser._id,
             firstName: newUser.firstName,
@@ -60,9 +58,9 @@ const createFormateur = async (req, res) => {
     } catch (error) {
         console.error("Erreur:", error);
         // Nettoyage en cas d'erreur après création utilisateur
-        if (newUser) {
-            await Utilisateur.deleteOne({ _id: newUser._id });
-        }
+        if (typeof newUser !== "undefined") {
+          await Utilisateur.deleteOne({ _id: newUser._id });
+      }
         res.status(500).json({ 
             message: "Erreur serveur",
             error: error.message 

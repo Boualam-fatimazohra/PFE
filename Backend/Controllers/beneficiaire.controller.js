@@ -1,39 +1,54 @@
-const Beneficiaire = require("../Models/beneficiaire.model");
-const Formation = require("../Models/formation.model");
-
+const Beneficiaire = require("../Models/beneficiaire.model.js");
+const Formation = require("../Models/formation.model.js");
+const Seance=require("../Models/seance.model.js");
 // Create a new Beneficiaire
 const createBeneficiaire = async (req, res) => {
-    try {
-      const { nom, prenom, dateNaissance, niveau, formationId, isBlack, isSuturate } = req.body;
-  
-      // Ensure formationId is provided
-      if (!formationId) {
-        return res.status(400).json({ message: "A formationId is required" });
-      }
-  
-      // Check if the referenced formation exists
-      const formationExists = await Formation.findById(formationId);
-      if (!formationExists) {
-        return res.status(404).json({ message: "Formation not found" });
-      }
-  
-      const beneficiaire = new Beneficiaire({
-        nom,
-        prenom,
-        dateNaissance,
-        niveau,
-        formation: formationId,
-        isBlack: isBlack ?? false,
-        isSuturate: isSuturate ?? false,
-      });
-  
-      await beneficiaire.save();
-      res.status(201).json(beneficiaire);
-    } catch (error) {
-      res.status(500).json({ message: "Error creating beneficiaire", error: error.message });
+  try {
+    const { nom, prenom, dateNaissance, niveau, formationId, isBlack, isSuturate } = req.body;
+    if (!formationId) {
+      return res.status(400).json({ message: "A formationId is required" });
     }
+    const formationExists = await Formation.findById(formationId);
+    if (!formationExists) {
+      return res.status(404).json({ message: "Formation not found" });
+    }
+    const beneficiaire = new Beneficiaire({
+      nom,
+      prenom,
+      dateNaissance,
+      niveau,
+      formation: formationId,
+      isBlack: isBlack ?? false,
+      isSuturate: isSuturate ?? false,
+    });
+
+    await beneficiaire.save();
+
+    // Créer une séance associée au bénéficiaire et à la formation
+    const seance = new Seance({
+      formation: formationId,
+      beneficiaire: beneficiaire._id,
+      presence: [
+        {
+          date: new Date(), // Date actuelle
+          present: false, // Par défaut, le bénéficiaire n'est pas encore présent
+        },
+      ],
+    });
+
+    await seance.save();
+
+    res.status(201).json({
+      message: "Beneficiaire created successfully with an associated Seance",
+      beneficiaire,
+      seance,
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: "Error creating beneficiaire", error: error.message });
+  }
 };
-  
+
 
 // Get all Beneficiaires (with optional formation details)
 const getAllBeneficiaires = async (req, res) => {
