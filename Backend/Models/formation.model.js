@@ -10,8 +10,7 @@ const formationSchema = new mongoose.Schema({
   tauxSatisfaction: { type: Number, min: 0, max: 100, required: false },
   formateur: { type: mongoose.Schema.Types.ObjectId, ref: "Formateur", required: true },
   classes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Classe" }],
-  evaluation: { type: mongoose.Schema.Types.ObjectId, ref: "Evaluation", required: false },
-  manager: { type: mongoose.Schema.Types.ObjectId, ref: "Manager", required: false } // Fixed field name 'manger' to 'manager' and corrected ref to "Manager"
+  evaluation: { type: mongoose.Schema.Types.ObjectId, ref: "Evaluation", required: false }
   ,image: { type: String, required: false }
 }, { timestamps: true });
 
