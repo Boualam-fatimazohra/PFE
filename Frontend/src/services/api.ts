@@ -7,7 +7,7 @@ interface Formation {
   dateFin: string;
   status: string;
 }
-const API_URL = 'http://localhost:5000/api/formateur/GetFormations';
+const API_URL = 'http://localhost:5000/api/formation/GetFormations';
 export const fetchFormations = async (): Promise<Formation[]> => {
     try {
       const response = await axios.get(API_URL); 

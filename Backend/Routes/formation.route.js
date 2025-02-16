@@ -4,7 +4,7 @@ const { createFormation, GetOneFormation, UpdateFormation, GetFormations, Delete
 const router = express.Router();
 
 // Route to add a new formation (Protected route: Only authenticated users can access)
-router.post('/Addformation', authenticated, createFormation);
+router.post('/Addformation',  createFormation);
 
 // Route to get all formations (No authentication required)
 router.get('/GetFormations', GetFormations);

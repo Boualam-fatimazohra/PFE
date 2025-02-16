@@ -2,7 +2,7 @@ const Formateur=require("../Models/formateur.model.js");
 const Formation=require("../Models/formation.model.js");
 
 const crypto = require('crypto');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const { Utilisateur } = require('../Models/utilisateur.model.js');
 const  {sendMail}  = require('../Config/auth.js');
 
@@ -29,7 +29,7 @@ const createFormateur = async (req, res) => {
             password: hashedPassword,
             role: "Formateur"
         });
-        await sendMail(email, temporaryPassword);
+        await sendMail(email,temporaryPassword);
 
         await newUser.save();
         // Création du formateur lié
