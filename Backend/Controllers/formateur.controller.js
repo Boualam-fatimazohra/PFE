@@ -13,7 +13,7 @@ const generateRandomPassword = (length = 12) => {
 };
 
 const createFormateur = async (req, res) => {
-    const { firstName, lastName, email, manager, coordinateur } = req.body;
+    const { nom, prenom, email, manager, coordinateur } = req.body;
     try {
         // Vérification de l'existence de l'email
         const existingUser = await Utilisateur.findOne({ email });
@@ -23,8 +23,8 @@ const createFormateur = async (req, res) => {
         const temporaryPassword = generateRandomPassword();
         const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
         const newUser = new Utilisateur({
-            firstName,
-            lastName,
+            nom,
+            prenom,
             email,
             password: hashedPassword,
             role: "Formateur"
@@ -39,11 +39,11 @@ const createFormateur = async (req, res) => {
             coordinateur: coordinateur
         });
         await newFormateur.save();
-          console.log("✅ Email envoyé");     // Préparation de la réponse
+          console.log(" Email envoyé");     // Préparation de la réponse
         const userResponse = {
             _id: newUser._id,
-            firstName: newUser.firstName,
-            lastName: newUser.lastName,
+            prenom: newUser.prenom,
+            nom: newUser.nom,
             email: newUser.email,
             role: newUser.role,
             phoneNumber: newUser.phoneNumber
@@ -57,7 +57,6 @@ const createFormateur = async (req, res) => {
 
     } catch (error) {
         console.error("Erreur:", error);
-        // Nettoyage en cas d'erreur après création utilisateur
         if (typeof newUser !== "undefined") {
           await Utilisateur.deleteOne({ _id: newUser._id });
       }
@@ -71,21 +70,17 @@ const createFormateur = async (req, res) => {
 
 const getFormateurs = async (req, res) => {
     try {
-      const formateurs = await Formateur.find().populate("utilisateur", "firstName lastName email  phoneNumber role").populate("manager").populate("coordinateur");
+      const formateurs = await Formateur.find().populate("utilisateur", "nom  prenom  email  numeroTelephone  role").populate("manager").populate("coordinateur");
       res.status(200).json(formateurs);
     } catch (error) {
       res.status(500).json({ message: "Erreur serveur", error: error.message });
     }
   };
-//   firstName: { type: String },
-    // lastName: { type: String },
-    // email: { type: String, required: true, unique: true },
-    // phoneNumber: { type: String },
-  
+
   const getFormateurById = async (req, res) => {
     const id=req.params.id;
     try {
-      const formateur = await Formateur.findById(id).populate("utilisateur", "firstName lastName email role").populate("manager").populate("coordinateur");
+      const formateur = await Formateur.findById(id).populate("utilisateur", "nom   prenom  email  role").populate("manager").populate("coordinateur");
       if (!formateur) return res.status(404).json({ message: "Formateur non trouvé" });
       res.status(200).json(formateur);
     } catch (error) {
@@ -95,7 +90,7 @@ const getFormateurs = async (req, res) => {
 
   const updateFormateur = async (req, res) => {
     try {
-      const { firstName, lastName, email } = req.body;
+      const { nom, prenom, email } = req.body;
   
       // Check if at least one field is provided
       if (!firstName && !lastName && !email) {
@@ -110,7 +105,7 @@ const getFormateurs = async (req, res) => {
   
       // Update the corresponding Utilisateur
       const updatedUtilisateur = await Utilisateur.findByIdAndUpdate(
-        formateur.utilisateur, { firstName, lastName, email },
+        formateur.utilisateur, { nom,prenom, email },
         { new: true, runValidators: true } // Ensure updated data is returned and validated
       );
   
