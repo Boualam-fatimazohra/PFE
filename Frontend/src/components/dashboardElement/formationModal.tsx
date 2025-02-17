@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from "react";
 import { useState, useRef } from "react";
 import { Eye, Download, Trash2, PlusCircle } from "lucide-react";
