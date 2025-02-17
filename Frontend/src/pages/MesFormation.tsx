@@ -22,7 +22,7 @@ SelectTrigger,
 SelectValue,
 } from "@/components/ui/select";
 import DetailsFormation from "@/components/dashboardElement/DetailsFormation";
-import FormationAvenir from "@/pages/FormationAvenir";
+import {FormationAvenir } from "@/pages/FormationAvenir";
 import FormationTerminer from "@/pages/FormationTerminer";
 
 interface FormationItem {
