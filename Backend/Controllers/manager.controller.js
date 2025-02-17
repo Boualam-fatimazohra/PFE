@@ -4,12 +4,8 @@ const { Utilisateur } = require("../Models/utilisateur.model");
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const  {sendMail}  = require('../Config/auth.js');
+const generateRandomPassword = require("../utils/generateRandomPassword.js");
 
-const generateRandomPassword = (length = 12) => {
-  return crypto.randomBytes(Math.ceil(length / 2))
-    .toString('hex')
-    .slice(0, length);
-};
 // Create a new Manager
 const createManager = async (req, res) => {
     try {
