@@ -21,6 +21,7 @@ import FormationTerminer from "./pages/FormationTerminer";
 
 import { FormationAvenir } from "./pages/FormationAvenir";
 import FormationModal from "./components/dashboardElement/formationModal";
+import MesFormation from "./pages/MesFormation";
 
 
 const queryClient = new QueryClient();

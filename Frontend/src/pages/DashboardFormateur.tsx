@@ -59,10 +59,13 @@ const DashboardFormateur = () => {
                 <CardContent className="p-6">
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-semibold">Mes Formations</h2>
-                    <button className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors">
-                      Découvrir
-                    </button>
-                  </div>
+                        <button 
+                        className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors" 
+                        onClick={() => navigate("/formateur/mesformation")}
+                      >
+                        Découvrir
+                      </button>
+                          </div>
                   <FormationsTable />
                 </CardContent>
               </Card>
@@ -71,9 +74,9 @@ const DashboardFormateur = () => {
                 <CardContent className="p-6">
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-semibold">Évaluations</h2>
-                    <button className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors">
-                      Découvrir
-                    </button>
+                    <button className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors" >
+                  Découvrir
+                </button>
                   </div>
 
                   <div className="space-y-4">
