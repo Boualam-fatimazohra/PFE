@@ -1,5 +1,6 @@
 import * as React from "react";
 
+
 export const FormationAvenir = () => {
   return (
     <div className="px-4">
