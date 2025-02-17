@@ -6,12 +6,8 @@ const createFormation = async (req, res) => {
   try {
       // 1. Récupérer l'ID utilisateur depuis les cookies
       const id = req.user?.userId; // Vérification de la présence de req.user
-      const role = req.user?.role;  
       if (!id) {
           return res.status(401).json({ message:"Utilisateur non authentifié" });
-      }
-      if (role !== "Formateur") {
-        return res.status(403).json({ message: "Accès refusé. Seuls les formateurs peuvent créer une formation." });
       }
       // 3. Vérifier si un document Formateur existe déjà
       let formateur = await Formateur.findOne({ utilisateur: id });
@@ -35,9 +31,9 @@ const createFormation = async (req, res) => {
         lienInscription,
         tags,
         formateur: formateur._id,
-        status: "En Cours" // Valeur par défaut
+        status: "A venir" // Valeur par défaut
       });
-
+      console.log("Requête reçue pour ajouter une formation:", req.body);
       const formationEnregistree = await nouvelleFormation.save();
       res.status(201).json(formationEnregistree);
   } catch (error) {

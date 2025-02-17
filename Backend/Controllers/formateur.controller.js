@@ -2,10 +2,10 @@ const Formateur=require("../Models/formateur.model.js");
 const Formation=require("../Models/formation.model.js");
 
 const crypto = require('crypto');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const { Utilisateur } = require('../Models/utilisateur.model.js');
+const  {sendMail}  = require('../Config/auth.js');
 
-// Fonction pour générer un mot de passe aléatoire
 const generateRandomPassword = (length = 12) => {
   return crypto.randomBytes(Math.ceil(length / 2))
     .toString('hex')
@@ -13,56 +13,37 @@ const generateRandomPassword = (length = 12) => {
 };
 
 const createFormateur = async (req, res) => {
-    const { firstName, lastName, email, manager, coordinateur } = req.body;
-    
+    const { nom, prenom, email, manager, coordinateur } = req.body;
     try {
-        // Vérification de l'authentification et des autorisations
-        // const managerId = req.user?.userId;
-        // const managerRole = req.user?.role;
-
-        // if (!managerId) {
-        //     return res.status(401).json({ message: "Utilisateur non authentifié" });
-        // }
-
-        // if (managerRole !== "Manager") {
-        //     return res.status(403).json({ message: "Accès refusé. Réservé aux managers." });
-        // }
-
         // Vérification de l'existence de l'email
         const existingUser = await Utilisateur.findOne({ email });
         if (existingUser) {
             return res.status(400).json({ message: "Cet email est déjà utilisé" });
         }
-
-        // Génération du mot de passe temporaire
         const temporaryPassword = generateRandomPassword();
         const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
-
-        // Création de l'utilisateur
         const newUser = new Utilisateur({
-            firstName,
-            lastName,
+            nom,
+            prenom,
             email,
             password: hashedPassword,
             role: "Formateur"
         });
+        await sendMail(email,temporaryPassword);
 
         await newUser.save();
-
         // Création du formateur lié
         const newFormateur = new Formateur({
             utilisateur: newUser._id,
-            manager: manager._id,
-            coordinateur: coordinateur._id
+            manager: manager,
+            coordinateur: coordinateur
         });
-
         await newFormateur.save();
-
-        // Préparation de la réponse
+          console.log(" Email envoyé");     // Préparation de la réponse
         const userResponse = {
             _id: newUser._id,
-            firstName: newUser.firstName,
-            lastName: newUser.lastName,
+            prenom: newUser.prenom,
+            nom: newUser.nom,
             email: newUser.email,
             role: newUser.role,
             phoneNumber: newUser.phoneNumber
@@ -76,12 +57,9 @@ const createFormateur = async (req, res) => {
 
     } catch (error) {
         console.error("Erreur:", error);
-        
-        // Nettoyage en cas d'erreur après création utilisateur
-        if (newUser) {
-            await Utilisateur.deleteOne({ _id: newUser._id });
-        }
-
+        if (typeof newUser !== "undefined") {
+          await Utilisateur.deleteOne({ _id: newUser._id });
+      }
         res.status(500).json({ 
             message: "Erreur serveur",
             error: error.message 
@@ -92,21 +70,17 @@ const createFormateur = async (req, res) => {
 
 const getFormateurs = async (req, res) => {
     try {
-      const formateurs = await Formateur.find().populate("utilisateur", "firstName lastName email  phoneNumber role").populate("manager").populate("coordinateur");
+      const formateurs = await Formateur.find().populate("utilisateur", "nom  prenom  email  numeroTelephone  role").populate("manager").populate("coordinateur");
       res.status(200).json(formateurs);
     } catch (error) {
       res.status(500).json({ message: "Erreur serveur", error: error.message });
     }
   };
-//   firstName: { type: String },
-    // lastName: { type: String },
-    // email: { type: String, required: true, unique: true },
-    // phoneNumber: { type: String },
-  
+
   const getFormateurById = async (req, res) => {
     const id=req.params.id;
     try {
-      const formateur = await Formateur.findById(id).populate("utilisateur", "firstName lastName email role").populate("manager").populate("coordinateur");
+      const formateur = await Formateur.findById(id).populate("utilisateur", "nom   prenom  email  role").populate("manager").populate("coordinateur");
       if (!formateur) return res.status(404).json({ message: "Formateur non trouvé" });
       res.status(200).json(formateur);
     } catch (error) {
@@ -116,7 +90,7 @@ const getFormateurs = async (req, res) => {
 
   const updateFormateur = async (req, res) => {
     try {
-      const { firstName, lastName, email } = req.body;
+      const { nom, prenom, email } = req.body;
   
       // Check if at least one field is provided
       if (!firstName && !lastName && !email) {
@@ -131,8 +105,7 @@ const getFormateurs = async (req, res) => {
   
       // Update the corresponding Utilisateur
       const updatedUtilisateur = await Utilisateur.findByIdAndUpdate(
-        formateur.utilisateur, 
-        { firstName, lastName, email },
+        formateur.utilisateur, { nom,prenom, email },
         { new: true, runValidators: true } // Ensure updated data is returned and validated
       );
   

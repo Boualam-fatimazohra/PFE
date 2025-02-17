@@ -5,8 +5,6 @@ const Coordinateur = require("../Models/coordinateur.model");
 const createCoordinateur = async (req, res) => {
   try {
     const { utilisateurData, manager } = req.body;
-
-    // Ensure the manager exists
     const managerExists = await Manager.findById(manager);
     if (!managerExists) {
       return res.status(404).json({ message: "Manager not found" });
@@ -28,10 +26,10 @@ const createCoordinateur = async (req, res) => {
 
     // Create the utilisateur entry
     const newUtilisateur = new Utilisateur({
-      firstName,
-      lastName,
+      nom,
+      prenom,
       email,
-      phoneNumber,
+      numeroTelephone,
       password,
       role
     });
@@ -94,7 +92,7 @@ const getCoordinateurById = async (req, res) => {
 // Update a Coordinateur
 const updateCoordinateur = async (req, res) => {
   try {
-    const { firstName, lastName, email, phoneNumber, password } = req.body;
+    const { nom,prenom, email,numeroTelephone, password } = req.body;
 
     // Check if Coordinateur exists
     const coordinateur = await Coordinateur.findById(req.params.id);
@@ -105,7 +103,7 @@ const updateCoordinateur = async (req, res) => {
     // Update Utilisateur data
     const updatedUtilisateur = await Utilisateur.findByIdAndUpdate(
       coordinateur.utilisateur, 
-      { firstName, lastName, email, phoneNumber, password },
+      { nom,prenom,email,numeroTelephone, password },
       { new: true, runValidators: true }
     );
 
