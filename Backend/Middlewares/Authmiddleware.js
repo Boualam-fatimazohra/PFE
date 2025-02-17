@@ -25,7 +25,7 @@ const authenticated = async (req, res, next) => {
         res.clearCookie('token');
         res.status(401).json({ message: 'Invalid or expired token' });
     }
-}; 
+};
 exports.isManager = (req, res, next) => {
     if (req.user.role !== "Manager") {
       return res.status(403).json({ message: "Only managers can perform this action" });
