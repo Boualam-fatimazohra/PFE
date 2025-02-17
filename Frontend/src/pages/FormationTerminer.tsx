@@ -48,6 +48,26 @@ function FormationTerminer() {
       phone: "06445454512",
       status: "Présent (e)",
     },
+    {
+        date: "26/05/2024",
+        time: "14h00-16h00",
+        firstName: "fatima",
+        lastName: "Boualam",
+        email: "fatima.bou@gmail.com",
+        gender: "femme",
+        phone: "06445454512",
+        status: "Présent (e)",
+    },
+    {
+        date: "26/05/2024",
+        time: "14h00-16h00",
+        firstName: "Ouidad",
+        lastName: "tarif",
+        email: "ouidad.tarif@gmail.com",
+        gender: "femme",
+        phone: "06445454512",
+        status: "Absent (e)",
+    },
   ];
 
   return (

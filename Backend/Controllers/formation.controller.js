@@ -31,9 +31,9 @@ const createFormation = async (req, res) => {
         lienInscription,
         tags,
         formateur: formateur._id,
-        status: "En Cours" // Valeur par défaut
+        status: "A venir" // Valeur par défaut
       });
-
+      console.log("Requête reçue pour ajouter une formation:", req.body);
       const formationEnregistree = await nouvelleFormation.save();
       res.status(201).json(formationEnregistree);
   } catch (error) {
