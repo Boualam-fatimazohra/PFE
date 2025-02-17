@@ -5,21 +5,17 @@ const Formateur  = require('../Models/formateur.model.js');
 const createFormation = async (req, res) => {
   try {
       // 1. Récupérer l'ID utilisateur depuis les cookies
-      // const id = req.user?.userId; // Vérification de la présence de req.user
-      // const role = req.user?.role;  
-      // if (!id) {
-      //     return res.status(401).json({ message:"Utilisateur non authentifié" });
-      // }
-      // if (role !== "Formateur") {
-      //   return res.status(403).json({ message: "Accès refusé. Seuls les formateurs peuvent créer une formation." });
-      // }
-      // // 3. Vérifier si un document Formateur existe déjà
-      // let formateur = await Formateur.findOne({ utilisateur: id });
-      // // 4. Si le formateur n'existe pas, on le crée
-      // if (!formateur) {
-      //     formateur = new Formateur({ utilisateur: id, formations: [] });
-      //     await formateur.save();
-      // }
+      const id = req.user?.userId; // Vérification de la présence de req.user
+      if (!id) {
+          return res.status(401).json({ message:"Utilisateur non authentifié" });
+      }
+      // 3. Vérifier si un document Formateur existe déjà
+      let formateur = await Formateur.findOne({ utilisateur: id });
+      // 4. Si le formateur n'existe pas, on le crée
+      if (!formateur) {
+          formateur = new Formateur({ utilisateur: id, formations: [] });
+          await formateur.save();
+      }
 
       // Vérifier si toutes les données requises sont présentes
       const { nom, dateDebut, dateFin, lienInscription, tags } = req.body;

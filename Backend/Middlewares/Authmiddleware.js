@@ -26,23 +26,4 @@ const authenticated = async (req, res, next) => {
         res.status(401).json({ message: 'Invalid or expired token' });
     }
 };
-exports.isManager = (req, res, next) => {
-    if (req.user.role !== "Manager") {
-      return res.status(403).json({ message: "Only managers can perform this action" });
-    }
-    next();
-  };
-  
-  exports.isCoordinateur = (req, res, next) => {
-    if (req.user.role !== "Coordinateur") {
-      return res.status(403).json({ message: "Only Coordinateurs can perform this action" });
-    }
-    next();
-  };
-
-  exports.isFormateur = (req, res, next) => {
-    if (req.user.role !== "Formateur") {
-      return res.status(403).json({ message: "Only Formateurs can perform this action" });
-    }
-    next();};
 module.exports = authenticated;
