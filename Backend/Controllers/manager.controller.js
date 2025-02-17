@@ -1,28 +1,31 @@
 const Manager = require("../Models/manager.model");
+const bcrypt = require('bcryptjs');
 const { Utilisateur } = require("../Models/utilisateur.model");
 
 // Create a new Manager
 const createManager = async (req, res) => {
     try {
-        const { nom,prenom, email, numeroTelephone, password, role } = req.body;
-        if (!email || !password || !role) {
+        const { nom,prenom, email, numeroTelephone, password } = req.body;
+        if (!email || !password) {
             return res.status(400).json({ message: "Email, password, and role are required" });
         }
-        if (role !== "Manager") {
+        /*if (role !== "Manager") {
             return res.status(400).json({ message: "Role must be 'Manager'" });
-        }
-        const existingUser = await Utilisateur.findOe({ email });
+        }*/
+        const existingUser = await Utilisateur.findOne({ email });
         if (existingUser) {
             return res.status(400).json({ message: "Utilisateur with this email already exists" });
         }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
 
         const newUtilisateur = new Utilisateur({
             nom,
             prenom,
             email,
             numeroTelephone,
-            password,
-            role
+            password: hashedPassword,
+            role: "Manager"
         });
         await newUtilisateur.save();
         // Create the manager entry with the utilisateur

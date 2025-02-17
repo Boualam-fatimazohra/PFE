@@ -1,10 +1,11 @@
 const express = require('express');
 const { createFormateur, getFormateurs,updateFormateur,deleteFormateur, getFormateurById } = require('../Controllers/formateur.controller.js');
 const authorizeRoles = require('../Middlewares/RoleMiddleware.js');
+const authenticated = require('../Middlewares/Authmiddleware.js');
 
 const router = express.Router();
 
-router.post('/Addformateur',createFormateur);
+router.post('/Addformateur',authenticated, authorizeRoles('Admin', 'Manager'), createFormateur);
 router.get('/getFormateurs',getFormateurs);
 router.put('/updateFormateur/:id',updateFormateur);
 router.delete('/deleteFormateur/:id',deleteFormateur);
