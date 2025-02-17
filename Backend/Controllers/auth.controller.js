@@ -4,15 +4,12 @@ const bcrypt = require('bcryptjs');
 
    const Login = async (req, res) => {
    const { email, password } = req.body;
-
    try {
    console.log("Login: Request body:", req.body);
    console.log("Login: Email from request:", email);
-
    console.log("debut de login avant findOne");
    const user = await Utilisateur.findOne({ email });
    console.log("aprés  findOne");
-
    if (!user) {
    console.log("Login: User not found");
    return res.status(400).json({ message: 'Invalid email or password' });
@@ -33,8 +30,8 @@ const bcrypt = require('bcryptjs');
    const token = jwt.sign(
    { userId: user._id,
    role: user.role,
-   firstName: user.firstName,
-   lastName: user.lastName },
+   firstName: user.nom,
+   lastName: user.prenom },
    process.env.JWT_SECRET,
    { expiresIn: '1w' } 
    );
@@ -71,61 +68,70 @@ const bcrypt = require('bcryptjs');
 //jD5IDdTVLoITMCpL mot de passe mongo 
 //mongodb+srv://salouaouissa:<db_password>@cluster0.nwqo9.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
 const createUser = async (req, res) => {
-    const { firstName, lastName, email, password } = req.body;
+    const { nom, prenom, email, password } = req.body;
+    
     try {
-        // Vérification de l'existence de l'utilisateur
-        const existingUser = await Utilisateur.findOne({ email });
-        if (existingUser) {
-            return res.status(400).json({ message: "L'utilisateur existe déjà" });
+        if (!nom || !prenom || !email || !password) {
+            return res.status(400).json({ message: "Tous les champs sont obligatoires" });
         }
 
+        const existingUser = await Utilisateur.findOne({ email });
+        if (existingUser) {
+            return res.status(409).json({ message: "Cet email est déjà utilisé" });
+        }
 
-        // Création de l'utilisateur
+        const hashedPassword = await bcrypt.hash(password, 10); // Salt rounds = 10
+
         const newUser = new Utilisateur({
-            firstName,
-            lastName,
+            nom,
+            prenom,
             email,
-            password: hashedPassword,
-            role:"Formateur"
+            password: hashedPassword, // On stocke le mot de passe hashé
+            role: "Admin"
         });
 
-   await newUser.save();
-   const token = jwt.sign(
-   { 
-   userId: newUser._id, 
-   role: newUser.role 
-   },
-   process.env.JWT_SECRET,
-   { expiresIn: '1w' }
-   );
+        await newUser.save();
 
-   res.cookie('token', token, {
-   httpOnly: true,
-   sameSite: 'strict',
-   secure: false ,
-   maxAge: 604800000 
-   });
-   const userResponse = {
-   _id: newUser._id,
-   firstName: newUser.firstName,
-   lastName: newUser.lastName,
-   email: newUser.email,
-   role: newUser.role
-   };
+        // Génération du JWT
+        const token = jwt.sign(
+            { 
+                userId: newUser._id,
+                role: newUser.role 
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: '1w' }
+        );
 
-   res.status(201).json({ 
-   message: "Utilisateur créé avec succès", 
-   user: userResponse 
-   });
+        // Configuration du cookie
+        res.cookie('token', token, {
+            httpOnly: true,
+            sameSite: 'strict',
+            secure: process.env.NODE_ENV === 'production', // Secure en production
+            maxAge: 604800000 // 1 semaine
+        });
 
-   } catch (error) {
-   console.error("Erreur détaillée:", error);
-   res.status(500).json({ 
-   message: "Erreur serveur",
-   error:error.message 
-   });
-   }
-   };
+        // Réponse sans informations sensibles
+        const userResponse = {
+            _id: newUser._id,
+            firstName: newUser.prenom,
+            lastName: newUser.nom,
+            email: newUser.email,
+            role: newUser.role
+        };
+
+        res.status(201).json({ 
+            message: "Administrateur créé avec succès", 
+            user: userResponse 
+        });
+
+    } catch (error) {
+        console.error("Erreur lors de la création:", error);
+        res.status(500).json({ 
+            message: "Erreur serveur",
+            error: error.message 
+        });
+    }
+};
 
    const Logout = (req, res) => {
    console.log("Logout function called on backend");
