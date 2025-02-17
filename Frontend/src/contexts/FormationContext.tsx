@@ -1,49 +1,43 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { fetchFormations } from '../services/api'; // Fonction pour récupérer les formations
+import { fetchFormations, addFormation } from '../services/api';
 
-// Définir le type des formations
 interface Formation {
-  _id: string;
+  _id?: string;
   nom: string;
   dateDebut: string;
   dateFin: string;
-  status: "En Cours" | "Terminer" | "Replanifier"; // Type union des statuts
+  lienInscription: string;
+  tags: string;
+  status?: "En Cours" | "Terminer" | "Replanifier";
 }
 
-// Définir le type pour le contexte
 interface FormationContextType {
   formations: Formation[];
   loading: boolean;
+  error: string | null;
+  addNewFormation: (formationData: Formation) => Promise<void>;
 }
 
-// Définir les props du provider
 interface FormationProviderProps {
   children: ReactNode;
 }
 
-// Créer le contexte avec un type par défaut
 const FormationContext = createContext<FormationContextType | undefined>(undefined);
 
-// Fournir le contexte aux composants enfants
 export const FormationProvider: React.FC<FormationProviderProps> = ({ children }) => {
   const [formations, setFormations] = useState<Formation[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const getFormations = async () => {
       try {
-        const data = await fetchFormations(); 
-
-        // Cast des statuts pour correspondre à l'union type
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const formationsWithCorrectStatus = data.map((formation: any) => ({
-          ...formation,
-          status: formation.status as "En Cours" | "Terminer" | "Replanifier", // Casting explicite
-        }));
-
-        setFormations(formationsWithCorrectStatus);
+        const data = await fetchFormations();
+        setFormations(data);
+        setError(null);
       } catch (error) {
-        console.error('Erreur de récupération des formations', error);
+        console.error('Erreur lors de la récupération des formations', error);
+        setError('Impossible de charger les formations');
       } finally {
         setLoading(false);
       }
@@ -52,14 +46,26 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
     getFormations();
   }, []);
 
+  const addNewFormation = async (formationData: Formation) => {
+    try {
+      setError(null);
+      const newFormation = await addFormation(formationData);
+      setFormations((prevFormations) => [...prevFormations, newFormation]);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Erreur lors de l'ajout de la formation";
+      console.error(errorMessage);
+      setError(errorMessage);
+      throw error;
+    }
+  };
+
   return (
-    <FormationContext.Provider value={{ formations, loading }}>
+    <FormationContext.Provider value={{ formations, loading, error, addNewFormation }}>
       {children}
     </FormationContext.Provider>
   );
 };
 
-// Hook personnalisé pour accéder aux données du contexte
 export const useFormations = (): FormationContextType => {
   const context = useContext(FormationContext);
   if (!context) {
