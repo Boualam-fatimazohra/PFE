@@ -1,11 +1,9 @@
+const mongoose = require('mongoose');
+
 const seanceSchema = new mongoose.Schema({
-    formation: { type: mongoose.Schema.Types.ObjectId, ref: "Formation", required: true },
-    bénéficiaire: { type: mongoose.Schema.Types.ObjectId, ref: "bénéficiaire", required: true },
-    présence :[
-      {date: { type: Date, required: true },
-      present: { type: Boolean, default: false }}// Indique si le bénéficiaire était présent
-    ]
+    formation: { type: mongoose.Schema.Types.ObjectId,ref:"Formation",required: true },
+    date :{type:Date,required:true},
+    periode:{type:String,required:true,enum:["Matin","Soir"]},
   }, { timestamps: true });
-  
-  const Seance = mongoose.model("Seance", seanceSchema);
-  
+const  Seance = mongoose.model("Seance",seanceSchema);
+module.exports = Seance;

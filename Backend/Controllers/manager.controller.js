@@ -4,37 +4,27 @@ const { Utilisateur } = require("../Models/utilisateur.model");
 // Create a new Manager
 const createManager = async (req, res) => {
     try {
-        const { firstName, lastName, email, phoneNumber, password, role } = req.body;
-
-        // Ensure required fields are provided
+        const { nom,prenom, email, numeroTelephone, password, role } = req.body;
         if (!email || !password || !role) {
             return res.status(400).json({ message: "Email, password, and role are required" });
         }
-
-        // Ensure the role is Manager
         if (role !== "Manager") {
             return res.status(400).json({ message: "Role must be 'Manager'" });
         }
-
-        // Check if utilisateur already exists
-        const existingUser = await Utilisateur.findOne({ email });
+        const existingUser = await Utilisateur.findOe({ email });
         if (existingUser) {
             return res.status(400).json({ message: "Utilisateur with this email already exists" });
         }
 
-        // Create a new utilisateur
         const newUtilisateur = new Utilisateur({
-            firstName,
-            lastName,
+            nom,
+            prenom,
             email,
-            phoneNumber,
+            numeroTelephone,
             password,
             role
         });
-
-        // Save the new utilisateur
         await newUtilisateur.save();
-
         // Create the manager entry with the utilisateur
         const newManager = new Manager({ utilisateur: newUtilisateur._id });
         await newManager.save();
@@ -82,7 +72,7 @@ const getManagerById = async (req, res) => {
 const updateManager = async (req, res) => {
     try {
         const { id } = req.params;
-        const { firstName, lastName, email, phoneNumber, password, role } = req.body;
+        const { nom, prenom, email,numeroTelephone, password, role } = req.body;
 
         // Ensure the role is "Manager"
         if (role && role !== "Manager") {
@@ -98,7 +88,7 @@ const updateManager = async (req, res) => {
         // Find the associated utilisateur and update fields
         const updatedUtilisateur = await Utilisateur.findByIdAndUpdate(
             existingManager.utilisateur,
-            { firstName, lastName, email, phoneNumber, password, role },
+            { nom, prenom, email, numeroTelephone, password, role },
             { new: true }
         );
 

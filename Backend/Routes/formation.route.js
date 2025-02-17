@@ -1,10 +1,12 @@
 const express = require('express');
 const authenticated = require('../Middlewares/Authmiddleware.js');
 const { createFormation, GetOneFormation, UpdateFormation, GetFormations, DeleteFormation, GetFormationOfMentor } = require('../Controllers/formation.controller.js'); // Removed duplicate DeleteFormation
+const authorizeRoles = require('../Middlewares/RoleMiddleware.js');
+
 const router = express.Router();
 
 // Route to add a new formation (Protected route: Only authenticated users can access)
-router.post('/Addformation', authenticated, createFormation);
+router.post('/Addformation', authenticated, authorizeRoles('Formateur'), createFormation);
 
 // Route to get all formations (No authentication required)
 router.get('/GetFormations', GetFormations);
@@ -13,16 +15,11 @@ router.get('/GetFormations', GetFormations);
 router.delete('/DeleteFormation/:id', authenticated, DeleteFormation);
 
 // Route to update a formation by ID (Method changed from POST to PUT for consistency)
-router.put('/UpdateFormation/:id', authenticated, UpdateFormation); // Changed method from POST to PUT for best practice
+router.put('/UpdateFormation/:id',UpdateFormation); // Changed method from POST to PUT for best practice
 
 // Route to get one specific formation by ID
 router.get('/GetOneFormation/:id', GetOneFormation);
 
-// Removed redundant '/UpdateFormations/:id' route, as it was a duplicate of '/UpdateFormation/:id'
-
-// Removed commented-out route for '/DeleteFormations', as there was no DeleteFormations function
-
-// Route to get formations of a specific mentor (Protected route)
 router.get('/GetFormationOfMentor', authenticated, GetFormationOfMentor);
 
 module.exports = router;
