@@ -17,6 +17,6 @@ router.get("/",authenticated,authoriezeRoles('Admin'), getManagers);
 // todo : il faut ajouter un middelware pour vérifier est ce que l'id de manager dans req et le meme que l'id passé en paramétre 
 router.get("/:id",authenticated,authoriezeRoles('Admin',"Manager"),getManagerById);
 router.put("/:id",authenticated,authoriezeRoles('Admin',"Manager"), updateManager);
-router.delete("/:id",authenticated,authoriezeRoles('Admin',"Manager"), deleteManager);
+router.delete("/:id",authenticated,authoriezeRoles('Admin'), deleteManager);
 
 module.exports = router;

@@ -2,11 +2,11 @@ const express = require('express');
 const authenticated = require('../Middlewares/Authmiddleware.js');
 const { createFormation, GetOneFormation, UpdateFormation, GetFormations, DeleteFormation, GetFormationOfMentor } = require('../Controllers/formation.controller.js'); // Removed duplicate DeleteFormation
 const authorizeRoles = require('../Middlewares/RoleMiddleware.js');
-
+const upload = require('../Middlewares/uploadMiddleware.js');
 const router = express.Router();
 
 // Route to add a new formation (Protected route: Only authenticated users can access)
-router.post('/Addformation', authenticated, authorizeRoles('Formateur'), createFormation);
+router.post('/Addformation', authenticated, authorizeRoles('Formateur'),upload.single("image"),createFormation);
 
 // Route to get all formations (No authentication required)
 router.get('/GetFormations', GetFormations);
