@@ -1,27 +1,38 @@
 const Manager = require("../Models/manager.model");
 const { Utilisateur } = require("../Models/utilisateur.model");
+const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
+const  {sendMail}  = require('../Config/auth.js');
 
+const generateRandomPassword = (length = 12) => {
+  return crypto.randomBytes(Math.ceil(length / 2))
+    .toString('hex')
+    .slice(0, length);
+};
 // Create a new Manager
 const createManager = async (req, res) => {
     try {
-        const { nom,prenom, email, numeroTelephone, password, role } = req.body;
-        if (!email || !password || !role) {
+        const { nom,prenom, email, numeroTelephone, role } = req.body;
+        if (!email || !role) {
             return res.status(400).json({ message: "Email, password, and role are required" });
         }
         if (role !== "Manager") {
             return res.status(400).json({ message: "Role must be 'Manager'" });
         }
-        const existingUser = await Utilisateur.findOe({ email });
+        const existingUser = await Utilisateur.findOne({ email });
         if (existingUser) {
             return res.status(400).json({ message: "Utilisateur with this email already exists" });
         }
+        const temporaryPassword = generateRandomPassword();
+        const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
+        await sendMail(email,temporaryPassword);
 
         const newUtilisateur = new Utilisateur({
             nom,
             prenom,
             email,
             numeroTelephone,
-            password,
+            password:hashedPassword,
             role
         });
         await newUtilisateur.save();
@@ -72,12 +83,7 @@ const getManagerById = async (req, res) => {
 const updateManager = async (req, res) => {
     try {
         const { id } = req.params;
-        const { nom, prenom, email,numeroTelephone, password, role } = req.body;
-
-        // Ensure the role is "Manager"
-        if (role && role !== "Manager") {
-            return res.status(400).json({ message: "Role must be 'Manager'" });
-        }
+        const { nom, prenom, email,numeroTelephone,password} = req.body;
 
         // Find the existing manager
         const existingManager = await Manager.findById(id);
@@ -88,7 +94,7 @@ const updateManager = async (req, res) => {
         // Find the associated utilisateur and update fields
         const updatedUtilisateur = await Utilisateur.findByIdAndUpdate(
             existingManager.utilisateur,
-            { nom, prenom, email, numeroTelephone, password, role },
+            { nom, prenom, email, numeroTelephone,password},
             { new: true }
         );
 
