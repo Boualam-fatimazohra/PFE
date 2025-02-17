@@ -2,74 +2,75 @@ import * as React from "react";
 
 export const FormationAvenir = () => {
   return (
-    <>
-      <div className="flex w-full max-w-[1358px] items-stretch gap-5 flex-wrap justify-between mt-10 max-md:max-w-full">
-        <div className="flex flex-col overflow-hidden text-sm text-black font-bold whitespace-nowrap leading-none pl-[55px]">
-          <div className="flex">
-            <div className="flex items-center gap-1 pt-2 pb-2.5">
-              <img
-                loading="lazy"
-                src="https://cdn.builder.io/api/v1/image/assets/32942b86facf465bad688d8f78f5f3fb/5e6379252813464dcb43589db855cc4182d67eba3ef907ba443230f644e5b96e"
-                className="aspect-[1] object-contain w-[18px] self-stretch shrink-0 my-auto"
-                alt="Back arrow"
-              />
-              <div className="self-stretch gap-[3px] my-auto text-gray-700">Retour</div>
-            </div>
-          </div>
+    <div className="px-4">
+      {/* Header with Back and Refresh */}
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center gap-2 text-sm font-bold cursor-pointer">
+          <span className="text-gray-600">‹ Retour</span>
         </div>
-        <div className="flex items-stretch gap-[7px] my-auto">
-          <div className="text-gray-500 text-sm font-normal leading-none grow shrink basis-auto">
+        <div className="flex items-center gap-2">
+          <span className="text-gray-500 text-sm">
             Données actualisées le 20/10/2025 à 8H02
-          </div>
-          <div className="flex flex-col relative aspect-[4.909] w-[108px] text-base text-black font-semibold whitespace-nowrap leading-none px-[30px] bg-gray-200 rounded-lg shadow-md">
-            <img
-              loading="lazy"
-              srcSet="https://cdn.builder.io/api/v1/image/assets/32942b86facf465bad688d8f78f5f3fb/605203f2-edcb-45e7-b932-45a123fc1375"
-              className="absolute h-full w-full object-cover inset-0 rounded-lg"
-              alt="Refresh button"
-            />
+          </span>
+          <button className="bg-gray-100 text-black px-4 py-1.5 rounded-md text-sm font-medium">
             Actualiser
-          </div>
+          </button>
         </div>
       </div>
 
-      <div className="bg-[#F4F4F4] flex w-[1300px] max-w-full items-stretch gap-[19px] flex-wrap mt-[17px] pr-20 max-md:pr-5">
-        <div className="bg-orange-500 flex w-3 shrink-0 h-[117px]" />
-        <div className="my-auto max-md:max-w-full">
-          <div className="flex w-[211px] max-w-full items-stretch gap-[11px]">
-            <div className="text-black text-2xl font-bold grow shrink w-[99px]">
-              Formation
-            </div>
-            <div className="bg-purple-100 flex min-w-[84px] min-h-6 items-center overflow-hidden text-[13px] text-purple-600 font-medium text-center leading-loose justify-center my-auto px-4 rounded-xl">
-              <div className="self-stretch w-11 overflow-hidden my-auto">A venir</div>
-            </div>
+      {/* Formation Header */}
+      <div className="bg-gray-100 p-6 rounded-sm relative">
+        <div className="absolute left-0 top-0 bottom-0 w-1 bg-orange-500" />
+        <div className="ml-4">
+          <div className="flex items-center gap-3 mb-2">
+            <h1 className="text-xl font-bold">Formation</h1>
+            <span className="bg-purple-100 text-purple-600 px-3 py-0.5 rounded-full text-sm">
+              A venir
+            </span>
           </div>
-          <div className="text-gray-700 text-2xl font-semibold max-md:max-w-full">
+          <h2 className="text-xl text-gray-700">
             AWS : Développement, déploiement et gestion
+          </h2>
+        </div>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-4 gap-4 mt-6">
+        {[
+          'Total Bénéficiaires',
+          'Total Formations',
+          'Prochain événement',
+          'Satisfaction moyenne'
+        ].map((title) => (
+          <div key={title} className="bg-white rounded-lg shadow-sm p-4 flex flex-col items-center justify-center border border-gray-200">
+            <span className="text-gray-500 text-sm mb-2">{title}</span>
+            <span className="text-xl font-semibold">-</span>
           </div>
-        </div>
+        ))}
       </div>
 
-      <div className="w-full max-w-[1300px] mt-[22px] max-md:max-w-full">
-        <div className="gap-5 flex max-md:flex-col max-md:items-stretch">
-          {["Total Bénéficiaires", "Total Formations", "Prochain événement", "Satisfaction moyenne"].map((label, index) => (
-            <div key={index} className="w-3/12 bg-white shadow-md p-4 rounded-lg text-center border border-gray-200 max-md:w-full">
-              <div className="text-gray-500 text-sm">{label}</div>
-              <div className="text-xl font-bold text-black">-</div>
-            </div>
-          ))}
+      {/* No Data Message */}
+      <div className="flex flex-col items-center justify-center mt-20">
+      <div className="relative w-24 h-24 mb-6">
+        {/* Cercle principal */}
+        <div className="absolute w-16 h-16 bg-gray-200 rounded-full left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+        
+        {/* Échelle sortant du trou */}
+        <div className="absolute w-4 h-12 bg-gray-300 rounded-t-full left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 rotate-45" />
+        
+        {/* Icône d'avertissement */}
+        <div className="absolute w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold right-0 top-0">
+          !
         </div>
       </div>
+      {/* Texte principal */}
+      <h3 className="text-gray-800 text-lg font-medium mb-1 text-center">
+        Vous n'avez aucune base de données
+      </h3>
+      <p className="text-gray-600 text-center">pour cette formation</p>
+    </div>
 
-      <div className="flex flex-col items-center justify-center text-center mt-10">
-        <img
-          src="https://cdn.builder.io/api/v1/image/assets/32942b86facf465bad688d8f78f5f3fb/d383d3334b3208e0daf239faa8e943e901e9c3a33b577eca85aa726897409666"
-          alt="No data"
-          className="w-32 h-32"
-        />
-        <h2 className="text-lg font-semibold text-gray-800 mt-4">Vous n'avez aucun résultat</h2>
-        <p className="text-gray-600">pour cette formation</p>
-      </div>
-    </>
+    </div>
   );
 };
+

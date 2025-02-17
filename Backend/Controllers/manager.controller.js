@@ -1,7 +1,15 @@
 const Manager = require("../Models/manager.model");
 const bcrypt = require('bcryptjs');
 const { Utilisateur } = require("../Models/utilisateur.model");
+const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
+const  {sendMail}  = require('../Config/auth.js');
 
+const generateRandomPassword = (length = 12) => {
+  return crypto.randomBytes(Math.ceil(length / 2))
+    .toString('hex')
+    .slice(0, length);
+};
 // Create a new Manager
 const createManager = async (req, res) => {
     try {
@@ -16,8 +24,9 @@ const createManager = async (req, res) => {
         if (existingUser) {
             return res.status(400).json({ message: "Utilisateur with this email already exists" });
         }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const temporaryPassword = generateRandomPassword();
+        const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
+        await sendMail(email,temporaryPassword);
 
         const newUtilisateur = new Utilisateur({
             nom,
@@ -75,12 +84,7 @@ const getManagerById = async (req, res) => {
 const updateManager = async (req, res) => {
     try {
         const { id } = req.params;
-        const { nom, prenom, email,numeroTelephone, password, role } = req.body;
-
-        // Ensure the role is "Manager"
-        if (role && role !== "Manager") {
-            return res.status(400).json({ message: "Role must be 'Manager'" });
-        }
+        const { nom, prenom, email,numeroTelephone,password} = req.body;
 
         // Find the existing manager
         const existingManager = await Manager.findById(id);
@@ -91,7 +95,7 @@ const updateManager = async (req, res) => {
         // Find the associated utilisateur and update fields
         const updatedUtilisateur = await Utilisateur.findByIdAndUpdate(
             existingManager.utilisateur,
-            { nom, prenom, email, numeroTelephone, password, role },
+            { nom, prenom, email, numeroTelephone,password},
             { new: true }
         );
 

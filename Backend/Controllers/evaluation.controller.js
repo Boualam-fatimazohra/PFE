@@ -2,25 +2,49 @@ const mongoose = require("mongoose");
 const Evaluation = require("../Models/evaluation.model.js");
 
 exports.createEvaluation = async (req, res) => {
-  try {
-    const { tauxSatisfaction, questions, formation } = req.body;
-
-    if (!mongoose.Types.ObjectId.isValid(formation)) {
-      return res.status(400).json({ error: "ID de formation invalide" });
+    try {
+      const evaluationData = {
+        contentEvaluation: {
+          qualiteContenuFormation: req.body.contentEvaluation?.qualiteContenuFormation,
+          utiliteCompetencesAcquises: req.body.contentEvaluation?.utiliteCompetencesAcquises,
+          alignementBesoinsProf: req.body.contentEvaluation?.alignementBesoinsProf,
+          structureFormation: req.body.contentEvaluation?.structureFormation,
+          niveauDifficulte: req.body.contentEvaluation?.niveauDifficulte
+        },
+        pedagogy: {
+          qualitePedagogique: req.body.pedagogy?.qualitePedagogique,
+          expertiseFormateur: req.body.pedagogy?.expertiseFormateur,
+          qualiteSupportFormation: req.body.pedagogy?.qualiteSupportFormation,
+          qualiteExercices: req.body.pedagogy?.qualiteExercices,
+          adaptationNiveauParticipants: req.body.pedagogy?.adaptationNiveauParticipants
+        },
+        materialConditions: {
+          confortSalle: req.body.materialConditions?.confortSalle,
+          accessibiliteLieu: req.body.materialConditions?.accessibiliteLieu,
+          horaires: req.body.materialConditions?.horaires,
+          materielPedagogique: req.body.materialConditions?.materielPedagogique
+        },
+        generalOrganization: {
+          communicationOrganisationnelle: req.body.generalOrganization?.communicationOrganisationnelle
+        },
+        recommandation:req.body.recommandation,
+        commentaire: req.body?.commentaire
+      };
+  
+      const evaluation = new Evaluation(evaluationData);
+      await evaluation.save();
+  
+      res.status(201).json({
+        message: 'Evaluation submitted successfully',
+        evaluation: evaluation
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: 'Error submitting evaluation',
+        error: error.message
+      });
     }
-    const lienEvaluation = `${req.protocol}://${req.get("host")}/evaluation/${Math.random().toString(36).substring(7)}`;
-    const newEvaluation = await Evaluation.create({
-      tauxSatisfaction,
-      lienEvaluation,
-      questions: JSON.stringify(questions),
-      formation: new mongoose.Types.ObjectId(formation), 
-    });
-    console.log("creation de l'evaluation ");
-    res.status(201).json({ message: "Évaluation créée avec succès", evaluation: newEvaluation });
-  } catch (error) {
-    console.log("Erreur:", error);
-    res.status(500).json({ error: "Erreur lors de la création de l'évaluation" });
-  }
+  
 };
 exports.getEvaluationByLink = async (req, res) => {
     try {
