@@ -17,6 +17,7 @@
     "skipLibCheck": true,
     "allowJs": true,
     "noUnusedLocals": false,
+    "moduleResolution": "node",
     "strictNullChecks": false
   }
 }

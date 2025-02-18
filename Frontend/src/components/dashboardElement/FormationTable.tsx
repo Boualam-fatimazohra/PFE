@@ -37,21 +37,21 @@ export const FormationsTable = () => {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {formations.map((formation: Formation) => (
-          <TableRow key={formation._id}>
-            <TableCell>{formation.nom}</TableCell>
-            <TableCell>{formation.dateDebut}</TableCell>
-            <TableCell>
-              <StatusBadge status={formation.status} />
-            </TableCell>
-            <TableCell>
-              <button className="bg-black text-white px-3 py-1 rounded-md text-sm">
-                Accéder
-              </button>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
+  {formations.slice(-4).map((formation: Formation) => (
+    <TableRow key={formation._id}>
+      <TableCell>{formation.nom}</TableCell>
+      <TableCell>{formation.dateDebut}</TableCell>
+      <TableCell>
+        <StatusBadge status={formation.status} />
+      </TableCell>
+      <TableCell>
+        <button className="bg-black text-white px-3 py-1 rounded-md text-sm">
+          Accéder
+        </button>
+      </TableCell>
+    </TableRow>
+  ))}
+</TableBody>
     </Table>
   );
 };
