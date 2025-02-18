@@ -1,8 +1,56 @@
 const Beneficiaire = require("../Models/beneficiaire.model");
-const Formation = require("../Models/formation.model.js");
+const Formation = require("../Models/formation.model");
 const readExcelFile = require("../utils/excelReader");
 const XLSX = require("xlsx");
-// const BeneficiareFormation = require("../Models/BeneficiareFormation.js"); // Assure-toi que c'est le bon chemin
+
+// Create a new Beneficiaire
+const createBeneficiaire = async (req, res) => {
+  try {
+    const { nom, prenom, dateNaissance, niveau, formationId, isBlack, isSuturate } = req.body;
+    if (!formationId) {
+      return res.status(400).json({ message: "A formationId is required" });
+    }
+    const formationExists = await Formation.findById(formationId);
+    if (!formationExists) {
+      return res.status(404).json({ message: "Formation not found" });
+    }
+    const beneficiaire = new Beneficiaire({
+      nom,
+      prenom,
+      dateNaissance,
+      niveau,
+      formation: formationId,
+      isBlack: isBlack ?? false,
+      isSuturate: isSuturate ?? false,
+    });
+
+    await beneficiaire.save();
+
+    // Créer une séance associée au bénéficiaire et à la formation
+    const seance = new Seance({
+      formation: formationId,
+      beneficiaire: beneficiaire._id,
+      presence: [
+        {
+          date: new Date(), // Date actuelle
+          present: false, // Par défaut, le bénéficiaire n'est pas encore présent
+        },
+      ],
+    });
+
+    await seance.save();
+
+    res.status(201).json({
+      message: "Beneficiaire created successfully with an associated Seance",
+      beneficiaire,
+      seance,
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: "Error creating beneficiaire", error: error.message });
+  }
+};
+
 
 // Get all Beneficiaires (with optional formation details)
 const getAllBeneficiaires = async (req, res) => {
@@ -71,14 +119,15 @@ const deleteBeneficiaire = async (req, res) => {
 
 // Upload beinificiaire excel data directly to database
 const uploadBeneficiairesFromExcel = async (req, res) => {
-  const idFormation=req.body;
   try {
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
-    } 
-     
+    }
+
+    // Read the file as a buffer
     const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
 
+    // Debugging logs
     console.log("Workbook:", workbook);
     console.log("Sheet Names:", workbook.SheetNames);
 
@@ -94,8 +143,9 @@ const uploadBeneficiairesFromExcel = async (req, res) => {
       return res.status(400).json({ message: "First sheet is empty or not found" });
     }
 
+    // Convert the worksheet to JSON
     const rawData = XLSX.utils.sheet_to_json(worksheet);
-    console.log("Parsed Data:", rawData); 
+    console.log("Parsed Data:", rawData); // Log to debug
 
     // Transform data to match MongoDB schema
     const beneficiaires = rawData.map(item => ({
@@ -130,8 +180,6 @@ const uploadBeneficiairesFromExcel = async (req, res) => {
     //   confirmationEmail: false,
     // }));
 
-    // Insérer les instances de BeneficiareFormation
-    const insertedBeneficiareFormations = await BeneficiareFormation.insertMany(beneficiareFormations);
     res.status(200).json({ message: "Beneficiaires uploaded successfully", data: insertedBeneficiaires });
   } catch (error) {
     console.error(error);
@@ -140,26 +188,26 @@ const uploadBeneficiairesFromExcel = async (req, res) => {
 };
 
 // Simple read data from excel testing
-// const uploadBenificiaireExcel = async (req, res) => {
-//   try {
-//     if (!req.file) {
-//       return res.status(400).json({ message: "Please upload an Excel file" });
-//     }
+const uploadBenificiaireExcel = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "Please upload an Excel file" });
+    }
 
-//     const filePath = req.file.path;
+    const filePath = req.file.path;
 
-//     console.log(`File uploaded to: ${filePath}`); // Log the file path to confirm where the file is stored
+    console.log(`File uploaded to: ${filePath}`); // Log the file path to confirm where the file is stored
 
-//     const data = readExcelFile(filePath);
+    const data = readExcelFile(filePath);
 
-//     console.log(data);
+    console.log(data);
 
-//     res.status(200).json({ message: "Data uploaded successfully", data });
-//   } catch (error) {
-//     console.error("Error processing file:", error);
-//     res.status(500).json({ message: "Error processing file", error: error.message });
-//   }
-// }
+    res.status(200).json({ message: "Data uploaded successfully", data });
+  } catch (error) {
+    console.error("Error processing file:", error);
+    res.status(500).json({ message: "Error processing file", error: error.message });
+  }
+}
 
 // Export the functions for use in routes
 module.exports = {
