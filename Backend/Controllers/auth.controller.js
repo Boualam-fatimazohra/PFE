@@ -3,67 +3,67 @@ const jwt = require('jsonwebtoken');
 const { Utilisateur } = require('../Models/utilisateur.model.js');
 
 const Login = async (req, res) => {
-const { email, password } = req.body;
+    const { email, password } = req.body;
 
-try {
-console.log("Login: Request body:", req.body);
-console.log("Login: Email from request:", email);
+    try {
+    console.log("Login: Request body:", req.body);
+    console.log("Login: Email from request:", email);
 
-console.log("debut de login avant findOne");
-const user = await Utilisateur.findOne({ email });
-console.log("aprés  findOne");
+    console.log("debut de login avant findOne");
+    const user = await Utilisateur.findOne({ email });
+    console.log("aprés  findOne");
 
-if (!user) {
-console.log("Login: User not found");
-return res.status(400).json({ message: 'Login: User not found' });
-}
+    if (!user) {
+    console.log("Login: User not found");
+    return res.status(400).json({ message: 'Login: User not found' });
+    }
 
-console.log("Login: User found:", user);
+    console.log("Login: User found:", user);
 
-const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await bcrypt.compare(password, user.password);
 
-if (!isPasswordValid) {
-console.log("Login: Invalid password");
+    if (!isPasswordValid) {
+    console.log("Login: Invalid password");
 
-return res.status(400).json({ message: 'Login: Invalid password' });
-}
+    return res.status(400).json({ message: 'Login: Invalid password' });
+    }
 
-console.log("Login: Password valid");
+    console.log("Login: Password valid");
 
-const token = jwt.sign(
-{ userId: user._id,
-role: user.role,
-firstName: user.firstName,
-lastName: user.lastName },
-process.env.JWT_SECRET,
-{ expiresIn: '1w' } 
-);
+    const token = jwt.sign(
+    { userId: user._id,
+    role: user.role,
+    firstName: user.nom,
+    lastName: user.prenom },
+    process.env.JWT_SECRET,
+    { expiresIn: '1w' } 
+    );
 
-console.log("Login: Token generated:", token);
+    console.log("Login: Token generated:", token);
 
-res.cookie('token', token, {
-httpOnly: true, 
-sameSite: 'strict',
-secure: false,
-maxAge: 300000000 
-});
+    res.cookie('token', token, {
+    httpOnly: true, 
+    sameSite: 'strict',
+    secure: false,
+    maxAge: 300000000 
+    });
 
-console.log("Login: Token set in cookie");
+    console.log("Login: Token set in cookie");
 
-res.status(200).json({ 
-message: 'Login successful',
-role: user.role,
-user: {
-firstName: user.firstName,
-lastName: user.lastName
-}
-});
-console.log("Login: Success de login")
+    res.status(200).json({ 
+    message: 'Login successful',
+    role: user.role,
+    user: {
+    firstName: user.firstName,
+    lastName: user.lastName
+    }
+    });
+    console.log("Login: Success de login")
 
-} catch (error) {
-console.error('Login error:', error);
-res.status(500).json({ message: 'Internal server error' });
-}
+    } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+    }
 };
 
 
