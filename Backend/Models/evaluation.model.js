@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const evaluationSchema = new mongoose.Schema({
   formationTitle: {
     type: String,
-    default: "Développement C# Fundamentals et Applications Modernes"
+    require:false
   },
   formationDate: {
     type: String,
@@ -38,7 +38,8 @@ const evaluationSchema = new mongoose.Schema({
     default: Date.now
   },
   recommandation:{type:Boolean,required:true},
-  commentaire:{type:String,required:false}
+  commentaire:{type:String,required:false},
+  formation:{type:mongoose.Schema.Types.ObjectId,ref:"Formation",required:true}
 });
 
 const Evaluation = mongoose.model('Evaluation', evaluationSchema);
