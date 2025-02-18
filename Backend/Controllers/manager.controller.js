@@ -79,13 +79,11 @@ const getManagerById = async (req, res) => {
     }
 };
 
-// Update Manager
 const updateManager = async (req, res) => {
     try {
         const { id } = req.params;
         const { nom, prenom, email,numeroTelephone,password} = req.body;
 
-        // Find the existing manager
         const existingManager = await Manager.findById(id);
         if (!existingManager) {
             return res.status(404).json({ message: "Manager not found" });
