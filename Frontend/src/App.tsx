@@ -18,8 +18,10 @@ import { ToastContainer } from "react-toastify";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { Footer } from "@/components/layout/Footer";
 import FormationTerminer from "./pages/FormationTerminer";
+
 import { FormationAvenir } from "./pages/FormationAvenir";
 import FormationModal from "./components/dashboardElement/formationModal";
+
 
 const queryClient = new QueryClient();
 
@@ -59,10 +61,15 @@ const App = () => (
             {/* Autres pages */}
             <Route path="/generate-link" element={<GenerateLink />} />
             <Route path="/formulaire-evaluation" element={<FormulaireEvaluation />} />
-            <Route path="//DetailsFormation" element={<DetailsFormation />} />
-            <Route path="//FormationTerminer" element={<FormationTerminer />} />
+
             <Route path="/formationModal" element={< FormationModal/>} />
-            <Route path="//FormationAvenir" element={<FormationAvenir />} />
+   
+            <Route path="/DetailsFormation" element={<DetailsFormation />} />
+            <Route path="/FormationTerminer" element={<FormationTerminer />} />
+            <Route path="/FormationAvenir" element={<FormationAvenir />} />
+
+
+
             {/* Page 404 */}
             <Route path="*" element={<NotFound />} />
           </Routes>
