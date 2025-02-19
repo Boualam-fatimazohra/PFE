@@ -5,7 +5,6 @@ const connectDB = require("./Config/config.js");
 const Auth = require("./Routes/auth.route.js");
 const formationRoutes = require("./Routes/formation.route.js");
 const formateurRoutes = require("./Routes/formateur.route.js");
-const evaluationRoutes = require("./Routes/evaluationRoute.js");
 const beneficiaireRoutes = require("./Routes/beneficiaire.route.js");
 const coordinateurRoutes = require("./Routes/coordinateur.route.js");
 const managerRoutes = require("./Routes/manager.route.js"); // Correction ici
@@ -34,7 +33,6 @@ connectDB();
 // Déclaration des routes
 app.use("/api/auth", Auth);
 app.use("/api/formation", formationRoutes);
-app.use("/api/evaluation", evaluationRoutes);
 app.use("/api/beneficiaires", beneficiaireRoutes);
 app.use("/api/coordinateurs", coordinateurRoutes);
 app.use("/api/managers", managerRoutes);
