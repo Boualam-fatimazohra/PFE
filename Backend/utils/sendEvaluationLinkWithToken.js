@@ -1,4 +1,4 @@
-import generateToken from "./generateToken";
+const generateToken=require("./generateToken");
 const { sendMail } = require("../Config/auth.js");
 
 const sendEvaluationLinkWithToken = async (email, formationId) => {

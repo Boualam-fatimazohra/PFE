@@ -1,4 +1,4 @@
-const BeneficiareFormation = require("../Models/BeneficiareFormation.js");
+const BeneficiareFormation = require("../Models/beneficiairesFormation.js");
 
 const checkSubmission = async (req, res, next) => {
   try {
@@ -14,12 +14,10 @@ const checkSubmission = async (req, res, next) => {
       return res.status(404).json({ message: "Token invalide ou introuvable" });
     }
 
-    // Vérifier si la réponse a déjà été soumise
     if (beneficiaireFormation.isSubmited) {
       return res.status(403).json({ message: "Réponse déjà enregistrée, vous ne pouvez pas soumettre à nouveau." });
     }
 
-    // Passer à l'étape suivante
     next();
   } catch (error) {
     console.error("Erreur lors de la vérification du token:", error);
