@@ -54,8 +54,8 @@ const Login = async (req, res) => {
     message: 'Login successful',
     role: user.role,
     user: {
-    firstName: user.firstName,
-    lastName: user.lastName
+    nom: user.nom,
+    prenom: user.prenom
     }
     });
     console.log("Login: Success de login")
@@ -87,8 +87,8 @@ const createUser = async (req, res) => {
 
     // Création de l'utilisateur
     const newUser = new Utilisateur({
-        firstName,
-        lastName,
+        nom,
+        prenom,
         email,
         password: hashedPassword,
         role:"Formateur"

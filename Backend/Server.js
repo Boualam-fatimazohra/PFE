@@ -37,7 +37,7 @@ app.use("/api/beneficiaires", beneficiaireRoutes);
 app.use("/api/coordinateurs", coordinateurRoutes);
 app.use("/api/managers", managerRoutes);
 app.use("/api/formateur", formateurRoutes);
-
+app.use("/api/evaluation", require("./Routes/evaluation.route.js"));
 // Lancement du serveur
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
