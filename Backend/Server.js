@@ -5,7 +5,6 @@ const connectDB = require("./Config/config.js");
 const Auth = require("./Routes/auth.route.js");
 const formationRoutes = require("./Routes/formation.route.js");
 const formateurRoutes = require("./Routes/formateur.route.js");
-const evaluationRoutes = require("./Routes/evaluationRoute.js");
 const beneficiaireRoutes = require("./Routes/beneficiaire.route.js");
 const coordinateurRoutes = require("./Routes/coordinateur.route.js");
 const managerRoutes = require("./Routes/manager.route.js"); // Correction ici
@@ -23,6 +22,8 @@ app.use(
   cors({
     origin: "http://localhost:8080",
     credentials: true,
+    methods: "GET,POST,PUT,DELETE",
+    allowedHeaders: "Content-Type,Authorization"
   })
 );
 
@@ -32,11 +33,12 @@ connectDB();
 // Déclaration des routes
 app.use("/api/auth", Auth);
 app.use("/api/formation", formationRoutes);
-app.use("/api/evaluation", evaluationRoutes);
 app.use("/api/beneficiaires", beneficiaireRoutes);
 app.use("/api/coordinateurs", coordinateurRoutes);
 app.use("/api/managers", managerRoutes);
 app.use("/api/formateur", formateurRoutes);
+app.use("/api/formation/Addformation", formationRoutes);
+
 
 // Lancement du serveur
 app.listen(PORT, () => {

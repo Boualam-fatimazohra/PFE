@@ -37,26 +37,26 @@ export const FormationsTable = () => {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {formations.map((formation: Formation) => (
-          <TableRow key={formation._id}>
-            <TableCell>{formation.nom}</TableCell>
-            <TableCell>{formation.dateDebut}</TableCell>
-            <TableCell>
-              <StatusBadge status={formation.status} />
-            </TableCell>
-            <TableCell>
-              <button className="bg-black text-white px-3 py-1 rounded-md text-sm">
-                Accéder
-              </button>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
+  {formations.slice(-4).map((formation: Formation) => (
+    <TableRow key={formation._id}>
+      <TableCell>{formation.nom}</TableCell>
+      <TableCell>{formation.dateDebut}</TableCell>
+      <TableCell>
+        <StatusBadge status={formation.status} />
+      </TableCell>
+      <TableCell>
+        <button className="bg-black text-white px-3 py-1 rounded-md text-sm">
+          Accéder
+        </button>
+      </TableCell>
+    </TableRow>
+  ))}
+</TableBody>
     </Table>
   );
 };
 
-// 📌 Composant helper pour afficher le statut avec un badge stylisé
+// Composant helper pour afficher le statut avec un badge stylisé
 const StatusBadge = ({ status }: { status: string }) => {
   const statusStyles: Record<string, string> = {
     "En Cours": "bg-orange-100 text-orange-700",
@@ -64,7 +64,7 @@ const StatusBadge = ({ status }: { status: string }) => {
     "Replanifier": "bg-gray-100 text-gray-700",
   };
 
-  // ✅ Si le statut est inconnu, on applique un style par défaut
+  //  Si le statut est inconnu, on applique un style par défaut
   const badgeStyle = statusStyles[status] || "bg-red-100 text-red-700";
 
   return (
