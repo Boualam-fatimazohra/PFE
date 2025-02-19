@@ -1,7 +1,7 @@
 import { Bell, UserCircle } from "lucide-react";
    import { Link, useNavigate, useLocation } from "react-router-dom";
    import { useEffect, useState } from "react";
-   import { logout } from "@/services/authService";
+   // import { logout } from "@/services/authService";
 
    export function DashboardHeader() {
    const [user, setUser] = useState(null);
@@ -10,10 +10,10 @@ import { Bell, UserCircle } from "lucide-react";
 
    useEffect(() => {
    const storedRole = localStorage.getItem("userRole");
-   const storedFirstName = localStorage.getItem("firstName");
-   const storedLastName = localStorage.getItem("lastName");
+   const storedFirstName = localStorage.getItem("nom");
+   const storedLastName = localStorage.getItem("prenom");
    if (storedFirstName && storedLastName) {
-   setUser({ firstName: storedFirstName, lastName: storedLastName, role: storedRole || "Formateur" });
+   setUser({ nom: storedFirstName, prenom: storedLastName, role: storedRole || "Formateur" });
    } else {
    console.warn("User data not found in localStorage");
    setUser(null);
@@ -23,10 +23,10 @@ import { Bell, UserCircle } from "lucide-react";
    const handleLogout = async () => {
    try {
    console.log("Attempting to logout");
-   await logout();
+   // await logout();
    localStorage.removeItem('userRole');
-   localStorage.removeItem('firstName');
-   localStorage.removeItem('lastName');
+   localStorage.removeItem('nom');
+   localStorage.removeItem('prenom');
    navigate('/');
    console.log("Logout successful, navigating to /");
    } catch (error) {
@@ -101,7 +101,7 @@ import { Bell, UserCircle } from "lucide-react";
    <span className="text-sm">
    <span className="text-gray-400">Bonjour, </span>
    {user ? (
-   <span className="text-orange-500">{`${user.firstName} ${user.lastName}`}</span>
+   <span className="text-orange-500">{`${user.nom} ${user.prenom}`}</span>
    ) : (
    <span className="text-orange-500">N/A</span>
    )}

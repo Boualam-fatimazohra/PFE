@@ -3,43 +3,41 @@ const Formation = require('../Models/formation.model.js');
 const Formateur  = require('../Models/formateur.model.js');
 //  debut : creation d'un formation par un formateur bien précis :
 const createFormation = async (req, res) => {
+  const { titre,description,status,categorie,niveau,lienInscription } = req.body;
+
   try {
-      // 1. Récupérer l'ID utilisateur depuis les cookies
-      const id = req.user?.userId; // Vérification de la présence de req.user
-      if (!id) {
-          return res.status(401).json({ message:"Utilisateur non authentifié" });
-      }
-      // 3. Vérifier si un document Formateur existe déjà
-      let formateur = await Formateur.findOne({ utilisateur: id });
-      // 4. Si le formateur n'existe pas, on le crée
-      if (!formateur) {
-          formateur = new Formateur({ utilisateur: id, formations: [] });
-          await formateur.save();
-      }
+    const id = req.user?.userId;
+    if (!id) {
+      return res.status(401).json({ message: "Utilisateur non authentifié" });
+    }
+    if (!nom || !dateDebut || !dateFin || !tags) {
+      return res.status(400).json({ message: "Tous les champs obligatoires doivent être fournis." });
+    }
 
-      // Vérifier si toutes les données requises sont présentes
-      const { nom, dateDebut, dateFin, lienInscription, tags } = req.body;
-      if (!nom || !dateDebut || !dateFin || !tags) {
-        return res.status(400).json({ message: "Tous les champs obligatoires doivent être fournis." });
-      }
+    const imagePath = req.file ? req.file.path : null;
 
-      // Créer la formation
-      const nouvelleFormation = new Formation({
-        nom,
-        dateDebut,
-        dateFin,
-        lienInscription,
-        tags,
-        formateur: formateur._id,
-        status: "A venir" // Valeur par défaut
-      });
-      console.log("Requête reçue pour ajouter une formation:", req.body);
-      const formationEnregistree = await nouvelleFormation.save();
-      res.status(201).json(formationEnregistree);
+    const nouvelleFormation = new Formation({
+      titre,
+      description,
+      status,
+      categorie,
+      niveau,
+      formateur: formateur._id,
+      image: imagePath, 
+      status,
+      lienInscription
+    });
+
+    console.log("Requête reçue pour ajouter une formation:", req.body);
+    const formationEnregistree = await nouvelleFormation.save();
+    res.status(201).json(formationEnregistree);
   } catch (error) {
-      res.status(500).json({ message: "Erreur lors de la création de la formation", error: error.message });
+    res.status(500).json({ message: "Erreur lors de la création de la formation", error: error.message });
   }
 };
+
+
+
 // fin : creation d'un formation par un formateur bien précis
 // debut : recupération de tout les formations de tous les formateurs
 const GetFormations = async (req, res) => {
@@ -65,7 +63,7 @@ const GetOneFormation = async (req, res) => {
       return res.status(400).json({ message: "ID de formation invalide" });
     };
     const formation = await Formation.findById(id)
-      .populate({ path: 'formateur', populate: { path: 'utilisateur' } }); // Peupler formateur + utilisateur
+      .populate({ path: 'formateur', populate: { path: 'utilisateur' } }); 
     // Vérifier si la formation existe
     if (!formation) {
       return res.status(404).json({ message: "Formation non trouvée" });

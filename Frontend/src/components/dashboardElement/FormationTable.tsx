@@ -56,7 +56,7 @@ export const FormationsTable = () => {
   );
 };
 
-// 📌 Composant helper pour afficher le statut avec un badge stylisé
+// Composant helper pour afficher le statut avec un badge stylisé
 const StatusBadge = ({ status }: { status: string }) => {
   const statusStyles: Record<string, string> = {
     "En Cours": "bg-orange-100 text-orange-700",
@@ -64,7 +64,7 @@ const StatusBadge = ({ status }: { status: string }) => {
     "Replanifier": "bg-gray-100 text-gray-700",
   };
 
-  // ✅ Si le statut est inconnu, on applique un style par défaut
+  //  Si le statut est inconnu, on applique un style par défaut
   const badgeStyle = statusStyles[status] || "bg-red-100 text-red-700";
 
   return (

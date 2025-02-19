@@ -43,44 +43,50 @@ export default function EvaluationForm() {
   const [error, setError] = useState(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  // Récupérer l'URL de l'API
   const API_URL = import.meta.env.VITE_API_LINK || "";
 
   useEffect(() => {
-    console.log("ID formation:", id);
-    console.log("API URL:", API_URL);
-    console.log("Token utilisateur:", token);
-    console.log("VITE_API_LINK:", import.meta.env.VITE_API_LINK);
-
-    if (!id || !token) {
-      setError("Lien invalide. ID ou Token manquant.");
-      setLoading(false);
-      return;
-    }
-
     const fetchCourseDetails = async () => {
-      const apiEndpoint = `${API_URL}/api/formation/GetOneFormation/${id}`;
-      
+      if (!id || !token) {
+        setError("Lien invalide. ID ou Token manquant.");
+        setLoading(false);
+        return;
+      }
+
       try {
-        console.log("URL de l'API appelée :", apiEndpoint);
-        const response = await fetch(apiEndpoint, { headers: { "Accept": "application/json" } });
+        const apiEndpoint = `${API_URL}/api/formation/GetOneFormation/${id}`;
+        
+        // Ensure token is properly formatted in the Authorization header
+        const headers = new Headers({
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
+
+        const response = await fetch(apiEndpoint, { 
+          method: 'GET',
+          headers: headers,
+          credentials: 'include' // Include cookies if needed
+        });
 
         if (!response.ok) {
+          if (response.status === 401) {
+            throw new Error("Session expirée ou non autorisée. Veuillez vous reconnecter.");
+          }
           const errorText = await response.text();
           throw new Error(`Erreur ${response.status}: ${errorText}`);
         }
 
-        // Vérifier si la réponse est JSON
         const contentType = response.headers.get("content-type");
         if (!contentType || !contentType.includes("application/json")) {
-          throw new Error("Réponse API non valide (HTML reçu au lieu de JSON)");
+          throw new Error("Réponse API non valide (format incorrect)");
         }
 
         const data = await response.json();
         setCourseDetails(data);
       } catch (err) {
         console.error("Erreur API:", err);
-        setError(`Impossible de charger les détails du cours: ${err.message}`);
+        setError(err.message);
       } finally {
         setLoading(false);
       }
@@ -90,7 +96,7 @@ export default function EvaluationForm() {
   }, [id, token, API_URL]);
 
   const handleInputChange = (name, value) => {
-    setEvaluation((prev) => ({ ...prev, [name]: value }));
+    setEvaluation(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -98,20 +104,25 @@ export default function EvaluationForm() {
     setSubmitting(true);
 
     try {
-      if (!courseDetails || !courseDetails.mentors || courseDetails.mentors.length === 0) {
+      if (!courseDetails?.mentors?.length) {
         throw new Error("Informations sur le formateur manquantes.");
       }
 
       const submitEndpoint = `${API_URL}/api/evaluation/SubmitEvaluation`;
+      
+      const headers = new Headers({
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      });
 
       const response = await fetch(submitEndpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: headers,
+        credentials: 'include',
         body: JSON.stringify({
           ...evaluation,
           courseId: id,
-          mentorId: courseDetails.mentors[0]._id,
-          token: token,
+          mentorId: courseDetails.mentors[0]._id
         }),
       });
 
@@ -129,6 +140,108 @@ export default function EvaluationForm() {
       setSubmitting(false);
     }
   };
+// export default function EvaluationForm() {
+//   const { id, token } = useParams();
+//   const [courseDetails, setCourseDetails] = useState(null);
+//   const [evaluation, setEvaluation] = useState({});
+//   const [loading, setLoading] = useState(true);
+//   const [submitting, setSubmitting] = useState(false);
+//   const [error, setError] = useState(null);
+//   const [isSubmitted, setIsSubmitted] = useState(false);
+
+//   // Récupérer l'URL de l'API
+//   const API_URL = import.meta.env.VITE_API_LINK || "";
+
+//   useEffect(() => {
+//     console.log("ID formation:", id);
+//     console.log("API URL:", API_URL);
+//     console.log("Token utilisateur:", token);
+//     console.log("VITE_API_LINK:", import.meta.env.VITE_API_LINK);
+
+//     if (!id || !token) {
+//       setError("Lien invalide. ID ou Token manquant.");
+//       setLoading(false);
+//       return;
+//     }
+
+//     const fetchCourseDetails = async () => {
+//       const apiEndpoint = `${API_URL}/api/formation/GetOneFormation/${id}`;
+      
+//       try {
+//         console.log("URL de l'API appelée :", apiEndpoint);
+//         const response = await fetch(apiEndpoint, { 
+//           headers: { 
+//           "Accept": "application/json" ,
+//           "Authorization": `Bearer ${token}`
+//         } });
+
+//         if (!response.ok) {
+//           const errorText = await response.text();
+//           throw new Error(`Erreur ${response.status}: ${errorText}`);
+//         }
+
+//         // Vérifier si la réponse est JSON
+//         const contentType = response.headers.get("content-type");
+//         if (!contentType || !contentType.includes("application/json")) {
+//           throw new Error("Réponse API non valide (HTML reçu au lieu de JSON)");
+//         }
+
+//         const data = await response.json();
+//         setCourseDetails(data);
+//       } catch (err) {
+//         console.error("Erreur API:", err);
+//         setError(`Impossible de charger les détails du cours: ${err.message}`);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+
+//     fetchCourseDetails();
+//   }, [id, token, API_URL]);
+
+//   const handleInputChange = (name, value) => {
+//     setEvaluation((prev) => ({ ...prev, [name]: value }));
+//   };
+
+//   const handleSubmit = async (e) => {
+//     e.preventDefault();
+//     setSubmitting(true);
+
+//     try {
+//       if (!courseDetails || !courseDetails.mentors || courseDetails.mentors.length === 0) {
+//         throw new Error("Informations sur le formateur manquantes.");
+//       }
+
+//       const submitEndpoint = `${API_URL}/api/evaluation/SubmitEvaluation`;
+
+//       const response = await fetch(submitEndpoint, {
+//         method: "POST",
+//         headers: { 
+//           "Content-Type": "application/json" ,
+//           "Authorization": `Bearer ${token}`
+//         },
+//         body: JSON.stringify({
+//           ...evaluation,
+//           courseId: id,
+//           mentorId: courseDetails.mentors[0]._id,
+//           token: token,
+//         }),
+//       });
+
+//       if (!response.ok) {
+//         const errorText = await response.text();
+//         throw new Error(`Erreur ${response.status}: ${errorText}`);
+//       }
+
+//       setIsSubmitted(true);
+//       toast.success("Évaluation soumise avec succès !");
+//     } catch (error) {
+//       console.error("Erreur soumission:", error);
+//       toast.error(`Échec : ${error.message}`);
+//     } finally {
+//       setSubmitting(false);
+//     }
+//   };
 
   if (loading) {
     return (
