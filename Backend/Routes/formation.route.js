@@ -2,7 +2,7 @@ const express = require('express');
 const authenticated = require('../Middlewares/Authmiddleware.js');
 const { createFormation, GetOneFormation, UpdateFormation, GetFormations, DeleteFormation, GetFormationOfMentor } = require('../Controllers/formation.controller.js'); // Removed duplicate DeleteFormation
 const authorizeRoles = require('../Middlewares/RoleMiddleware.js');
-const authorizeSelfGetUpdate = require('../Middlewares/userProfileMiddleware.js');
+const authorizeSelfGetUpdate = require('../Middlewares/selfAccess.js');
 
 const router = express.Router();
 
