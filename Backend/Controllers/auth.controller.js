@@ -87,8 +87,8 @@ const createUser = async (req, res) => {
 
     // Création de l'utilisateur
     const newUser = new Utilisateur({
-        firstName,
-        lastName,
+        nom,
+        prenom,
         email,
         password: hashedPassword,
         role:"Formateur"
