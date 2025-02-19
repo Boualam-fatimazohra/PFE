@@ -1,5 +1,6 @@
 import * as React from "react";
 import { useState, useRef } from "react";
+import { Eye, Download, Trash2, PlusCircle } from "lucide-react";
 interface Step {
   number: string;
   label: string;
@@ -7,8 +8,11 @@ interface Step {
 }
 interface Step2ContentProps {
   formState: any;
+  // listeParticipants: File[];
   setFormState: React.Dispatch<React.SetStateAction<any>>;
-  errors: Record<string, string>;
+  errors: {
+    listeParticipants?: string;
+  };
 }
 
 interface FormSectionProps {
@@ -128,7 +132,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
       }
       
       // Vérifier le type de fichier
-      if (!['image/jpeg', 'image/jpg','image/pdf','image/doc'].includes(file.type)) {
+      if (!['image/jpeg', 'image/jpg','application/pdf','application/msword'].includes(file.type)) {
         alert("Format de fichier non supporté. Utilisez JPG ou JPEG ou PDF ou DOC.");
         return;
       }
@@ -191,11 +195,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
 const Step1Content: React.FC<{
   formState: any;
   setFormState: React.Dispatch<React.SetStateAction<any>>;
-  statusOptions: any[];
-  categoryOptions: any[];
-  levelOptions: any[];
+  statusOptions: { label: string; value: string }[];
+  categoryOptions: { label: string; value: string }[];
+  levelOptions: { label: string; value: string }[];
   errors: Record<string, string>;
-}> = ({ formState, setFormState, statusOptions, categoryOptions, levelOptions, errors }) => {
+}>= ({ formState, setFormState, statusOptions, categoryOptions, levelOptions, errors }) => {
   return (
     <FormSection title="Informations générales">
       <div className="space-y-4">
@@ -262,25 +266,166 @@ const Step1Content: React.FC<{
     </FormSection>
   );
 };
+const Step2Content: React.FC<Step2ContentProps> = ({ formState, setFormState }) => {
+  const [fileList, setFileList] = useState<File[]>(formState.listeParticipants || []);
 
-const Step2Content: React.FC<Step2ContentProps> = ({ 
-  formState, 
-  setFormState,  
-  errors 
-}) => {
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      const newFiles = Array.from(event.target.files);
+      const updatedFileList = [...fileList, ...newFiles];
+
+      setFileList(updatedFileList);
+      setFormState((prevState: any) => ({
+        ...prevState,
+        listeParticipants: updatedFileList,
+      }));
+    }
+  };
+
+  const handleDeleteFile = (index: number) => {
+    const newList = fileList.filter((_, i) => i !== index);
+
+    setFileList(newList);
+    setFormState((prevState: any) => ({
+      ...prevState,
+      listeParticipants: newList,
+    }));
+  };
+
   return (
-    <FormSection title="Participants & Classes">
-      <div className="space-y-4">
-      <FileUpload
-        label="Liste des participantes"
-        onFileSelect={(file) => setFormState({ ...formState, listeParticipants: file })}
-        selectedFile={formState.listeParticipants}
-        error={errors.listeParticipants}
-      />
+    <div className="p-6 border border-gray-300 rounded-lg shadow-md w-full max-w-3xl bg-white">
+      {/* Titre */}
+      <h2 className="text-xl font-bold text-gray-900 mb-4">Participants & Classes</h2>
+
+      {/* Liste des fichiers importés */}
+      <div className="p-4 border border-gray-300 rounded-lg">
+        <div className="flex justify-between items-center mb-3">
+          <label className="font-semibold text-gray-700">Liste des Participants *</label>
+          <input 
+            type="file" 
+            multiple 
+            onChange={handleFileSelect} 
+            accept=".csv,.xlsx"
+            className="hidden"
+            id="fileUpload"
+          />
+          <label htmlFor="fileUpload" className="flex items-center px-4 py-2 bg-purple-500 text-white text-sm rounded-lg cursor-pointer hover:bg-purple-600 transition">
+            <PlusCircle size={18} className="mr-2" /> <span>Enhance List +</span>
+          </label>
+        </div>
+
+        {/* Fichiers ajoutés */}
+        {fileList.length > 0 ? (
+          fileList.map((file, index) => (
+            <div key={index} className="flex justify-between items-center bg-gray-100 p-3 rounded-lg mb-2 shadow-sm">
+              <span className="font-medium text-gray-800">{file.name}</span>
+              <span className="text-gray-600 text-sm">{new Date().toLocaleDateString()}</span>
+              <div className="flex space-x-3">
+                <button onClick={() => window.open(URL.createObjectURL(file))} className="text-gray-700 hover:text-gray-900 transition">
+                  <Eye size={18} />
+                </button>
+                <a href={URL.createObjectURL(file)} download={file.name} className="text-gray-700 hover:text-gray-900 transition">
+                  <Download size={18} />
+                </a>
+                <button onClick={() => handleDeleteFile(index)} className="text-red-500 hover:text-red-700 transition">
+                  <Trash2 size={18} />
+                </button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="border border-dashed border-gray-400 rounded-lg p-6 text-center text-gray-500">
+            <div className="flex flex-col items-center">
+              <svg className="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v12m0 0l3-3m-3 3l-3-3"></path>
+              </svg>
+              <p className="text-sm">Maximum file size: 100MB. Liste Excel ou un fichier CSV</p>
+              <label htmlFor="fileUpload" className="mt-2 inline-block bg-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 rounded-lg cursor-pointer hover:bg-gray-300 transition">
+                Select a file
+              </label>
+            </div>
+          </div>
+        )}
       </div>
-    </FormSection>
+
+     
+    </div>
   );
 };
+
+// const Step2Content: React.FC<Step2ContentProps> = ({ formState, setFormState, errors }) => {
+//   const [fileList, setFileList] = useState<File[]>(formState.listeParticipants || []);
+
+//   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+//     if (event.target.files) {
+//       const newFiles = Array.from(event.target.files);
+//       const updatedFileList = [...fileList, ...newFiles]; // Copie correcte
+
+//       setFileList(updatedFileList);
+//       setFormState((prevState: any) => ({
+//         ...prevState,
+//         listeParticipants: updatedFileList,
+//       }));
+//     }
+//   };
+
+//   const handleDeleteFile = (index: number) => {
+//     const newList = fileList.filter((_, i) => i !== index);
+
+//     setFileList(newList);
+//     setFormState((prevState: any) => ({
+//       ...prevState,
+//       listeParticipants: newList,
+//     }));
+//   };
+
+//   return (
+//     <div className="p-5 border rounded shadow w-full max-w-2xl">
+//       <h2 className="text-xl font-semibold mb-3">Participants & Classes</h2>
+
+//       {/* Liste des fichiers importés */}
+//       <div className="border p-3 rounded mb-3">
+//         <div className="flex justify-between items-center mb-2">
+//           <label className="font-semibold">Liste des Participants *</label>
+//           <input 
+//             type="file" 
+//             multiple 
+//             onChange={handleFileSelect} 
+//             accept=".jpg,.jpeg,.pdf,.doc,.docx"
+//             className="hidden"
+//             id="fileUpload"
+//           />
+//           <label htmlFor="fileUpload" className="flex items-center px-3 py-1 bg-purple-500 text-white rounded cursor-pointer">
+//             <PlusCircle size={16} className="mr-1" /> Ajouter un fichier
+//           </label>
+//         </div>
+
+//         {fileList.length > 0 ? (
+//           fileList.map((file, index) => (
+//             <div key={index} className="flex justify-between items-center bg-gray-100 p-2 rounded mb-2">
+//               <span>{file.name}</span>
+//               <span>{new Date().toLocaleDateString()}</span>
+//               <div className="flex space-x-2">
+//                 <button onClick={() => window.open(URL.createObjectURL(file))}>
+//                   <Eye size={16} />
+//                 </button>
+//                 <a href={URL.createObjectURL(file)} download={file.name}>
+//                   <Download size={16} />
+//                 </a>
+//                 <button onClick={() => handleDeleteFile(index)}>
+//                   <Trash2 size={16} className="text-red-500" />
+//                 </button>
+//               </div>
+//             </div>
+//           ))
+//         ) : (
+//           <p className="text-gray-500 text-sm">Aucun fichier ajouté.</p>
+//         )}
+//       </div>
+//     </div>
+//   );
+// };
+
 
 const Step3Content: React.FC = () => {
   return (
@@ -393,6 +538,7 @@ const FormationModal = () => {
     { number: "3", label: "Publication", active: currentStep === 3 },
     { number: "4", label: "Terminé", active: currentStep === 4 }
   ];
+  
 
   const statusOptions = [
     { label: "En cours", value: "En cours" },

@@ -2,7 +2,6 @@ const Manager = require("../Models/manager.model");
 const bcrypt = require('bcryptjs');
 const { Utilisateur } = require("../Models/utilisateur.model");
 const crypto = require('crypto');
-const bcrypt = require('bcryptjs');
 const  {sendMail}  = require('../Config/auth.js');
 const generateRandomPassword = require("../utils/generateRandomPassword.js");
 
