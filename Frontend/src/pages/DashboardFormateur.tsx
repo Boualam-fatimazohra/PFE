@@ -13,17 +13,28 @@ import { toast, ToastContainer } from 'react-toastify';
 import { EvaluationsTable } from "@/components/dashboardElement/EvaluationTable";
 import { SearchBar } from "@/components/dashboardElement/SearchBar";
 
-// Sample data - you might want to move this to a separate file or fetch from an API
-const formationsData = [
+// Types definitions
+interface Formation {
+  nom: string;
+  dateDebut: string;
+  status: "En Cours" | "Terminé" | "Replanifier";
+}
+
+interface GenerateEvaluationLinkResponse {
+  evaluationLink: string;
+}
+
+// Sample data
+const formationsData: Formation[] = [
   { nom: "Conception d'application mobile", dateDebut: "25/02/2025", status: "En Cours" },
   { nom: "Développement Web", dateDebut: "10/03/2025", status: "Terminé" },
   { nom: "Cybersécurité", dateDebut: "05/04/2025", status: "Replanifier" },
 ];
 
-const DashboardFormateur = () => {
+const DashboardFormateur: React.FC = () => {
   const navigate = useNavigate();
 
-  const generateEvaluationLink = async (courseId) => {
+  const generateEvaluationLink = async (courseId: string): Promise<void> => {
     try {
       const response = await fetch(`${import.meta.env.VITE_API_LINK}/api/evaluation/GenerateEvaluationLink`, {
         method: 'POST',
@@ -38,7 +49,7 @@ const DashboardFormateur = () => {
         throw new Error("Failed to generate evaluation link");
       }
 
-      const { evaluationLink } = await response.json();
+      const { evaluationLink }: GenerateEvaluationLinkResponse = await response.json();
       await navigator.clipboard.writeText(evaluationLink);
       toast.success('Lien d\'évaluation généré et copié dans le presse-papiers');
       toast.info(`Lien d'évaluation : ${evaluationLink}`);
@@ -48,8 +59,13 @@ const DashboardFormateur = () => {
     }
   };
 
-  const handleOpenModal = () => {
+  const handleOpenModal = (): void => {
     navigate("/formationModal");
+  };
+
+  const handleSearch = (searchValue: string): void => {
+    console.log(searchValue);
+    // Implement search functionality here
   };
 
   return (
@@ -64,7 +80,7 @@ const DashboardFormateur = () => {
             <div className="flex justify-between items-center mb-8">
               <h1 className="text-2xl font-bold">Vue d'Ensemble</h1>
               <div className="flex gap-4">
-                <SearchBar onSearch={(value) => console.log(value)} />
+                <SearchBar onSearch={handleSearch} />
                 <button 
                   onClick={handleOpenModal}
                   className="bg-orange-500 text-white px-4 py-2 rounded-md flex items-center space-x-2 hover:bg-orange-600 transition-colors"
@@ -97,7 +113,7 @@ const DashboardFormateur = () => {
                       Découvrir
                     </button>
                   </div>
-                  <FormationsTable data={formationsData} />
+                  <FormationsTable formations={formationsData} />
                 </CardContent>
               </Card>
 
@@ -113,7 +129,7 @@ const DashboardFormateur = () => {
                       Découvrir
                     </button>
                   </div>
-                  <EvaluationsTable />
+                  <EvaluationsTable onGenerateLink={generateEvaluationLink} />
                   <div className="mt-6">
                     <RapportCard />
                   </div>
