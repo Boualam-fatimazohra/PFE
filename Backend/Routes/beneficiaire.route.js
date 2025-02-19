@@ -14,7 +14,7 @@ const upload = require("../utils/upload");
 router.post("/upload", upload.single("file"), uploadBeneficiairesFromExcel);
 
 // Route to create a new Beneficiaire (Must be associated with a Formation)
-router.post("/", createBeneficiaire);
+// router.post("/", createBeneficiaire);
 
 // Route to get all Beneficiaires (with Formation details)
 router.get("/", getAllBeneficiaires);
