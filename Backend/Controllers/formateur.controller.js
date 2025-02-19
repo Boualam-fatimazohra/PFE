@@ -41,8 +41,10 @@ const createFormateur = async (req, res) => {
             password: hashedPassword,
             role: "Formateur"
         });
-
-        await sendMail(email, temporaryPassword);
+          const contenu =`<p>Bonjour,</p>
+                   <p>Votre mot de passe est : <b>${temporaryPassword}</b></p>
+                   <p>Merci de ne pas le partager.</p>`;
+        await sendMail(email,contenu);
         await newUser.save();
 
         // Create Formateur linked to the new user

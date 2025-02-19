@@ -6,7 +6,7 @@ const readExcelFile = (filePath) => {
   const sheet = workbook.Sheets[sheetName]; // Access the sheet
   const data = xlsx.utils.sheet_to_json(sheet); // Convert to JSON
 
-  return data; // Returns an array of objects
+  return data; 
 };
 
 module.exports = readExcelFile;
