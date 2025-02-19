@@ -1,5 +1,6 @@
-// src/components/dashboardElement/DocumentsSection.jsx
 import * as React from "react";
+import { Eye, Download, Trash2 } from 'lucide-react';
+import { Button } from "@/components/ui/button";
 
 interface Document {
   title: string;
@@ -12,51 +13,24 @@ interface DocumentsSectionProps {
 
 const DocumentsSection: React.FC<DocumentsSectionProps> = ({ documents }) => {
   return (
-    <div className="bg-white w-6/12 max-md:w-full">
-      <div className="border border-[color:var(--Neutral-400,#999)] bg-white w-full pt-[15px] pb-[27px] px-3 border-solid">
-        <div className="flex w-full items-stretch gap-5 font-bold flex-wrap justify-between">
-          <div className="text-black text-2xl leading-none my-auto">
-            Kit Formations
-          </div>
-          <button className="self-stretch bg-black min-h-10 gap-[5px] overflow-hidden text-sm text-white whitespace-nowrap text-center leading-none px-5">
-            Importer
-          </button>
-        </div>
-
+    <div className="bg-white p-6 border border-[#999]">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-2xl font-bold">Kit Formations</h3>
+        <Button style={{ backgroundColor: 'black !important', color: 'white !important' }}>Importer</Button>
+      </div>
+      <div className="space-y-4">
         {documents.map((doc, index) => (
-          <React.Fragment key={index}>
-            <div className="border-t-[color:var(--Neutral-200,#DDD)] border-b-[color:var(--Neutral-200,#DDD)] flex w-full items-center gap-[40px_100px] flex-wrap mt-[25px] py-1.5 border-t border-solid border-b">
-              <div className="text-[#333] text-base font-semibold leading-none self-stretch grow shrink w-[178px] my-auto">
-                {doc.title}
-              </div>
-              <div className="text-[#595959] text-[13px] font-semibold leading-loose self-stretch my-auto">
-                {doc.date}
-              </div>
-              <div className="self-stretch flex items-stretch gap-2.5">
-                <button className="p-2">
-                  <img
-                    src="https://cdn.builder.io/api/v1/image/assets/32942b86facf465bad688d8f78f5f3fb/b1d8dbe1266382def8285a9d3331a9bd6047a1d72c58c928c6934eb61deb81ec"
-                    className="w-6 h-6"
-                    alt="View"
-                  />
-                </button>
-                <button className="p-2">
-                  <img
-                    src="https://cdn.builder.io/api/v1/image/assets/32942b86facf465bad688d8f78f5f3fb/b4ab927c22bfd6ae28b7074e12d10c0a8a11127c57e1eb08e72136ec9e01b952"
-                    className="w-6 h-6"
-                    alt="Download"
-                  />
-                </button>
-                <button className="p-2">
-                  <img
-                    src="https://cdn.builder.io/api/v1/image/assets/32942b86facf465bad688d8f78f5f3fb/e678b81cd4194c7e1aaf86995b3d8eae8f8beeebe8486169552b224c44c98331"
-                    className="w-6 h-6"
-                    alt="Delete"
-                  />
-                </button>
+          <div key={index} className="flex items-center justify-between py-3 border-y border-[#DDD]">
+            <span className="font-semibold text-[#333]">{doc.title}</span>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-[#595959] font-semibold">{doc.date}</span>
+              <div className="flex items-center gap-2">
+                <button><Eye size={18} /></button>
+                <button><Download size={18} /></button>
+                <button><Trash2 size={18} /></button>
               </div>
             </div>
-          </React.Fragment>
+          </div>
         ))}
       </div>
     </div>
