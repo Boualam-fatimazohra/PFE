@@ -51,6 +51,7 @@ const createBeneficiaire = async (req, res) => {
   }
 };
 
+// const BeneficiareFormation = require("../Models/BeneficiareFormation.js"); // Assure-toi que c'est le bon chemin
 
 // Get all Beneficiaires (with optional formation details)
 const getAllBeneficiaires = async (req, res) => {
