@@ -72,7 +72,6 @@ const SubmitEvaluation = async (req, res) => {
 const sendEvaluationLinksToBeneficiaries = async (req, res) => {
   try {
     const { beneficiaryIds, formationId } = req.body;
-    // Vérification des entrées
     if (!beneficiaryIds || beneficiaryIds.length === 0) {
       return res.status(400).json({ message: "Aucun ID de bénéficiaire fourni." });
     }
