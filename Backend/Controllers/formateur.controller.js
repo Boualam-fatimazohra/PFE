@@ -1,71 +1,82 @@
-const Formateur=require("../Models/formateur.model.js");
-const Formation=require("../Models/formation.model.js");
+const Formateur = require("../Models/formateur.model.js");
+const Formation = require("../Models/formation.model.js");
 
-const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const { Utilisateur } = require('../Models/utilisateur.model.js');
-const  {sendMail}  = require('../Config/auth.js');
-
-const generateRandomPassword = (length = 12) => {
-  return crypto.randomBytes(Math.ceil(length / 2))
-    .toString('hex')
-    .slice(0, length);
-};
+const { sendMail } = require('../Config/auth.js');
+const generateRandomPassword = require('../utils/generateRandomPassword.js');
 
 const createFormateur = async (req, res) => {
-    const { nom, prenom, email, manager, coordinateur } = req.body;
+    const { nom, prenom, email, numeroTelephone, coordinateur, manager } = req.body;
+
     try {
         // Vérification de l'existence de l'email
         const existingUser = await Utilisateur.findOne({ email });
         if (existingUser) {
             return res.status(400).json({ message: "Cet email est déjà utilisé" });
         }
+
+        const userRole = req.user?.role;
+        console.log(userRole);
+        let assignedManager;
+
+        if (!userRole) {
+            return res.status(403).json({ message: "Forbidden: Only Admins or Managers can create a Formateur (endpoint)" });
+        } else if (userRole === "Manager") {
+            assignedManager = req.user.userId; // Assign Manager's ID
+        } else {
+            assignedManager = manager; // Use manager from request body if Admin
+        }
+
+        // Generate and hash a temporary password
         const temporaryPassword = generateRandomPassword();
         const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
+
+        // Create new user
         const newUser = new Utilisateur({
             nom,
             prenom,
             email,
+            numeroTelephone,
             password: hashedPassword,
             role: "Formateur"
         });
-        await sendMail(email,temporaryPassword);
-
+          const contenu =`<p>Bonjour,</p>
+                   <p>Votre mot de passe est : <b>${temporaryPassword}</b></p>
+                   <p>Merci de ne pas le partager.</p>`;
+        await sendMail(email,contenu);
         await newUser.save();
-        // Création du formateur lié
+
+        // Create Formateur linked to the new user
         const newFormateur = new Formateur({
             utilisateur: newUser._id,
-            manager: manager,
-            coordinateur: coordinateur
+            manager: assignedManager, 
+            coordinateur
         });
+
         await newFormateur.save();
-          console.log(" Email envoyé");     // Préparation de la réponse
-        const userResponse = {
-            _id: newUser._id,
-            prenom: newUser.prenom,
-            nom: newUser.nom,
-            email: newUser.email,
-            role: newUser.role,
-            phoneNumber: newUser.phoneNumber
-        };
+        console.log("Email envoyé");
 
         res.status(201).json({ 
             message: "Formateur créé avec succès",
-            user: userResponse,
-            temporaryPassword: temporaryPassword // Envoyer le mot de passe non hashé
+            user: newFormateur,
         });
 
     } catch (error) {
         console.error("Erreur:", error);
+        
+        // Rollback user creation if something fails
         if (typeof newUser !== "undefined") {
-          await Utilisateur.deleteOne({ _id: newUser._id });
-      }
+            await Utilisateur.deleteOne({ _id: newUser._id });
+        }
+
         res.status(500).json({ 
             message: "Erreur serveur",
             error: error.message 
         });
     }
 };
+
 
 
 const getFormateurs = async (req, res) => {

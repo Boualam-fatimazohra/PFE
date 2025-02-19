@@ -1,24 +1,20 @@
 const Manager = require("../Models/manager.model");
+const bcrypt = require('bcryptjs');
 const { Utilisateur } = require("../Models/utilisateur.model");
 const crypto = require('crypto');
-const bcrypt = require('bcryptjs');
 const  {sendMail}  = require('../Config/auth.js');
+const generateRandomPassword = require("../utils/generateRandomPassword.js");
 
-const generateRandomPassword = (length = 12) => {
-  return crypto.randomBytes(Math.ceil(length / 2))
-    .toString('hex')
-    .slice(0, length);
-};
 // Create a new Manager
 const createManager = async (req, res) => {
     try {
-        const { nom,prenom, email, numeroTelephone, role } = req.body;
-        if (!email || !role) {
+        const { nom,prenom, email, numeroTelephone, password } = req.body;
+        if (!email || !password) {
             return res.status(400).json({ message: "Email, password, and role are required" });
         }
-        if (role !== "Manager") {
+        /*if (role !== "Manager") {
             return res.status(400).json({ message: "Role must be 'Manager'" });
-        }
+        }*/
         const existingUser = await Utilisateur.findOne({ email });
         if (existingUser) {
             return res.status(400).json({ message: "Utilisateur with this email already exists" });
@@ -32,8 +28,8 @@ const createManager = async (req, res) => {
             prenom,
             email,
             numeroTelephone,
-            password:hashedPassword,
-            role
+            password: hashedPassword,
+            role: "Manager"
         });
         await newUtilisateur.save();
         // Create the manager entry with the utilisateur
@@ -89,7 +85,6 @@ const updateManager = async (req, res) => {
             return res.status(404).json({ message: "Manager not found" });
         }
 
-        // Find the associated utilisateur and update fields
         const updatedUtilisateur = await Utilisateur.findByIdAndUpdate(
             existingManager.utilisateur,
             { nom, prenom, email, numeroTelephone,password},
