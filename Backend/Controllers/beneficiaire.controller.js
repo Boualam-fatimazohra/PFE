@@ -2,7 +2,7 @@ const Beneficiaire = require("../Models/beneficiaire.model");
 const Formation = require("../Models/formation.model.js");
 const readExcelFile = require("../utils/excelReader");
 const XLSX = require("xlsx");
-const BeneficiareFormation = require("../Models/BeneficiareFormation.model.js"); // Assure-toi que c'est le bon chemin
+// const BeneficiareFormation = require("../Models/BeneficiareFormation.js"); // Assure-toi que c'est le bon chemin
 
 // Get all Beneficiaires (with optional formation details)
 const getAllBeneficiaires = async (req, res) => {
@@ -121,14 +121,14 @@ const uploadBeneficiairesFromExcel = async (req, res) => {
     
 
     // Insert into MongoDB
-    const insertedBeneficiaires = await Beneficiaire.insertMany(beneficiaires);
+    // const insertedBeneficiaires = await Beneficiaire.insertMany(beneficiaires);
 
-    const beneficiareFormations = insertedBeneficiaires.map(b => ({
-      formation: idFormation,
-      beneficiaires: b._id, // Associer le bénéficiaire
-      confirmationAppel: false,
-      confirmationEmail: false,
-    }));
+    // const beneficiareFormations = insertedBeneficiaires.map(b => ({
+    //   formation: idFormation,
+    //   beneficiaires: b._id, // Associer le bénéficiaire
+    //   confirmationAppel: false,
+    //   confirmationEmail: false,
+    // }));
 
     // Insérer les instances de BeneficiareFormation
     const insertedBeneficiareFormations = await BeneficiareFormation.insertMany(beneficiareFormations);
@@ -163,11 +163,9 @@ const uploadBeneficiairesFromExcel = async (req, res) => {
 
 // Export the functions for use in routes
 module.exports = {
-    createBeneficiaire,
     getAllBeneficiaires,
     getBeneficiaireById,
     updateBeneficiaire,
     deleteBeneficiaire,
-    uploadBenificiaireExcel,
     uploadBeneficiairesFromExcel
 };
