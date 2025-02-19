@@ -5,6 +5,9 @@ import { Footer } from "@/components/layout/Footer";
 import { Card } from "@/components/ui/card";
 import { Search, Edit, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
 import {
 Pagination,
 PaginationContent,
@@ -37,7 +40,11 @@ const [formations, setFormations] = useState<FormationItem[]>([
 { id: 1, title: "AWS : Développement et déploiement", status: "À venir" },
 { id: 2, title: "Conception d'application mobile", status: "Terminé" },
 ]);
+const navigate = useNavigate();
 
+  const handleOpenModal = () => {
+    navigate("/formationModal");
+  };
 const [isModalOpen, setIsModalOpen] = useState(false);
 const [selectedFormation, setSelectedFormation] = useState<FormationItem | null>(null);
 const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -117,9 +124,13 @@ onClick={handleRetourClick}
 <>
 <div className="flex justify-between items-center mb-8">
 <h1 className="text-2xl font-bold">Mes Formations</h1>
-<button className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors">
-Créer une formation
-</button>
+<button 
+                  onClick={handleOpenModal}
+                  className="bg-orange-500 text-white px-4 py-2 rounded-md flex items-center space-x-2 hover:bg-orange-600 transition-colors"
+                >
+                  <Plus size={20} />
+                  <span>Créer une formation</span>
+                </button>
 </div>
 
 <div className="flex items-center justify-between mb-6">
