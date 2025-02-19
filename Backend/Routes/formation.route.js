@@ -4,6 +4,7 @@ const { createFormation, GetOneFormation, UpdateFormation, GetFormations, Delete
 const authorizeRoles = require('../Middlewares/RoleMiddleware.js');
 const authorizeSelfGetUpdate = require('../Middlewares/selfAccess.js');
 const upload = require('../Middlewares/uploadMiddleware');
+const authorizeNestedOwnership = require('../Middlewares/NestedOwnershipMiddleware.js')
 
 const router = express.Router();
 
@@ -17,7 +18,12 @@ router.get('/GetFormations', authenticated, GetFormations);
 router.delete('/DeleteFormation/:id', authenticated, authorizeRoles('Admin', 'Manager'), DeleteFormation);
 
 // Route to update a formation by ID 
-router.put('/UpdateFormation/:id', authenticated, authorizeRoles('Admin', 'Manager'), UpdateFormation); 
+router.put('/UpdateFormation/:id', 
+    authenticated, 
+    authorizeRoles('Admin', 'Manager'),
+    authorizeNestedOwnership('Formation', 'formateur.utilisateur'),
+    UpdateFormation
+); 
 
 // Route to get one specific formation by ID
 router.get('/GetOneFormation/:id',authenticated, GetOneFormation);
