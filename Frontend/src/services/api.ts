@@ -11,6 +11,7 @@ interface Formation {
 }
 const API_URL = 'http://localhost:5000/api/formation/GetFormations';
 
+
 const ADD_URL = 'http://localhost:5000/api/formation/Addformation';
 
 // Helper function to get the token from cookies

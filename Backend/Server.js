@@ -39,6 +39,8 @@ app.use("/api/beneficiaires", beneficiaireRoutes);
 app.use("/api/coordinateurs", coordinateurRoutes);
 app.use("/api/managers", managerRoutes);
 app.use("/api/formateur", formateurRoutes);
+app.use("/api/formation/Addformation", formationRoutes);
+
 
 // Lancement du serveur
 app.listen(PORT, () => {

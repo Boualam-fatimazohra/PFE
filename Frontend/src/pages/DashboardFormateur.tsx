@@ -13,7 +13,10 @@ import { Share2 } from "lucide-react";
 import { toast, ToastContainer } from 'react-toastify';
 import { EvaluationsTable } from "@/components/dashboardElement/EvaluationTable";
 import { SearchBar } from "@/components/dashboardElement/SearchBar";
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 
 // 📌 Exemple de données
 const formationsData = [
@@ -23,6 +26,7 @@ const formationsData = [
 ];
 const DashboardFormateur = () => {
   const navigate = useNavigate();
+<<<<<<< Updated upstream
   const generateEvaluationLink = async (courseId) => {
     try {
       const response = await fetch(`${import.meta.env.VITE_API_LINK}/api/evaluation/GenerateEvaluationLink`, {
@@ -45,6 +49,9 @@ const DashboardFormateur = () => {
   }
 
 
+=======
+
+>>>>>>> Stashed changes
   const handleOpenModal = () => {
     navigate("/formationModal");
   };
@@ -82,6 +89,7 @@ const DashboardFormateur = () => {
                 <CardContent className="p-6">
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-semibold">Mes Formations</h2>
+<<<<<<< Updated upstream
                         <button 
                         className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors" 
                         onClick={() => navigate("/formateur/mesformation")}
@@ -111,19 +119,36 @@ const DashboardFormateur = () => {
 
 
 {/* 
+=======
+                    <button className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors">
+                      Découvrir
+                    </button>
+                  </div>
+                  <FormationsTable />
+                </CardContent>
+              </Card>
+
+>>>>>>> Stashed changes
               <Card>
                 <CardContent className="p-6">
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-semibold">Évaluations</h2>
+<<<<<<< Updated upstream
                     <button className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors" >
                   Découvrir
                 </button>
+=======
+                    <button className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors">
+                      Découvrir
+                    </button>
+>>>>>>> Stashed changes
                   </div>
 
                   <div className="space-y-4">
                     <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
                       <span>Conception d'application mobile</span>
                       <span className="text-orange-500">En Cours</span>
+<<<<<<< Updated upstream
                       <button
                           onClick={() => generateEvaluationLink(course._id)}
                           className="w-full flex items-center justify-center space-x-2 bg-orange-500 hover:bg-orange-600 text-white transition-colors duration-200"
@@ -132,13 +157,20 @@ const DashboardFormateur = () => {
                           <span>Generate Evaluation Link</span>
                       </button>
 
+=======
+                      <GenerateLink />
+>>>>>>> Stashed changes
                     </div>
                   </div>
                   <div className="mt-6">
                     <RapportCard />
                   </div>
                 </CardContent>
+<<<<<<< Updated upstream
               </Card> */}
+=======
+              </Card>
+>>>>>>> Stashed changes
             </div>
 
             {/* Kit Formateur */}
