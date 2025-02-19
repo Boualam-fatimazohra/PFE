@@ -7,7 +7,7 @@ const { sendMail } = require('../Config/auth.js');
 const generateRandomPassword = require('../utils/generateRandomPassword.js');
 
 const createFormateur = async (req, res) => {
-    const { nom, prenom, email, numeroTelephone, coordinateur, manager } = req.body;
+    const { nom, prenom, email, numeroTelephone, password, coordinateur, manager } = req.body;
 
     try {
         // Vérification de l'existence de l'email
@@ -30,7 +30,7 @@ const createFormateur = async (req, res) => {
 
         // Generate and hash a temporary password
         const temporaryPassword = generateRandomPassword();
-        const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
+        const hashedPassword = await bcrypt.hash(password, 10);
 
         // Create new user
         const newUser = new Utilisateur({
@@ -102,7 +102,7 @@ const getFormateurs = async (req, res) => {
       const { nom, prenom, email } = req.body;
   
       // Check if at least one field is provided
-      if (!firstName && !lastName && !email) {
+      if (!nom && !prenom && !email) {
         return res.status(400).json({ message: "At least one field is required for update." });
       }
   
