@@ -13,7 +13,7 @@ const beneficiaireSchema = new mongoose.Schema({
     etablissement:{type:String,required:false},
     profession:{type:String,required:false,enum:["Sans Emploi","Avec Emploi","Etudiant"]},
     isBlack: { type: Boolean, default: false },
-    isSuturate: { type: Boolean, default: false },
+    isSaturate: { type: Boolean, default: false },
     nationalite: {type:String,required:true},
   }, { timestamps: true });
 
