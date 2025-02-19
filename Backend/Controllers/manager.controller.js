@@ -2,7 +2,6 @@ const Manager = require("../Models/manager.model");
 const bcrypt = require('bcryptjs');
 const { Utilisateur } = require("../Models/utilisateur.model");
 const crypto = require('crypto');
-const bcrypt = require('bcryptjs');
 const  {sendMail}  = require('../Config/auth.js');
 const generateRandomPassword = require("../utils/generateRandomPassword.js");
 
@@ -21,7 +20,7 @@ const createManager = async (req, res) => {
             return res.status(400).json({ message: "Utilisateur with this email already exists" });
         }
         const temporaryPassword = generateRandomPassword();
-        const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
+        const hashedPassword = await bcrypt.hash(password, 10);
         await sendMail(email,temporaryPassword);
 
         const newUtilisateur = new Utilisateur({
@@ -76,19 +75,16 @@ const getManagerById = async (req, res) => {
     }
 };
 
-// Update Manager
 const updateManager = async (req, res) => {
     try {
         const { id } = req.params;
         const { nom, prenom, email,numeroTelephone,password} = req.body;
 
-        // Find the existing manager
         const existingManager = await Manager.findById(id);
         if (!existingManager) {
             return res.status(404).json({ message: "Manager not found" });
         }
 
-        // Find the associated utilisateur and update fields
         const updatedUtilisateur = await Utilisateur.findByIdAndUpdate(
             existingManager.utilisateur,
             { nom, prenom, email, numeroTelephone,password},

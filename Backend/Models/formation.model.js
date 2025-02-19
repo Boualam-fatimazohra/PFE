@@ -3,12 +3,12 @@ const mongoose = require('mongoose');
 const formationSchema = new mongoose.Schema({
   
   nom: { type: String, required: true },
-  dateDebut: { type: Date, required: true },
-  dateFin: { type: Date, required: true },
+  dateDebut: { type: Date, required: false },
+  dateFin: { type: Date, required: false },
   description :{type:String,required:false,default:"Aucun description"},
   lienInscription: { type: String },
   status: { type: String, default: "Avenir", enum: ["En Cours", "Terminé", "Avenir"] }, // Fixed enum values spelling
-  tags: { type: String, required: true },
+  tags: { type: String, required: false },
   tauxSatisfaction: { type: Number, min: 0, max: 100, required: false },
   formateur: { type: mongoose.Schema.Types.ObjectId, ref: "Formateur", required: true },
   // todo : définir les valeur de niveau et categorie

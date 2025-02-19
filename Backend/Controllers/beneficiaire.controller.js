@@ -51,6 +51,7 @@ const createBeneficiaire = async (req, res) => {
   }
 };
 
+// const BeneficiareFormation = require("../Models/BeneficiareFormation.js"); // Assure-toi que c'est le bon chemin
 
 // Get all Beneficiaires (with optional formation details)
 const getAllBeneficiaires = async (req, res) => {
@@ -171,7 +172,14 @@ const uploadBeneficiairesFromExcel = async (req, res) => {
     
 
     // Insert into MongoDB
-    const insertedBeneficiaires = await Beneficiaire.insertMany(beneficiaires);
+    // const insertedBeneficiaires = await Beneficiaire.insertMany(beneficiaires);
+
+    // const beneficiareFormations = insertedBeneficiaires.map(b => ({
+    //   formation: idFormation,
+    //   beneficiaires: b._id, // Associer le bénéficiaire
+    //   confirmationAppel: false,
+    //   confirmationEmail: false,
+    // }));
 
     res.status(200).json({ message: "Beneficiaires uploaded successfully", data: insertedBeneficiaires });
   } catch (error) {
@@ -204,11 +212,9 @@ const uploadBenificiaireExcel = async (req, res) => {
 
 // Export the functions for use in routes
 module.exports = {
-    createBeneficiaire,
     getAllBeneficiaires,
     getBeneficiaireById,
     updateBeneficiaire,
     deleteBeneficiaire,
-    uploadBenificiaireExcel,
     uploadBeneficiairesFromExcel
 };
