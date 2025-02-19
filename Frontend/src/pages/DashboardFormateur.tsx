@@ -8,25 +8,21 @@ import { FormationsTable } from "@/components/dashboardElement/FormationTable";
 import KitFormateur from "@/components/dashboardElement/KitFormateur";
 import RapportCard from "@/components/dashboardElement/RapportCard";
 import { FormationProvider } from "@/contexts/FormationContext";
-import { Plus } from "lucide-react";
-import { Share2 } from "lucide-react";
+import { Plus, Share2 } from "lucide-react";
 import { toast, ToastContainer } from 'react-toastify';
 import { EvaluationsTable } from "@/components/dashboardElement/EvaluationTable";
 import { SearchBar } from "@/components/dashboardElement/SearchBar";
-<<<<<<< Updated upstream
 
-=======
->>>>>>> Stashed changes
-
-// 📌 Exemple de données
+// Sample data - you might want to move this to a separate file or fetch from an API
 const formationsData = [
-  { nom: "Conception d'application mobile", dateDebut: "25/02/2025", status: "En Cours" as const },
-  { nom: "Développement Web", dateDebut: "10/03/2025", status: "Terminé" as const },
-  { nom: "Cybersécurité", dateDebut: "05/04/2025", status: "Replanifier" as const },
+  { nom: "Conception d'application mobile", dateDebut: "25/02/2025", status: "En Cours" },
+  { nom: "Développement Web", dateDebut: "10/03/2025", status: "Terminé" },
+  { nom: "Cybersécurité", dateDebut: "05/04/2025", status: "Replanifier" },
 ];
+
 const DashboardFormateur = () => {
   const navigate = useNavigate();
-<<<<<<< Updated upstream
+
   const generateEvaluationLink = async (courseId) => {
     try {
       const response = await fetch(`${import.meta.env.VITE_API_LINK}/api/evaluation/GenerateEvaluationLink`, {
@@ -36,34 +32,38 @@ const DashboardFormateur = () => {
         },
         body: JSON.stringify({ courseId }),
         credentials: 'include',
-      })
-      if (!response.ok) throw new Error("Failed to generate evaluation link")
-      const { evaluationLink } = await response.json()
-      navigator.clipboard.writeText(evaluationLink)
-      toast.success('Evaluation link generated and copied to clipboard')
-      toast.info(`Evaluation link: ${evaluationLink}`)
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate evaluation link");
+      }
+
+      const { evaluationLink } = await response.json();
+      await navigator.clipboard.writeText(evaluationLink);
+      toast.success('Lien d\'évaluation généré et copié dans le presse-papiers');
+      toast.info(`Lien d'évaluation : ${evaluationLink}`);
     } catch (error) {
-      console.error("Error generating evaluation link:", error)
-      toast.error('Failed to generate evaluation link. Please try again.')
+      console.error("Error generating evaluation link:", error);
+      toast.error('Échec de la génération du lien d\'évaluation. Veuillez réessayer.');
     }
-  }
+  };
 
-
-=======
-
->>>>>>> Stashed changes
   const handleOpenModal = () => {
     navigate("/formationModal");
   };
+
   return (
     <FormationProvider>
       <div className="min-h-screen flex flex-col">
         <DashboardHeader />
+        <ToastContainer />
+        
         <main className="flex-grow bg-gray-50">
           <div className="container mx-auto px-4 py-8">
+            {/* Header Section */}
             <div className="flex justify-between items-center mb-8">
               <h1 className="text-2xl font-bold">Vue d'Ensemble</h1>
-              <div className="flex justify-between">
+              <div className="flex gap-4">
                 <SearchBar onSearch={(value) => console.log(value)} />
                 <button 
                   onClick={handleOpenModal}
@@ -75,7 +75,7 @@ const DashboardFormateur = () => {
               </div>
             </div>
 
-            {/* Cartes statistiques */}
+            {/* Statistics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               <StatsCard title="Total Bénéficiaires" value={250} />
               <StatsCard title="Total Formations" value={64} />
@@ -83,100 +83,49 @@ const DashboardFormateur = () => {
               <StatsCard title="Satisfaction moyenne" value="95%" />
             </div>
 
-            {/* Mes Formations et Évaluations */}
+            {/* Formations and Evaluations Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              {/* Formations Card */}
               <Card>
                 <CardContent className="p-6">
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-semibold">Mes Formations</h2>
-<<<<<<< Updated upstream
-                        <button 
-                        className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors" 
-                        onClick={() => navigate("/formateur/mesformation")}
-                      >
-                        Découvrir
-                      </button>
-                          </div>
-                  <FormationsTable />
-                </CardContent>
-              </Card>
-              {/* Évaluations */}
-              <Card>
-  <CardContent className="p-6">
-    <div className="flex justify-between items-center mb-4">
-      <h2 className="text-xl font-semibold">Évaluations</h2>
-      <button 
-        className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors"
-        onClick={() => navigate("/FormulaireEvaluation")}
-      >
-        Découvrir
-      </button>
-    </div>
-
-    <EvaluationsTable />
-  </CardContent>
-</Card>
-
-
-{/* 
-=======
-                    <button className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors">
+                    <button 
+                      className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors"
+                      onClick={() => navigate("/formateur/mesformation")}
+                    >
                       Découvrir
                     </button>
                   </div>
-                  <FormationsTable />
+                  <FormationsTable data={formationsData} />
                 </CardContent>
               </Card>
 
->>>>>>> Stashed changes
+              {/* Evaluations Card */}
               <Card>
                 <CardContent className="p-6">
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-semibold">Évaluations</h2>
-<<<<<<< Updated upstream
-                    <button className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors" >
-                  Découvrir
-                </button>
-=======
-                    <button className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors">
+                    <button 
+                      className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors"
+                      onClick={() => navigate("/FormulaireEvaluation")}
+                    >
                       Découvrir
                     </button>
->>>>>>> Stashed changes
                   </div>
-
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
-                      <span>Conception d'application mobile</span>
-                      <span className="text-orange-500">En Cours</span>
-<<<<<<< Updated upstream
-                      <button
-                          onClick={() => generateEvaluationLink(course._id)}
-                          className="w-full flex items-center justify-center space-x-2 bg-orange-500 hover:bg-orange-600 text-white transition-colors duration-200"
-                        >
-                          <Share2 className="w-5 h-5" />
-                          <span>Generate Evaluation Link</span>
-                      </button>
-
-=======
-                      <GenerateLink />
->>>>>>> Stashed changes
-                    </div>
-                  </div>
+                  <EvaluationsTable />
                   <div className="mt-6">
                     <RapportCard />
                   </div>
                 </CardContent>
-<<<<<<< Updated upstream
-              </Card> */}
-=======
               </Card>
->>>>>>> Stashed changes
             </div>
 
-            {/* Kit Formateur */}
+            {/* Kit Formateur Section */}
             <KitFormateur />
           </div>
         </main>
+        
         <Footer />
       </div>
     </FormationProvider>
