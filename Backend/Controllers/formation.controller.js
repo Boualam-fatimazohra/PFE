@@ -117,37 +117,7 @@ const DeleteFormation = async (req, res) => {
   }
 };
 // fin  : deleteFormation par id 
-// debut : récupérer les formation d'un seule formateur 
-const GetFormationOfMentor = async (req, res) => {
-  try {
-    // Get the mentor's userId from the cookie
-    const mentorId = req.user?.userId;
-    if (!mentorId) {
-      return res.status(401).json({ message: "Utilisateur non authentifié" });
-    }
 
-    // Find the formateur using the mentorId (utilisateur)
-    const formateur = await Formateur.findOne({ utilisateur: mentorId });
-
-    // Check if the formateur exists
-    if (!formateur) {
-      return res.status(404).json({ message: "Formateur non trouvé" });
-    }
-
-    // Find the formations by formateur ID (this will be the formateur reference in the 'Formation' schema)
-    const formations = await Formation.find({ formateur: formateur._id });
-
-    // Check if formations are found
-    if (formations.length === 0) {
-      return res.status(404).json({ message: "Aucune formation trouvée pour ce formateur" });
-    }
-
-    // Return the formations associated with the formateur
-    res.status(200).json(formations);
-  } catch (error) {
-    res.status(500).json({ message: 'Erreur lors de la récupération des formations', error: error.message });
-  }
-};
 
 // fin:récupérer les formations d'un seule formateur
-module.exports = { createFormation, GetFormations, GetOneFormation, UpdateFormation,GetFormationOfMentor,DeleteFormation };
+module.exports = { createFormation, GetFormations, GetOneFormation, UpdateFormation,DeleteFormation };
