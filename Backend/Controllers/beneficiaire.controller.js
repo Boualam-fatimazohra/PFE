@@ -206,6 +206,7 @@ const deleteBeneficiaire = async (req, res) => {
 // Upload beinificiaire excel data directly to database
 
 const uploadBeneficiairesFromExcel = async (req, res) => {
+  const idFormation=req.body;
   try {
     // Vérifier que idFormation est présent et valide
     const idFormation = req.body.idFormation; // Assurez-vous que c'est bien dans le body
