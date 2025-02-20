@@ -1,5 +1,6 @@
 const Formateur = require("../Models/formateur.model.js");
 const Formation = require("../Models/formation.model.js");
+const Manager = require("../Models/manager.model.js");
 
 const bcrypt = require('bcryptjs');
 const { Utilisateur } = require('../Models/utilisateur.model.js');
@@ -7,7 +8,7 @@ const { sendMail } = require('../Config/auth.js');
 const generateRandomPassword = require('../utils/generateRandomPassword.js');
 
 const createFormateur = async (req, res) => {
-    const { nom, prenom, email, numeroTelephone, coordinateur, manager } = req.body;
+    const { nom, prenom, email, numeroTelephone,coordinateur, manager } = req.body;
 
     try {
         // Vérification de l'existence de l'email
@@ -25,7 +26,17 @@ const createFormateur = async (req, res) => {
         } else if (userRole === "Manager") {
             assignedManager = req.user.userId; // Assign Manager's ID
         } else {
-            assignedManager = manager; // Use manager from request body if Admin
+            // Verify if the provided manager exists when Admin is creating
+            if (!manager) {
+              return res.status(400).json({ message: "Manager ID is required when Admin creates a Formateur" });
+            }
+            
+            const managerExists = await Manager.findOne({ utilisateur: manager });
+            if (!managerExists) {
+                return res.status(400).json({ message: "Specified manager does not exist" });
+            }
+            
+            assignedManager = manager;
         }
 
         // Generate and hash a temporary password
@@ -104,7 +115,7 @@ const getFormateurs = async (req, res) => {
       const { nom, prenom, email } = req.body;
   
       // Check if at least one field is provided
-      if (!firstName && !lastName && !email) {
+      if (!nom && !prenom && !email) {
         return res.status(400).json({ message: "At least one field is required for update." });
       }
   
@@ -149,5 +160,37 @@ const getFormateurs = async (req, res) => {
       res.status(500).json({ message: "Erreur serveur", error: error.message });
     }
   };
+
+  // debut : récupérer les formation d'un seule formateur 
+const GetFormateurFormations = async (req, res) => {
+  try {
+    // Get the mentor's userId from the cookie
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ message: "Utilisateur non authentifié" });
+    }
+
+    // Find the formateur using the userId (utilisateur)
+    const formateur = await Formateur.findOne({ utilisateur: userId });
+
+    // Check if the formateur exists
+    if (!formateur) {
+      return res.status(404).json({ message: "Formateur non trouvé" });
+    }
+
+    // Find the formations by formateur ID (this will be the formateur reference in the 'Formation' schema)
+    const formations = await Formation.find({ formateur: formateur._id });
+
+    // Check if formations are found
+    if (formations.length === 0) {
+      return res.status(404).json({ message: "Aucune formation trouvée pour ce formateur" });
+    }
+
+    // Return the formations associated with the formateur
+    res.status(200).json(formations);
+  } catch (error) {
+    res.status(500).json({ message: 'Erreur lors de la récupération des formations', error: error.message });
+  }
+};
   
-  module.exports = { createFormateur, getFormateurs, getFormateurById, updateFormateur, deleteFormateur };
+  module.exports = { createFormateur, getFormateurs, getFormateurById, updateFormateur, deleteFormateur, GetFormateurFormations };
