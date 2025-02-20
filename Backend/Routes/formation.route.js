@@ -1,6 +1,6 @@
 const express = require('express');
 const authenticated = require('../Middlewares/Authmiddleware.js');
-const { createFormation, GetOneFormation, UpdateFormation, GetFormations, DeleteFormation, GetFormationOfMentor } = require('../Controllers/formation.controller.js'); // Removed duplicate DeleteFormation
+const { createFormation, GetOneFormation, UpdateFormation, GetFormations, DeleteFormation, GetFormationOfMentor ,getNombreFormationsTerminees} = require('../Controllers/formation.controller.js'); // Removed duplicate DeleteFormation
 const authorizeRoles = require('../Middlewares/RoleMiddleware.js');
 const authorizeSelfGetUpdate = require('../Middlewares/selfAccess.js');
 const upload = require('../utils/uploadImage');
@@ -18,5 +18,5 @@ router.put('/UpdateFormation/:id', authenticated, authorizeRoles('Admin', 'Manag
 // Route to get one specific formation by ID
 router.get('/GetOneFormation/:id',authenticated, GetOneFormation);
 router.get('/GetFormationOfMentor', authenticated, GetFormationOfMentor);
-
+router.get('/getNombreFormationsTerminees/:formateurId',getNombreFormationsTerminees);
 module.exports = router;

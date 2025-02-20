@@ -162,7 +162,7 @@ const DeleteFormation = async (req, res) => {
 // debut : récupérer les formation d'un seule formateur 
 const GetFormationOfMentor = async (req, res) => {
   try {
-    const mentorId = req.user?.userId;
+    const mentorId = req.body.idFormateur;
     if (!mentorId) {
       return res.status(401).json({ message: "Utilisateur non authentifié" });
     }
@@ -181,10 +181,13 @@ const GetFormationOfMentor = async (req, res) => {
   }
 };
 // debut : fonction qui retourne le nombre des formation d'un formateur
-const getNombreFormationsTerminees = async () => {
+const getNombreFormationsTerminees = async (req, res) => {
   const formateurId = req.params.formateurId;
+  console.log("voici l'id du formateur",formateurId);
   try {
+    if(!formateurId) return res.status(401).json({ message: "Utilisateur non authentифé" });
     const count = await Formation.countDocuments({ formateur: formateurId, status: "Terminé" });
+    if(!count) return res.status(404).json({ message: "Aucune formation trouvée pour ce formateur" });
     return count;
   } catch (error) {
     console.error("Erreur lors du comptage des formations :", error);
