@@ -78,7 +78,7 @@ const createUser = async (req, res) => {
             return res.status(409).json({ message: "Cet email est déjà utilisé" });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10); // Salt rounds = 10
+        const hashedPassword = await bcrypt.hash(password, 10); 
 
     // Création de l'utilisateur
     const newUser = new Utilisateur({
