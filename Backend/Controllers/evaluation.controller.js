@@ -101,7 +101,6 @@ const sendEvaluationLinksToBeneficiaries = async (req, res) => {
         // Générer un token et envoyer l'email
         const token = await sendEvaluationLinkWithToken(email, formationId);
         console.log(`Lien envoyé à ${email} avec le token : ${token}`);
-
         const beneficiaireFormation = await BeneficiareFormation.findOneAndUpdate(
             { 
               formation: new mongoose.Types.ObjectId(formationId), 
@@ -120,22 +119,17 @@ const sendEvaluationLinksToBeneficiaries = async (req, res) => {
         console.error(`Erreur lors de l'envoi du lien à ${email}:`, error.message);
       }
     });
-
     // Attendre que toutes les opérations soient terminées
     await Promise.all(updatePromises);
-
     return res.status(200).json({ message: "Les liens d'évaluation ont été envoyés." });
-
   } catch (error) {
     console.error("Erreur lors de l'envoi des liens d'évaluation :", error);
     return res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
-
-
 const getLastEvaluation = async (req, res) => {
     console.log("debut de la fonction getLastEvaluation");
-    try {
+    try { 
     const evaluation = await Evaluation.findOne();
     console.log("evaluation ::: ", evaluation); // Affiche l'évaluation dans la console
     if (!evaluation) {
@@ -147,53 +141,9 @@ const getLastEvaluation = async (req, res) => {
       console.log("Erreur:", error);
       res.status(500).json({ error: "Erreur lors de la récupération de l'évaluation" });
     }
-  };
-//   exports.importEvaluationsFromExcel = async (filePath) => {
-//     try {
-//         const data = readExcelFile(filePath); 
-
-//         const evaluations = data.map((row) => ({
-//             formationTitle: row["Titre Formation"] || "Développement C# Fundamentals et Applications Modernes",
-//             formationDate: row["Date Formation"] || "12, 13 & 14 Février 2025",
-//             contentEvaluation: {
-//                 qualiteContenuFormation: row["Qualité Contenu Formation"] || 3,
-//                 utiliteCompetencesAcquises: row["Utilité Compétences Acquises"] || 3,
-//                 alignementBesoinsProf: row["Alignement Besoins Pro"] || 3,
-//                 structureFormation: row["Structure Formation"] || 3,
-//                 niveauDifficulte: row["Niveau Difficulté"] || 3
-//             },
-//             pedagogy: {
-//                 qualitePedagogique: row["Qualité Pédagogique"] || 3,
-//                 expertiseFormateur: row["Expertise Formateur"] || 3,
-//                 qualiteSupportFormation: row["Qualité Support Formation"] || 3,
-//                 qualiteExercices: row["Qualité Exercices"] || 3,
-//                 adaptationNiveauParticipants: row["Adaptation Niveau Participants"] || 3
-//             },
-//             materialConditions: {
-//                 confortSalle: row["Confort Salle"] || 3,
-//                 accessibiliteLieu: row["Accessibilité Lieu"] || 3,
-//                 horaires: row["Horaires"] || 3,
-//                 materielPedagogique: row["Matériel Pédagogique"] || 3
-//             },
-//             generalOrganization: {
-//                 communicationOrganisationnelle: row["Communication Organisationnelle"] || 3
-//             },
-//             recommandation: row["Recommandation"] === "Oui" ? true : false,
-//             commentaire: row["Commentaire"] || ""
-//         }));
-
-//         await Evaluation.insertMany(evaluations);
-//         console.log("Importation terminée avec succès !");
-//     } catch (error) {
-//         console.error("Erreur lors de l'importation des évaluations :", error);
-//     }
-// };
-  
+  };  
 module.exports = {
     getLastEvaluation,
     sendEvaluationLinksToBeneficiaries,
     SubmitEvaluation
   };
-  
-
-  

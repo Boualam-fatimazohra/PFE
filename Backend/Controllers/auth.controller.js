@@ -65,11 +65,6 @@ const Login = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
     }
 };
-
-
-
-//jD5IDdTVLoITMCpL mot de passe mongo 
-//mongodb+srv://salouaouissa:<db_password>@cluster0.nwqo9.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
 const createUser = async (req, res) => {
     const { nom, prenom, email, password } = req.body;
     
@@ -112,8 +107,8 @@ maxAge: 604800000
 });
 const userResponse = {
 _id: newUser._id,
-firstName: newUser.firstName,
-lastName: newUser.lastName,
+firstName: newUser.nom,
+lastName: newUser.prenom,
 email: newUser.email,
 role: newUser.role
 };
@@ -131,7 +126,6 @@ error:error.message
 });
 }
 };
-
 const Logout = (req, res) => {
 console.log("Logout function called on backend");
 res.clearCookie('token');
