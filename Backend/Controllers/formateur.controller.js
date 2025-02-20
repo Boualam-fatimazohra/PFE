@@ -31,7 +31,7 @@ const createFormateur = async (req, res) => {
         // Generate and hash a temporary password
         const temporaryPassword = generateRandomPassword();
         const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
-
+        
         // Create new user
         const newUser = new Utilisateur({
             nom,
