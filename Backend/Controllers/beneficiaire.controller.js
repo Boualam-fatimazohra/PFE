@@ -1,5 +1,5 @@
 const Beneficiaire = require("../Models/beneficiaire.model");
-const Formation = require("../Models/formation.model.js");
+const Formation = require("../Models/formation.model");
 const readExcelFile = require("../utils/excelReader");
 const XLSX = require("xlsx");
 const  BeneficiareFormation=require("../Models/beneficiairesFormation.js");
@@ -233,6 +233,7 @@ const uploadBeneficiairesFromExcel = async (req, res) => {
       return res.status(400).json({ message: "First sheet is empty or not found" });
     }
 
+    // Convert the worksheet to JSON
     const rawData = XLSX.utils.sheet_to_json(worksheet);
     
     // Transform data to match MongoDB schema
@@ -299,26 +300,26 @@ const uploadBeneficiairesFromExcel = async (req, res) => {
 
 
 // Simple read data from excel testing
-// const uploadBenificiaireExcel = async (req, res) => {
-//   try {
-//     if (!req.file) {
-//       return res.status(400).json({ message: "Please upload an Excel file" });
-//     }
+const uploadBenificiaireExcel = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "Please upload an Excel file" });
+    }
 
-//     const filePath = req.file.path;
+    const filePath = req.file.path;
 
-//     console.log(`File uploaded to: ${filePath}`); // Log the file path to confirm where the file is stored
+    console.log(`File uploaded to: ${filePath}`); // Log the file path to confirm where the file is stored
 
-//     const data = readExcelFile(filePath);
+    const data = readExcelFile(filePath);
 
-//     console.log(data);
+    console.log(data);
 
-//     res.status(200).json({ message: "Data uploaded successfully", data });
-//   } catch (error) {
-//     console.error("Error processing file:", error);
-//     res.status(500).json({ message: "Error processing file", error: error.message });
-//   }
-// }
+    res.status(200).json({ message: "Data uploaded successfully", data });
+  } catch (error) {
+    console.error("Error processing file:", error);
+    res.status(500).json({ message: "Error processing file", error: error.message });
+  }
+}
 
 // Export the functions for use in routes
 module.exports = {
