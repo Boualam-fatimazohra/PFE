@@ -39,6 +39,7 @@ router.put('/UpdateFormation/:id',
 // Route to get one specific formation by ID
 router.get('/GetOneFormation/:id',
     authenticated,
+    authorizeRoles('Admin', 'Manager', 'Formateur'),  
     authorizeNestedOwnership('Formation', 'formateur.utilisateur'),
     GetOneFormation);
 
