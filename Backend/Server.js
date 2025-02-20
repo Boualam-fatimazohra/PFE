@@ -9,6 +9,7 @@ const beneficiaireRoutes = require("./Routes/beneficiaire.route.js");
 const coordinateurRoutes = require("./Routes/coordinateur.route.js");
 const managerRoutes = require("./Routes/manager.route.js"); // Correction ici
 const cookieParser = require("cookie-parser");
+const path = require('path');
 
 dotenv.config();
 
@@ -26,7 +27,7 @@ app.use(
     allowedHeaders: "Content-Type,Authorization"
   })
 );
-
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // Connexion à la base de données
 connectDB();
 
