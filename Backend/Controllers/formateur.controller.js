@@ -1,5 +1,6 @@
 const Formateur = require("../Models/formateur.model.js");
 const Formation = require("../Models/formation.model.js");
+const Manager = require("../Models/manager.model.js");
 
 const bcrypt = require('bcryptjs');
 const { Utilisateur } = require('../Models/utilisateur.model.js');
@@ -25,7 +26,17 @@ const createFormateur = async (req, res) => {
         } else if (userRole === "Manager") {
             assignedManager = req.user.userId; // Assign Manager's ID
         } else {
-            assignedManager = manager; // Use manager from request body if Admin
+            // Verify if the provided manager exists when Admin is creating
+            if (!manager) {
+              return res.status(400).json({ message: "Manager ID is required when Admin creates a Formateur" });
+            }
+            
+            const managerExists = await Manager.findOne({ utilisateur: manager });
+            if (!managerExists) {
+                return res.status(400).json({ message: "Specified manager does not exist" });
+            }
+            
+            assignedManager = manager;
         }
 
         // Generate and hash a temporary password
