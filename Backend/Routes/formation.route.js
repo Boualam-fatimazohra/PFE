@@ -8,15 +8,14 @@ const router = express.Router();
 
 // Route to add a new formation (Protected route: Only authenticated users can access)
 router.post('/Addformation', authenticated, authorizeRoles('Formateur'),upload.single("image"),createFormation);
-
 // Route to get all formations (No authentication required)
 router.get('/GetFormations', authenticated, GetFormations);
 // Route to delete a formation by ID
 router.delete('/DeleteFormation/:id', authenticated, authorizeRoles('Admin', 'Manager'), DeleteFormation);
 // Route to update a formation by ID 
-router.put('/UpdateFormation/:id', authenticated, authorizeRoles('Admin', 'Manager'), UpdateFormation); 
+router.put('/UpdateFormation/:id', authenticated,authorizeRoles('Admin', 'Manager','Formateur'), UpdateFormation); 
 // Route to get one specific formation by ID
-router.get('/GetOneFormation/:id',authenticated, GetOneFormation);
-router.get('/GetFormationOfMentor', authenticated, GetFormationOfMentor);
+router.get('/GetOneFormation/:id',authenticated,GetOneFormation);
+router.get('/GetFormationOfMentor', authenticated,GetFormationOfMentor);
 router.get('/getNombreFormationsTerminees/:formateurId',getNombreFormationsTerminees);
 module.exports = router;

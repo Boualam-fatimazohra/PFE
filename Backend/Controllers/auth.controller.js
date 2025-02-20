@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { Utilisateur } = require('../Models/utilisateur.model.js');
+const generateRandomPassword = require('../utils/generateRandomPassword.js');
 
 const Login = async (req, res) => {
     const { email, password } = req.body;
