@@ -1,18 +1,27 @@
 import * as React from "react";
-import { Printer } from "lucide-react";
+import { useState } from "react";
+import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import CourseHeader from "@/components/Formation/CoursHeader";
-import StatisticsCards from "@/components/Formation/StatisticsCards";
-import DocumentsSection from "@/components/Formation/DocumentsSection";
-import StatsSection from "@/components/Formation/StatsSection";
-import ParticipantsSection from "@/components/Formation/ParticipantsSection";
+import CourseHeader from "../Formation/CoursHeader";
+import StatisticsCards from "../Formation/StatisticsCards";
+import DocumentsSection from "../Formation/DocumentsSection";
+import StatsSection from "../Formation/StatsSection";
+import ParticipantsSection from "../Formation/ParticipantsSection";
+import { CustomPagination } from "../layout/CustomPagination";
 
-const DetailsFormation = () => {
+interface DetailsFormationProps {
+  onRetourClick: () => void;
+}
+
+const DetailsFormation: React.FC<DetailsFormationProps> = ({ onRetourClick }) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = 3;
+
   const statsCards = [
     { label: "Total Bénéficiaires", value: "250" },
     { label: "Total Formations", value: "64" },
     { label: "Prochain event", value: "07" },
-    { label: "Satisfaction ", value: "95%" },
+    { label: "Satisfaction moyenne", value: "95%" },
   ];
 
   const documents = [
@@ -30,64 +39,73 @@ const DetailsFormation = () => {
       email: "mohamed.bika@gmail.com",
       gender: "Homme",
       phone: "06445454512",
-      status: "present" as const,
+      status: "present",
     },
     {
-      date: "27/05/2024",
-      time: "10h00-12h00",
-      lastName: "Lahmidi",
-      firstName: "Fatima",
-      email: "fatima.lahmidi@gmail.com",
-      gender: "Femme",
-      phone: "06565656565",
-      status: "absent" as const,
+      date: "26/05/2024",
+      time: "14h00-16h00",
+      lastName: "Bikarrane",
+      firstName: "Mohamed",
+      email: "mohamed.bika@gmail.com",
+      gender: "Homme",
+      phone: "06445454512",
+      status: "absent",
     },
   ];
 
+  const statsMetrics = [
+    { label: "Taux de completion", value: null },
+    { label: "Taux Satisfaction", value: null },
+    { label: "Heures", value: null },
+  ];
+
   return (
-    <div>
-      <div className="flex w-full max-w-[1358px] items-stretch gap-5 flex-wrap justify-between mt-10">
-        <div className="flex flex-col overflow-hidden text-sm text-black font-bold whitespace-nowrap leading-none pl-[55px]">
-          <Button variant="link" className="flex items-center gap-1 pt-2 pb-2.5">
-            <img
-              src="https://cdn.builder.io/api/v1/image/assets/32942b86facf465bad688d8f78f5f3fb/5e6379252813464dcb43589db855cc4182d67eba3ef907ba443230f644e5b96e"
-              className="w-[18px] h-[18px]"
-              alt="Back"
-            />
-            Retour
-          </Button>
-        </div>
-        <div className="flex items-stretch gap-[7px] my-auto">
-          <div className="text-[#595959] text-sm font-normal leading-none grow shrink basis-auto">
-            Données actualisées le 20/10/2025 à 8H02
+    <div className="bg-white min-h-screen p-1 font-inter ">
+      <main>
+        {/* Top Bar */}
+        <div className="flex justify-between items-center mb-8">
+          {/* Bouton Retour */}
+          <button 
+            className="flex items-center gap-1 text-sm font-medium text-orange-600 hover:text-orange-800 transition"
+            onClick={onRetourClick}
+          >
+            <span className="text-lg">‹</span> Retour
+          </button>
+
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-[#595959]">
+              Données actualisées le 20/10/2025 à 8H02
+            </span>
+            <button className="flex items-center gap-1 text-black font-medium text-sm ml-1">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4C7.58 4 4 7.58 4 12C4 16.42 7.58 20 12 20C15.73 20 18.84 17.45 19.73 14H17.65C16.83 16.33 14.61 18 12 18C8.69 18 6 15.31 6 12C6 8.69 8.69 6 12 6C13.66 6 15.14 6.69 16.22 7.78L13 11H20V4L17.65 6.35Z" fill="currentColor"/>
+            </svg>
+            Actualiser
+          </button>
           </div>
-          <Button className="flex items-center gap-2" variant="outline">
-            <span>Actualiser</span>
-            <img
-              src="https://cdn.builder.io/api/v1/image/assets/32942b86facf465bad688d8f78f5f3fb/c3fc36ef-95bc-44c2-aabe-531033eaf72f"
-              className="w-4 h-4 object-contain"
-              alt="Refresh"
-            />
-          </Button>
         </div>
-      </div>
 
-      <CourseHeader
-        title="Formation"
-        subtitle="AWS : Développement, déploiement et gestion"
-        status="en-cours"
-      />
+        {/* Course Header Component */}
+        <CourseHeader 
+          title="Formation" 
+          subtitle="AWS : Développement, déploiement et gestion" 
+          status="En Cours" 
+        />
 
-      <StatisticsCards cards={statsCards} />
+        {/* Statistics Cards Component */}
+        <StatisticsCards cards={statsCards} />
 
-      <div className="w-full max-w-[1300px] mt-5">
-        <div className="gap-5 flex max-md:flex-col max-md:items-stretch">
+        {/* Documents and Stats Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <DocumentsSection documents={documents} />
-          <StatsSection completion="-" satisfaction="-" hours="-" />
+          <StatsSection metrics={statsMetrics} />
         </div>
-      </div>
 
-      <ParticipantsSection participants={participants} />
+        {/* Participants Section Component */}
+        <ParticipantsSection participants={participants} />
+
+        <CustomPagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+      </main>
     </div>
   );
 };

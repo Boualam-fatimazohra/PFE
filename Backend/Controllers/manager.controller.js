@@ -20,7 +20,7 @@ const createManager = async (req, res) => {
             return res.status(400).json({ message: "Utilisateur with this email already exists" });
         }
         const temporaryPassword = generateRandomPassword();
-        const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
+        const hashedPassword = await bcrypt.hash(password, 10);
         await sendMail(email,temporaryPassword);
 
         const newUtilisateur = new Utilisateur({
