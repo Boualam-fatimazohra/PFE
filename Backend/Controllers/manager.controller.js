@@ -8,9 +8,9 @@ const generateRandomPassword = require("../utils/generateRandomPassword.js");
 // Create a new Manager
 const createManager = async (req, res) => {
     try {
-        const { nom,prenom, email, numeroTelephone, password } = req.body;
-        if (!email || !password) {
-            return res.status(400).json({ message: "Email, password, and role are required" });
+        const { nom,prenom, email, numeroTelephone} = req.body;
+        if (!email ) {
+            return res.status(400).json({ message: "Email, password" });
         }
         /*if (role !== "Manager") {
             return res.status(400).json({ message: "Role must be 'Manager'" });
