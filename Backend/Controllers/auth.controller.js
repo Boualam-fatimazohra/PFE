@@ -4,7 +4,6 @@ const { Utilisateur } = require('../Models/utilisateur.model.js');
 
 const Login = async (req, res) => {
     const { email, password } = req.body;
-
     try {
     console.log("Login: Request body:", req.body);
     console.log("Login: Email from request:", email);
