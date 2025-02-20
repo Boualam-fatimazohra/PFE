@@ -86,7 +86,7 @@ const createUser = async (req, res) => {
         prenom,
         email,
         password: hashedPassword,
-        role:"Formateur"
+        role:"Manager"
     });
 
 await newUser.save();
