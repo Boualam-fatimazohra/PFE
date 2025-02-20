@@ -18,7 +18,6 @@ router.post("/upload", upload.single("file"), uploadBeneficiairesFromExcel);
 router.post('/createBeneficiaire', createBeneficiaire);
 // Route to get all Beneficiaires (with Formation details)
 router.get("/", getAllBeneficiaires);
-
 // Route to get a single Beneficiaire by ID (with Formation details)
 router.get("/:id", getBeneficiaireById);
 
