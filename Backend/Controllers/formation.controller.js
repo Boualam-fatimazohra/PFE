@@ -114,7 +114,6 @@ const UpdateFormation = async (req, res) => {
   const { id } = req.params;
   const { nom, description, status } = req.body;
   let image = req.file ? req.file.filename : null; // Si un fichier est uploadé
-
   try {
     // Vérifier si la formation existe
     const formation = await Formation.findById(id);
@@ -125,7 +124,6 @@ const UpdateFormation = async (req, res) => {
     formation.nom = nom || formation.nom;
     formation.description = description || formation.description;
     formation.status = status || formation.status;
-
     // Mettre à jour l'image seulement si une nouvelle est uploadée
     if (image) {
       console.log(image);
