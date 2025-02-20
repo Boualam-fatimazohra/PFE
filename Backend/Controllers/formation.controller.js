@@ -157,42 +157,7 @@ const DeleteFormation = async (req, res) => {
   }
 };
 // fin  : deleteFormation par id 
-// debut : récupérer les formation d'un seule formateur 
-const GetFormationOfMentor = async (req, res) => {
-  try {
-    const mentorId = req.body.idFormateur;
-    if (!mentorId) {
-      return res.status(401).json({ message: "Utilisateur non authentifié" });
-    }
-    const formateur = await Formateur.findOne({ utilisateur: mentorId });
-    if (!formateur) {
-      return res.status(404).json({ message: "Formateur non trouvé" });
-    }
-    const formations = await Formation.find({ formateur: formateur._id });
-    if (formations.length === 0) {
-      return res.status(404).json({ message: "Aucune formation trouvée pour ce formateur" });
-    }
-
-    res.status(200).json(formations);
-  } catch (error) {
-    res.status(500).json({ message: 'Erreur lors de la récupération des formations', error: error.message });
-  }
-};
-// debut : fonction qui retourne le nombre des formation d'un formateur
-const getNombreFormationsTerminees = async (req, res) => {
-  const formateurId = req.params.formateurId;
-  console.log("voici l'id du formateur",formateurId);
-  try {
-    if(!formateurId) return res.status(401).json({ message: "Utilisateur non authentифé" });
-    const count = await Formation.countDocuments({ formateur: formateurId, status: "Terminé" });
-    if(!count) return res.status(404).json({ message: "Aucune formation trouvée pour ce formateur" });
-    return count;
-  } catch (error) {
-    console.error("Erreur lors du comptage des formations :", error);
-    throw error;
-  }
-};
 
 // fin: fonction qui retourne le nombre des formation d'un formateur
 // fin:récupérer les formations d'un seule formateur
-module.exports = { createFormation, GetFormations, GetOneFormation, UpdateFormation,GetFormationOfMentor,DeleteFormation,getNombreFormationsTerminees };
+module.exports = { createFormation, GetFormations, GetOneFormation, UpdateFormation,DeleteFormation };

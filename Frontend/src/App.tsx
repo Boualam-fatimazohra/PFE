@@ -68,6 +68,10 @@ const App = () => (
 
 
 
+            <Route path="//DetailsFormation" element={<DetailsFormation />} />
+            <Route path="//FormationTerminer" element={<FormationTerminer />} />
+            <Route path="/formationModal" element={< FormationModal/>} />
+            <Route path="//FormationAvenir" element={<FormationAvenir />} />
             {/* Page 404 */}
             <Route path="*" element={<NotFound />} />
           </Routes>
