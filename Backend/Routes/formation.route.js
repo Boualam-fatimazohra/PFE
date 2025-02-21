@@ -31,8 +31,9 @@ router.delete('/DeleteFormation/:id',
 // Route to update a formation by ID 
 router.put('/UpdateFormation/:id', 
     authenticated, 
-    authorizeRoles('Admin', 'Manager'),
+    authorizeRoles('Admin', 'Manager','Formateur'),
     authorizeNestedOwnership('Formation', 'formateur.utilisateur'),
+    upload.single("image"),
     UpdateFormation
 ); 
 

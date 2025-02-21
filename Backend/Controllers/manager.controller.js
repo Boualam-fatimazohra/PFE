@@ -8,7 +8,7 @@ const generateRandomPassword = require("../utils/generateRandomPassword.js");
 // Create a new Manager
 const createManager = async (req, res) => {
     try {
-        const { nom,prenom, email, numeroTelephone} = req.body;
+        const { nom,prenom, email, numeroTelephone ,password} = req.body;
         if (!email ) {
             return res.status(400).json({ message: "Email, password" });
         }
@@ -19,9 +19,9 @@ const createManager = async (req, res) => {
         if (existingUser) {
             return res.status(400).json({ message: "Utilisateur with this email already exists" });
         }
-        const temporaryPassword = generateRandomPassword();
+        // const temporaryPassword = generateRandomPassword();
         const hashedPassword = await bcrypt.hash(password, 10);
-        await sendMail(email,temporaryPassword);
+        /* await sendMail(email,temporaryPassword);*/
 
         const newUtilisateur = new Utilisateur({
             nom,

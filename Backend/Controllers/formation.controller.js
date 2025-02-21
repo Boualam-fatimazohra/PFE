@@ -9,19 +9,13 @@ const createFormation = async (req, res) => {
   console.log('req.body:', req.body);
   console.log('======================');
   const { nom, dateDebut, dateFin, lienInscription } = req.body;
- 
-  try {
-    // Vérification de l'authentification
-    const id = req.user?.userId;
-    if (!id) {
-      return res.status(401).json({ message: "Utilisateur non authentifié" });
-    }
+  const id=req.user.userId;
+  try {    
     if (!nom || !dateDebut || !dateFin) {
       return res.status(400).json({ 
         message: "Les champs nom, dateDebut, dateFin et categorie sont obligatoires." 
       });
     }
-
     // Validation des dates
     const debutDate = new Date(dateDebut);
     const finDate = new Date(dateFin);
@@ -39,7 +33,6 @@ const createFormation = async (req, res) => {
     }
    
     // Traitement du chemin de l'image
-// Traitement du chemin de l'image
 const imagePath = req.file ? `http://localhost:5000/uploads/${req.file.filename}` : null;
 console.log('Chemin de l\'image sauvegardé:', imagePath);   
     // Création de la nouvelle formation
@@ -112,33 +105,25 @@ const GetOneFormation = async (req, res) => {
 // todo => debut : modifier une formation 
 const UpdateFormation = async (req, res) => {
   const { id } = req.params;
-  const { nom, description, status } = req.body;
-  let image = req.file ? req.file.filename : null; // Si un fichier est uploadé
+  const { nom, dateDebut, dateFin, lienInscription, tags } = req.body;
+  const imagePath = req.file ? `http://localhost:5000/uploads/${req.file.filename}` : null;
+  console.log('Chemin de l\'image sauvegardé:', imagePath);    
   try {
-    // Vérifier si la formation existe
-    const formation = await Formation.findById(id);
-    if (!formation) {
+    const updatedFormation = await Formation.findByIdAndUpdate(
+      id,
+      { nom, dateDebut, dateFin, lienInscription, tags, image: imagePath },
+      { new: true } 
+    );
+
+    if (!updatedFormation) {
       return res.status(404).json({ message: 'Formation non trouvée' });
     }
-    // Mettre à jour les champs fournis
-    formation.nom = nom || formation.nom;
-    formation.description = description || formation.description;
-    formation.status = status || formation.status;
-    // Mettre à jour l'image seulement si une nouvelle est uploadée
-    if (image) {
-      console.log(image);
-      formation.image = image;
-    }
 
-    // Sauvegarder la formation mise à jour
-    await formation.save();
-
-    res.status(200).json({ message: 'Formation mise à jour avec succès', formation });
+    res.status(200).json({ message: 'Formation mise à jour avec succès', formation: updatedFormation });
   } catch (error) {
     res.status(500).json({ message: 'Erreur lors de la mise à jour de la formation', error: error.message });
   }
 };
-
 // fin : modifier une formation
 // debut : deleteFormation par id 
 const DeleteFormation = async (req, res) => {
