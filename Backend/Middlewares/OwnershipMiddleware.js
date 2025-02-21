@@ -7,15 +7,11 @@ const authorizeOwnership = (childModel, parentField) => {
             const { id } = req.params;
             console.log("user Role: " + role + ",userId: " + userId);
             console.log("parms Id: " + id);
-            console.log('Middleware debug info:');
-            console.log('childModel received:', childModel);
-            console.log('Available models:', Object.keys(mongoose.models));
 
             if (role === "Admin") {
                 return next();
             }
 
-            // Ensure childModel is a string
             const modelName = typeof childModel === 'function' ? childModel.modelName : childModel;
             
             const Model = mongoose.models[modelName];
@@ -30,26 +26,52 @@ const authorizeOwnership = (childModel, parentField) => {
                 });
             }
 
-            const childEntity = await Model.findById(id);
+            // First, get the entity and populate only the necessary first level
+            const childEntity = await Model.findById(id).populate('utilisateur').populate(parentField);
+
             if (!childEntity) {
                 return res.status(404).json({ message: `${modelName}/:${id} not found` });
             }
 
-            // if the formateur who want to get update himself (exemple)
-            if (childEntity.utilisateur.toString() === userId) {
-                console.log("middleware update yourself")
+            // Case 1: User is trying to access their own resource
+            if (childEntity.utilisateur?._id.toString() === userId) {
+                console.log("Access granted: User accessing own resource");
                 return next();
             }
 
-            // check if it's the manager of the formateur (exemple)
-            if (childEntity[parentField].toString() !== userId) {
-                return res.status(403).json({ message: `Forbidden: You do not have permission to access this ${modelName}` });
+            // Case 2: No parent field (manager) assigned
+            if (!childEntity[parentField]) {
+                return res.status(403).json({ 
+                    message: `Forbidden: No ${parentField} assigned to this ${modelName}` 
+                });
             }
 
-            next();
+            // Case 3: Check if user is the manager
+            // Handle both possible schema structures
+            const parentUserId = childEntity[parentField].utilisateur?._id || 
+                               childEntity[parentField].utilisateur;
+
+            if (!parentUserId) {
+                return res.status(403).json({ 
+                    message: `Forbidden: Invalid ${parentField} configuration` 
+                });
+            }
+
+            if (parentUserId.toString() === userId) {
+                console.log(`Access granted: User is the ${parentField}`);
+                return next();
+            }
+
+            return res.status(403).json({ 
+                message: `Forbidden: You do not have permission to access this ${modelName}` 
+            });
+
         } catch (error) {
             console.error("Authorization error:", error);
-            res.status(500).json({ message: "Internal server error" });
+            res.status(500).json({ 
+                message: "Internal server error",
+                error: error.message 
+            });
         }
     };
 };
