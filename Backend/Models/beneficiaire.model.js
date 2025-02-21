@@ -8,10 +8,12 @@ const beneficiaireSchema = new mongoose.Schema({
     email:{type:String,required:true},
     genre :{type:String,required:true},
     pays:{type:String,required:true},
-    niveau: { type: String, required:false,enum :["bac","bac+2","bac+3","bac+5"] },
+    //,enum :["bac","bac+2","bac+3","bac+5"]
+    niveau: { type: String, required:false },
     specialite: {type:String,required:false},
     etablissement:{type:String,required:false},
-    profession:{type:String,required:false,enum:["Sans Emploi","Avec Emploi","Etudiant"]},
+    // ,enum:["Sans Emploi","Avec Emploi","Etudiant"]
+    profession:{type:String,required:false},
     isBlack: { type: Boolean, default: false },
     isSaturate: { type: Boolean, default: false },
     nationalite: {type:String,required:false},

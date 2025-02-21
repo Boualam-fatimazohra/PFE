@@ -66,17 +66,14 @@ const Login = async (req, res) => {
 };
 const createUser = async (req, res) => {
     const { nom, prenom, email, password } = req.body;
-    
     try {
         if (!nom || !prenom || !email || !password) {
             return res.status(400).json({ message: "Tous les champs sont obligatoires" });
         }
-
         const existingUser = await Utilisateur.findOne({ email });
         if (existingUser) {
             return res.status(409).json({ message: "Cet email est déjà utilisé" });
         }
-
         const hashedPassword = await bcrypt.hash(password, 10); 
 
     // Création de l'utilisateur
