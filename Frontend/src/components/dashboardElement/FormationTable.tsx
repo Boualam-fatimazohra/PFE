@@ -37,7 +37,11 @@ export const FormationsTable = () => {
         </TableRow>
       </TableHeader>
       <TableBody>
-  {formations.slice(-4).map((formation: Formation) => (
+
+  {formations
+  .filter((formation: Formation) => formation.status === "En Cours","Terminer") // Filtrer les formations "En Cours"
+  .slice(-8) // Récupérer les 8 dernières
+  .map((formation: Formation) => (
     <TableRow key={formation._id}>
       <TableCell>{formation.nom}</TableCell>
       <TableCell>{formation.dateDebut}</TableCell>
@@ -45,12 +49,13 @@ export const FormationsTable = () => {
         <StatusBadge status={formation.status} />
       </TableCell>
       <TableCell>
-        <button className="bg-black text-white px-3 py-1 rounded-md text-sm">
+        <button className="rounded-none bg-black text-white px-3 py-1 rounded-md text-sm">
           Accéder
         </button>
       </TableCell>
     </TableRow>
-  ))}
+))}
+
 </TableBody>
     </Table>
   );
