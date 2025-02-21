@@ -39,7 +39,7 @@ import { Bell, UserCircle } from "lucide-react";
    navigationLinks = [
    { name: "Dashboard", path: "/formateur/dashboardFormateur" },
    { name: "Mes Formations", path: "/formateur/mesformation" },
-   { name: "Page Link", path: "/page-link" },
+   { name: "Calendrier", path: "/CalendarView" },
    { name: "Page Link", path: "/page-link-2" },
    { name: "Page Link", path: "/page-link-3" },
    ];

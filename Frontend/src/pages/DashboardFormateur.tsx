@@ -83,7 +83,7 @@ const DashboardFormateur: React.FC = () => {
                 <SearchBar onSearch={handleSearch} />
                 <button 
                   onClick={handleOpenModal}
-                  className="bg-orange-500 text-white px-4 py-2 rounded-md flex items-center space-x-2 hover:bg-orange-600 transition-colors"
+                  className="rounded-none bg-orange-500 text-white px-4 py-2 rounded-md flex items-center space-x-2 hover:bg-orange-600 transition-colors"
                 >
                   <Plus size={20} />
                   <span>Créer une formation</span>
@@ -107,7 +107,7 @@ const DashboardFormateur: React.FC = () => {
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-semibold">Mes Formations</h2>
                     <button 
-                      className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors"
+                      className="rounded-none bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors"
                       onClick={() => navigate("/formateur/mesformation")}
                     >
                       Découvrir
@@ -123,7 +123,7 @@ const DashboardFormateur: React.FC = () => {
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-semibold">Évaluations</h2>
                     <button 
-                      className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors"
+                      className="rounded-none bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors"
                       onClick={() => navigate("/FormulaireEvaluation")}
                     >
                       Découvrir
