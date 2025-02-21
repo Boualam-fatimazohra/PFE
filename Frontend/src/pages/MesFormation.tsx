@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Search, Edit, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
+import { StatsCard } from "@/components/dashboardElement/StatsCard";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { CustomPagination } from "@/components/layout/CustomPagination";
@@ -26,7 +27,7 @@ import { Button } from "@/components/ui/button";
 interface FormationItem {
   id: number;
   title: string;
-  status: "En cours" | "À venir" | "Terminé" | "Replanifié";
+  status: "En cours" | "A venir" | "Terminer" | "Replanifier";
 }
 
 const MesFormations = () => {
@@ -39,9 +40,9 @@ const navigate = useNavigate();
   };
   const [formations, setFormations] = useState<FormationItem[]>([
     { id: 0, title: "Développement C# : fondamentaux", status: "En cours" },
-    { id: 1, title: "AWS : Développement et déploiement", status: "À venir" },
-    { id: 2, title: "Conception d'application mobile", status: "Terminé" },
-    { id: 3, title: "Developpement JAVA", status: "Replanifié" },
+    { id: 1, title: "AWS : Développement et déploiement", status: "A venir" },
+    { id: 2, title: "Conception d'application mobile", status: "Terminer" },
+    { id: 3, title: "Developpement JAVA", status: "Replanifier" },
   ]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -91,14 +92,19 @@ const navigate = useNavigate();
     switch (selectedFormation.status) {
       case "En cours":
         return <DetailsFormation onRetourClick={handleRetourClick} />;
-      case "À venir":
+      case "A venir":
         return <FormationAvenir onRetourClick={handleRetourClick} />;
-      case "Terminé":
+      case "Terminer":
         return <FormationTerminer onRetourClick={handleRetourClick}/>;
       default:
         return <div>Statut inconnu</div>;
     }
   };
+
+      const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+      const filteredFormations = selectedStatus && selectedStatus !== 'null'
+      ? formations.filter((formation) => formation.status === selectedStatus)
+      : formations;
 
   return (
     <div className="bg-white min-h-screen p-4">
@@ -128,21 +134,25 @@ const navigate = useNavigate();
                       placeholder="Recherche une formation"
                       className="rounded-none shadow-sm border w-full pr-10"
                     />
-                    <Search
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-orange-500"
-                      size={20}
-                    />
+                    <svg className="absolute right-3 top-1/2 transform -translate-y-1/2 " width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="26" height="26" rx="13" fill="#FF7900"/>
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M19.2765 18.1101L15.6661 14.4996C16.2718 13.6533 16.5966 12.6382 16.5949 11.5974C16.5949 8.83742 14.3574 6.59998 11.5974 6.59998C8.83738 6.59998 6.59998 8.83738 6.59998 11.5974C6.59998 14.3574 8.83738 16.5949 11.5974 16.5949C12.6382 16.5965 13.6533 16.2717 14.4998 15.6661L18.1101 19.2764C18.2665 19.432 18.5192 19.432 18.6756 19.2764L19.2765 18.6756C19.432 18.5191 19.432 18.2665 19.2765 18.1101ZM11.5974 14.9957C9.72062 14.9957 8.19916 13.4742 8.19916 11.5974C8.19916 9.72062 9.72062 8.19916 11.5974 8.19916C13.4742 8.19916 14.9957 9.72062 14.9957 11.5974C14.9957 13.4742 13.4742 14.9957 11.5974 14.9957Z" fill="white"/>
+                    </svg>
+
                   </div>
-                  <Select>
-                    <SelectTrigger className="w-[150px] rounded-none shadow-sm border">
-                      <SelectValue placeholder="Tous les statuts" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-none">
-                      <SelectItem value="all">Tous les statuts</SelectItem>
-                      <SelectItem value="draft">Brouillon</SelectItem>
-                      <SelectItem value="published">Publié</SelectItem>
-                    </SelectContent>
+                  <Select onValueChange={setSelectedStatus}>
+                      <SelectTrigger className="w-[150px] rounded-none shadow-sm border">
+                        <SelectValue placeholder="Tous les statuts" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-none">
+                        <SelectItem value="null">Tous les statuts</SelectItem>
+                        <SelectItem value="En cours">En Cours</SelectItem>
+                        <SelectItem value="A venir">A Venir</SelectItem>
+                        <SelectItem value="Replanifier">Replanifier</SelectItem>
+                        <SelectItem value="Terminer">Terminer</SelectItem>
+                      </SelectContent>
                   </Select>
+
                   <Select>
                     <SelectTrigger className="w-[150px] rounded-none shadow-sm border">
                       <SelectValue placeholder="Trier par date" />
@@ -156,14 +166,20 @@ const navigate = useNavigate();
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                {formations.map((formation) => (
+                <StatsCard title="Total Formations" value={41} />
+                <StatsCard title="Total Formations" value={25} />
+                <StatsCard title="Total" value="-" />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                {filteredFormations.map((formation) => (
                   <FormationCard
-                  key={formation.id}
-                  formation={formation}
-                  onEdit={handleEditClick}
-                  onDelete={handleDeleteClick}
-                  onAccess={handleAccessClick}
-                />
+                    key={formation.id}
+                    formation={formation}
+                    onEdit={handleEditClick}
+                    onDelete={handleDeleteClick}
+                    onAccess={handleAccessClick}
+                  />
                 ))}
               </div>
 
