@@ -24,7 +24,12 @@ const createFormateur = async (req, res) => {
         if (!userRole) {
             return res.status(403).json({ message: "Forbidden: Only Admins or Managers can create a Formateur (endpoint)" });
         } else if (userRole === "Manager") {
-            assignedManager = req.user.userId; // Assign Manager's ID
+            // Find the manager document using the user ID
+            const managerDoc = await Manager.findOne({ utilisateur: req.user.userId });
+            if (!managerDoc) {
+                return res.status(400).json({ message: "Manager not found" });
+            }
+            assignedManager = managerDoc._id; // Use the Manager document ID, not 
         } else {
               // Verify if the provided manager exists when Admin is creating
             if (!manager) {
@@ -36,7 +41,7 @@ const createFormateur = async (req, res) => {
                 return res.status(400).json({ message: "Specified manager does not exist" });
             }
             
-            assignedManager = manager;
+            assignedManager = managerExists._id;
         }
 
         // Generate and hash a temporary password
