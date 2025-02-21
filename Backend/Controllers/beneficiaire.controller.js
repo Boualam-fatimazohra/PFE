@@ -263,9 +263,7 @@ const uploadBeneficiairesFromExcel = async (req, res) => {
     session.startTransaction();
 
     try {
-      
       const insertedBeneficiaires = await Beneficiaire.insertMany(beneficiaires, { session });
-      
       const beneficiareFormations = insertedBeneficiaires.map(b => ({
         formation: new mongoose.Types.ObjectId(idFormation), // Convertir en ObjectId
         beneficiaire: b._id,
@@ -296,9 +294,6 @@ const uploadBeneficiairesFromExcel = async (req, res) => {
     });
   }
 };
-
-
-
 // Simple read data from excel testing
 const uploadBenificiaireExcel = async (req, res) => {
   try {
