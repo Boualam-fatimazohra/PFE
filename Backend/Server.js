@@ -8,6 +8,7 @@ const formateurRoutes = require("./Routes/formateur.route.js");
 const beneficiaireRoutes = require("./Routes/beneficiaire.route.js");
 const coordinateurRoutes = require("./Routes/coordinateur.route.js");
 const managerRoutes = require("./Routes/manager.route.js"); // Correction ici
+const   evaluationRoutes=require("./Routes/evaluation.route.js")
 const cookieParser = require("cookie-parser");
 const path = require('path');
 
@@ -37,8 +38,8 @@ app.use("/api/formation", formationRoutes);
 app.use("/api/beneficiaires", beneficiaireRoutes);
 app.use("/api/coordinateurs", coordinateurRoutes);
 app.use("/api/managers", managerRoutes);
-app.use("/api/formateur", formateurRoutes);
-app.use("/api/evaluation", require("./Routes/evaluation.route.js"));
+app.use("/api/formateur",formateurRoutes);
+app.use("/api/evaluation",evaluationRoutes);
 app.use("/api/formation/Addformation", formationRoutes);
 
 
