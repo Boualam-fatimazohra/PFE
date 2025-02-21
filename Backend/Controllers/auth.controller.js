@@ -115,7 +115,11 @@ const Login = async (req, res) => {
         res.status(200).json({ 
             message: 'Login successful',
             role: user.role,
-            user: { nom: user.nom, prenom: user.prenom }
+            user: { 
+                nom: user.nom, 
+                prenom: user.prenom,
+                userId: user._id
+            }
         });
     } catch (error) {
         console.error('Login error:', error);
