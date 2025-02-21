@@ -41,17 +41,24 @@ const CourseHeader: React.FC<CourseHeaderProps> = ({ title, subtitle, status }) 
   const statusLabel = getStatusLabel(status);
 
   return (
-    <div className="bg-gray-100 p-6 mb-8 border-l-4 border-[#FF7900]">
-      <div className="flex items-center gap-4 mb-2">
-        <h1 className="text-2xl font-bold">{title}</h1>
-        <span className={`px-3 py-1 ${statusClassName} text-sm`}>
+    <div className="bg-[#F4F4F4] py-3 px-4 mb-4 relative font-inter">
+        <div className="absolute left-0 top-0 bottom-0 w-2 bg-orange-500" />
+        <div className="ml-6">
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="text-xl font-bold">Formation</h1>
+            <span className={`px-3 py-1 ${statusClassName}  text-sm `}>
           {statusLabel}
         </span>
-      </div>
-      <h2 className="text-xl text-[#666666]">
+          </div>
+          <h2 className="text-xl text-[#666666] font-inter">
         {subtitle}
       </h2>
-    </div>
+        </div>
+      </div>
+
+
+
+
   );
 };
 

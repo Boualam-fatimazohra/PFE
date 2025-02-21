@@ -1,23 +1,22 @@
-import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
+import Logo from "@/assets/images/login_logo.png";
 
 export function Header() {
   return (
-    <header className="w-full bg-white border-b border-gray-200">
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="w-10 h-10 bg-orange-500 rounded-full"></div>
-            <div className="flex flex-col">
-              <span className="text-xl font-semibold text-orange-500">Orange</span>
-              <span className="text-sm text-gray-600">Digital Center Maroc</span>
-            </div>
+    <header className="fixed top-0 left-0 w-full bg-black p-2 z-50">
+      <div className="container mx-auto flex justify-between items-center">
+        <div className="flex items-center">
+          <div className="mr-2">
+            <img src={Logo} alt="Orange logo" className="w-9 h-9" />
           </div>
-          <div className="flex items-center">
-            <button className="px-6 py-2 text-orange-500 hover:text-orange-600 transition-colors">
-              Connexion
-            </button>
+          <div className="text-white">
+            <div className="text-large font-max font-bold font-inter">Orange</div>
+            <div className="text-xm font-bold font-inter">Digital Center Maroc</div>
           </div>
         </div>
+        <Link to="/" className="border border-white text-white px-3 py-1 text-xs hover:bg-white hover:text-black transition-colors font-inter">
+          Retour Accueil
+        </Link>
       </div>
     </header>
   );
