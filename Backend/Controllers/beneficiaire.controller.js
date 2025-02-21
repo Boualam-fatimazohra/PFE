@@ -2,56 +2,138 @@ const Beneficiaire = require("../Models/beneficiaire.model");
 const Formation = require("../Models/formation.model");
 const readExcelFile = require("../utils/excelReader");
 const XLSX = require("xlsx");
-
-// Create a new Beneficiaire
+const  BeneficiareFormation=require("../Models/beneficiairesFormation.js");
+const mongoose = require('mongoose');
 const createBeneficiaire = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
-    const { nom, prenom, dateNaissance, niveau, formationId, isBlack, isSuturate } = req.body;
-    if (!formationId) {
-      return res.status(400).json({ message: "A formationId is required" });
+      // Extraction des données du body
+      const {
+          nom,
+          prenom,
+          dateNaissance,
+          email,
+          genre,
+          pays,
+          niveau,
+          specialite,
+          etablissement,
+          profession,
+          nationalite,
+          idFormation 
+      } = req.body;
+      // Validation de l'idFormation
+      if (!idFormation || !mongoose.Types.ObjectId.isValid(idFormation)) {
+          return res.status(400).json({
+              success: false,
+              message: "ID de formation invalide ou manquant"
+          });
+      }
+      // Validation des champs requis
+      if (!nom || !email || !genre || !pays) {
+          return res.status(400).json({
+              success: false,
+              message: "Les champs nom, email, genre et pays sont obligatoires"
+          });
+      }
+      // Validation du format email
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+          return res.status(400).json({
+              success: false,
+              message: "Format d'email invalide"
+          });
+      }
+      // Vérification si l'email existe déjà
+      const existingBeneficiaire = await Beneficiaire.findOne({ email }).session(session);
+      if (existingBeneficiaire) {
+          await session.abortTransaction();
+          return res.status(409).json({
+              success: false,
+              message: "Un bénéficiaire avec cet email existe déjà"
+          });
+      }
+      // Création du nouveau bénéficiaire
+      const newBeneficiaire = new Beneficiaire({
+          nom,
+          prenom,
+          dateNaissance: dateNaissance ? new Date(dateNaissance) : undefined,
+          email,
+          genre,
+          pays,
+          niveau,
+          specialite,
+          etablissement,
+          profession,
+          nationalite,
+          isBlack: false,
+          isSaturate: false
+      });
+
+      // Sauvegarde du bénéficiaire
+      const savedBeneficiaire = await newBeneficiaire.save({ session });
+
+      try {
+        // Après la sauvegarde du bénéficiaire
+        console.log('Bénéficiaire sauvegardé avec succès');
+        
+        // Vérification de l'existence de la formation
+        const formationExists = await Formation.findById(idFormation).session(session);
+        if (!formationExists) {
+            throw new Error('Formation non trouvée');
+        }
+    
+        // Création de l'instance BeneficiareFormation avec try/catch spécifique
+        try {
+            const newBeneficiareFormation = new BeneficiareFormation({
+                formation: idFormation,
+                beneficiaire: savedBeneficiaire._id,
+                confirmationAppel: false,
+                confirmationEmail: false,
+                horodateur: new Date(),
+                isSubmited: false
+            });
+    
+            console.log('Instance BeneficiareFormation créée:', newBeneficiareFormation);
+            
+            const savedBeneficiareFormation = await newBeneficiareFormation.save({ session });
+            console.log('BeneficiareFormation sauvegardé avec succès');
+    
+            await session.commitTransaction();
+            
+            res.status(201).json({
+                success: true,
+                message: "Bénéficiaire et association à la formation créés avec succès",
+                data: {
+                    beneficiaire: savedBeneficiaire,
+                    beneficiareFormation: savedBeneficiareFormation
+                }
+            });
+        } catch (formationError) {
+            console.error('Erreur lors de la création de BeneficiareFormation:', formationError);
+            throw formationError;
+        }
+    } catch (error) {
+        await session.abortTransaction();
+        console.error('Erreur détaillée:', {
+            message: error.message,
+            stack: error.stack,
+            name: error.name
+        });
+        
+        res.status(500).json({
+            success: false,
+            message: "Erreur lors de la création",
+            error: error.message,
+            details: error.stack
+        });
+    } finally {
+        session.endSession();
+    }} catch (error) {
+        res.status(500).json({ message: "Error creating beneficiaire", error: error.message });
     }
-    const formationExists = await Formation.findById(formationId);
-    if (!formationExists) {
-      return res.status(404).json({ message: "Formation not found" });
-    }
-    const beneficiaire = new Beneficiaire({
-      nom,
-      prenom,
-      dateNaissance,
-      niveau,
-      formation: formationId,
-      isBlack: isBlack ?? false,
-      isSuturate: isSuturate ?? false,
-    });
-
-    await beneficiaire.save();
-
-    // Créer une séance associée au bénéficiaire et à la formation
-    const seance = new Seance({
-      formation: formationId,
-      beneficiaire: beneficiaire._id,
-      presence: [
-        {
-          date: new Date(), // Date actuelle
-          present: false, // Par défaut, le bénéficiaire n'est pas encore présent
-        },
-      ],
-    });
-
-    await seance.save();
-
-    res.status(201).json({
-      message: "Beneficiaire created successfully with an associated Seance",
-      beneficiaire,
-      seance,
-    });
-
-  } catch (error) {
-    res.status(500).json({ message: "Error creating beneficiaire", error: error.message });
-  }
 };
-
-// const BeneficiareFormation = require("../Models/BeneficiareFormation.js"); // Assure-toi que c'est le bon chemin
 
 // Get all Beneficiaires (with optional formation details)
 const getAllBeneficiaires = async (req, res) => {
@@ -108,30 +190,38 @@ const updateBeneficiaire = async (req, res) => {
 // Delete a Beneficiaire
 const deleteBeneficiaire = async (req, res) => {
   try {
-    const deletedBeneficiaire = await Beneficiaire.findByIdAndDelete(req.params.id);
-    if (!deletedBeneficiaire) {
-      return res.status(404).json({ message: "Beneficiaire not found" });
+    const result = await Beneficiaire.deleteMany({}); 
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: "Aucun bénéficiaire trouvé" });
     }
-    res.status(200).json({ message: "Beneficiaire deleted successfully" });
+
+    res.status(200).json({ message: "Tous les bénéficiaires ont été supprimés avec succès" });
   } catch (error) {
-    res.status(500).json({ message: "Error deleting beneficiaire", error: error.message });
+    res.status(500).json({ message: "Erreur lors de la suppression des bénéficiaires", error: error.message });
   }
 };
 
+
 // Upload beinificiaire excel data directly to database
+
 const uploadBeneficiairesFromExcel = async (req, res) => {
   try {
+    // Vérifier que idFormation est présent et valide
+    const idFormation = req.body.idFormation; // Assurez-vous que c'est bien dans le body
+    
+    if (!idFormation || !mongoose.Types.ObjectId.isValid(idFormation)) {
+      return res.status(400).json({ 
+        message: "ID de formation invalide ou manquant",
+        error: "Invalid formation ID" 
+      });
+    }
+
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
     }
-
-    // Read the file as a buffer
+     
     const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
-
-    // Debugging logs
-    console.log("Workbook:", workbook);
-    console.log("Sheet Names:", workbook.SheetNames);
-
     if (!workbook.SheetNames.length) {
       return res.status(400).json({ message: "No sheets found in the uploaded Excel file" });
     }
@@ -139,15 +229,13 @@ const uploadBeneficiairesFromExcel = async (req, res) => {
     // Get first sheet
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
-
     if (!worksheet) {
       return res.status(400).json({ message: "First sheet is empty or not found" });
     }
 
     // Convert the worksheet to JSON
     const rawData = XLSX.utils.sheet_to_json(worksheet);
-    console.log("Parsed Data:", rawData); // Log to debug
-
+    
     // Transform data to match MongoDB schema
     const beneficiaires = rawData.map(item => ({
       horodateur: item["Horodateur"] || null,
@@ -155,9 +243,9 @@ const uploadBeneficiairesFromExcel = async (req, res) => {
       prenom: typeof item["Prénom"] === "string" ? item["Prénom"].trim() : null,
       nom: typeof item["Nom"] === "string" ? item["Nom"].trim() : null,
       genre: item["Genre"] || null,
-      dateDeNaissance: item["Date de naissance"] 
-        ? new Date((item["Date de naissance"] - 25569) * 86400000) 
-        : null, // Convert Excel date
+      dateDeNaissance: item["Date de naissance"]
+        ? new Date((item["Date de naissance"] - 25569) * 86400000)
+        : null,
       pays: typeof item["Pays"] === "string" ? item["Pays"].trim() : null,
       situationProfessionnelle: item["Situation Profetionnelle"] || null,
       profession: typeof item["Profession"] === "string" ? item["Profession"].trim() : null,
@@ -169,24 +257,47 @@ const uploadBeneficiairesFromExcel = async (req, res) => {
       etablissement: typeof item["Établissement"] === "string" ? item["Établissement"].trim() : null,
       dejaParticipeODC: item["Avez-vous déja participé au programmes ODC"] || null,
     }));
-    
+   
+    // Utiliser une session MongoDB pour garantir l'atomicité
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    // Insert into MongoDB
-    // const insertedBeneficiaires = await Beneficiaire.insertMany(beneficiaires);
+    try {
+      
+      const insertedBeneficiaires = await Beneficiaire.insertMany(beneficiaires, { session });
+      
+      const beneficiareFormations = insertedBeneficiaires.map(b => ({
+        formation: new mongoose.Types.ObjectId(idFormation), // Convertir en ObjectId
+        beneficiaire: b._id,
+        confirmationAppel: false,
+        confirmationEmail: false,
+      }));
 
-    // const beneficiareFormations = insertedBeneficiaires.map(b => ({
-    //   formation: idFormation,
-    //   beneficiaires: b._id, // Associer le bénéficiaire
-    //   confirmationAppel: false,
-    //   confirmationEmail: false,
-    // }));
-
-    res.status(200).json({ message: "Beneficiaires uploaded successfully", data: insertedBeneficiaires });
+      // Insérer les instances de BeneficiareFormation
+      await BeneficiareFormation.insertMany(beneficiareFormations, { session });
+      
+      await session.commitTransaction();
+      
+      res.status(200).json({ 
+        message: "Beneficiaires uploaded successfully", 
+        count: insertedBeneficiaires.length 
+      });
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
+    }
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error uploading beneficiaires", error: error.message });
+    console.error('Upload error:', error);
+    res.status(500).json({ 
+      message: "Error uploading beneficiaires", 
+      error: error.message 
+    });
   }
 };
+
+
 
 // Simple read data from excel testing
 const uploadBenificiaireExcel = async (req, res) => {
@@ -216,5 +327,6 @@ module.exports = {
     getBeneficiaireById,
     updateBeneficiaire,
     deleteBeneficiaire,
-    uploadBeneficiairesFromExcel
+    uploadBeneficiairesFromExcel,
+    createBeneficiaire
 };
