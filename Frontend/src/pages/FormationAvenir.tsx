@@ -9,10 +9,13 @@ export const FormationAvenir:React.FC<FormationAvenirProps> = ({ onRetourClick }
       {/* Header with Back and Refresh */}
       <div className="flex justify-between items-center mb-4">
       <button 
-            className="flex items-center gap-1 text-sm font-medium text-orange-600 hover:text-orange-800 transition"
+            className="flex items-center gap-1 text-xl font-medium text-orange-600 hover:text-orange-800 transition"
             onClick={onRetourClick}
-          >
-            <span className="text-lg">‹</span> Retour
+          > 
+            <svg width="18" height="19" viewBox="0 0 18 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M10.6665 4.65625L5.21143 10L10.6665 15.3437L12.2251 13.8177L8.32784 10L12.2251 6.1838L10.6665 4.65625Z" fill="#F16E00"/>
+            </svg>
+            <span className="text-lg font-bold text-[#000000] "> Retour</span> 
           </button>
         <div className="flex items-center gap-2">
           <span className="text-gray-500 text-sm">

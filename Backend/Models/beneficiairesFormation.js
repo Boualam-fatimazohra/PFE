@@ -8,8 +8,8 @@ const beneficiareFormationSchema= new mongoose.Schema({
     formation: { type:mongoose.Schema.Types.ObjectId, ref:"Formation",required: true },
     beneficiaire:{ type: mongoose.Schema.Types.ObjectId,ref:"Beneficiaire",required:true},
     evaluation:{ type: mongoose.Schema.Types.ObjectId,ref:"Evaluation",required:false},
-    token:{type:String,required:false},
-    isSubmited: { type: Boolean, default: false } // pour vérifier est ce que l'evaluation est déja envoyer ou pas
+    token:{type:String,required:false,default:"null"},
+    isSubmited: { type: Boolean, default:false } // pour vérifier est ce que l'evaluation est déja envoyer ou pas
   }, { timestamps: true });
 
 module.exports = mongoose.model("BeneficiareFormation", beneficiareFormationSchema);

@@ -20,6 +20,8 @@ import generateEvaluationLink from "./pages/Evaluation";
 import { FormationAvenir } from "./pages/FormationAvenir";
 import FormationModal from "./components/dashboardElement/formationModal";
 import MesFormation from "./pages/MesFormation";
+import { Calendar } from "lucide-react";
+import CalendarView from "./components/dashboardElement/CalendarView";
 
 
 const queryClient = new QueryClient();
@@ -62,16 +64,12 @@ const App = () => (
             <Route path="/EvaluationForm" element={<EvaluationForm />} />
             <Route path="/formationModal" element={< FormationModal/>} />
             <Route path="/EvaluationForm" element={< EvaluationForm/>}/>
+            <Route path="/CalendarView" element={<CalendarView/>}/>
             <Route path="/DetailsFormation" element={<DetailsFormation />} />
             <Route path="/FormationTerminer" element={<FormationTerminer />} />
             <Route path="/FormationAvenir" element={<FormationAvenir />} />
 
-
-
-            <Route path="//DetailsFormation" element={<DetailsFormation />} />
-            <Route path="//FormationTerminer" element={<FormationTerminer />} />
             <Route path="/formationModal" element={< FormationModal/>} />
-            <Route path="//FormationAvenir" element={<FormationAvenir />} />
             {/* Page 404 */}
             <Route path="*" element={<NotFound />} />
           </Routes>

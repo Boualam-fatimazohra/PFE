@@ -3,26 +3,49 @@ const mongoose = require("mongoose");
 const authorizeOwnership = (childModel, parentField) => {
     return async (req, res, next) => {
         try {
-            const userId = req.user.userId; // Extract user info from authentication middleware
-            const { id } = req.params; // Extract entity ID from request parameters 
+            const { userId, role } = req.user;
+            const { id } = req.params;
+            console.log("user Role: " + role + ",userId: " + userId);
+            console.log("parms Id: " + id);
+            console.log('Middleware debug info:');
+            console.log('childModel received:', childModel);
+            console.log('Available models:', Object.keys(mongoose.models));
 
-            // Find the child entity by ID (e.g., Formateur or Formation)
-            const childEntity = await mongoose.model(childModel).findOne({ utilisateur: userId });
-            if (!childEntity) {
-                return res.status(404).json({ message: `${childModel} not found` });
-            }
-
-            // If the authenticated user is directly related to this entity (e.g., a Formateur updating their own record)
-            if (childEntity._id.toString() === id) {
+            if (role === "Admin") {
                 return next();
             }
 
-            // Check if the authenticated user is the assigned parent entity
-            if (childEntity[parentField].toString() !== userId) {
-                return res.status(403).json({ message: `Forbidden: You do not have permission to access this ${childModel}` });
+            // Ensure childModel is a string
+            const modelName = typeof childModel === 'function' ? childModel.modelName : childModel;
+            
+            const Model = mongoose.models[modelName];
+            if (!Model) {
+                console.error(`Model ${modelName} not found in registered models`);
+                return res.status(500).json({ 
+                    message: "Configuration error: Model not found",
+                    debug: {
+                        requestedModel: modelName,
+                        availableModels: Object.keys(mongoose.models)
+                    }
+                });
             }
 
-            // Everything is fine, proceed
+            const childEntity = await Model.findById(id);
+            if (!childEntity) {
+                return res.status(404).json({ message: `${modelName}/:${id} not found` });
+            }
+
+            // if the formateur who want to get update himself (exemple)
+            if (childEntity.utilisateur.toString() === userId) {
+                console.log("middleware update yourself")
+                return next();
+            }
+
+            // check if it's the manager of the formateur (exemple)
+            if (childEntity[parentField].toString() !== userId) {
+                return res.status(403).json({ message: `Forbidden: You do not have permission to access this ${modelName}` });
+            }
+
             next();
         } catch (error) {
             console.error("Authorization error:", error);

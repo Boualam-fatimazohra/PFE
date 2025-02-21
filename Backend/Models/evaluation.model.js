@@ -37,7 +37,7 @@ const evaluationSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
-  recommandation:{type:Boolean,required:true},
+  recommandation:{type:String,enum :["Oui","Non"] ,required:true},
   commentaire:{type:String,required:false},
   formation:{type:mongoose.Schema.Types.ObjectId,ref:"Formation",required:true}
 });
