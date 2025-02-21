@@ -24,14 +24,15 @@ router.get('/GetFormations',
 // Route to delete a formation by ID
 router.delete('/DeleteFormation/:id', 
     authenticated, 
-    authorizeRoles('Admin', 'Manager'), 
+    authorizeRoles('Admin', 'Manager'),
+    authorizeNestedOwnership('Formation', 'formateur.utilisateur'), 
     DeleteFormation
 );
 
 // Route to update a formation by ID 
 router.put('/UpdateFormation/:id', 
     authenticated, 
-    authorizeRoles('Admin', 'Manager'),
+    authorizeRoles('Admin', 'Manager', 'Formateur'),
     authorizeNestedOwnership('Formation', 'formateur.utilisateur'),
     UpdateFormation
 ); 
@@ -39,6 +40,7 @@ router.put('/UpdateFormation/:id',
 // Route to get one specific formation by ID
 router.get('/GetOneFormation/:id',
     authenticated,
+    authorizeRoles('Admin', 'Manager', 'Formateur'),  
     authorizeNestedOwnership('Formation', 'formateur.utilisateur'),
     GetOneFormation);
 
