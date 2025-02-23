@@ -37,7 +37,7 @@ router.get('/getFormateurById/:id',
     getFormateurById
 );
 
-router.get('/getFormateurFormations/:id', 
+router.get('/getFormateurFormations', 
     authenticated, 
     authorizeRoles('Admin', 'Manager', 'Formateur'),
     authorizeOwnership('Formateur', "manager"),

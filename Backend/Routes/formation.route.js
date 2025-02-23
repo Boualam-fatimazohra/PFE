@@ -4,7 +4,7 @@ const { createFormation, GetOneFormation, UpdateFormation, GetFormations, Delete
 const authorizeRoles = require('../Middlewares/RoleMiddleware.js');
 const upload = require('../utils/uploadImage.js');
 const authorizeNestedOwnership = require('../Middlewares/NestedOwnershipMiddleware.js')
-
+const authorizeOwnership = require('../Middlewares/OwnershipMiddleware.js')
 const router = express.Router();
 
 // Route to add a new formation (Protected route: Only authenticated users can access)

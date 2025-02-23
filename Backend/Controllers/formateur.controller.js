@@ -198,7 +198,6 @@ const GetFormateurFormations = async (req, res) => {
     if (!userId) {
       return res.status(401).json({ message: "Utilisateur non authentifié" });
     }
-
     // Find the formateur using the userId (utilisateur)
     const formateur = await Formateur.findOne({ utilisateur: userId });
 
