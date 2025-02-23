@@ -1,9 +1,8 @@
 const express = require('express');
-const { createFormateur, getFormateurs, updateFormateur, deleteFormateur, getFormateurById, GetFormateurFormations } = require('../Controllers/formateur.controller.js');
+const { createFormateur, getFormateurs, updateFormateur, deleteFormateur, getFormateurById, GetFormateurFormations,getFormateurByManager } = require('../Controllers/formateur.controller.js');
 const authorizeRoles = require('../Middlewares/RoleMiddleware.js');
 const authenticated = require('../Middlewares/Authmiddleware.js');
 const authorizeOwnership = require('../Middlewares/OwnershipMiddleware.js');
-
 const router = express.Router();
 
 router.post('/Addformateur', 
@@ -44,5 +43,10 @@ router.get('/getFormateurFormations/:id',
     authorizeOwnership('Formateur', "manager"),
     GetFormateurFormations
 );
+// récupérer les formateurs du manager authentifier
+router.get('/getFormateurByManager', 
+    authenticated, 
+    authorizeRoles( 'Admin','Manager'),
+    getFormateurByManager);
 
 module.exports = router;

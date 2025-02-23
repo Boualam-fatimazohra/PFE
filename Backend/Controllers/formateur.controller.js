@@ -8,15 +8,14 @@ const { sendMail } = require('../Config/auth.js');
 const generateRandomPassword = require('../utils/generateRandomPassword.js');
 
 const createFormateur = async (req, res) => {
-    const { nom, prenom, email, numeroTelephone,coordinateur, manager } = req.body;
-
+    const { nom, prenom, email, numeroTelephone,coordinateur,manager} = req.body;
     try {
         // Vérification de l'existence de l'email
         const existingUser = await Utilisateur.findOne({ email });
         if (existingUser) {
             return res.status(400).json({ message: "Cet email est déjà utilisé" });
         }
-
+        // extraction du role de l'utilisateur
         const userRole = req.user?.role;
         console.log(userRole);
         let assignedManager;
@@ -24,6 +23,7 @@ const createFormateur = async (req, res) => {
         if (!userRole) {
             return res.status(403).json({ message: "Forbidden: Only Admins or Managers can create a Formateur (endpoint)" });
         } else if (userRole === "Manager") {
+          console.log("le cas ou le mangaer qui tente de creer formateur");
             // Find the manager document using the user ID
             const managerDoc = await Manager.findOne({ utilisateur: req.user.userId });
             if (!managerDoc) {
@@ -32,22 +32,20 @@ const createFormateur = async (req, res) => {
             assignedManager = managerDoc._id; // Use the Manager document ID, not 
         } else {
             // Verify if the provided manager exists when Admin is creating
-            if (!manager) {
-              return res.status(400).json({ message: "Manager ID is required when Admin creates a Formateur" });
-            }
-            
-            const managerExists = await Manager.findOne({ utilisateur: manager });
-            if (!managerExists) {
-                return res.status(400).json({ message: "Specified manager does not exist" });
-            }
-            
-            assignedManager = manager;
-        }
+             if (!manager) {
+               return res.status(400).json({ message: "Manager ID is required when Admin creates a Formateur" });
+             }
+             console.log("le cas ou l'admin qui tente de creer formateur");
 
+             const managerDoc = await Manager.findById(manager);
+            if (!managerDoc) {
+                return res.status(400).json({ message: "Manager not found" });
+            }
+            assignedManager = managerDoc._id; // Use the Manager document ID, not
+                   }
         // Generate and hash a temporary password
         const temporaryPassword = generateRandomPassword();
         const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
-        
         // Create new user
         const newUser = new Utilisateur({
             nom,
@@ -80,12 +78,10 @@ const createFormateur = async (req, res) => {
 
     } catch (error) {
         console.error("Erreur:", error);
-        
         // Rollback user creation if something fails
         if (typeof newUser !== "undefined") {
             await Utilisateur.deleteOne({ _id: newUser._id });
         }
-
         res.status(500).json({ 
             message: "Erreur serveur",
             error: error.message 
@@ -94,7 +90,7 @@ const createFormateur = async (req, res) => {
 };
 
 
-
+// debut :pour récuperer tout les formateurs sans exception
 const getFormateurs = async (req, res) => {
     try {
       const formateurs = await Formateur.find().populate("utilisateur", "nom  prenom  email  numeroTelephone  role").populate("manager").populate("coordinateur");
@@ -103,7 +99,35 @@ const getFormateurs = async (req, res) => {
       res.status(500).json({ message: "Erreur serveur", error: error.message });
     }
   };
+  // fin :pour récuperer tout les formateurs sans exception
+  // debut : pour récuperer les formateurs d'un manager
+  const getFormateurByManager = async (req, res) => {
+    const userId = req.user?.userId; // Supposons que req.user.userId est correctement défini
+    if(!userId) return res.status(401).json({message:"Utilisateur non authentifié"});
+    try {
+      // chercher le manager associée a cet utilisateur
+      const manager=await Manager.findOne({utilisateur:userId});
+      if(!manager) return res.status(404).json({message:"Manager non trouvé"});
+      const managerId=manager._id;
+        //  Recherche des formateurs associés au manager
+        const formateurs = await Formateur.find({ manager: managerId })
+            .populate("utilisateur", "nom prenom email numeroTelephone role")
+            .populate("manager") // Exemple de champs à afficher
+            .populate("coordinateur");
 
+        //  Gestion du cas "Aucun résultat"
+        if (formateurs.length === 0) {
+            return res.status(200).json({ message: "Aucun formateur trouvé pour ce manager", data: [] });
+        }
+
+        //  Renvoi des données
+        res.status(200).json({ data: formateurs });
+
+    } catch (error) {
+        res.status(500).json({ message: "Erreur serveur", error: error.message });
+    }
+};
+  // fin : pour récuperer les formateurs d'un manager
   const getFormateurById = async (req, res) => {
     const id=req.params.id;
     try {
@@ -198,4 +222,4 @@ const GetFormateurFormations = async (req, res) => {
   }
 };
   
-  module.exports = { createFormateur, getFormateurs, getFormateurById, updateFormateur, deleteFormateur, GetFormateurFormations };
+  module.exports = { createFormateur, getFormateurs, getFormateurById, updateFormateur, deleteFormateur, GetFormateurFormations,getFormateurByManager };
