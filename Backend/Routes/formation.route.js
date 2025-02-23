@@ -2,7 +2,7 @@ const express = require('express');
 const authenticated = require('../Middlewares/Authmiddleware.js');
 const { createFormation, GetOneFormation, UpdateFormation, GetFormations, DeleteFormation } = require('../Controllers/formation.controller.js'); // Removed duplicate DeleteFormation
 const authorizeRoles = require('../Middlewares/RoleMiddleware.js');
-const upload = require('../Middlewares/uploadMiddleware');
+const upload = require('../utils/uploadImage.js');
 const authorizeNestedOwnership = require('../Middlewares/NestedOwnershipMiddleware.js')
 
 const router = express.Router();

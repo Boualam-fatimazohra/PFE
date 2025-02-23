@@ -43,7 +43,6 @@ async function sendMail(destinataire, contenu) {
 
         const accessToken = await oAuth2Client.getAccessToken();
         console.log("Token d'accès obtenu :", accessToken.token ? "OK" : " NON DÉFINI");
-
         const transport = nodemailer.createTransport({
             service: "gmail",
             auth: {
