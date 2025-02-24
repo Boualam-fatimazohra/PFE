@@ -8,7 +8,7 @@ const SubmitEvaluation = async (req, res) => {
   const { token } = req.params;
   try {
     if (!token) {
-      return res.status(400).json({ message: "Token manquant" });
+      return res.status(400).json({ message: "Token manquant"});
     }
     const beneficiaireFormation = await BeneficiareFormation.findOne({ token });
     beneficiaireFormation.isSubmited = true;

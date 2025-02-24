@@ -2,7 +2,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { Utilisateur } = require('../Models/utilisateur.model.js');
 const generateRandomPassword = require('../utils/generateRandomPassword.js');
-
+const {sendMail} = require('../Config/auth.js');
+//
 const Login = async (req, res) => {
     const { email, password } = req.body;
     try {
@@ -128,5 +129,86 @@ res.clearCookie('token');
 res.status(200).json({ message: 'Logged out successfully' });
 console.log("Token cookie cleared");
 };
+// auth.controller.js
 
-module.exports = { Login, createUser, Logout };
+
+const ForgotPassword = async (req, res) => {
+  const { email } = req.body;
+  try {
+    const user = await Utilisateur.findOne({ email });
+    if (!user) return res.status(404).json({ message: "Utilisateur non trouvé" });
+
+     // Vérifier si les champs existent dans l'instance et les ajouter si nécessaires
+    //  if (user.resetPasswordCode === undefined) {
+    //     user.resetPasswordCode = null;
+    // }
+    // if (user.resetPasswordExpires === undefined) {
+    //     user.resetPasswordExpires = null;
+    // }
+    const resetCode = generateRandomPassword();
+    const hashedCode = await bcrypt.hash(resetCode, 10);
+
+    user.resetPasswordCode = hashedCode;
+    user.resetPasswordExpires = Date.now() + 3600000; // 1 heure
+
+    await user.save();
+
+    // Générer un JWT contenant l'email
+    const token = jwt.sign({userId:user._id, email }, process.env.JWT_SECRET, { expiresIn: "1h" });
+     console.log("Générer un JWT contenant l'email")
+    // Stocker le JWT dans un cookie sécurisé
+    res.cookie("token",token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 3600000, // 1 heure
+    });
+
+    // Envoyer l'email
+    await sendMail(email, `Votre code de réinitialisation : ${resetCode}`);
+
+    res.status(200).json({ message: "Code envoyé par email" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const VerifyResetCode = async (req, res) => {
+    const { code } = req.body;
+    try {
+        const email = req.user?.email; //  Récupération directe via le middleware
+        if (!email) return res.status(400).json({ message: "Email non trouvé dans le token" });
+
+        console.log("Récupération directe via le middleware", email);
+
+        // Récupérer l'utilisateur sans chercher `resetPasswordCode` dans la requête
+        const user = await Utilisateur.findOne({
+            email,
+            resetPasswordExpires: { $gt: Date.now() }, // Vérifier l'expiration
+        });
+
+        if (!user || !user.resetPasswordCode) {
+            return res.status(400).json({ message: "Code invalide ou expiré" });
+        }
+
+        // Comparer le code reçu avec le code haché
+        const isCodeValid = await bcrypt.compare(code, user.resetPasswordCode);
+        if (!isCodeValid) {
+            return res.status(400).json({ message: "Code invalide ou expiré" });
+        }
+
+        console.log("Code vérifié, utilisateur trouvé :", user);
+        res.status(200).json({ message: "Code vérifié" });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+const UpdatePassword=async(req,res)=>{
+    const { password } = req.body;
+    try {
+        const email = req.user?.email; //  Récupération directe via le middleware
+        if (!email) return res.status(400).json({ message: "Email non trouvé dans le token" });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }}
+module.exports = { Login, createUser, Logout ,ForgotPassword,VerifyResetCode,UpdatePassword};
