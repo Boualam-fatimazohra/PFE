@@ -88,8 +88,6 @@ const createFormateur = async (req, res) => {
         });
     }
 };
-
-
 // debut :pour récuperer tout les formateurs sans exception
 const getFormateurs = async (req, res) => {
     try {

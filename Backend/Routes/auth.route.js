@@ -1,6 +1,6 @@
 const express = require('express');
-const {Login ,createUser,Logout} = require('../Controllers/auth.controller');
-
+const {Login ,createUser,Logout,ForgotPassword,VerifyResetCode} = require('../Controllers/auth.controller');
+const authenticated=require("../Middlewares/Authmiddleware.js");
 // const authenticated = require('../Middlewares/Authmiddleware')
 // const verifyRole = require('../Middlewares/verifyRole')
 const router = express.Router();
@@ -8,7 +8,8 @@ const router = express.Router();
 router.post('/signIn', Login);
 router.post('/signup',createUser);
 router.get('/logout', Logout);
-
+router.post('/forgotpassword',ForgotPassword);
+router.post('/verifyresetcode',authenticated,VerifyResetCode);
 // router.get('/validate-token', authenticated, verifyRole(['Mentor']), (req, res) => {
 //     res.status(200).json({ message: 'Token is valid.', user: req.user });
 // });

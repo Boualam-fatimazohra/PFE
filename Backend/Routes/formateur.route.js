@@ -33,7 +33,8 @@ router.delete('/deleteFormateur/:id',
 
 router.get('/getFormateurById/:id', 
     authenticated, 
-    authorizeRoles('Admin', 'Manager', 'Formateur'), 
+    authorizeRoles('Admin', 'Manager', 'Formateur'),
+    authorizeOwnership('Formateur', "manager"),     
     getFormateurById
 );
 
