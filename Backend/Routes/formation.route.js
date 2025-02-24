@@ -4,9 +4,10 @@ const { createFormation, GetOneFormation, UpdateFormation, GetFormations, Delete
 const authorizeRoles = require('../Middlewares/RoleMiddleware.js');
 const upload = require('../utils/uploadImage.js');
 const authorizeNestedOwnership = require('../Middlewares/NestedOwnershipMiddleware.js')
-const authorizeOwnership = require('../Middlewares/OwnershipMiddleware.js')
-const router = express.Router();
+const authorizeOwnership = require('../Middlewares/OwnershipMiddleware.js');
+const authorizeFormationAccess = require('../Middlewares/FormationAccess.js');
 
+const router = express.Router();
 // Route to add a new formation (Protected route: Only authenticated users can access)
 router.post('/Addformation', 
     authenticated, 
@@ -25,7 +26,7 @@ router.get('/GetFormations',
 router.delete('/DeleteFormation/:id', 
     authenticated, 
     authorizeRoles('Admin', 'Manager'),
-    authorizeNestedOwnership('Formation', 'formateur.utilisateur'), 
+    authorizeFormationAccess('delete'),
     DeleteFormation
 );
 
@@ -33,7 +34,8 @@ router.delete('/DeleteFormation/:id',
 router.put('/UpdateFormation/:id', 
     authenticated, 
     authorizeRoles('Admin', 'Manager', 'Formateur'),
-    authorizeNestedOwnership('Formation', 'formateur.utilisateur'),
+    upload.single("image"),
+    authorizeFormationAccess('update'),
     UpdateFormation
 ); 
 
@@ -41,7 +43,8 @@ router.put('/UpdateFormation/:id',
 router.get('/GetOneFormation/:id',
     authenticated,
     authorizeRoles('Admin', 'Manager', 'Formateur'),  
-    authorizeNestedOwnership('Formation', 'formateur.utilisateur'),
-    GetOneFormation);
+    authorizeFormationAccess('read'),
+    GetOneFormation
+);
 
 module.exports = router;
