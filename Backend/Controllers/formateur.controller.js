@@ -189,33 +189,37 @@ const getFormateurs = async (req, res) => {
   };
 
   // debut : récupérer les formation d'un seule formateur 
-const GetFormateurFormations = async (req, res) => {
+ // debut : récupérer les formation d'un seule formateur 
+ const GetFormateurFormations = async (req, res) => {
   try {
-    // Get the mentor's userId from the cookie
-    const userId = req.user?.userId;
-    if (!userId) {
-      return res.status(401).json({ message: "Utilisateur non authentifié" });
+    // Get the formateur's ID from the request params
+    const formateurId = req.params.id;
+
+    // Check if formateurId is provided
+    if (!formateurId) {
+      return res.status(400).json({ message: "Aucun identifiant de formateur fourni" });
     }
-    // Find the formateur using the userId (utilisateur)
-    const formateur = await Formateur.findOne({ utilisateur: userId });
+
+    // Find the formateur using the ID
+    const formateur = await Formateur.findById(formateurId);
 
     // Check if the formateur exists
     if (!formateur) {
       return res.status(404).json({ message: "Formateur non trouvé" });
     }
 
-    // Find the formations by formateur ID (this will be the formateur reference in the 'Formation' schema)
+    // Find formations linked to this formateur
     const formations = await Formation.find({ formateur: formateur._id });
 
-    // Check if formations are found
+    // Check if formations array is empty
     if (formations.length === 0) {
-      return res.status(404).json({ message: "Aucune formation trouvée pour ce formateur" });
+      return res.status(200).json({ message: "Aucune formation disponible pour ce formateur." });
     }
 
-    // Return the formations associated with the formateur
+    // Return formations (empty array if none found)
     res.status(200).json(formations);
   } catch (error) {
-    res.status(500).json({ message: 'Erreur lors de la récupération des formations', error: error.message });
+    res.status(500).json({ message: "Erreur lors de la récupération des formations", error: error.message });
   }
 };
   
