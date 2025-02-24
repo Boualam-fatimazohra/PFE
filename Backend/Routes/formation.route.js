@@ -1,13 +1,19 @@
 const express = require('express');
 const authenticated = require('../Middlewares/Authmiddleware.js');
-const { createFormation, GetOneFormation, UpdateFormation, GetFormations, DeleteFormation } = require('../Controllers/formation.controller.js'); // Removed duplicate DeleteFormation
+const { 
+    createFormation, 
+    GetOneFormation, 
+    UpdateFormation, 
+    GetFormations, 
+    DeleteFormation 
+} = require('../Controllers/formation.controller.js');
 const authorizeRoles = require('../Middlewares/RoleMiddleware.js');
 const upload = require('../Middlewares/uploadMiddleware');
-const authorizeNestedOwnership = require('../Middlewares/NestedOwnershipMiddleware.js')
+const authorizeFormationAccess = require('../Middlewares/FormationAccess.js');
 
 const router = express.Router();
 
-// Route to add a new formation 
+// Route to add a new formation
 router.post('/Addformation', 
     authenticated, 
     authorizeRoles('Formateur'),
@@ -25,7 +31,7 @@ router.get('/GetFormations',
 router.delete('/DeleteFormation/:id', 
     authenticated, 
     authorizeRoles('Admin', 'Manager'),
-    authorizeNestedOwnership('Formation', 'formateur.utilisateur'), 
+    authorizeFormationAccess('delete'),
     DeleteFormation
 );
 
@@ -33,7 +39,7 @@ router.delete('/DeleteFormation/:id',
 router.put('/UpdateFormation/:id', 
     authenticated, 
     authorizeRoles('Admin', 'Manager', 'Formateur'),
-    authorizeNestedOwnership('Formation', 'formateur.utilisateur'),
+    authorizeFormationAccess('update'),
     UpdateFormation
 ); 
 
@@ -41,7 +47,7 @@ router.put('/UpdateFormation/:id',
 router.get('/GetOneFormation/:id',
     authenticated,
     authorizeRoles('Admin', 'Manager', 'Formateur'),  
-    authorizeNestedOwnership('Formation', 'formateur.utilisateur'),
+    authorizeFormationAccess('read'),
     GetOneFormation
 );
 
