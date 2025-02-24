@@ -4,7 +4,6 @@ const Manager = require("../Models/manager.model.js");
 
 const bcrypt = require('bcryptjs');
 const { Utilisateur } = require('../Models/utilisateur.model.js');
-const { sendMail } = require('../Config/auth.js');
 const generateRandomPassword = require('../utils/generateRandomPassword.js');
 
 const createFormateur = async (req, res) => {
@@ -22,9 +21,17 @@ const createFormateur = async (req, res) => {
         let assignedManager;
 
         if (!userRole) {
+
             return res.status(403).json({ message: "Forbidden: Only Admins or Managers can create a Formateur (endpoint)" });
+
         } else if (userRole === "Manager") {
-            assignedManager = req.user.userId; // Assign Manager's ID
+
+            const managerDoc = await Manager.findOne({ utilisateur: req.user.userId });
+            
+            if (!managerDoc) {
+                return res.status(400).json({ message: "Manager not found" });
+            }
+            assignedManager = managerDoc._id;
         } else {
               // Verify if the provided manager exists when Admin is creating
             if (!manager) {
@@ -55,7 +62,7 @@ const createFormateur = async (req, res) => {
           const contenu =`<p>Bonjour,</p>
                    <p>Votre mot de passe est : <b>${temporaryPassword}</b></p>
                    <p>Merci de ne pas le partager.</p>`;
-        await sendMail(email,contenu);
+        //await sendMail(email,contenu);
         await newUser.save();
 
         // Create Formateur linked to the new user
@@ -162,35 +169,65 @@ const getFormateurs = async (req, res) => {
   };
 
   // debut : récupérer les formation d'un seule formateur 
-const GetFormateurFormations = async (req, res) => {
+  const GetFormateurFormations = async (req, res) => {
+    try {
+      // Get the formateur's ID from the request params
+      const formateurId = req.params.id;
+  
+      // Check if formateurId is provided
+      if (!formateurId) {
+        return res.status(400).json({ message: "Aucun identifiant de formateur fourni" });
+      }
+  
+      // Find the formateur using the ID
+      const formateur = await Formateur.findById(formateurId);
+  
+      // Check if the formateur exists
+      if (!formateur) {
+        return res.status(404).json({ message: "Formateur non trouvé" });
+      }
+  
+      // Find formations linked to this formateur
+      const formations = await Formation.find({ formateur: formateur._id });
+
+      // Check if formations array is empty
+      if (formations.length === 0) {
+        return res.status(200).json({ message: "Aucune formation disponible pour ce formateur." });
+      }
+  
+      // Return formations (empty array if none found)
+      res.status(200).json(formations);
+    } catch (error) {
+      res.status(500).json({ message: "Erreur lors de la récupération des formations", error: error.message });
+    }
+  };
+  
+
+const getFormateurByManager = async (req, res) => {
+  const userId = req.user?.userId; // Supposons que req.user.userId est correctement défini
+  if(!userId) return res.status(401).json({message:"Utilisateur non authentifié"});
   try {
-    // Get the mentor's userId from the cookie
-    const userId = req.user?.userId;
-    if (!userId) {
-      return res.status(401).json({ message: "Utilisateur non authentifié" });
-    }
+    // chercher le manager associée a cet utilisateur
+    const manager=await Manager.findOne({utilisateur:userId});
+    if(!manager) return res.status(404).json({message:"Manager non trouvé"});
+    const managerId=manager._id;
+      //  Recherche des formateurs associés au manager
+      const formateurs = await Formateur.find({ manager: managerId })
+          .populate("utilisateur", "nom prenom email numeroTelephone role")
+          .populate("manager") // Exemple de champs à afficher
+          .populate("coordinateur");
 
-    // Find the formateur using the userId (utilisateur)
-    const formateur = await Formateur.findOne({ utilisateur: userId });
+      //  Gestion du cas "Aucun résultat"
+      if (formateurs.length === 0) {
+          return res.status(200).json({ message: "Aucun formateur trouvé pour ce manager", data: [] });
+      }
 
-    // Check if the formateur exists
-    if (!formateur) {
-      return res.status(404).json({ message: "Formateur non trouvé" });
-    }
+      //  Renvoi des données
+      res.status(200).json({ data: formateurs });
 
-    // Find the formations by formateur ID (this will be the formateur reference in the 'Formation' schema)
-    const formations = await Formation.find({ formateur: formateur._id });
-
-    // Check if formations are found
-    if (formations.length === 0) {
-      return res.status(404).json({ message: "Aucune formation trouvée pour ce formateur" });
-    }
-
-    // Return the formations associated with the formateur
-    res.status(200).json(formations);
   } catch (error) {
-    res.status(500).json({ message: 'Erreur lors de la récupération des formations', error: error.message });
+      res.status(500).json({ message: "Erreur serveur", error: error.message });
   }
 };
   
-  module.exports = { createFormateur, getFormateurs, getFormateurById, updateFormateur, deleteFormateur, GetFormateurFormations };
+  module.exports = { createFormateur, getFormateurs, getFormateurById, updateFormateur, deleteFormateur, GetFormateurFormations, getFormateurByManager };

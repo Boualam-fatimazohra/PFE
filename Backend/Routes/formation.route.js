@@ -7,7 +7,7 @@ const authorizeNestedOwnership = require('../Middlewares/NestedOwnershipMiddlewa
 
 const router = express.Router();
 
-// Route to add a new formation (Protected route: Only authenticated users can access)
+// Route to add a new formation 
 router.post('/Addformation', 
     authenticated, 
     authorizeRoles('Formateur'),
@@ -15,7 +15,7 @@ router.post('/Addformation',
     createFormation
 );
 
-// Route to get all formations (No authentication required)
+// Route to get all formations
 router.get('/GetFormations', 
     authenticated, 
     GetFormations
@@ -42,6 +42,7 @@ router.get('/GetOneFormation/:id',
     authenticated,
     authorizeRoles('Admin', 'Manager', 'Formateur'),  
     authorizeNestedOwnership('Formation', 'formateur.utilisateur'),
-    GetOneFormation);
+    GetOneFormation
+);
 
 module.exports = router;
