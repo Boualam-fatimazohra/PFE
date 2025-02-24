@@ -2,60 +2,68 @@ const Formation = require('../Models/formation.model.js');
 const Formateur  = require('../Models/formateur.model.js');
 //  debut : creation d'un formation par un formateur bien précis :
 const createFormation = async (req, res) => {
-  console.log('===== DEBUG UPLOAD =====');
-  console.log('req.file:', req.file);
-  console.log('req.files:', req.files);
-  console.log('Content-Type:', req.get('Content-Type'));
-  console.log('req.body:', req.body);
-  console.log('======================');
-  const { nom, dateDebut, dateFin, lienInscription } = req.body;
-  const id=req.user.userId;
-  try {    
-    if (!nom || !dateDebut || !dateFin) {
-      return res.status(400).json({ 
-        message: "Les champs nom, dateDebut, dateFin et categorie sont obligatoires." 
-      });
+  try {
+    // 1. Get user ID from authentication
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ message: "Utilisateur non authentifié" });
     }
-    // Validation des dates
-    const debutDate = new Date(dateDebut);
-    const finDate = new Date(dateFin);
-    
-    if (isNaN(debutDate.getTime()) || isNaN(finDate.getTime())) {
+
+    // 2. Find the formateur associated with this user
+    const formateur = await Formateur.findOne({ utilisateur: userId });
+    if (!formateur) {
+      return res.status(401).json({ message: "Formateur non trouvé" });
+    }
+
+    // 3. Extract data from request body
+    const { 
+      nom, 
+      dateDebut, 
+      dateFin,
+      // description,
+      lienInscription,
+      // status,
+      // tags,
+      // categorie,
+      // niveau
+    } = req.body;
+
+    // 4. Validate required fields
+    if (!nom) {
       return res.status(400).json({ 
-        message: "Les dates fournies ne sont pas valides" 
+        message: "Le nom de la formation est obligatoire" 
       });
     }
 
-    if (finDate < debutDate) {
-      return res.status(400).json({ 
-        message: "La date de fin ne peut pas être antérieure à la date de début" 
-      });
-    }
-   
-    // Traitement du chemin de l'image
-const imagePath = req.file ? `http://localhost:5000/uploads/${req.file.filename}` : null;
-console.log('Chemin de l\'image sauvegardé:', imagePath);   
-    // Création de la nouvelle formation
+    // 5. Get image path if file was uploaded
+    const imagePath = req.file ? req.file.path : null;
+
+    // 6. Create new formation
     const nouvelleFormation = new Formation({
       nom,
-      dateDebut,
-      dateFin,
-      formateur: id,
-      image: imagePath,
-      lienInscription
+      dateDebut: dateDebut || null,
+      dateFin: dateFin || null,
+      description: "Aucun description",
+      lienInscription,
+      status:  "Avenir",
+      tags:  "",
+      categorie:  "type1",
+      niveau: "type1",
+      formateur: formateur._id,  // Use formateur._id instead of userId
+      image: imagePath
     });
 
-    console.log("Requête reçue pour ajouter une formation:", {
-      ...req.body,
-      imagePath,
-      formateurId: id
-    });
-
+    // 7. Save the formation
     const formationEnregistree = await nouvelleFormation.save();
-    res.status(201).json(formationEnregistree);
+
+    // 8. Return the saved formation
+    res.status(201).json({
+      message: "Formation créée avec succès",
+      formation: formationEnregistree
+    });
 
   } catch (error) {
-    console.error("Erreur lors de la création de la formation:", error);
+    console.error("Erreur création formation:", error);
     res.status(500).json({ 
       message: "Erreur lors de la création de la formation", 
       error: error.message 
