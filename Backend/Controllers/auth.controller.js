@@ -203,12 +203,50 @@ const VerifyResetCode = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
-const UpdatePassword=async(req,res)=>{
-    const { password } = req.body;
+const ChangePassword = async (req, res) => {
+    const { newPassword } = req.body;
+  
     try {
-        const email = req.user?.email; //  Récupération directe via le middleware
-        if (!email) return res.status(400).json({ message: "Email non trouvé dans le token" });
+      const email = req.user?.email; // Récupérer l'email à partir du token
+  
+      if (!email) return res.status(400).json({ message: "Email non trouvé dans le token" });
+  
+      // Vérification que le mot de passe est valide (par exemple, 8 caractères avec des majuscules, minuscules, chiffres, et caractères spéciaux)
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+])[A-Za-z\d!@#$%^&*()_+]{8,}$/;
+      if (!passwordRegex.test(newPassword)) {
+        return res.status(400).json({
+          message: "Le mot de passe doit contenir au moins 8 caractères, avec une majuscule, une minuscule, un chiffre et un caractère spécial",
+        });
+      }
+  
+      // Trouver l'utilisateur à partir de l'email
+      const user = await Utilisateur.findOne({ email });
+  
+      if (!user) {
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
+      }
+  
+      // Hacher le nouveau mot de passe
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+  
+      // Mettre à jour le mot de passe dans la base de données
+      user.password = hashedPassword;
+      user.resetPasswordCode = null; // Supprimer le code de réinitialisation
+      user.resetPasswordExpires = null; // Supprimer l'expiration du code
+      await user.save();
+      res.clearCookie('token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production', // Assure-toi que le cookie est bien supprimé en production avec HTTPS
+        sameSite: 'Strict',
+      });
+      console.log("Mot de passe modifié avec succès");
+      // Répondre à l'utilisateur que le mot de passe a été modifié
+      res.status(200).json({ message: "Mot de passe modifié avec succès" });
+  
     } catch (error) {
-        res.status(500).json({ message: error.message });
-    }}
-module.exports = { Login, createUser, Logout ,ForgotPassword,VerifyResetCode,UpdatePassword};
+      res.status(500).json({ message: error.message });
+    }
+  };
+  
+
+module.exports = { Login, createUser, Logout ,ForgotPassword,VerifyResetCode,ChangePassword};
