@@ -6,7 +6,6 @@ const {sendMail} = require('../Config/auth.js');
 //
 const Login = async (req, res) => {
     const { email, password } = req.body;
-
     try {
         console.log("Login: Request body:", req.body);
         const user = await Utilisateur.findOne({ email });
