@@ -43,7 +43,7 @@ const createFormateur = async (req, res) => {
                 return res.status(400).json({ message: "Specified manager does not exist" });
             }
             
-            assignedManager = manager;
+            assignedManager = managerExists._id;
         }
 
         // Generate and hash a temporary password
