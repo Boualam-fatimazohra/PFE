@@ -1,7 +1,6 @@
 const Manager = require("../Models/manager.model");
 const bcrypt = require('bcryptjs');
 const { Utilisateur } = require("../Models/utilisateur.model");
-const  {sendMail}  = require('../Config/auth.js');
 const generateRandomPassword = require("../utils/generateRandomPassword.js");
 
 // Create a new Manager
@@ -20,7 +19,7 @@ const createManager = async (req, res) => {
         }
         const temporaryPassword = generateRandomPassword();
         const hashedPassword = await bcrypt.hash(password, 10);
-        await sendMail(email,temporaryPassword);
+        //await sendMail(email,temporaryPassword);
 
         const newUtilisateur = new Utilisateur({
             nom,
