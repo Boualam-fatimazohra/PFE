@@ -25,6 +25,8 @@ import { Calendar } from "lucide-react";
 import CalendarView from "./components/dashboardElement/CalendarView";
 import Chatbot from "./pages/Chatbot";
 import { AuthProvider } from "./contexts/AuthContext";
+import AddFormation from "./pages/apiTesting/AddFormation";
+import FormateurFormations from "./pages/apiTesting/FormateurFormations";
 
 
 
@@ -62,6 +64,9 @@ const App = () => (
             <Route path="/coordinateur/*" element={<CoordinateurRoutes />} />
             <Route path="/technicien/*" element={<TechnicienRoutes />} />
             <Route path="/evaluation/:id/:token" element={<EvaluationForm />} />
+            
+            <Route path="/addformation" element={<AddFormation />} /> 
+            <Route path="/formations" element={<FormateurFormations />} /> 
 
             {/* Autres pages */}
             <Route path="/generate-link" element={<GenerateLink />} />
