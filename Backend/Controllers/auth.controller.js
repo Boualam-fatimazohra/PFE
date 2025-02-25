@@ -13,57 +13,63 @@ const Login = async (req, res) => {
     const user = await Utilisateur.findOne({ email });
     console.log("aprés  findOne");
 
-    if (!user) {
-    console.log("Login: User not found");
-    return res.status(400).json({ message: 'Login: User not found' });
-    }
+        if (!user) {
+            console.log("Login: User not found");
+            return res.status(400).json({ message: 'User not found' });
+        }
 
-    console.log("Login: User found:", user);
+        console.log("Login: User found:", user);
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            console.log("Login: Invalid password");
+            return res.status(400).json({ message: 'Invalid password' });
+        }
 
-    if (!isPasswordValid) {
-    console.log("Login: Invalid password");
+        console.log("Login: Password valid");
 
-    return res.status(400).json({ message: 'Login: Invalid password' });
-    }
+        // Ajout de logs pour vérifier les valeurs
+        console.log("Login: Nom =", user.nom);
+        console.log("Login: Prénom =", user.prenom);
+        console.log("Login: Role =", user.role);
 
-    console.log("Login: Password valid");
+        if (!user.nom || !user.prenom || !user.role) {
+            console.error("Login: Missing user fields", { nom: user.nom, prenom: user.prenom, role: user.role });
+            return res.status(500).json({ message: "User data is incomplete" });
+        }
 
-    const token = jwt.sign(
-    { userId: user._id,
-    role: user.role,
-    firstName: user.nom,
-    lastName: user.prenom },
-    process.env.JWT_SECRET,
-    { expiresIn: '1w' } 
-    );
+        const token = jwt.sign(
+            { userId: user._id, role: user.role, nom: user.nom, prenom: user.prenom },
+            process.env.JWT_SECRET,
+            { expiresIn: '1w' }
+        );
 
-    console.log("Login: Token generated:", token);
+        res.cookie('token', token, {
+            httpOnly: true,
+            sameSite: 'strict',
+            secure: false,
+            maxAge: 300000000
+        });
 
-    res.cookie('token', token, {
-    httpOnly: true, 
-    sameSite: 'strict',
-    secure: false,
-    maxAge: 300000000 
-    });
-
-    console.log("Login: Token set in cookie");
-
-    res.status(200).json({ 
-    message: 'Login successful',
-    role: user.role,
-    user: {
-    nom: user.nom,
-    prenom: user.prenom
-    }
-    });
-    console.log("Login: Success de login")
-
+        console.log("Login: Sending response...");
+        res.status(200).json({ 
+            message: 'Login successful',
+            role: user.role,
+            user: { 
+                nom: user.nom, 
+                prenom: user.prenom,
+                userId: user._id
+            }
+        });
     } catch (error) {
-      return res.status(500).json({ message: 'Server error', error: error.message });
-    }
+        console.error('Login error:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
 };
+
+
+//jD5IDdTVLoITMCpL mot de passe mongo 
+//mongodb+srv://salouaouissa:<db_password>@cluster0.nwqo9.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
 const createUser = async (req, res) => {
     const { nom, prenom, email, password } = req.body;
     
