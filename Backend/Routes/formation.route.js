@@ -1,13 +1,19 @@
 const express = require('express');
 const authenticated = require('../Middlewares/Authmiddleware.js');
-const { createFormation, GetOneFormation, UpdateFormation, GetFormations, DeleteFormation } = require('../Controllers/formation.controller.js'); // Removed duplicate DeleteFormation
+const { 
+    createFormation, 
+    GetOneFormation, 
+    UpdateFormation, 
+    GetFormations, 
+    DeleteFormation 
+} = require('../Controllers/formation.controller.js');
 const authorizeRoles = require('../Middlewares/RoleMiddleware.js');
-const upload = require('../utils/uploadImage.js');
-const authorizeNestedOwnership = require('../Middlewares/NestedOwnershipMiddleware.js')
+const upload = require('../Middlewares/uploadMiddleware');
+const authorizeFormationAccess = require('../Middlewares/FormationAccess.js');
 
 const router = express.Router();
 
-// Route to add a new formation (Protected route: Only authenticated users can access)
+// Route to add a new formation
 router.post('/Addformation', 
     authenticated, 
     authorizeRoles('Formateur'),
@@ -15,7 +21,7 @@ router.post('/Addformation',
     createFormation
 );
 
-// Route to get all formations (No authentication required)
+// Route to get all formations
 router.get('/GetFormations', 
     authenticated, 
     GetFormations
@@ -24,15 +30,16 @@ router.get('/GetFormations',
 // Route to delete a formation by ID
 router.delete('/DeleteFormation/:id', 
     authenticated, 
-    authorizeRoles('Admin', 'Manager'), 
+    authorizeRoles('Admin', 'Manager'),
+    authorizeFormationAccess('delete'),
     DeleteFormation
 );
 
 // Route to update a formation by ID 
 router.put('/UpdateFormation/:id', 
     authenticated, 
-    authorizeRoles('Admin', 'Manager'),
-    authorizeNestedOwnership('Formation', 'formateur.utilisateur'),
+    authorizeRoles('Admin', 'Manager', 'Formateur'),
+    authorizeFormationAccess('update'),
     UpdateFormation
 ); 
 
@@ -40,7 +47,8 @@ router.put('/UpdateFormation/:id',
 router.get('/GetOneFormation/:id',
     authenticated,
     authorizeRoles('Admin', 'Manager', 'Formateur'),  
-    authorizeNestedOwnership('Formation', 'formateur.utilisateur'),
-    GetOneFormation);
+    authorizeFormationAccess('read'),
+    GetOneFormation
+);
 
 module.exports = router;
