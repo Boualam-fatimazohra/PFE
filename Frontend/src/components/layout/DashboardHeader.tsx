@@ -1,6 +1,7 @@
 import { Bell, UserCircle } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { logout } from "@/services/authServices";
 
 export function DashboardHeader() {
   const [user, setUser] = useState(null);
@@ -9,23 +10,36 @@ export function DashboardHeader() {
   const location = useLocation();
 
   useEffect(() => {
-    const storedRole = localStorage.getItem("userRole");
-    const storedFirstName = localStorage.getItem("nom");
-    const storedLastName = localStorage.getItem("prenom");
-    if (storedFirstName && storedLastName) {
-      setUser({ nom: storedFirstName, prenom: storedLastName, role: storedRole || "Formateur" });
+    const userString = localStorage.getItem("user"); // Récupère la donnée sous forme de string
+    if (userString) {
+      try {
+        const user = JSON.parse(userString); // Convertit la string en objet
+        const storedRole = user.role;
+        const storedFirstName = user.prenom;
+        const storedLastName = user.nom;
+        
+        if (storedFirstName && storedLastName) {
+          setUser({ nom: storedFirstName, prenom: storedLastName, role: storedRole || "Formateur" });
+        } else {
+          console.warn("Données utilisateur incomplètes dans localStorage");
+          setUser(null);
+        }
+      } catch (error) {
+        console.error("Erreur lors du parsing de user depuis localStorage", error);
+        setUser(null);
+      }
     } else {
-      console.warn("User data not found in localStorage");
+      console.warn("Aucun utilisateur trouvé dans localStorage");
       setUser(null);
     }
   }, []);
+  
 
   const handleLogout = async () => {
     try {
-      localStorage.removeItem("userRole");
-      localStorage.removeItem("nom");
-      localStorage.removeItem("prenom");
-      navigate("/");
+      await logout();
+      console.log("Logout successful****************");
+     navigate("/");
     } catch (error) {
       console.error("Logout error:", error);
     }

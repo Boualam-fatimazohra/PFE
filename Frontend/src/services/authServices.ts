@@ -24,7 +24,7 @@ export const login = async (email: string, password: string): Promise<LoginRespo
 // Déconnexion utilisateur
 export const logout = async (): Promise<void> => {
   try {
-    await apiClient.post('/auth/logout');
+    await apiClient.get('/auth/logout');
     window.location.href = '/'; // Rediriger vers la page de connexion après déconnexion
   } catch (error) {
     console.error('Logout failed:', error);
