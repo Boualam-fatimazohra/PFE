@@ -53,21 +53,6 @@ export const EvaluationsTable = () => {
       const randomToken = Math.random().toString(36).substring(2, 10);
       const generatedLink = `${window.location.origin}/evaluation/${id}/${randomToken}`;
       
-      // Option 2: Generate token on server-side (more secure)
-      // Uncomment this block if you have a server endpoint for token generation
-      /*
-      const response = await fetch(`${API_URL}/api/evaluations/generate-token/${id}`, {
-        method: 'POST',
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to generate evaluation token');
-      }
-      
-      const data = await response.json();
-      const generatedLink = `${window.location.origin}/evaluation/${id}/${data.token}`;
-      */
-      
       setLinks(prev => ({ ...prev, [id]: generatedLink }));
       toast.success("Lien d'évaluation généré avec succès");
     } catch (error) {
@@ -125,8 +110,11 @@ export const EvaluationsTable = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {formations.map((formation: Formation) => (
-            <TableRow key={formation._id} className="hover:bg-orange-50 transition duration-150">
+          {/* {formations.map((formation: Formation) => ( */}
+          {formations
+  .filter((formation: Formation) => formation.status === "En Cours")
+  .slice(-4)
+  .map((formation: Formation) => (            <TableRow key={formation._id} className="hover:bg-orange-50 transition duration-150">
               <TableCell className="py-4 font-medium">{formation.nom}</TableCell>
               <TableCell>
                 <StatusBadge status={formation.status} />
@@ -136,7 +124,8 @@ export const EvaluationsTable = () => {
                   <button
                     onClick={() => generateEvaluationLink(formation._id)}
                     disabled={generating[formation._id]}
-                    className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed w-full max-w-xs"
+                    className="bg-black hover:bg-orange-600 text-white px-3 py-1 text-sm font-medium transition duration-150 ease-in-out flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed w-auto min-w-[80px] h-[30px]"
+                    //  className="rounded-none bg-black hover:bg-orange-600 text-white px-2 py-1 rounded-md text-lg font-medium transition duration-150 ease-in-out flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed w-auto max-w-xs"
                   >
                     {generating[formation._id] ? (
                       <>
@@ -144,7 +133,7 @@ export const EvaluationsTable = () => {
                         Génération...
                       </>
                     ) : (
-                      "Générer le lien d'évaluation"
+                      "Générer lien "
                     )}
                   </button>
                   

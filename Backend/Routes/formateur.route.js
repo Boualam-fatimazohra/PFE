@@ -1,5 +1,5 @@
 const express = require('express');
-const { createFormateur, getFormateurs, updateFormateur, deleteFormateur, getFormateurById, GetFormateurFormations } = require('../Controllers/formateur.controller.js');
+const { createFormateur, getFormateurs, updateFormateur, deleteFormateur, getFormateurById, GetFormateurFormations, getFormateurByManager } = require('../Controllers/formateur.controller.js');
 const authorizeRoles = require('../Middlewares/RoleMiddleware.js');
 const authenticated = require('../Middlewares/Authmiddleware.js');
 const authorizeOwnership = require('../Middlewares/OwnershipMiddleware.js');
@@ -21,7 +21,7 @@ router.get('/getFormateurs',
 router.put('/updateFormateur/:id', 
     authenticated, 
     authorizeRoles('Admin', 'Manager', 'Formateur'), 
-    authorizeOwnership('Formateur', "manager"),  
+    authorizeOwnership('Formateur', "manager"),
     updateFormateur
 );
 
@@ -44,6 +44,12 @@ router.get('/getFormateurFormations/:id',
     authorizeRoles('Admin', 'Manager', 'Formateur'),
     authorizeOwnership('Formateur', "manager"),
     GetFormateurFormations
+);
+
+router.get('/getFormateurByManager', 
+    authenticated, 
+    authorizeRoles('Admin', 'Manager'), 
+    getFormateurByManager
 );
 
 module.exports = router;
