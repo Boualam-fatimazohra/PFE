@@ -25,7 +25,7 @@ import { Calendar } from "lucide-react";
 import CalendarView from "./components/dashboardElement/CalendarView";
 import Chatbot from "./pages/Chatbot";
 
-
+import { AuthProvider } from "@/contexts/AuthContext";
 
 const queryClient = new QueryClient();
 
@@ -45,8 +45,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 };
 
 const App = () => (
+  
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+    <AuthProvider>
       <BrowserRouter>
         <Layout>
           <Routes>
@@ -72,13 +74,14 @@ const App = () => (
             <Route path="/DetailsFormation" element={<DetailsFormation />} />
             <Route path="/FormationTerminer" element={<FormationTerminer />} />
             <Route path="/FormationAvenir" element={<FormationAvenir />} />
-
+            
             <Route path="/formationModal" element={< FormationModal/>} />
             {/* Page 404 */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Layout>
       </BrowserRouter>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

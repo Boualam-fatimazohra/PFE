@@ -1,62 +1,37 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { login } from "@/services/authService";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function LoginForm() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
-  const onSubmit = async (e) => {
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
 
-    const formData = new FormData(e.target);
-    const data = {
-      email: formData.get("email"),
-      password: formData.get("password"),
-    };
+    const formData = new FormData(e.target as HTMLFormElement);
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
 
     try {
-      const response = await login(data);
+      await login(email, password);
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-      if (!response) {
-        throw new Error("No response received from server");
-      }
-      if (!response.role) {
-        throw new Error("Role missing in response");
-      }
-
-      // Stockage du rôle
-      localStorage.setItem("userRole", response.role);
-
-      // Stockage des données utilisateur
-      if (response.user) {
-        const { nom, prenom } = response.user;
-
-        if (nom && prenom) {
-          localStorage.setItem("nom", nom);
-          localStorage.setItem("prenom", prenom);
-        }
-      }
-
-      // Navigation basée sur le rôle
-      const roleRoutes = {
+      const roleRoutes: Record<string, string> = {
         Formateur: "/formateur/dashboardFormateur",
         Manager: "/manager/dashboardManager",
         Coordinateur: "/coordinateur/dashboardCoordinateur",
         Technicien: "/technicien/dashboardTechnicien",
       };
-      const route = roleRoutes[response.role];
-      if (route) {
-        navigate(route);
-      } else {
-        toast.error("Rôle non reconnu");
-      }
-    } catch (error) {
+
+      navigate(roleRoutes[user.role] || "/");
+    } catch (error: any) {
       console.error("Login error:", error);
-      const errorMessage = error.response?.data?.message || "Erreur de connexion";
-      toast.error(errorMessage);
+      toast.error(error.message || "Erreur de connexion");
     } finally {
       setLoading(false);
     }
@@ -66,39 +41,20 @@ export function LoginForm() {
     <form onSubmit={onSubmit} className="space-y-6 w-[600px]">
       <div className="space-y-2">
         <label htmlFor="email" className="block text-sm font-bold font-inter">
-          Adresse email <span className=" text-sm font-bold font-inter text-[#CD3C14]">*</span>
+          Adresse email <span className="text-sm font-bold font-inter text-[#CD3C14]">*</span>
         </label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          required
-          className="w-full p-2 border border-gray-300 rounded"
-        />
+        <input id="email" name="email" type="email" required className="w-full p-2 border border-gray-300 rounded" />
       </div>
       <div className="space-y-2">
         <label htmlFor="password" className="block text-sm font-bold font-inter">
-          Mot de passe <span className=" text-sm font-bold font-inter text-[#CD3C14]">*</span>
+          Mot de passe <span className="text-sm font-bold font-inter text-[#CD3C14]">*</span>
         </label>
-       
-        <input
-          id="password"
-          name="password"
-          type="password"
-          required
-          className="w-full p-2 border border-gray-300 rounded"
-        />
+        <input id="password" name="password" type="password" required className="w-full p-2 border border-gray-300 rounded" />
       </div>
       <div className="text-right">
-        <a href="/forgot-password" className="text-sm text-[#CD3C14] hover:text-red-700">
-          Mot de passe oubliée
-        </a>
+        <a href="/forgot-password" className="text-sm text-[#CD3C14] hover:text-red-700">Mot de passe oublié</a>
       </div>
-      <button
-        type="submit"
-        className="w-[200px] bg-[#FF7900] hover:bg-orange-600 text-black py-3 font-bold font-inter"
-        disabled={loading}
-      >
+      <button type="submit" className="w-[200px] bg-[#FF7900] hover:bg-orange-600 text-black py-3 font-bold font-inter" disabled={loading}>
         {loading ? "Connexion..." : "Connexion"}
       </button>
     </form>
