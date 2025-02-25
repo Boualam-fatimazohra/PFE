@@ -208,12 +208,12 @@ const ChangePassword = async (req, res) => {
       if (!email) return res.status(400).json({ message: "Email non trouvé dans le token" });
   
       // Vérification que le mot de passe est valide (par exemple, 8 caractères avec des majuscules, minuscules, chiffres, et caractères spéciaux)
-      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+])[A-Za-z\d!@#$%^&*()_+]{8,}$/;
-      if (!passwordRegex.test(newPassword)) {
-        return res.status(400).json({
-          message: "Le mot de passe doit contenir au moins 8 caractères, avec une majuscule, une minuscule, un chiffre et un caractère spécial",
-        });
-      }
+      // const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+])[A-Za-z\d!@#$%^&*()_+]{8,}$/;
+      // if (!passwordRegex.test(newPassword)) {
+      //   return res.status(400).json({
+      //     message: "Le mot de passe doit contenir au moins 8 caractères, avec une majuscule, une minuscule, un chiffre et un caractère spécial",
+      //   });
+      // }
   
       // Trouver l'utilisateur à partir de l'email
       const user = await Utilisateur.findOne({ email });
