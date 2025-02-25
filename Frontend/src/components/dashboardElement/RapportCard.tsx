@@ -8,7 +8,7 @@ export default function RapportCard() {
             <CardContent className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-semibold">Rapport & Statistiques</h2>
-                <button className="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors">
+                <button className="rounded-none bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors">
                   Générer Rapport
                 </button>
               </div>

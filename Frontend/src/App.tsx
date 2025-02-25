@@ -18,8 +18,13 @@ import { Footer } from "@/components/layout/Footer";
 import FormationTerminer from "./pages/FormationTerminer";
 import generateEvaluationLink from "./pages/Evaluation";
 import { FormationAvenir } from "./pages/FormationAvenir";
+import beneficiaires from "./components/dashboardElement/beneficiaires"
 import FormationModal from "./components/dashboardElement/formationModal";
 import MesFormation from "./pages/MesFormation";
+import { Calendar } from "lucide-react";
+import CalendarView from "./components/dashboardElement/CalendarView";
+import Chatbot from "./pages/Chatbot";
+
 
 
 const queryClient = new QueryClient();
@@ -48,7 +53,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/evaluation/:id" element={<EvaluationForm />} />
-
+            <Route path="/Chatbot" element={<Chatbot />} />
             {/* Routes pour les différents types d'utilisateurs */}
             <Route path="/formateur/*" element={<FormateurRoutes />} />
             <Route path="/manager/*" element={<ManagerRoutes />} />
@@ -62,16 +67,13 @@ const App = () => (
             <Route path="/EvaluationForm" element={<EvaluationForm />} />
             <Route path="/formationModal" element={< FormationModal/>} />
             <Route path="/EvaluationForm" element={< EvaluationForm/>}/>
+            <Route path="/CalendarView" element={<CalendarView/>}/>
+            <Route path="/beneficiaires" element={<beneficiaires/>}/>
             <Route path="/DetailsFormation" element={<DetailsFormation />} />
             <Route path="/FormationTerminer" element={<FormationTerminer />} />
             <Route path="/FormationAvenir" element={<FormationAvenir />} />
 
-
-
-            <Route path="//DetailsFormation" element={<DetailsFormation />} />
-            <Route path="//FormationTerminer" element={<FormationTerminer />} />
             <Route path="/formationModal" element={< FormationModal/>} />
-            <Route path="//FormationAvenir" element={<FormationAvenir />} />
             {/* Page 404 */}
             <Route path="*" element={<NotFound />} />
           </Routes>
