@@ -128,8 +128,6 @@ res.status(200).json({ message: 'Logged out successfully' });
 console.log("Token cookie cleared");
 };
 // auth.controller.js
-
-
 const ForgotPassword = async (req, res) => {
   const { email } = req.body;
   try {

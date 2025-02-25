@@ -21,8 +21,8 @@ const beneficiaireSchema = new mongoose.Schema({
     // est ce qu'il a dépasser 3 formation ou pas 
     isSaturate: { type: Boolean, default: false },
     nationalite: {type:String,required:false},
-    region:{type:String,required:false,enum:["Souss Massa","Draa Tafilalte"],default:"null"},
-    categorieAge:{type:String,required:false,enum:["Moin_15","Entre15_24","Entre25_34","Plus_35"],default:"null"},
+    region:{type:String,required:false,enum:["Souss Massa","Draa Tafilalte","Oued Ed-Dahab"],default:"null"},
+    categorieAge:{type:String,required:false,enum:["Moin_15","Entre15_24","Entre25_34","Plus_34"],default:"null"},
   }, { timestamps: true });
 
 module.exports = mongoose.model("Beneficiaire", beneficiaireSchema);
