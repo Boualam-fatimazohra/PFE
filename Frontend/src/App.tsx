@@ -24,6 +24,7 @@ import MesFormation from "./pages/MesFormation";
 import { Calendar } from "lucide-react";
 import CalendarView from "./components/dashboardElement/CalendarView";
 import Chatbot from "./pages/Chatbot";
+import { AuthProvider } from "./contexts/AuthContext";
 
 
 
@@ -46,6 +47,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <AuthProvider>
     <TooltipProvider>
       <BrowserRouter>
         <Layout>
@@ -80,6 +82,7 @@ const App = () => (
         </Layout>
       </BrowserRouter>
     </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
