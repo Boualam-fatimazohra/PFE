@@ -28,7 +28,7 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
   const [formations, setFormations] = useState<Formation[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
+   
   useEffect(() => {
     const getFormations = async () => {
       try {
