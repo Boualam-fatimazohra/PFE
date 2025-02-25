@@ -15,7 +15,7 @@ interface Formation {
 
 export const getAllFormations = async () => {
   try {
-    const response = await apiClient.get('/formation/GetFormations');
+    const response = await apiClient.get('/formation/getFormations');
     return response.data;
   } catch (error) {
     console.error('Error fetching formations:', error);
