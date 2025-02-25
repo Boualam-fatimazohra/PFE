@@ -40,7 +40,7 @@ router.put('/UpdateFormation/:id',
 router.get('/GetOneFormation/:id',
     authenticated,
     authorizeRoles('Admin', 'Manager', 'Formateur'),  
-    authorizeNestedOwnership('Formation', 'formateur.utilisateur'),
+   
     GetOneFormation);
 
 module.exports = router;
