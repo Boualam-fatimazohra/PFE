@@ -37,7 +37,7 @@ export const fetchFormations = async (): Promise<Formation[]> => {
 export const addFormation = async (formationData: Formation): Promise<Formation> => {
   try {
     const response = await api.post(ADD_URL, formationData, {
-      withCredentials: true, // 🔥 Active l'envoi des cookies avec la requête
+      withCredentials: true, // Active l'envoi des cookies avec la requête
       headers: {
         'Content-Type': 'application/json'
       }
