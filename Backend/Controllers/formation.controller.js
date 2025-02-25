@@ -167,4 +167,4 @@ const DeleteFormation = async (req, res) => {
 
 // fin: fonction qui retourne le nombre des formation d'un formateur
 // fin:récupérer les formations d'un seule formateur
-module.exports = { createFormation, GetFormations, GetOneFormation, UpdateFormation,DeleteFormation };
+module.exports = { createFormation, GetFormations, GetOneFormation, UpdateFormation,DeleteFormation};
