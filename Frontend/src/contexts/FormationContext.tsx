@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { fetchFormations, addFormation } from '../services/api';
+import { fetchFormations, addFormation } from '../api/services/api';
 
 interface Formation {
   _id?: string;
