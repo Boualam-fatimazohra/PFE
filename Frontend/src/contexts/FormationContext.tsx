@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { fetchFormations, addFormation } from '../api/services/api';
-import { deleteFormation as apiDeleteFormation } from '../api/services/formationService';
+import { deleteFormation as apiDeleteFormation, updateFormation as ipUpdateFormation } from '../api/services/formationService';
 
 interface Formation {
   _id?: string;
@@ -18,6 +18,8 @@ interface FormationContextType {
   error: string | null;
   addNewFormation: (formationData: Formation) => Promise<void>;
   deleteFormation: (id: string) => Promise<void>;
+  updateFormation: (id: string, formationData: Partial<Formation>) => Promise<void>;
+  refreshFormations: () => Promise<void>;
 }
 
 interface FormationProviderProps {
@@ -47,6 +49,19 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
 
     getFormations();
   }, []);
+
+  const refreshFormations = async () => {
+    setLoading(true);
+    try {
+      const data = await fetchFormations();
+      setFormations(data);
+      setError(null);
+    } catch (error) {
+      setError('Failed to refresh formations');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const addNewFormation = async (formationData: Formation) => {
     try {
@@ -81,11 +96,36 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
     }
   };
 
+  // Add this function for updating formations
+  const updateFormation = async (id: string, formationData: Partial<Formation>) => {
+    try {
+      setError(null);
+      // Call the API to update the formation
+      const updatedFormation = await ipUpdateFormation(id, formationData);
+      
+      // Update the formations list with the updated formation
+      setFormations((prevFormations) => 
+        prevFormations.map((formation) => 
+          formation._id === id ? { ...formation, ...updatedFormation } : formation
+        )
+      );
+    } catch (error) {
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "Erreur lors de la mise à jour de la formation";
+      console.error(errorMessage);
+      setError(errorMessage);
+      throw error;
+    }
+  };
+
   return (
-    <FormationContext.Provider value={{ formations, loading, error, addNewFormation, deleteFormation }}>
+    <FormationContext.Provider value={{ formations, loading, error, addNewFormation, deleteFormation, updateFormation, refreshFormations }}>
       {children}
     </FormationContext.Provider>
   );
+
+
 };
 
 export const useFormations = (): FormationContextType => {
