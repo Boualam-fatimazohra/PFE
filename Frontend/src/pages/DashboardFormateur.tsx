@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { Footer } from "@/components/layout/Footer";
@@ -7,11 +7,12 @@ import { StatsCard } from "@/components/dashboardElement/StatsCard";
 import { FormationsTable } from "@/components/dashboardElement/FormationTable";
 import KitFormateur from "@/components/dashboardElement/KitFormateur";
 import RapportCard from "@/components/dashboardElement/RapportCard";
-import { FormationProvider } from "@/contexts/FormationContext";
 import { Plus, Share2 } from "lucide-react";
 import { toast, ToastContainer } from 'react-toastify';
 import { EvaluationsTable } from "@/components/dashboardElement/EvaluationTable";
 import { SearchBar } from "@/components/dashboardElement/SearchBar";
+import { useFormations } from "@/contexts/FormationContext";
+
 
 // Types definitions
 interface Formation {
@@ -33,6 +34,17 @@ const formationsData: Formation[] = [
 
 const DashboardFormateur: React.FC = () => {
   const navigate = useNavigate();
+  const { formations } = useFormations(); // Get formations from context
+  const [formationCount, setFormationCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // First approach: You can use the formations already in context
+    if (formations) {
+      setFormationCount(formations.length);
+      setIsLoading(false);
+    }
+  }, [formations]);
 
   const generateEvaluationLink = async (courseId: string): Promise<void> => {
     try {
@@ -69,7 +81,7 @@ const DashboardFormateur: React.FC = () => {
   };
 
   return (
-    <FormationProvider>
+
       <div className="min-h-screen flex flex-col">
         <DashboardHeader />
         <ToastContainer />
@@ -94,7 +106,9 @@ const DashboardFormateur: React.FC = () => {
             {/* Statistics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               <StatsCard title="Total Bénéficiaires" value={250} />
-              <StatsCard title="Total Formations" value={64} />
+              <StatsCard title="Total Formations" 
+                  value={isLoading ? '...' : formationCount} 
+              />
               <StatsCard title="Prochain événement" value="07" />
               <StatsCard title="Satisfaction moyenne" value="95%" />
             </div>
@@ -144,7 +158,7 @@ const DashboardFormateur: React.FC = () => {
         
         <Footer />
       </div>
-    </FormationProvider>
+
   );
 };
 
