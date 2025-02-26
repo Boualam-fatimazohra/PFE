@@ -138,7 +138,7 @@ const createBeneficiaire = async (req, res) => {
 // Get all Beneficiaires (with optional formation details)
 const getAllBeneficiaires = async (req, res) => {
   try {
-    const beneficiaires = await Beneficiaire.find().populate("formation");
+    const beneficiaires = await Beneficiaire.find();
     res.status(200).json(beneficiaires);
   } catch (error) {
     res.status(500).json({ message: "Error fetching beneficiaires", error: error.message });
@@ -148,7 +148,7 @@ const getAllBeneficiaires = async (req, res) => {
 // Get a single Beneficiaire by ID (with formation details)
 const getBeneficiaireById = async (req, res) => {
   try {
-    const beneficiaire = await Beneficiaire.findById(req.params.id).populate("formation");
+    const beneficiaire = await Beneficiaire.findById(req.params.id);
     if (!beneficiaire) {
       return res.status(404).json({ message: "Beneficiaire not found" });
     }
@@ -161,26 +161,18 @@ const getBeneficiaireById = async (req, res) => {
 // Update a Beneficiaire
 const updateBeneficiaire = async (req, res) => {
   try {
-    const { nom, prenom, dateNaissance, niveau, formationId, isBlack, isSuturate } = req.body;
+    const {  isBlack, isSuturate } = req.body;
 
-    // Check if formation exists before updating
-    if (formationId) {
-      const formationExists = await Formation.findById(formationId);
-      if (!formationExists) {
-        return res.status(404).json({ message: "Formation not found" });
-      }
-    }
-
+    // todo:  Check if formation exists before updating by chcking formtionId passed in params
     const updatedBeneficiaire = await Beneficiaire.findByIdAndUpdate(
       req.params.id,
-      { nom, prenom, dateNaissance, niveau, formation: formationId, isBlack, isSuturate },
+      {isBlack, isSuturate },
       { new: true, runValidators: true }
-    ).populate("formation");
+    );
 
     if (!updatedBeneficiaire) {
       return res.status(404).json({ message: "Beneficiaire not found" });
     }
-
     res.status(200).json(updatedBeneficiaire);
   } catch (error) {
     res.status(500).json({ message: "Error updating beneficiaire", error: error.message });
@@ -263,9 +255,7 @@ const uploadBeneficiairesFromExcel = async (req, res) => {
     session.startTransaction();
 
     try {
-      
       const insertedBeneficiaires = await Beneficiaire.insertMany(beneficiaires, { session });
-      
       const beneficiareFormations = insertedBeneficiaires.map(b => ({
         formation: new mongoose.Types.ObjectId(idFormation), // Convertir en ObjectId
         beneficiaire: b._id,
@@ -296,9 +286,6 @@ const uploadBeneficiairesFromExcel = async (req, res) => {
     });
   }
 };
-
-
-
 // Simple read data from excel testing
 const uploadBenificiaireExcel = async (req, res) => {
   try {
