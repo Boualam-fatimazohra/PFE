@@ -6,7 +6,7 @@ import test from '@/assets/images/test.jpg';
 
 
 interface FormationItem {
-    id: number;
+    id: string;
     title: string;
     status: "En cours" | "A venir" | "Terminer" | "Replanifier";
   }
@@ -14,7 +14,7 @@ interface FormationItem {
 interface FormationCardProps {
     formation: FormationItem;
     onEdit: (formation: FormationItem) => void;
-    onDelete: (id: number) => void;
+    onDelete: (id: string) => void;
     onAccess: (formation: FormationItem) => void;
   }
   

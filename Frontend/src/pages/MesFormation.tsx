@@ -25,9 +25,10 @@ import DetailsFormation from "@/components/dashboardElement/DetailsFormation";
 import { FormationAvenir } from "@/pages/FormationAvenir";
 import FormationTerminer from "@/pages/FormationTerminer";
 import { Button } from "@/components/ui/button";
+import { toast } from "react-toastify";
 
 interface FormationItem {
-  id: number;
+  id: string; // Changed to string to match actual _id from API
   title: string;
   status: "En cours" | "A venir" | "Terminer" | "Replanifier";
 }
@@ -35,9 +36,10 @@ interface FormationItem {
 const MesFormations = () => {
   const navigate = useNavigate();
   // Use the FormationContext hook
-  const { formations: contextFormations, loading, deleteFormation } = useFormations();
+  const { formations: contextFormations, loading, deleteFormation, error } = useFormations();
   // Update your formations state to map from the context data
   const [formations, setFormations] = useState<FormationItem[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleOpenModal = () => {
     navigate("/formationModal");
@@ -46,8 +48,8 @@ const MesFormations = () => {
   // Add a useEffect to map the context formations to your local state format
   useEffect(() => {
     if (contextFormations && contextFormations.length > 0) {
-      const mappedFormations = contextFormations.map((formation, index) => ({
-        id: index, // Or use formation._id if available
+      const mappedFormations = contextFormations.map((formation) => ({
+        id: formation._id || `temp-${formation.nom}`, // Use _id from API
         title: formation.nom,
         status: formation.status as "En cours" | "A venir" | "Terminer" | "Replanifier"
       }));
@@ -55,26 +57,33 @@ const MesFormations = () => {
     }
   }, [contextFormations]);
 
+  // Show error toast if there's an error in the context
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error]);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFormation, setSelectedFormation] = useState<FormationItem | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [formationToDelete, setFormationToDelete] = useState<number | null>(null);
+  const [formationToDelete, setFormationToDelete] = useState<string | null>(null);
   const [showDetails, setShowDetails] = useState(false);
-
 
   const handleEditClick = (formation: FormationItem) => {
     setSelectedFormation(formation);
     setIsModalOpen(true);
   };
+  
   const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = 30;
+  const totalPages = Math.ceil(formations.length / 9); // Assuming 9 items per page
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedFormation(null);
   };
 
-  const handleDeleteClick = (id: number) => {
+  const handleDeleteClick = (id: string) => {
     // Find the formation to delete
     const formation = formations.find(f => f.id === id);
     if (formation) {
@@ -86,18 +95,59 @@ const MesFormations = () => {
   const confirmDeleteFormation = async () => {
     if (formationToDelete !== null) {
       try {
-        // Call the context's delete function
-        await deleteFormation(formationToDelete.toString());
-        // The context will refresh the formations list
-
-        // Just close the modal
+        // Close the modal first for better UX
         setIsDeleteModalOpen(false);
+        // Show a loading state
+        setIsDeleting(true);
+        
+        // Call the context's delete function
+        await deleteFormation(formationToDelete);
+        
+        // Reset state
         setFormationToDelete(null);
-      } catch (error) {
-        console.error("Error deleting formation:", error);
+        
+        // Show success message
+        toast.success("Formation supprimée avec succès");
+      } catch (err) {
+        // More robust error handling
+        console.error("Delete error:", err);
+        
+        let errorMessage = "Erreur lors de la suppression. Veuillez réessayer.";
+        
+        // Handle axios error structure
+        if (err.response) {
+          // The request was made and the server responded with a status code
+          // that falls out of the range of 2xx
+          const status = err.response.status;
+          const responseMessage = err.response.data?.message;
+          
+          switch (status) {
+            case 401:
+              errorMessage = "Session expirée. Veuillez vous reconnecter.";
+              // Optionally navigate to login
+              // setTimeout(() => navigate('/'), 2000);
+              break;
+            case 403:
+              errorMessage = "Vous n'avez pas les permissions nécessaires pour cette action.";
+              break;
+            case 404:
+              errorMessage = "Formation introuvable. Elle a peut-être déjà été supprimée.";
+              break;
+            default:
+              errorMessage = responseMessage || `Erreur serveur (${status}).`;
+          }
+        } else if (err.request) {
+          // The request was made but no response was received
+          errorMessage = "Aucune réponse du serveur. Vérifiez votre connexion.";
+        }
+        
+        toast.error(errorMessage);
+      } finally {
+        setIsDeleting(false);
       }
     }
   };
+  
   const handleAccessClick = (formation: FormationItem) => {
     setSelectedFormation(formation);
     setShowDetails(true);
@@ -123,10 +173,10 @@ const MesFormations = () => {
     }
   };
 
-      const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
-      const filteredFormations = selectedStatus && selectedStatus !== 'null'
-      ? formations.filter((formation) => formation.status === selectedStatus)
-      : formations;
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const filteredFormations = selectedStatus && selectedStatus !== 'null'
+    ? formations.filter((formation) => formation.status === selectedStatus)
+    : formations;
 
   return (
     <div className="bg-white min-h-screen p-4">
@@ -158,7 +208,7 @@ const MesFormations = () => {
                     />
                     <svg className="absolute right-3 top-1/2 transform -translate-y-1/2 " width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <rect width="26" height="26" rx="13" fill="#FF7900"/>
-                        <path fill-rule="evenodd" clip-rule="evenodd" d="M19.2765 18.1101L15.6661 14.4996C16.2718 13.6533 16.5966 12.6382 16.5949 11.5974C16.5949 8.83742 14.3574 6.59998 11.5974 6.59998C8.83738 6.59998 6.59998 8.83738 6.59998 11.5974C6.59998 14.3574 8.83738 16.5949 11.5974 16.5949C12.6382 16.5965 13.6533 16.2717 14.4998 15.6661L18.1101 19.2764C18.2665 19.432 18.5192 19.432 18.6756 19.2764L19.2765 18.6756C19.432 18.5191 19.432 18.2665 19.2765 18.1101ZM11.5974 14.9957C9.72062 14.9957 8.19916 13.4742 8.19916 11.5974C8.19916 9.72062 9.72062 8.19916 11.5974 8.19916C13.4742 8.19916 14.9957 9.72062 14.9957 11.5974C14.9957 13.4742 13.4742 14.9957 11.5974 14.9957Z" fill="white"/>
+                        <path fillRule="evenodd" clipRule="evenodd" d="M19.2765 18.1101L15.6661 14.4996C16.2718 13.6533 16.5966 12.6382 16.5949 11.5974C16.5949 8.83742 14.3574 6.59998 11.5974 6.59998C8.83738 6.59998 6.59998 8.83738 6.59998 11.5974C6.59998 14.3574 8.83738 16.5949 11.5974 16.5949C12.6382 16.5965 13.6533 16.2717 14.4998 15.6661L18.1101 19.2764C18.2665 19.432 18.5192 19.432 18.6756 19.2764L19.2765 18.6756C19.432 18.5191 19.432 18.2665 19.2765 18.1101ZM11.5974 14.9957C9.72062 14.9957 8.19916 13.4742 8.19916 11.5974C8.19916 9.72062 9.72062 8.19916 11.5974 8.19916C13.4742 8.19916 14.9957 9.72062 14.9957 11.5974C14.9957 13.4742 13.4742 14.9957 11.5974 14.9957Z" fill="white"/>
                     </svg>
 
                   </div>
@@ -188,9 +238,9 @@ const MesFormations = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                <StatsCard title="Total Formations" value={formations.length} />
-                <StatsCard title="Total Formations" value={formations.length} />
-                <StatsCard title="Total" value="-" />
+                <StatsCard title="Total Formations" value={loading ? "..." : formations.length} />
+                <StatsCard title="Formations en cours" value={loading ? "..." : filteredFormations.filter(f => f.status === "En cours").length} />
+                <StatsCard title="Formations à venir" value={loading ? "..." : filteredFormations.filter(f => f.status === "A venir").length} />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
@@ -220,7 +270,13 @@ const MesFormations = () => {
                 )}
               </div>
 
-              <CustomPagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+              {filteredFormations.length > 0 && (
+                <CustomPagination 
+                  currentPage={currentPage} 
+                  totalPages={totalPages || 1} 
+                  onPageChange={setCurrentPage} 
+                />
+              )}
             </>
           )}
         </div>
@@ -257,6 +313,7 @@ const MesFormations = () => {
                 variant="outline"
                 className="rounded-none"
                 onClick={() => setIsDeleteModalOpen(false)}
+                disabled={isDeleting}
               >
                 Annuler
               </Button>
@@ -264,8 +321,16 @@ const MesFormations = () => {
                 variant="destructive"
                 className="rounded-none"
                 onClick={confirmDeleteFormation}
+                disabled={isDeleting}
               >
-                Supprimer
+                {isDeleting ? (
+                  <>
+                    <span className="animate-spin mr-2">⟳</span>
+                    Suppression...
+                  </>
+                ) : (
+                  "Supprimer"
+                )}
               </Button>
             </div>
           </div>
