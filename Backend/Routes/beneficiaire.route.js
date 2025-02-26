@@ -24,9 +24,7 @@ router.get("/:id", getBeneficiaireById);
 router.get("/getBeneficiaireByFormation/:id",authenticated,RoleMiddleware("Formateur"),getBeneficiaireFormation
 );
 // Route to update a Beneficiaire
-router.put("/:id", updateBeneficiaire);
-
+router.put("/:id", authenticated,RoleMiddleware("Formateur"),updateBeneficiaire);
 // Route to delete a Beneficiaire
 router.delete("/deleteAll", deleteBeneficiaire);
-
 module.exports = router;
