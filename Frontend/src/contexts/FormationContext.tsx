@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { fetchFormations, addFormation } from '../api/services/api';
+import { deleteFormation as apiDeleteFormation } from '../api/services/formationService';
 
 interface Formation {
   _id?: string;
@@ -16,6 +17,7 @@ interface FormationContextType {
   loading: boolean;
   error: string | null;
   addNewFormation: (formationData: Formation) => Promise<void>;
+  deleteFormation: (id: string) => Promise<void>;
 }
 
 interface FormationProviderProps {
@@ -59,8 +61,28 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
     }
   };
 
+  const deleteFormation = async (id: string) => {
+    try {
+      setError(null);
+      // Call the API to delete the formation
+      await apiDeleteFormation(id);
+      
+      // Update the local state by removing the deleted formation
+      setFormations((prevFormations) => 
+        prevFormations.filter((formation) => formation._id !== id)
+      );
+    } catch (error) {
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "Erreur lors de la suppression de la formation";
+      console.error(errorMessage);
+      setError(errorMessage);
+      throw error;
+    }
+  };
+
   return (
-    <FormationContext.Provider value={{ formations, loading, error, addNewFormation }}>
+    <FormationContext.Provider value={{ formations, loading, error, addNewFormation, deleteFormation }}>
       {children}
     </FormationContext.Provider>
   );

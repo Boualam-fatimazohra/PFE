@@ -35,7 +35,7 @@ interface FormationItem {
 const MesFormations = () => {
   const navigate = useNavigate();
   // Use the FormationContext hook
-  const { formations: contextFormations, loading } = useFormations();
+  const { formations: contextFormations, loading, deleteFormation } = useFormations();
   // Update your formations state to map from the context data
   const [formations, setFormations] = useState<FormationItem[]>([]);
 
@@ -75,16 +75,28 @@ const MesFormations = () => {
   };
 
   const handleDeleteClick = (id: number) => {
-    setFormationToDelete(id);
-    setIsDeleteModalOpen(true);
+    // Find the formation to delete
+    const formation = formations.find(f => f.id === id);
+    if (formation) {
+      setFormationToDelete(id);
+      setIsDeleteModalOpen(true);
+    }
   };
 
-  const confirmDeleteFormation = () => {
-    setFormations((prevFormations) =>
-      prevFormations.filter((formation) => formation.id !== formationToDelete)
-    );
-    setIsDeleteModalOpen(false);
-    setFormationToDelete(null);
+  const confirmDeleteFormation = async () => {
+    if (formationToDelete !== null) {
+      try {
+        // Call the context's delete function
+        await deleteFormation(formationToDelete.toString());
+        // The context will refresh the formations list
+
+        // Just close the modal
+        setIsDeleteModalOpen(false);
+        setFormationToDelete(null);
+      } catch (error) {
+        console.error("Error deleting formation:", error);
+      }
+    }
   };
   const handleAccessClick = (formation: FormationItem) => {
     setSelectedFormation(formation);
