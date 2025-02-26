@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Card } from "@/components/ui/card";
@@ -12,6 +12,8 @@ import { CustomPagination } from "@/components/layout/CustomPagination";
 
 import ModalEditFormation from "@/components/dashboardElement/ModalEditFormation";
 import FormationCard from "@/components/Formation/FormationCards";
+import { useFormations } from "../contexts/FormationContext";
+
 import {
   Select,
   SelectContent,
@@ -31,19 +33,27 @@ interface FormationItem {
 }
 
 const MesFormations = () => {
-
-
-const navigate = useNavigate();
+  const navigate = useNavigate();
+  // Use the FormationContext hook
+  const { formations: contextFormations, loading } = useFormations();
+  // Update your formations state to map from the context data
+  const [formations, setFormations] = useState<FormationItem[]>([]);
 
   const handleOpenModal = () => {
     navigate("/formationModal");
   };
-  const [formations, setFormations] = useState<FormationItem[]>([
-    { id: 0, title: "Développement C# : fondamentaux", status: "En cours" },
-    { id: 1, title: "AWS : Développement et déploiement", status: "A venir" },
-    { id: 2, title: "Conception d'application mobile", status: "Terminer" },
-    { id: 3, title: "Developpement JAVA", status: "Replanifier" },
-  ]);
+
+  // Add a useEffect to map the context formations to your local state format
+  useEffect(() => {
+    if (contextFormations && contextFormations.length > 0) {
+      const mappedFormations = contextFormations.map((formation, index) => ({
+        id: index, // Or use formation._id if available
+        title: formation.nom,
+        status: formation.status as "En cours" | "A venir" | "Terminer" | "Replanifier"
+      }));
+      setFormations(mappedFormations);
+    }
+  }, [contextFormations]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFormation, setSelectedFormation] = useState<FormationItem | null>(null);
@@ -166,21 +176,36 @@ const navigate = useNavigate();
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                <StatsCard title="Total Formations" value={41} />
-                <StatsCard title="Total Formations" value={25} />
+                <StatsCard title="Total Formations" value={formations.length} />
+                <StatsCard title="Total Formations" value={formations.length} />
                 <StatsCard title="Total" value="-" />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                {filteredFormations.map((formation) => (
-                  <FormationCard
-                    key={formation.id}
-                    formation={formation}
-                    onEdit={handleEditClick}
-                    onDelete={handleDeleteClick}
-                    onAccess={handleAccessClick}
-                  />
-                ))}
+                {loading ? (
+                  // Loading skeleton
+                  <>
+                    <div className="bg-gray-100 animate-pulse h-64 rounded-md"></div>
+                    <div className="bg-gray-100 animate-pulse h-64 rounded-md"></div>
+                    <div className="bg-gray-100 animate-pulse h-64 rounded-md"></div>
+                  </>
+                ) : filteredFormations.length > 0 ? (
+                  // Display formations when available
+                  filteredFormations.map((formation) => (
+                    <FormationCard
+                      key={formation.id}
+                      formation={formation}
+                      onEdit={handleEditClick}
+                      onDelete={handleDeleteClick}
+                      onAccess={handleAccessClick}
+                    />
+                  ))
+                ) : (
+                  // No formations found
+                  <div className="col-span-3 text-center py-12 text-gray-500">
+                    Aucune formation trouvée
+                  </div>
+                )}
               </div>
 
               <CustomPagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
