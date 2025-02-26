@@ -21,6 +21,8 @@ const createBeneficiaire = async (req, res) => {
           etablissement,
           profession,
           nationalite,
+          isBlack,
+          isSaturate,
           idFormation 
       } = req.body;
       // Validation de l'idFormation
@@ -67,8 +69,8 @@ const createBeneficiaire = async (req, res) => {
           etablissement,
           profession,
           nationalite,
-          isBlack: false,
-          isSaturate: false
+          isBlack,
+          isSaturate
       });
 
       // Sauvegarde du bénéficiaire
@@ -138,7 +140,7 @@ const createBeneficiaire = async (req, res) => {
 // Get all Beneficiaires (with optional formation details)
 const getAllBeneficiaires = async (req, res) => {
   try {
-    const beneficiaires = await Beneficiaire.find().populate("formation");
+    const beneficiaires = await Beneficiaire.find();
     res.status(200).json(beneficiaires);
   } catch (error) {
     res.status(500).json({ message: "Error fetching beneficiaires", error: error.message });

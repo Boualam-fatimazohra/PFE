@@ -3,6 +3,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Index from "./pages/Index";
 import ForgotPassword from "./pages/ForgotPassword";
+import ValidatePassword from "./pages/ValidatePassword";
+import NewPassword from "./pages/NewPassword";
 import NotFound from "./pages/NotFound";
 import EvaluationForm from "./pages/FormulaireEvaluation";
 import FormateurRoutes from "./routes/FormateurRoutes";
@@ -18,12 +20,13 @@ import { Footer } from "@/components/layout/Footer";
 import FormationTerminer from "./pages/FormationTerminer";
 import generateEvaluationLink from "./pages/Evaluation";
 import { FormationAvenir } from "./pages/FormationAvenir";
-import beneficiaires from "./components/dashboardElement/beneficiaires"
 import FormationModal from "./components/dashboardElement/formationModal";
 import MesFormation from "./pages/MesFormation";
 import { Calendar } from "lucide-react";
 import CalendarView from "./components/dashboardElement/CalendarView";
 import Chatbot from "./pages/Chatbot";
+import ParticipantsSection from "./components/Formation/ParticipantsSection";
+import BeneficiairesList from "./components/Formation/Beneficiaires";
 
 
 
@@ -54,6 +57,9 @@ const App = () => (
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/evaluation/:id" element={<EvaluationForm />} />
             <Route path="/Chatbot" element={<Chatbot />} />
+            <Route path="/ValidatePassword" element={<ValidatePassword />} />
+            <Route path="/NewPassword" element={<NewPassword />} />
+
             {/* Routes pour les différents types d'utilisateurs */}
             <Route path="/formateur/*" element={<FormateurRoutes />} />
             <Route path="/manager/*" element={<ManagerRoutes />} />
@@ -67,11 +73,17 @@ const App = () => (
             <Route path="/EvaluationForm" element={<EvaluationForm />} />
             <Route path="/formationModal" element={< FormationModal/>} />
             <Route path="/EvaluationForm" element={< EvaluationForm/>}/>
+            <Route path="/BeneficiairesList" element={< BeneficiairesList/>} />
             <Route path="/CalendarView" element={<CalendarView/>}/>
-            <Route path="/beneficiaires" element={<beneficiaires/>}/>
-            <Route path="/DetailsFormation" element={<DetailsFormation />} />
-            <Route path="/FormationTerminer" element={<FormationTerminer />} />
-            <Route path="/FormationAvenir" element={<FormationAvenir />} />
+            <Route path="/DetailsFormation" element={<DetailsFormation onRetourClick={function (): void {
+              throw new Error("Function not implemented.");
+            } } />} />
+            <Route path="/FormationTerminer" element={<FormationTerminer onRetourClick={function (): void {
+              throw new Error("Function not implemented.");
+            } } />} />
+            <Route path="/FormationAvenir" element={<FormationAvenir onRetourClick={function (): void {
+              throw new Error("Function not implemented.");
+            } } />} />
 
             <Route path="/formationModal" element={< FormationModal/>} />
             {/* Page 404 */}
