@@ -1,6 +1,8 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { Utilisateur } = require('../Models/utilisateur.model.js');
+const generateRandomPassword = require('../utils/generateRandomPassword.js');
+const {sendMail} = require('../Config/auth.js');
 const Login = async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -130,5 +132,13 @@ res.clearCookie('token');
 res.status(200).json({ message: 'Logged out successfully' });
 console.log("Token cookie cleared");
 };
+const ForgotPassword = async (req, res) => {
+};
 
-module.exports = { Login, createUser, Logout };
+const VerifyResetCode = async (req, res) => {
+};
+const ChangePassword = async (req, res) => {
+  };
+  
+
+  module.exports = { Login, createUser, Logout ,ForgotPassword,VerifyResetCode,ChangePassword};
