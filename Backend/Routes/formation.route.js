@@ -9,8 +9,7 @@ const {
 } = require('../Controllers/formation.controller.js');
 const authorizeRoles = require('../Middlewares/RoleMiddleware.js');
 const upload = require('../utils/uploadImage.js');
-const authorizeNestedOwnership = require('../Middlewares/NestedOwnershipMiddleware.js')
-const authorizeOwnership = require('../Middlewares/OwnershipMiddleware.js');
+
 const authorizeFormationAccess = require('../Middlewares/FormationAccess.js');
 
 const router = express.Router();

@@ -6,6 +6,9 @@ const {sendMail} = require('../Config/auth.js');
 //
 const Login = async (req, res) => {
     const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email et mot de passe sont requis" });
+  }
     try {
         console.log("Login: Request body:", req.body);
         const user = await Utilisateur.findOne({ email });
@@ -131,43 +134,66 @@ console.log("Token cookie cleared");
 // auth.controller.js
 const ForgotPassword = async (req, res) => {
   const { email } = req.body;
-  try {
-    const user = await Utilisateur.findOne({ email });
-    if (!user) return res.status(404).json({ message: "Utilisateur non trouvé" });
 
-     // Vérifier si les champs existent dans l'instance et les ajouter si nécessaires
-    //  if (user.resetPasswordCode === undefined) {
-    //     user.resetPasswordCode = null;
-    // }
-    // if (user.resetPasswordExpires === undefined) {
-    //     user.resetPasswordExpires = null;
-    // }
+  console.log("ForgotPassword: Début de la requête");
+  // Vérification si l'email est fourni
+  if (!email) {
+    console.log("ForgotPassword: Aucune adresse email fournie");
+    return res.status(400).json({ message: "Veuillez fournir une adresse email" });
+  }
+
+  try {
+    console.log(`ForgotPassword: Recherche de l'utilisateur avec l'email: ${email}`);
+    const user = await Utilisateur.findOne({ email });
+
+    if (!user) {
+      console.log("ForgotPassword: Utilisateur non trouvé");
+      return res.status(400).json({ message: "Si l'email existe, un code a été envoyé" }); // Message plus générique
+    }
+
+    console.log("ForgotPassword: Utilisateur trouvé", user);
+
     const resetCode = generateRandomPassword();
+    console.log(`ForgotPassword: Code de réinitialisation généré: ${resetCode}`);
+
     const hashedCode = await bcrypt.hash(resetCode, 10);
+    console.log("ForgotPassword: Code de réinitialisation haché");
 
     user.resetPasswordCode = hashedCode;
     user.resetPasswordExpires = Date.now() + 3600000; // 1 heure
 
     await user.save();
+    console.log("ForgotPassword: Code enregistré dans la base de données");
 
-    // Générer un JWT contenant l'email
-    const token = jwt.sign({userId:user._id, email }, process.env.JWT_SECRET, { expiresIn: "1h" });
-     console.log("Générer un JWT contenant l'email")
-    // Stocker le JWT dans un cookie sécurisé
-    res.cookie("token",token, {
+    // Génération du JWT
+    const token = jwt.sign({ userId: user._id, email }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    console.log("ForgotPassword: JWT généré");
+
+    // Stockage du JWT dans un cookie sécurisé
+    res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       maxAge: 3600000, // 1 heure
     });
+    console.log("ForgotPassword: Cookie sécurisé stocké");
 
-    // Envoyer l'email
-    await sendMail(email, `Votre code de réinitialisation : ${resetCode}`);
+    // Tentative d'envoi de l'email
+    try {
+      await sendMail(email, `Votre code de réinitialisation : ${resetCode}`);
+      console.log("ForgotPassword: Email envoyé avec succès");
+    } catch (mailError) {
+      console.error("ForgotPassword: Erreur lors de l'envoi de l'email", mailError);
+      return res.status(500).json({ message: "Erreur lors de l'envoi de l'email" });
+    }
 
-    res.status(200).json({ message: "Code envoyé par email" });
+    res.status(200).json({ message: "Si l'email existe, un code a été envoyé" });
+
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("ForgotPassword: Erreur interne du serveur", error);
+    res.status(500).json({ message: "Erreur interne du serveur" });
   }
 };
+
 
 const VerifyResetCode = async (req, res) => {
     const { code } = req.body;
@@ -208,13 +234,13 @@ const ChangePassword = async (req, res) => {
   
       if (!email) return res.status(400).json({ message: "Email non trouvé dans le token" });
   
-      // Vérification que le mot de passe est valide (par exemple, 8 caractères avec des majuscules, minuscules, chiffres, et caractères spéciaux)
-      // const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+])[A-Za-z\d!@#$%^&*()_+]{8,}$/;
-      // if (!passwordRegex.test(newPassword)) {
-      //   return res.status(400).json({
-      //     message: "Le mot de passe doit contenir au moins 8 caractères, avec une majuscule, une minuscule, un chiffre et un caractère spécial",
-      //   });
-      // }
+      //Vérification que le mot de passe est valide (par exemple, 8 caractères avec des majuscules, minuscules, chiffres, et caractères spéciaux)
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+])[A-Za-z\d!@#$%^&*()_+]{8,}$/;
+        if (!passwordRegex.test(newPassword)) {
+            return res.status(400).json({
+                message: "Le mot de passe doit contenir au moins 8 caractères, avec une majuscule, une minuscule, un chiffre et un caractère spécial.",
+            });
+        }
   
       // Trouver l'utilisateur à partir de l'email
       const user = await Utilisateur.findOne({ email });
