@@ -36,8 +36,13 @@ const createFormation = async (req, res) => {
       });
     }
 
-    // 5. Get image path if file was uploaded
-    const imagePath = req.file ? req.file.path : null;
+    // 4. Récupérer l'image si elle est fournie
+    let imageBuffer = null;
+    let imageType = null;
+    if (req.file) {
+      imageBuffer = req.file.buffer;
+      imageType = req.file.mimetype;
+    }
 
     // 6. Create new formation
     const nouvelleFormation = new Formation({
@@ -50,8 +55,9 @@ const createFormation = async (req, res) => {
       tags: tags || "",
       categorie: categorie || "type1",
       niveau: niveau || "type1",
-      formateur: formateur._id,  // Use formateur._id instead of userId
-      image: imagePath
+      formateur: formateur._id,  
+      image: imageBuffer, // Stocke l’image en buffer
+      imageType: imageType // Stocke le type de l’image
     });
 
     // 7. Save the formation

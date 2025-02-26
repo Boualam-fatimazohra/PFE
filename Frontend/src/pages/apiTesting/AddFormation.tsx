@@ -38,15 +38,9 @@ const FormateurFormations = () => {
     setIsSubmitting(true);
     
     try {
-      // Convert date strings to the format expected by the API
-      const formData = {
-        ...formation,
-        dateDebut: new Date(formation.dateDebut).toISOString(),
-        dateFin: formation.dateFin ? new Date(formation.dateFin).toISOString() : undefined,
-        status: formation.status as "En Cours" | "Terminer" | "Replanifier"
-      };
-
-      await addNewFormation(formData);
+      // No need to modify the form data structure here
+      // Just pass the formation object with the File object directly
+      await addNewFormation(formation);
       setMessage("Formation créée avec succès!");
       
       // Reset form
@@ -104,7 +98,10 @@ const FormateurFormations = () => {
         </div>
       )}
       
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit}  
+        className="space-y-6"
+        encType="multipart/form-data" 
+      >
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Titre de la formation <span className="text-red-500">*</span>

@@ -63,18 +63,34 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
     }
   };
 
-  const addNewFormation = async (formationData: Formation) => {
-    try {
-      setError(null);
-      const newFormation = await addFormation(formationData);
-      setFormations((prevFormations) => [...prevFormations, newFormation]);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Erreur lors de l'ajout de la formation";
-      console.error(errorMessage);
-      setError(errorMessage);
-      throw error;
-    }
-  };
+// In FormationContext.tsx, update the addFormation function
+
+const addNewFormation = async (formationData) => {
+  try {
+    setError(null);
+    
+    // Create a FormData object for multipart/form-data submission
+    const formData = new FormData();
+    
+    // Append all form fields to FormData
+    Object.keys(formationData).forEach(key => {
+      if (key === 'image' && formationData[key] instanceof File) {
+        formData.append('image', formationData[key]);
+      } else if (formationData[key] !== null && formationData[key] !== undefined) {
+        formData.append(key, formationData[key]);
+      }
+    });
+    
+    const newFormation = await addFormation(formData);
+    setFormations((prevFormations) => [...prevFormations, newFormation]);
+    return newFormation;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Erreur lors de l'ajout de la formation";
+    console.error(errorMessage);
+    setError(errorMessage);
+    throw error;
+  }
+};
 
   const deleteFormation = async (id: string) => {
     try {
