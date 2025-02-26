@@ -5,7 +5,7 @@ import Index from "./pages/Index";
 import ForgotPassword from "./pages/ForgotPassword";
 import VerifyPassword from "./pages/VerifyPassword"
 import ValidatePassword from "./pages/ValidatePassword";
-import NewPassword from "./pages/NewPassword";
+import NewPassword from "./pages/UpdatePassword";
 import NotFound from "./pages/NotFound";
 import EvaluationForm from "./pages/FormulaireEvaluation";
 import FormateurRoutes from "./routes/FormateurRoutes";
