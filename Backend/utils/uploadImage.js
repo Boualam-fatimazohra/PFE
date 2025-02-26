@@ -1,27 +1,6 @@
-const path = require("path");
-const fs = require("fs");
-const multer=require("multer");
-// Créer le dossier uploads s'il n'existe pas
-const uploadDir = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+const multer = require("multer");
 
-// Configuration du stockage
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-      console.log("Enregistrement du fichier dans :", uploadDir);
-      cb(null, uploadDir);
-    },
-    filename: function (req, file, cb) {
-      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-      const extension = path.extname(file.originalname);
-      const filename = file.fieldname + "-" + uniqueSuffix + extension;
-      console.log("Nom du fichier généré :", filename);
-      cb(null, filename);
-    }
-  });
-  
+const storage = multer.memoryStorage(); // Stocke les fichiers en mémoire
 const upload = multer({ 
   storage: storage,
   fileFilter: (req, file, cb) => {

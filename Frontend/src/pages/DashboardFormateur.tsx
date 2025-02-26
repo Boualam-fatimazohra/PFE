@@ -13,24 +13,9 @@ import { EvaluationsTable } from "@/components/dashboardElement/EvaluationTable"
 import { SearchBar } from "@/components/dashboardElement/SearchBar";
 import { useFormations } from "@/contexts/FormationContext";
 
-
-// Types definitions
-interface Formation {
-  nom: string;
-  dateDebut: string;
-  status: "En Cours" | "Terminé" | "Replanifier";
-}
-
 interface GenerateEvaluationLinkResponse {
   evaluationLink: string;
 }
-
-// Sample data
-const formationsData: Formation[] = [
-  { nom: "Conception d'application mobile", dateDebut: "25/02/2025", status: "En Cours" },
-  { nom: "Développement Web", dateDebut: "10/03/2025", status: "Terminé" },
-  { nom: "Cybersécurité", dateDebut: "05/04/2025", status: "Replanifier" },
-];
 
 const DashboardFormateur: React.FC = () => {
   const navigate = useNavigate();
@@ -127,7 +112,7 @@ const DashboardFormateur: React.FC = () => {
                       Découvrir
                     </button>
                   </div>
-                  <FormationsTable formations={formationsData} />
+                  <FormationsTable/>
                 </CardContent>
               </Card>
 
