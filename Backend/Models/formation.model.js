@@ -14,7 +14,8 @@ const formationSchema = new mongoose.Schema({
   // todo : définir les valeur de niveau et categorie
   categorie: { type: String, default: "type1", enum: ["type1", "type2", "type3"] }, 
   niveau:{type: String, default: "type1", enum: ["type1", "type2", "type3"] },
-  image:{ type: String, required: false }
+  image: {type :Buffer }, // Storing Image as Buffer
+  imageType: {type:String}
 }, { timestamps: true });
 
 module.exports = mongoose.model("Formation", formationSchema);

@@ -30,5 +30,29 @@ export const logout = async (): Promise<void> => {
     console.error('Logout failed:', error);
   }
 };
+// Ajouter ces nouvelles fonctions à votre fichier authServices.ts
+export const forgotPassword = async (email: string): Promise<void> => {
+    try {
+      await apiClient.post('/auth/forgotpassword', { email });
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Échec de l\'envoi du code');
+    }
+  };
+  
+  export const verifyResetCode = async (code: string): Promise<void> => {
+    try {
+      await apiClient.post('/auth/verifyresetcode', { code });
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Code invalide ou expiré');
+    }
+  };
+  
+  export const changePassword = async (newPassword: string): Promise<void> => {
+    try {
+      await apiClient.post('/auth/changepassword', { newPassword });
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Échec de la modification du mot de passe');
+    }
+  };
 
 

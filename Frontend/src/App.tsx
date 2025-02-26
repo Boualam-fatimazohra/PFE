@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Index from "./pages/Index";
 import ForgotPassword from "./pages/ForgotPassword";
+import VerifyPassword from "./pages/VerifyPassword"
 import NotFound from "./pages/NotFound";
 import EvaluationForm from "./pages/FormulaireEvaluation";
 import FormateurRoutes from "./routes/FormateurRoutes";
@@ -24,7 +25,7 @@ import MesFormation from "./pages/MesFormation";
 import { Calendar } from "lucide-react";
 import CalendarView from "./components/dashboardElement/CalendarView";
 import Chatbot from "./pages/Chatbot";
-
+import NewPassword from "./pages/UpdatePassword"
 import { AuthProvider } from "@/contexts/AuthContext";
 
 const queryClient = new QueryClient();
@@ -54,6 +55,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/verify-code" element={<VerifyPassword/>} />
+            <Route  path="/reset-password" element={<NewPassword />} />
             <Route path="/evaluation/:id" element={<EvaluationForm />} />
             <Route path="/Chatbot" element={<Chatbot />} />
             {/* Routes pour les différents types d'utilisateurs */}
