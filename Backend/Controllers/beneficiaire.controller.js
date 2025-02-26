@@ -10,18 +10,24 @@ const createBeneficiaire = async (req, res) => {
   try {
       // Extraction des données du body
       const {
-          nom,
-          prenom,
-          dateNaissance,
-          email,
-          genre,
-          pays,
-          niveau,
-          specialite,
-          etablissement,
-          profession,
-          nationalite,
-          idFormation 
+  nom,
+  prenom,
+  dateNaissance,
+  email,
+  genre,
+  telephone,
+  pays,
+  niveau,
+  specialite,
+  etablissement,
+  profession,
+  situationProfessionnel,
+  isBlack,
+  isSaturate,
+  nationalite,
+  region,
+  categorieAge,
+  idFormation
       } = req.body;
       // Validation de l'idFormation
       if (!idFormation || !mongoose.Types.ObjectId.isValid(idFormation)) {
@@ -56,19 +62,23 @@ const createBeneficiaire = async (req, res) => {
       }
       // Création du nouveau bénéficiaire
       const newBeneficiaire = new Beneficiaire({
-          nom,
-          prenom,
-          dateNaissance: dateNaissance ? new Date(dateNaissance) : undefined,
-          email,
-          genre,
-          pays,
-          niveau,
-          specialite,
-          etablissement,
-          profession,
-          nationalite,
-          isBlack: false,
-          isSaturate: false
+        nom,
+        prenom,
+        dateNaissance,
+        email,
+        genre,
+        telephone,
+        pays,
+        niveau,
+        specialite,
+        etablissement,
+        profession,
+        situationProfessionnel,
+        isBlack,
+        isSaturate,
+        nationalite,
+        region,
+        categorieAge,
       });
 
       // Sauvegarde du bénéficiaire
@@ -287,26 +297,40 @@ const uploadBeneficiairesFromExcel = async (req, res) => {
   }
 };
 // Simple read data from excel testing
-const uploadBenificiaireExcel = async (req, res) => {
+const getBeneficiaireFormation = async (req, res) => {
+  const idFormation = req.params.id || req.body.idFormation;
+
+  console.log("ID Formation reçu :", idFormation); // Debug
+
   try {
-    if (!req.file) {
-      return res.status(400).json({ message: "Please upload an Excel file" });
+    // Vérifier si l'ID est valide
+    if (!idFormation || !mongoose.Types.ObjectId.isValid(idFormation.toString())) {
+      return res.status(400).json({ message: "ID de formation invalide" });
     }
 
-    const filePath = req.file.path;
+    // Convertir en ObjectId pour éviter les problèmes
+    const formationId = new mongoose.Types.ObjectId(idFormation.toString());
 
-    console.log(`File uploaded to: ${filePath}`); // Log the file path to confirm where the file is stored
+    // Récupérer les bénéficiaires liés à la formation
+    const beneficiaires = await BeneficiareFormation.find({ formation: formationId })
+      .populate({
+        path: "beneficiaire",
+        model: "Beneficiaire", // S'assurer que c'est bien le bon modèle
+      });
 
-    const data = readExcelFile(filePath);
+    // Vérifier si on a trouvé des bénéficiaires
+    if (!beneficiaires.length) {
+      return res.status(404).json({ message: "Aucun bénéficiaire trouvé pour cette formation" });
+    }
 
-    console.log(data);
-
-    res.status(200).json({ message: "Data uploaded successfully", data });
+    res.status(200).json(beneficiaires);
   } catch (error) {
-    console.error("Error processing file:", error);
-    res.status(500).json({ message: "Error processing file", error: error.message });
+    console.error("Erreur lors de la récupération des bénéficiaires:", error);
+    res.status(500).json({ message: "Erreur serveur", error: error.message });
   }
-}
+};
+
+
 
 // Export the functions for use in routes
 module.exports = {
@@ -315,5 +339,6 @@ module.exports = {
     updateBeneficiaire,
     deleteBeneficiaire,
     uploadBeneficiairesFromExcel,
-    createBeneficiaire
+    createBeneficiaire,
+    getBeneficiaireFormation
 };

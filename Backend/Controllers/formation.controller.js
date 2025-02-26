@@ -36,7 +36,7 @@ const createFormation = async (req, res) => {
       dateFin: dateFin || null,
       description: "Aucun description",
       lienInscription,
-      status: "Avenir",
+      status: "Terminer",
       tags: "",
       categorie: "type1",
       niveau: "type1",
