@@ -10,12 +10,11 @@ import { useFormations } from "../../contexts/FormationContext";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { Clipboard, Check, Loader2 } from "lucide-react";
+import { FormationTableItem } from "./FormationTable";
 
-// Interface des formations
-interface Formation {
-  _id: string;
-  nom: string;
-  status: string;
+// Propriétés pour le composant EvaluationsTable
+interface EvaluationsTableProps {
+  onGenerateLink?: (courseId: string) => Promise<void>;
 }
 
 // Composant pour afficher le statut avec un badge stylisé
@@ -35,8 +34,10 @@ const StatusBadge = ({ status }: { status: string }) => {
   );
 };
 
-export const EvaluationsTable = () => {
-  const { formations, loading } = useFormations();
+export const EvaluationsTable = ({ onGenerateLink }: EvaluationsTableProps) => {
+  const { formations: contextFormations, loading } = useFormations();
+  // Cast des formations du contexte au type FormationTableItem[]
+  const formations = contextFormations as unknown as FormationTableItem[];
   const [links, setLinks] = useState<Record<string, string>>({});
   const [generating, setGenerating] = useState<Record<string, boolean>>({});
   const [copied, setCopied] = useState<Record<string, boolean>>({});
@@ -46,20 +47,34 @@ export const EvaluationsTable = () => {
 
   // Fonction pour générer un lien d'évaluation
   const generateEvaluationLink = async (id: string) => {
-    try {
-      setGenerating(prev => ({ ...prev, [id]: true }));
-      
-      // Option 1: Generate token on client-side (less secure)
-      const randomToken = Math.random().toString(36).substring(2, 10);
-      const generatedLink = `${window.location.origin}/evaluation/${id}/${randomToken}`;
-      
-      setLinks(prev => ({ ...prev, [id]: generatedLink }));
-      toast.success("Lien d'évaluation généré avec succès");
-    } catch (error) {
-      console.error("Erreur lors de la génération du lien:", error);
-      toast.error("Erreur lors de la génération du lien d'évaluation");
-    } finally {
-      setGenerating(prev => ({ ...prev, [id]: false }));
+    if (onGenerateLink) {
+      try {
+        setGenerating(prev => ({ ...prev, [id]: true }));
+        await onGenerateLink(id);
+        // Si onGenerateLink ne met pas à jour les links, on peut utiliser un mécanisme de fallback
+        // ou laisser la logique à onGenerateLink
+      } catch (error) {
+        console.error("Erreur lors de la génération du lien:", error);
+        toast.error("Erreur lors de la génération du lien d'évaluation");
+      } finally {
+        setGenerating(prev => ({ ...prev, [id]: false }));
+      }
+    } else {
+      try {
+        setGenerating(prev => ({ ...prev, [id]: true }));
+        
+        // Option 1: Generate token on client-side (less secure)
+        const randomToken = Math.random().toString(36).substring(2, 10);
+        const generatedLink = `${window.location.origin}/evaluation/${id}/${randomToken}`;
+        
+        setLinks(prev => ({ ...prev, [id]: generatedLink }));
+        toast.success("Lien d'évaluation généré avec succès");
+      } catch (error) {
+        console.error("Erreur lors de la génération du lien:", error);
+        toast.error("Erreur lors de la génération du lien d'évaluation");
+      } finally {
+        setGenerating(prev => ({ ...prev, [id]: false }));
+      }
     }
   };
 
@@ -110,56 +125,54 @@ export const EvaluationsTable = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {/* {formations.map((formation: Formation) => ( */}
           {formations
-  .filter((formation: Formation) => formation.status === "En Cours")
-  .slice(-4)
-  .map((formation: Formation) => (            <TableRow key={formation._id} className="hover:bg-orange-50 transition duration-150">
-              <TableCell className="py-4 font-medium">{formation.nom}</TableCell>
-              <TableCell>
-                <StatusBadge status={formation.status} />
-              </TableCell>
-              <TableCell>
-                <div className="flex flex-col space-y-2">
-                  <button
-                    onClick={() => generateEvaluationLink(formation._id)}
-                    disabled={generating[formation._id]}
-                    className="bg-black hover:bg-orange-600 text-white px-3 py-1 text-sm font-medium transition duration-150 ease-in-out flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed w-auto min-w-[80px] h-[30px]"
-                    //  className="rounded-none bg-black hover:bg-orange-600 text-white px-2 py-1 rounded-md text-lg font-medium transition duration-150 ease-in-out flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed w-auto max-w-xs"
-                  >
-                    {generating[formation._id] ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Génération...
-                      </>
-                    ) : (
-                      "Générer lien "
-                    )}
-                  </button>
-                  
-                  {links[formation._id] && (
-                    <div className="flex flex-col mt-2 max-w-md">
-                      <div className="relative flex items-center">
-                        <input
-                          readOnly
-                          value={links[formation._id]}
-                          className="w-full bg-gray-50 border border-gray-300 text-gray-700 text-sm rounded-md pl-3 pr-10 py-2 focus:ring-orange-500 focus:border-orange-500"
-                        />
-                        <button
-                          onClick={() => copyToClipboard(formation._id)}
-                          className="absolute right-2 text-gray-500 hover:text-orange-500 transition"
-                          title="Copier le lien"
-                        >
-                          {copied[formation._id] ? <Check className="w-5 h-5 text-green-500" /> : <Clipboard className="w-5 h-5" />}
-                        </button>
+            .filter((formation: FormationTableItem) => formation.status === "En Cours")
+            .slice(-4)
+            .map((formation: FormationTableItem) => (
+              <TableRow key={formation._id} className="hover:bg-orange-50 transition duration-150">
+                <TableCell className="py-4 font-medium">{formation.nom}</TableCell>
+                <TableCell>
+                  <StatusBadge status={formation.status} />
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-col space-y-2">
+                    <button
+                      onClick={() => generateEvaluationLink(formation._id)}
+                      disabled={generating[formation._id]}
+                      className="bg-black hover:bg-orange-600 text-white px-3 py-1 text-sm font-medium transition duration-150 ease-in-out flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed w-auto min-w-[80px] h-[30px]"
+                    >
+                      {generating[formation._id] ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Génération...
+                        </>
+                      ) : (
+                        "Générer lien "
+                      )}
+                    </button>
+                    
+                    {links[formation._id] && (
+                      <div className="flex flex-col mt-2 max-w-md">
+                        <div className="relative flex items-center">
+                          <input
+                            readOnly
+                            value={links[formation._id]}
+                            className="w-full bg-gray-50 border border-gray-300 text-gray-700 text-sm rounded-md pl-3 pr-10 py-2 focus:ring-orange-500 focus:border-orange-500"
+                          />
+                          <button
+                            onClick={() => copyToClipboard(formation._id)}
+                            className="absolute right-2 text-gray-500 hover:text-orange-500 transition"
+                            title="Copier le lien"
+                          >
+                            {copied[formation._id] ? <Check className="w-5 h-5 text-green-500" /> : <Clipboard className="w-5 h-5" />}
+                          </button>
+                        </div>
                       </div>
-                     
-                    </div>
-                  )}
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
         </TableBody>
       </Table>
     </div>
