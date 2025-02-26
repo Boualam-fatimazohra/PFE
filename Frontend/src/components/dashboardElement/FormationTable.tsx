@@ -9,20 +9,49 @@ import {
 } from "@/components/ui/table";
 import { useFormations } from "../../contexts/FormationContext";
 
-// 📌 Interface des formations
-interface Formation {
+// 📌 Interface des formations - assurez-vous d'utiliser la même définition partout
+export interface FormationTableItem {
   _id: string;
   nom: string;
   dateDebut: string;
-  dateFin: string;
+  dateFin?: string;
   status: string;
 }
 
-// 📌 Composant principal de la table des formations
-export const FormationsTable = () => {
-  const { formations, loading } = useFormations();
+// Interface des props pour FormationsTable
+interface FormationsTableProps {
+  formations?: FormationTableItem[];
+}
 
-  if (loading) {
+// Composant helper pour afficher le statut avec un badge stylisé
+const StatusBadge = ({ status }: { status: string }) => {
+  const statusStyles: Record<string, string> = {
+    "En Cours": "bg-orange-100 text-orange-700",
+    "Terminer": "bg-green-100 text-green-700",
+    "Replanifier": "bg-gray-100 text-gray-700",
+    "Avenir": "bg-red-100 text-red-700", // A venir en rouge
+  };
+
+  // Si le statut est inconnu, on applique un style par défaut
+  const badgeStyle = statusStyles[status] || "bg-red-100 text-red-700";
+
+  return (
+    <span className={`px-4 py-1 text-sm  rounded-full min-w-[90px] text-center inline-block ${badgeStyle}`}>
+      {status}
+    </span>
+  );
+};
+
+// 📌 Composant principal de la table des formations
+export const FormationsTable = ({ formations: propFormations }: FormationsTableProps) => {
+  // Utiliser les formations passées en props ou celles du contexte
+  const formationsContext = useFormations();
+  const loading = formationsContext.loading;
+  // Cast des formations du contexte au type FormationTableItem[]
+  const contextFormations = formationsContext.formations as unknown as FormationTableItem[];
+  const formations = propFormations || contextFormations;
+
+  if (loading && !propFormations) {
     return <p>Chargement des formations...</p>;
   }
 
@@ -37,44 +66,26 @@ export const FormationsTable = () => {
         </TableRow>
       </TableHeader>
       <TableBody>
-
-  {formations
-  .filter((formation: Formation) => formation.status === "En Cours","Terminer") // Filtrer les formations "En Cours"
-  .slice(-8) // Récupérer les 8 dernières
-  .map((formation: Formation) => (
-    <TableRow key={formation._id}>
-      <TableCell>{formation.nom}</TableCell>
-      <TableCell>{formation.dateDebut}</TableCell>
-      <TableCell>
-        <StatusBadge status={formation.status} />
-      </TableCell>
-      <TableCell>
-        <button className="rounded-none bg-black text-white px-3 py-1 rounded-md text-sm">
-          Accéder
-        </button>
-      </TableCell>
-    </TableRow>
-))}
-
-</TableBody>
+        {formations
+          .filter((formation: FormationTableItem) => 
+            ["En Cours", "Terminer", "Replanifier", "Avenir"].includes(formation.status)
+          )
+          .slice(-8) // Récupérer les 8 dernières formations
+          .map((formation: FormationTableItem) => (
+            <TableRow key={formation._id}>
+              <TableCell>{formation.nom}</TableCell>
+              <TableCell>{formation.dateDebut}</TableCell>
+              <TableCell>
+                <StatusBadge status={formation.status} />
+              </TableCell>
+              <TableCell>
+                <button className="bg-black text-white px-3 py-1 rounded-md text-sm">
+                  Accéder
+                </button>
+              </TableCell>
+            </TableRow>
+          ))}
+      </TableBody>
     </Table>
-  );
-};
-
-// Composant helper pour afficher le statut avec un badge stylisé
-const StatusBadge = ({ status }: { status: string }) => {
-  const statusStyles: Record<string, string> = {
-    "En Cours": "bg-orange-100 text-orange-700",
-    "Terminer": "bg-green-100 text-green-700",
-    "Replanifier": "bg-gray-100 text-gray-700",
-  };
-
-  //  Si le statut est inconnu, on applique un style par défaut
-  const badgeStyle = statusStyles[status] || "bg-red-100 text-red-700";
-
-  return (
-    <span className={`px-2 py-1 rounded-full text-xs ${badgeStyle}`}>
-      {status}
-    </span>
   );
 };

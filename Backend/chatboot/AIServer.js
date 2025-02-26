@@ -9,7 +9,7 @@ const crypto = require('./Hashing');
 const axios = require('axios');
 
 const app = express();
-app.use(express.json({ limit: '50mb' })); // Augmenter la limite pour les requêtes JSON
+app.use(express.json({ limit: '100mb' })); // Augmenter la limite pour les requêtes JSON
 
 // Ajout de la configuration CORS correcte
 app.use(cors({
