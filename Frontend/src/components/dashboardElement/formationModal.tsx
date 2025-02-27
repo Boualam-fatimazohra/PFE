@@ -4,6 +4,8 @@ import { useState, useRef } from "react";
 import { Eye, Download, Trash2, PlusCircle, ChevronDown, ChevronLeft, ChevronRight, Search, Filter } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import ParticipantsSection from "../Formation/ParticipantsSection";
+import { useFormations } from "../../contexts/FormationContext";
+
 // Types
 interface Step {
   number: string;
@@ -24,32 +26,34 @@ interface Participant {
 }
 
 interface FormState {
-  title: string;
+  title: string;  // Will map to 'nom'
   description: string;
-  status: string;
-  category: string;
-  level: string;
-  imageFormation: File | null;
-  registrationLink: string;
-  listeParticipants?: File[];
+  status: "En Cours" | "Terminer" | "Replanifier"; // Specific string literals
+  category: string;  // Will map to 'categorie'
+  level: string;  // Will map to 'niveau'
+  imageFormation: File | null;  // Will map to 'image'
+  registrationLink: string;  // Will map to 'lienInscription'
   dateDebut: string;
   dateFin: string;
+  tags: string;  // Add this field
 }
 
+// Initial form state
+const initialFormState: FormState = {
+  title: "",
+  description: "",
+  status: "En Cours",
+  category: "",
+  level: "",
+  imageFormation: null,
+  registrationLink: "",
+  dateDebut: "",
+  dateFin: "",
+  tags: "",  // Initialize tags field
+};
+
 const FormationModal = () => {
-  // Initial form state
-  const initialFormState: FormState = {
-    title: "",
-    description: "",
-    status: "",
-    category: "",
-    level: "",
-    imageFormation: null,
-    registrationLink: "",
-    listeParticipants: [],
-    dateDebut: "",
-    dateFin: ""
-  };
+  const { addNewFormation, error: contextError } = useFormations();
 
   // State
   const [currentStep, setCurrentStep] = useState(1);
@@ -209,40 +213,31 @@ const FormationModal = () => {
       return;
     }
     setIsSubmitting(true);
-
+  
     try {
-      const formData = new FormData();
+      // Map formState to the structure needed by the API
+      const formationData = {
+        nom: formState.title,
+        description: formState.description,
+        status: formState.status as "En Cours" | "Terminer" | "Replanifier", // Add type assertion here
+        categorie: formState.category,
+        niveau: formState.level,
+        image: formState.imageFormation,
+        lienInscription: formState.registrationLink,
+        dateDebut: formState.dateDebut,
+        dateFin: formState.dateFin,
+        tags: formState.tags
+      };
+  
+      await addNewFormation(formationData);
       
-      formData.append('nom', formState.title);
-      formData.append('description', formState.description);
-      formData.append('status', formState.status);
-      formData.append('categorie', formState.category);
-      formData.append('niveau', formState.level);
-      formData.append('lienInscription', formState.registrationLink);
-      formData.append('dateDebut', formState.dateDebut);
-      formData.append('dateFin', formState.dateFin);
-      
-      if (formState.imageFormation) {
-        formData.append('image', formState.imageFormation);
-      }
-
-      const response = await fetch('/api/Addformation', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: formData
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      await response.json();
       alert('Formation créée avec succès!');
       setFormState(initialFormState);
       setCurrentStep(1);
       setFileList([]);
+      
+      // Optionally redirect after creation
+      // window.location.href = '/formateur/mesformation';
     } catch (error) {
       console.error('Error submitting formation:', error);
       alert('Erreur lors de la création de la formation. Veuillez réessayer.');
@@ -349,7 +344,7 @@ const FormationModal = () => {
             </label>
             <select
               value={formState.status}
-              onChange={(e) => setFormState({ ...formState, status: e.target.value })}
+              onChange={(e) => setFormState({ ...formState, status: e.target.value as "En Cours" | "Terminer" | "Replanifier"})}
               className={`rounded-none w-full p-2.5 border ${errors.status ? 'border-red-500' : 'border-gray-300'} rounded-lg`}
             >
               <option value="">Sélectionnez un status</option>

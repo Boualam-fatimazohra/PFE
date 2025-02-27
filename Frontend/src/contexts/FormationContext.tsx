@@ -10,7 +10,7 @@ interface Formation {
   lienInscription: string;
   tags: string;
   status?: "En Cours" | "Terminer" | "Replanifier";
-  image?: string; // include image url
+  image?: File | string; // include image url
 }
 
 interface FormationContextType {
