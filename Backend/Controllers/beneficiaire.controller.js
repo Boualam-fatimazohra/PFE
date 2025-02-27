@@ -4,6 +4,7 @@ const readExcelFile = require("../utils/excelReader");
 const XLSX = require("xlsx");
 const  BeneficiareFormation=require("../Models/beneficiairesFormation.js");
 const mongoose = require('mongoose');
+const Formateur=require("../Models/formateur.model");
 const createBeneficiaire = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -331,6 +332,42 @@ const getBeneficiaireFormation = async (req, res) => {
 };
 
 
+const getNombreBeneficiairesParFormateur = async (req, res) => {
+  console.log("debut de la fct getNbrBeneficiaire par formateur");
+
+  try {
+    const utilisateurId = req.user.userId;
+    
+    if (!mongoose.Types.ObjectId.isValid(utilisateurId)) {
+      return res.status(400).json({ message: "ID utilisateur invalide" });
+    }
+
+    const formateur = await Formateur.findOne({ utilisateur: utilisateurId });
+    
+    if (!formateur) {
+      return res.status(404).json({ message: "Formateur non trouvé" });
+    }
+
+    const formations = await Formation.find({ formateur: formateur._id }).select("_id");
+
+    if (formations.length === 0) {
+      return res.json({ nombreBeneficiaires: 0 });
+    }
+
+    // CORRECTION ICI 
+    const formationIds = formations.map(f => f._id); 
+
+    const nombreBeneficiaires = await BeneficiareFormation.countDocuments({
+      formation: { $in: formationIds }
+    });
+
+    res.json({ nombreBeneficiaires });
+
+  } catch (error) {
+    console.error("Erreur :", error);
+    res.status(500).json({ message: "Erreur interne du serveur", error: error.message });
+  }
+};
 
 // Export the functions for use in routes
 module.exports = {
@@ -340,5 +377,6 @@ module.exports = {
     deleteBeneficiaire,
     uploadBeneficiairesFromExcel,
     createBeneficiaire,
-    getBeneficiaireFormation
+    getBeneficiaireFormation,
+    getNombreBeneficiairesParFormateur
 };
