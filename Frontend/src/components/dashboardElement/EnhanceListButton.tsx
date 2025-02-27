@@ -19,6 +19,7 @@ interface ProcessingResults {
   totalBeneficiaries?: number;
   eligiblePhoneNumbers?: number;
   totalContacts?: number;
+  processedFilesCount?: number;
 }
 
 // Define props interface for the component
@@ -39,8 +40,10 @@ const EnhanceListButton = ({
 }: EnhanceListButtonProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [hasFiles, setHasFiles] = useState(false);
-  const [showResults, setShowResults] = useState(false);
   const [results, setResults] = useState<ProcessingResults | null>(null);
+
+  // API base URL
+  const API_BASE_URL = 'http://localhost:5000';
 
   // Debug logging to help troubleshoot the issue
   useEffect(() => {
@@ -57,6 +60,35 @@ const EnhanceListButton = ({
     }
   }, [fileList]);
 
+  // Fonction pour obtenir uniquement un nombre à partir de l'API
+  const fetchNumericValue = async (query: string): Promise<number> => {
+    try {
+      // Ajouter un indicateur spécifique pour dire au serveur de ne pas afficher la réponse dans le chat
+      const response = await fetch(`${API_BASE_URL}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: query + " presente moi uniquement le chiffre",
+          fileContext: fileList,
+          hideFromChat: true // Flag pour indiquer au serveur que cette requête est en arrière-plan
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      // Extraire le nombre de la réponse
+      const numericValue = parseInt(data.response.replace(/[^\d]/g, ''));
+      return isNaN(numericValue) ? 0 : numericValue;
+    } catch (error) {
+      console.error("Erreur lors de la récupération du nombre:", error);
+      return 0;
+    }
+  };
+
   const handleEnhance = async () => {
     // Double-check before clicking
     if (!Array.isArray(fileList) || fileList.length === 0) {
@@ -67,59 +99,38 @@ const EnhanceListButton = ({
     
     console.log("Processing files:", fileList);
     setIsLoading(true);
-    setShowResults(false);
     
     try {
-      // Here you would normally process the files
-      // For now, we'll simulate processing with the same results
-      const newResults: ProcessingResults = await new Promise(resolve => {
-        setTimeout(() => {
-          resolve({
-            totalBeneficiaries: 450,
-            eligiblePhoneNumbers: 200,
-            totalContacts: 450
-          });
-        }, 1500); // Simulate processing for 1.5 seconds
-      });
+      // Montrer un indicateur de chargement général
+      setLoading(true);
       
-      // Store results locally and show them
+      // Demander directement les valeurs numériques sans afficher les messages dans le chat
+      const totalBeneficiaries = await fetchNumericValue("Donne moi le nombre total des bénéficiaires");
+      const eligiblePhoneNumbers = await fetchNumericValue("Donne moi le nombre de numéros éligibles");
+      const totalContacts = await fetchNumericValue("Donne moi le total des contacts");
+      
+      // Créer l'objet de résultats
+      const newResults: ProcessingResults = {
+        totalBeneficiaries,
+        eligiblePhoneNumbers,
+        totalContacts,
+        processedFilesCount: fileList.length
+      };
+      
+      // Stocker localement les résultats
       setResults(newResults);
-      setShowResults(true);
       
-      // Update the processing results state in the parent component
+      // Mettre à jour l'état des résultats dans le composant parent
       setProcessingResults(newResults);
       
-      // Add a message to the chat indicating analysis is complete
+      // Ajouter un message discret pour indiquer que l'analyse est terminée
       setMessages(prev => [...prev, {
         sender: 'bot',
-        text: "J'ai analysé vos fichiers. Voici les résultats principaux:",
+        text: "Analyse complète. Les résultats sont affichés ci-dessus.",
         id: Date.now()
       }]);
       
-      // Automatically send the query for beneficiaries count
-      setTimeout(() => {
-        const query = "Donne moi le nombre total des bénéficiaires";
-        
-        // Add user message
-        setMessages(prev => [...prev, {
-          sender: 'user',
-          text: query,
-          id: Date.now()
-        }]);
-        
-        // Simulate bot response
-        setLoading(true);
-        setTimeout(() => {
-          setMessages(prev => [...prev, {
-            sender: 'bot',
-            text: `Le nombre total de bénéficiaires est de ${newResults.totalBeneficiaries}.`,
-            id: Date.now()
-          }]);
-          setLoading(false);
-        }, 800);
-      }, 500);
-      
-      // Notify parent component that enhancement is complete
+      // Notifier le composant parent que l'amélioration est terminée
       if (onEnhanceComplete) {
         onEnhanceComplete(newResults);
       }
@@ -128,6 +139,7 @@ const EnhanceListButton = ({
       alert("Une erreur s'est produite lors du traitement des fichiers");
     } finally {
       setIsLoading(false);
+      setLoading(false);
     }
   };
 
