@@ -67,92 +67,108 @@ app.get('/chat', (req, res) => {
 
 // Route POST /chat améliorée pour mieux gérer les fichiers
 app.post('/chat', async (req, res) => {
-    const { message, fileContext = [] } = req.body;
-  
+  try {
+    const { message, fileContext = [], hideFromChat } = req.body;
+
     if (!message) {
       return res.status(400).json({ error: "Message manquant" });
     }
-  
-    try {
-      let contextualizedMessage = message;
-      let systemPrompt = "Vous êtes un assistant virtuel spécialisé dans l'analyse de données. ";
-  
-      if (fileContext && fileContext.length > 0) {
-        // Vérifier si fileContext contient des données valides
-        const validFiles = fileContext.filter(file => 
-          file && file.name && file.data && typeof file.data === 'string' && file.data.trim().length > 0
-        );
-        
-        if (validFiles.length > 0) {
-          systemPrompt += "Analysez attentivement les fichiers fournis ci-dessous et répondez à la question de l'utilisateur de manière précise et détaillée.";
-          
-          // Message pour l'utilisateur
-          contextualizedMessage = "";
-          
-          // Ajouter chaque fichier au contexte
-          validFiles.forEach((file, index) => {
-            contextualizedMessage += `### DÉBUT DU FICHIER ${index + 1}: ${file.name} ###\n${file.data}\n### FIN DU FICHIER ${index + 1}: ${file.name} ###\n\n`;
-          });
-          
-          // Ajouter la question
-          contextualizedMessage += `Question: ${message}`;
-          
-          // Log pour débogage
-          console.log(`Envoi à Deepseek - ${validFiles.length} fichiers inclus`);
-        } else {
-          console.warn("fileContext reçu mais aucun fichier valide trouvé");
+
+    // Gestion des requêtes de fond
+    if (hideFromChat) {
+      let numericResponse;
+
+      if (message.includes('uniquement le chiffre')) {
+        if (message.includes('bénéficiaires')) {
+          numericResponse = calculateTotalBeneficiaries(fileContext);
+        } else if (message.includes('numéros') && message.includes('éligibles')) {
+          numericResponse = calculateEligiblePhoneNumbers(fileContext);
+        } else if (message.includes('total des contacts')) {
+          numericResponse = calculateTotalContacts(fileContext);
         }
-      } else {
-        systemPrompt += "Répondez aux questions de l'utilisateur de manière utile et précise.";
-      }
-      
-      // Log pour débogage
-      console.log(`Longueur totale du message : ${contextualizedMessage.length} caractères`);
-  
-      const response = await axios.post(
-        'https://api.deepseek.com/v1/chat/completions',
-        { 
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: contextualizedMessage }
-          ],
-          model: 'deepseek-chat',
-          temperature: 0.3,
-          max_tokens: 2000 // Spécifier la taille maximale de la réponse
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY || 'VOTRE_CLE_API_ICI'}`,
-            'Content-Type': 'application/json'
-          }
+
+        if (numericResponse !== undefined) {
+          return res.json({ response: numericResponse.toString() });
         }
-      );
-  
-      // Vérifier que nous avons bien une réponse
-      if (response.data && response.data.choices && response.data.choices[0]) {
-        return res.json({ response: response.data.choices[0].message.content });
-      } else {
-        throw new Error("Format de réponse API inattendu");
       }
-    } catch (error) {
-      console.error("Erreur dans le chatbot :", error);
-      
-      let errorMessage = "Erreur du serveur lors du traitement de votre demande.";
-      
-      if (error.response) {
-        console.error("Code d'erreur API:", error.response.status);
-        console.error("Données d'erreur:", error.response.data);
-        errorMessage = `Erreur de l'API (${error.response.status}): ${
-          error.response.data?.error?.message || 
-          (typeof error.response.data === 'string' ? error.response.data : 'Erreur inconnue')
-        }`;
-      } else if (error.request) {
-        errorMessage = "Impossible de contacter l'API Deepseek. Vérifiez votre connexion internet et vos clés API.";
-      }
-      
-      res.status(500).json({ error: errorMessage });
     }
+
+    // Construction du prompt pour Deepseek
+    let contextualizedMessage = message;
+    let systemPrompt = "Vous êtes un assistant virtuel spécialisé dans l'analyse de données.";
+
+    const validFiles = fileContext.filter(file => 
+      file && file.name && file.data && typeof file.data === 'string' && file.data.trim().length > 0
+    );
+
+    if (validFiles.length > 0) {
+      systemPrompt += " Analysez attentivement les fichiers fournis ci-dessous et répondez précisément.";
+      contextualizedMessage = validFiles.map((file, index) => 
+        `### FICHIER ${index + 1}: ${file.name} ###\n${file.data}\n`
+      ).join("\n") + `\nQuestion: ${message}`;
+    }
+
+    console.log(`Envoi à Deepseek - ${validFiles.length} fichiers inclus`);
+    console.log(`Longueur totale du message : ${contextualizedMessage.length} caractères`);
+
+    // Appel à l'API Deepseek
+    const response = await axios.post(
+      'https://api.deepseek.com/v1/chat/completions',
+      { 
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: contextualizedMessage }
+        ],
+        model: 'deepseek-chat',
+        temperature: 0.3,
+        max_tokens: 2000
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY || 'VOTRE_CLE_API_ICI'}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    if (response.data?.choices?.[0]) {
+      return res.json({ response: response.data.choices[0].message.content });
+    } else {
+      throw new Error("Format de réponse API inattendu");
+    }
+
+  } catch (error) {
+    console.error("Erreur dans le chatbot :", error);
+    
+    let errorMessage = "Erreur du serveur lors du traitement de votre demande.";
+    
+    if (error.response) {
+      console.error("Code d'erreur API:", error.response.status);
+      console.error("Données d'erreur:", error.response.data);
+      errorMessage = `Erreur de l'API (${error.response.status}): ${
+        error.response.data?.error?.message || 
+        (typeof error.response.data === 'string' ? error.response.data : 'Erreur inconnue')
+      }`;
+    } else if (error.request) {
+      errorMessage = "Impossible de contacter l'API Deepseek. Vérifiez votre connexion internet et vos clés API.";
+    }
+
+    res.status(500).json({ error: errorMessage });
+  }
 });
+
+// Fonctions de calcul (à remplacer par ta logique réelle)
+function calculateTotalBeneficiaries(fileContext) {
+  return 450; // Remplace avec ton calcul réel
+}
+
+function calculateEligiblePhoneNumbers(fileContext) {
+  return 200; // Remplace avec ton calcul réel
+}
+
+function calculateTotalContacts(fileContext) {
+  return 450; // Remplace avec ton calcul réel
+}
 
 // Route d'upload de fichier améliorée
 app.post("/upload-csv", upload.single("csvFile"), async (req, res) => {
