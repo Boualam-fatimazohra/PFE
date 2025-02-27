@@ -33,21 +33,23 @@ export const getFormationById = async (id: string) => {
   }
 };
 
-export const createFormation = async (formationData: Formation) => {
+// In formationService.ts
+export const createFormation = async (formationData: any) => {
   try {
     const formData = new FormData();
     
     // Append all form fields to FormData
-    Object.entries(formationData).forEach(([key, value]) => {
-      // Handle image file separately
-      if (key === 'image' && value instanceof File) {
-        formData.append('image', value);
-      } 
-      // Skip undefined values
-      else if (value !== undefined) {
-        formData.append(key, String(value));
+    Object.keys(formationData).forEach(key => {
+      // Skip image - we'll handle it separately
+      if (key !== 'image' && formationData[key] !== null && formationData[key] !== undefined) {
+        formData.append(key, formationData[key]);
       }
     });
+    
+    // Append image if it exists and is a File
+    if (formationData.image && formationData.image instanceof File) {
+      formData.append('image', formationData.image);
+    }
     
     const response = await apiClient.post('/formation/Addformation', formData, {
       headers: {

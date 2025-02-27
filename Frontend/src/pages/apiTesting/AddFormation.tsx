@@ -14,7 +14,7 @@ const FormateurFormations = () => {
     categorie: "type1", // Add categorie field based on the API
     niveau: "type1", // Add niveau field based on the API
     status: "En Cours" as "En Cours" | "Terminer" | "Replanifier", // Use type assertion here
-    image: null as File | null,
+    image: null,
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
