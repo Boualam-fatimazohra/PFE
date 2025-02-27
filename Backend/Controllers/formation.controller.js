@@ -1,6 +1,8 @@
 
 const Formation = require('../Models/formation.model.js');
 const Formateur  = require('../Models/formateur.model.js');
+const { cloudinary } = require('../Config/cloudinaryConfig.js');
+
 //  debut : creation d'un formation par un formateur bien précis :
 const createFormation = async (req, res) => {
   try {
@@ -37,12 +39,8 @@ const createFormation = async (req, res) => {
     }
 
     // 4. Récupérer l'image si elle est fournie
-    let imageBuffer = null;
-    let imageType = null;
-    if (req.file) {
-      imageBuffer = req.file.buffer;
-      imageType = req.file.mimetype;
-    }
+    // 5. Get image URL from Cloudinary (req.file is populated by multer)
+    const imageUrl = req.file ? req.file.path : null;
 
     // 6. Create new formation
     const nouvelleFormation = new Formation({
@@ -56,8 +54,7 @@ const createFormation = async (req, res) => {
       categorie: categorie || "type1",
       niveau: niveau || "type1",
       formateur: formateur._id,  
-      image: imageBuffer, // Stocke l’image en buffer
-      imageType: imageType // Stocke le type de l’image
+      image: imageUrl // This is now the Cloudinary URL
     });
 
     // 7. Save the formation
@@ -77,8 +74,6 @@ const createFormation = async (req, res) => {
     });
   }
 };
-
-
 
 // Get All Formateurs formations
 const getAllFormations = async (req, res) => {
@@ -124,8 +119,7 @@ const getFormations = async (req, res) => {
   }
 };
 
-// fin : recupération de tout les formations de tous les formateurs
-// debut :récupérer une formation par id passé en paramétre 
+// Get One formation by Id
 const GetOneFormation = async (req, res) => {
   try {
     const { id } = req.params; 
@@ -147,16 +141,23 @@ const GetOneFormation = async (req, res) => {
     });
   }
 };
-// fin: récupérer une formation par id passé en paramétre 
-// todo => debut : modifier une formation 
+
+// Update formation by Id
 const UpdateFormation = async (req, res) => {
   const { id } = req.params;
-  const { nom, dateDebut, dateFin, lienInscription, tags } = req.body;
+  const { nom, dateDebut, dateFin, lienInscription, tags, description, status, categorie, niveau } = req.body;
 
   try {
+    const updateData = { nom, dateDebut, dateFin, lienInscription, tags, description, status, categorie, niveau };
+    
+    // If a new image is uploaded, add it to the update data
+    if (req.file) {
+      updateData.image = req.file.path; // Cloudinary URL
+    }
+
     const updatedFormation = await Formation.findByIdAndUpdate(
       id,
-      { nom, dateDebut, dateFin, lienInscription, tags },
+      updateData,
       { new: true } 
     );
 
@@ -169,15 +170,34 @@ const UpdateFormation = async (req, res) => {
     res.status(500).json({ message: 'Erreur lors de la mise à jour de la formation', error: error.message });
   }
 };
-// fin : modifier une formation
-// debut : deleteFormation par id 
+
+// Delete Formation by Id
 const DeleteFormation = async (req, res) => {
   const { id } = req.params; 
   try {
-    const result = await Formation.findByIdAndDelete(id);
-    if (!result) {
+    // Get the formation first to get the image URL
+    const formation = await Formation.findById(id);
+    
+    if (!formation) {
       return res.status(404).json({ message: 'Formation non trouvée avec l\'ID fourni.' });
     }
+    
+    // If there's an image, delete it from Cloudinary
+    if (formation.image) {
+      // Extract the public_id from the Cloudinary URL
+      const publicId = formation.image.split('/').pop().split('.')[0];
+      
+      try {
+        await cloudinary.uploader.destroy('formations/' + publicId);
+      } catch (cloudinaryError) {
+        console.error('Error deleting image from Cloudinary:', cloudinaryError);
+        // Continue with deletion even if Cloudinary delete fails
+      }
+    }
+    
+    // Delete the formation from the database
+    await Formation.findByIdAndDelete(id);
+    
     res.status(200).json({ message: 'Formation supprimée avec succès.' });
   } catch (error) {
     res.status(500).json({
@@ -186,8 +206,5 @@ const DeleteFormation = async (req, res) => {
     });
   }
 };
-// fin  : deleteFormation par id 
 
-
-// fin:récupérer les formations d'un seule formateur
 module.exports = { createFormation, getAllFormations, GetOneFormation, UpdateFormation,DeleteFormation, getFormations };
