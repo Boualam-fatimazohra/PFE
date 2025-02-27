@@ -3,6 +3,9 @@ const  BeneficiareFormation=require("../Models/beneficiairesFormation.js");
 const {sendEvaluationLinkWithToken}=require("../utils/sendEvaluationLinkWithToken.js");
 const Beneficiaire=require("../Models/beneficiaire.model");
 const mongoose = require('mongoose');
+const {calculerTauxSatisfaction}=require("../utils/tauxSatisfactionFormation.js");
+const Formateur=require("../Models/formateur.model.js");
+const Formation=require("../Models/formation.model.js");
 // debut fct : enregistrer la réponse du beneficiare
 const SubmitEvaluation = async (req, res) => {
   const { token } = req.params;
@@ -147,9 +150,102 @@ const getLastEvaluation = async (req, res) => {
       console.log("Erreur:", error);
       res.status(500).json({ error: "Erreur lors de la récupération de l'évaluation" });
     }
-  };  
+  }; 
+
+/**
+ * Endpoint pour obtenir le taux de satisfaction d'une formation spécifique
+ */
+const tauxSatisfactionParFormation = async (req, res) => {
+  const idFormation = req.params.id;
+  
+  try {
+    const resultat = await calculerTauxSatisfaction(idFormation);
+    return res.status(200).json(resultat);
+  } catch (error) {
+    console.error(error.message);
+    return res.status(error.message.includes("invalide") ? 400 : 500).json({ 
+      message: "Erreur lors du calcul du taux de satisfaction", 
+      error: error.message 
+    });
+  }
+};
+
+/**
+ * Endpoint pour obtenir le taux de satisfaction de toutes les formations d'un formateur
+ */
+const tauxSatisfactionParFormateur = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    
+    // Vérifier si l'ID utilisateur est valide
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      console.log( "ID utilisateur invalide");
+      return res.status(400).json({ message: "ID utilisateur invalide" });
+    }
+    // Trouver le formateur lié à cet utilisateur
+    const formateur = await Formateur.findOne({ utilisateur: userId });
+    if (!formateur) {
+      console.log( "ID utilisateur invalide");
+
+      return res.status(404).json({ message: "Formateur non trouvé pour cet utilisateur" });
+    }
+    
+    // Récupérer toutes les formations de ce formateur
+    const formations = await Formation.find({ formateur: formateur._id });
+    if (!formations || formations.length === 0) {
+      return res.status(200).json({ 
+        tauxMoyen: 0, 
+        nombreTotalOui: 0, 
+        nombreTotalEvaluations: 0,
+        detailsParFormation: [],
+        message: "Aucune formation trouvée pour ce formateur" 
+      });
+    }
+    
+    // Initialiser les données consolidées
+    let nombreTotalOui = 0;
+    let nombreTotalEvaluations = 0;
+    const detailsParFormation = [];
+    
+    // Pour chaque formation, calculer le taux de satisfaction en utilisant la fonction générique
+    for (const formation of formations) {
+      const resultatFormation = await calculerTauxSatisfaction(formation._id);
+      
+      // Ajouter aux totaux
+      nombreTotalOui += resultatFormation.nombreOui;
+      nombreTotalEvaluations += resultatFormation.nombreTotal;
+      
+      // Ajouter les détails à la liste
+      detailsParFormation.push(resultatFormation);
+    }
+    
+    // Calculer le taux moyen global
+    const tauxMoyenGlobal = nombreTotalEvaluations > 0 ? 
+      (nombreTotalOui / nombreTotalEvaluations) * 100 : 0;
+    
+    // Renvoyer les résultats avec des informations détaillées
+    return res.status(200).json({
+      formateurId: formateur._id,
+      nom: formateur.nom,
+      prenom: formateur.prenom,
+      tauxMoyen: parseFloat(tauxMoyenGlobal.toFixed(2)),
+      nombreTotalOui,
+      nombreTotalEvaluations,
+      
+    });
+    
+  } catch (error) {
+    console.error("Erreur lors du calcul du taux de satisfaction par formateur:", error);
+    return res.status(500).json({ 
+      message: "Erreur lors du calcul du taux de satisfaction par formateur", 
+      error: error.message 
+    });
+  }
+};
 module.exports = {
     getLastEvaluation,
     sendEvaluationLinksToBeneficiaries,
-    SubmitEvaluation
+    SubmitEvaluation,
+    tauxSatisfactionParFormation,
+    tauxSatisfactionParFormateur
   };

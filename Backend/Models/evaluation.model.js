@@ -39,7 +39,8 @@ const evaluationSchema = new mongoose.Schema({
   },
   recommandation:{type:String,enum :["Oui","Non"] ,required:true},
   commentaire:{type:String,required:false},
-  formation:{type:mongoose.Schema.Types.ObjectId,ref:"Formation",required:true}
+  formation:{type:mongoose.Schema.Types.ObjectId,ref:"Formation",required:true},
+  
 });
 
 const Evaluation = mongoose.model('Evaluation', evaluationSchema);
