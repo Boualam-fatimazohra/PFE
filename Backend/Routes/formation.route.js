@@ -9,7 +9,7 @@ const {
     getFormations
 } = require('../Controllers/formation.controller.js');
 const authorizeRoles = require('../Middlewares/RoleMiddleware.js');
-const upload = require('../utils/uploadImage.js');
+const { upload } = require('../Config/cloudinaryConfig.js');
 const authorizeFormationAccess = require('../Middlewares/FormationAccess.js');
 
 const router = express.Router();
