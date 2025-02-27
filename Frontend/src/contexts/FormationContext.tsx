@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { fetchFormations, addFormation } from '../api/services/api';
+import { getAllFormations as fetchFormations, createFormation as addFormation } from '../api/services/formationService';
 import { deleteFormation as apiDeleteFormation, updateFormation as ipUpdateFormation } from '../api/services/formationService';
 
 interface Formation {
@@ -10,6 +10,7 @@ interface Formation {
   lienInscription: string;
   tags: string;
   status?: "En Cours" | "Terminer" | "Replanifier";
+  image?: string; // include image url
 }
 
 interface FormationContextType {
@@ -64,26 +65,18 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
   };
 
 // In FormationContext.tsx, update the addFormation function
-
-const addNewFormation = async (formationData) => {
+const addNewFormation = async (formationData: Formation) => {
   try {
     setError(null);
     
-    // Create a FormData object for multipart/form-data submission
-    const formData = new FormData();
+    // Call the API function directly with the formation data
+    // The service function will handle creating the FormData internally
+    const response = await addFormation(formationData);
     
-    // Append all form fields to FormData
-    Object.keys(formationData).forEach(key => {
-      if (key === 'image' && formationData[key] instanceof File) {
-        formData.append('image', formationData[key]);
-      } else if (formationData[key] !== null && formationData[key] !== undefined) {
-        formData.append(key, formationData[key]);
-      }
-    });
+    // Update state with the new formation
+    setFormations((prevFormations) => [...prevFormations, response.formation]);
     
-    const newFormation = await addFormation(formData);
-    setFormations((prevFormations) => [...prevFormations, newFormation]);
-    return newFormation;
+    return response.formation;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Erreur lors de l'ajout de la formation";
     console.error(errorMessage);

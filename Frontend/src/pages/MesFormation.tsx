@@ -31,6 +31,7 @@ interface FormationItem {
   id: string; // Changed to string to match actual _id from API
   title: string;
   status: "En cours" | "A venir" | "Terminer" | "Replanifier";
+  image: string;
 }
 
 const MesFormations = () => {
@@ -51,7 +52,8 @@ const MesFormations = () => {
       const mappedFormations = contextFormations.map((formation) => ({
         id: formation._id || `temp-${formation.nom}`, // Use _id from API
         title: formation.nom,
-        status: formation.status as "En cours" | "A venir" | "Terminer" | "Replanifier"
+        status: formation.status as "En cours" | "A venir" | "Terminer" | "Replanifier",
+        image: formation.image // Add this line to include the image URL
       }));
       setFormations(mappedFormations);
     }
@@ -172,6 +174,22 @@ const MesFormations = () => {
         return <div>Statut inconnu</div>;
     }
   };
+
+  //TODO:renderDetails later
+  /*const renderDetails = () => {
+    if (!selectedFormation) return null;
+  
+    switch (selectedFormation.status) {
+      case "En cours":
+        return <DetailsFormation formation={selectedFormation} onRetourClick={handleRetourClick} />;
+      case "A venir":
+        return <FormationAvenir formation={selectedFormation} onRetourClick={handleRetourClick} />;
+      case "Terminer":
+        return <FormationTerminer formation={selectedFormation} onRetourClick={handleRetourClick}/>;
+      default:
+        return <div>Statut inconnu</div>;
+    }
+  };*/
 
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const filteredFormations = selectedStatus && selectedStatus !== 'null'
