@@ -50,11 +50,6 @@ router.get('/getFormateurByManager',
     authorizeRoles( 'Admin','Manager'),
     getFormateurByManager);
 
-router.get('/getFormateurByManager', 
-    authenticated, 
-    authorizeRoles('Admin', 'Manager'), 
-    getFormateurByManager
-);
 router.get('/getFormationsOfFormateurConnected',
     authenticated,
     authorizeRoles('Formateur'),getFormations);

@@ -300,18 +300,17 @@ const uploadBeneficiairesFromExcel = async (req, res) => {
 // Simple read data from excel testing
 const getBeneficiaireFormation = async (req, res) => {
   const idFormation = req.params.id || req.body.idFormation;
-
   console.log("ID Formation reçu :", idFormation); // Debug
-
+  
   try {
     // Vérifier si l'ID est valide
     if (!idFormation || !mongoose.Types.ObjectId.isValid(idFormation.toString())) {
       return res.status(400).json({ message: "ID de formation invalide" });
     }
-
+    
     // Convertir en ObjectId pour éviter les problèmes
     const formationId = new mongoose.Types.ObjectId(idFormation.toString());
-
+    
     // Récupérer les bénéficiaires liés à la formation
     const beneficiaires = await BeneficiareFormation.find({ formation: formationId })
       .populate({
