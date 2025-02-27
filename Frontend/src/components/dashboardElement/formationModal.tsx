@@ -679,31 +679,23 @@ const FormationModal = () => {
         
         {/* Afficher les résultats du traitement s'ils existent, même si les fichiers sont affichés */}
         {processingResults && !loading && (
-          <div className="w-full">
-            <h3 className="text-lg font-medium mb-4">Resultat AI</h3>
-            <div className="grid grid-cols-5 gap-4">
-              <div className="text-center">
-                <p className="text-gray-500 text-sm">Total bénéficiaires</p>
-                <p className="text-lg font-semibold">{processingResults.totalBeneficiaries}</p>
+          <div className="w-full border border-purple-300 rounded-lg p-4">
+          <h3 className="text-lg font-medium mb-4">Résultat AI</h3>
+          <div className="grid grid-cols-5 gap-4">
+            {[
+              { label: "Numéros éligibles", value: processingResults.eligiblePhoneNumbers },
+              { label: "Total des inscrits", value: processingResults.totalContacts },
+              { label: "Total bénéficiaires", value: processingResults.totalBeneficiaries },
+              { label: "Total inscription", value: processingResults.totalBeneficiaries },
+            ].map((item, index) => (
+              <div key={index} className="bg-white shadow-md border rounded-lg p-4 text-center">
+                <p className="text-gray-500 text-sm">{item.label}</p>
+                <p className="text-lg font-semibold">{item.value}</p>
               </div>
-              <div className="text-center">
-                <p className="text-gray-500 text-sm">Numéros éligibles</p>
-                <p className="text-lg font-semibold">{processingResults.eligiblePhoneNumbers}</p>
-              </div>
-              <div className="text-center">
-                <p className="text-gray-500 text-sm">Total des inscrits</p>
-                <p className="text-lg font-semibold">{processingResults.totalContacts}</p>
-              </div>
-              <div className="text-center">
-                <p className="text-gray-500 text-sm">Total bénéficiaires</p>
-                <p className="text-lg font-semibold">{processingResults.totalBeneficiaries}</p>
-              </div>
-              <div className="text-center">
-                <p className="text-gray-500 text-sm">Total inscription</p>
-                <p className="text-lg font-semibold">{processingResults.totalBeneficiaries}</p>
-              </div>
-            </div>
+            ))}
           </div>
+        </div>
+        
         )}
       </div>
     </div>
