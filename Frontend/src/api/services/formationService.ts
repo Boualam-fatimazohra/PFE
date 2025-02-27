@@ -10,7 +10,7 @@ interface Formation {
   tags?: string;
   categorie?: string;
   niveau?: string;
-  image?: File;
+  image?: File | string; // Allow both File (for uploads) and string (for URLs)
 }
 
 export const getAllFormations = async () => {
@@ -38,11 +38,14 @@ export const createFormation = async (formationData: Formation) => {
     const formData = new FormData();
     
     // Append all form fields to FormData
-    Object.keys(formationData).forEach(key => {
-      if (key === 'image' && formationData[key] instanceof File) {
-        formData.append('image', formationData[key] as File);
-      } else {
-        formData.append(key, formationData[key] as string);
+    Object.entries(formationData).forEach(([key, value]) => {
+      // Handle image file separately
+      if (key === 'image' && value instanceof File) {
+        formData.append('image', value);
+      } 
+      // Skip undefined values
+      else if (value !== undefined) {
+        formData.append(key, String(value));
       }
     });
     
@@ -61,8 +64,32 @@ export const createFormation = async (formationData: Formation) => {
 
 export const updateFormation = async (id: string, formationData: Partial<Formation>) => {
   try {
-    const response = await apiClient.put(`/formation/UpdateFormation/${id}`, formationData);
-    return response.data;
+    // Check if there's an image file in the update data
+    if (formationData.image instanceof File) {
+      // Create FormData to handle file upload
+      const formData = new FormData();
+      
+      // Append all fields to FormData
+      Object.entries(formationData).forEach(([key, value]) => {
+        if (key === 'image' && value instanceof File) {
+          formData.append('image', value);
+        } else if (value !== undefined) {
+          formData.append(key, String(value));
+        }
+      });
+      
+      const response = await apiClient.put(`/formation/UpdateFormation/${id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      return response.data;
+    } else {
+      // Regular JSON update if no file is involved
+      const response = await apiClient.put(`/formation/UpdateFormation/${id}`, formationData);
+      return response.data;
+    }
   } catch (error) {
     console.error(`Error updating formation ${id}:`, error);
     throw error;
