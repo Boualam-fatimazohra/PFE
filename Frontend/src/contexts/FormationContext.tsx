@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { fetchFormations, addFormation } from '../services/api';
+import { getAllFormations as fetchFormations, createFormation as addFormation } from '../services/formationService';
+import { deleteFormation as apiDeleteFormation, updateFormation as ipUpdateFormation } from '../services/formationService';
 
 interface Formation {
   _id?: string;
@@ -9,6 +10,7 @@ interface Formation {
   lienInscription: string;
   tags: string;
   status?: "En Cours" | "Terminer" | "Replanifier";
+  image?: File | string; // include image url
 }
 
 interface FormationContextType {
@@ -16,6 +18,9 @@ interface FormationContextType {
   loading: boolean;
   error: string | null;
   addNewFormation: (formationData: Formation) => Promise<void>;
+  deleteFormation: (id: string) => Promise<void>;
+  updateFormation: (id: string, formationData: Partial<Formation>) => Promise<void>;
+  refreshFormations: () => Promise<void>;
 }
 
 interface FormationProviderProps {
@@ -46,13 +51,77 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
     getFormations();
   }, []);
 
-  const addNewFormation = async (formationData: Formation) => {
+  const refreshFormations = async () => {
+    setLoading(true);
+    try {
+      const data = await fetchFormations();
+      setFormations(data);
+      setError(null);
+    } catch (error) {
+      setError('Failed to refresh formations');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+// In FormationContext.tsx, update the addFormation function
+const addNewFormation = async (formationData: Formation) => {
+  try {
+    setError(null);
+    
+    // Call the API function directly with the formation data
+    // The service function will handle creating the FormData internally
+    const response = await addFormation(formationData);
+    
+    // Update state with the new formation
+    setFormations((prevFormations) => [...prevFormations, response.formation]);
+    
+    return response.formation;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Erreur lors de l'ajout de la formation";
+    console.error(errorMessage);
+    setError(errorMessage);
+    throw error;
+  }
+};
+
+  const deleteFormation = async (id: string) => {
     try {
       setError(null);
-      const newFormation = await addFormation(formationData);
-      setFormations((prevFormations) => [...prevFormations, newFormation]);
+      // Call the API to delete the formation
+      await apiDeleteFormation(id);
+      
+      // Update the local state by removing the deleted formation
+      setFormations((prevFormations) => 
+        prevFormations.filter((formation) => formation._id !== id)
+      );
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Erreur lors de l'ajout de la formation";
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "Erreur lors de la suppression de la formation";
+      console.error(errorMessage);
+      setError(errorMessage);
+      throw error;
+    }
+  };
+
+  // Add this function for updating formations
+  const updateFormation = async (id: string, formationData: Partial<Formation>) => {
+    try {
+      setError(null);
+      // Call the API to update the formation
+      const updatedFormation = await ipUpdateFormation(id, formationData);
+      
+      // Update the formations list with the updated formation
+      setFormations((prevFormations) => 
+        prevFormations.map((formation) => 
+          formation._id === id ? { ...formation, ...updatedFormation } : formation
+        )
+      );
+    } catch (error) {
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "Erreur lors de la mise à jour de la formation";
       console.error(errorMessage);
       setError(errorMessage);
       throw error;
@@ -60,10 +129,12 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
   };
 
   return (
-    <FormationContext.Provider value={{ formations, loading, error, addNewFormation }}>
+    <FormationContext.Provider value={{ formations, loading, error, addNewFormation, deleteFormation, updateFormation, refreshFormations }}>
       {children}
     </FormationContext.Provider>
   );
+
+
 };
 
 export const useFormations = (): FormationContextType => {

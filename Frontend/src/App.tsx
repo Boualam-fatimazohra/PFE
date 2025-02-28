@@ -26,9 +26,10 @@ import MesFormation from "./pages/MesFormation";
 import { Calendar } from "lucide-react";
 import CalendarView from "./components/dashboardElement/CalendarView";
 import Chatbot from "./pages/Chatbot";
-import { AuthProvider } from "@/contexts/AuthContext";
-import ParticipantsSection from "./components/Formation/ParticipantsSection";
-import BeneficiairesList from "./components/Formation/Beneficiaires";
+import { AuthProvider } from "./contexts/AuthContext";
+import AddFormation from "./pages/apiTesting/AddFormation";
+import FormateurFormations from "./pages/apiTesting/FormateurFormations";
+import { FormationProvider } from "./contexts/FormationContext";
 
 
 
@@ -52,48 +53,47 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 const App = () => (
   
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
     <AuthProvider>
-      <BrowserRouter>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/verify-code" element={<VerifyPassword/>} />
-            <Route  path="/reset-password" element={<NewPassword />} />
-            <Route path="/evaluation/:id" element={<EvaluationForm />} />
-            <Route path="/Chatbot" element={<Chatbot />} />
-            <Route path="/ValidatePassword" element={<ValidatePassword />} />
-            <Route path="/NewPassword" element={<NewPassword />} />
+      <FormationProvider>
+        <TooltipProvider>
+          <BrowserRouter>
+            <Layout>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/evaluation/:id" element={<EvaluationForm />} />
+                <Route path="/Chatbot" element={<Chatbot />} />
+                {/* Routes pour les différents types d'utilisateurs */}
+                <Route path="/formateur/*" element={<FormateurRoutes />} />
+                <Route path="/manager/*" element={<ManagerRoutes />} />
+                <Route path="/coordinateur/*" element={<CoordinateurRoutes />} />
+                <Route path="/technicien/*" element={<TechnicienRoutes />} />
+                <Route path="/evaluation/:id/:token" element={<EvaluationForm />} />
+                
+                <Route path="/addformation" element={<AddFormation />} /> 
+                <Route path="/formations" element={<FormateurFormations />} /> 
 
-            {/* Routes pour les différents types d'utilisateurs */}
-            <Route path="/formateur/*" element={<FormateurRoutes />} />
-            <Route path="/manager/*" element={<ManagerRoutes />} />
-            <Route path="/coordinateur/*" element={<CoordinateurRoutes />} />
-            <Route path="/technicien/*" element={<TechnicienRoutes />} />
-            <Route path="/evaluation/:id/:token" element={<EvaluationForm />} />
+                {/* Autres pages */}
+                <Route path="/generate-link" element={<GenerateLink />} />
+                <Route path="/formulaire-evaluation" element={<FormulaireEvaluation />} />
+                <Route path="/EvaluationForm" element={<EvaluationForm />} />
+                <Route path="/formationModal" element={< FormationModal/>} />
+                <Route path="/EvaluationForm" element={< EvaluationForm/>}/>
+                <Route path="/CalendarView" element={<CalendarView/>}/>
+                <Route path="/beneficiaires" element={<beneficiaires/>}/>
+                <Route path="/DetailsFormation" element={<DetailsFormation />} />
+                <Route path="/FormationTerminer" element={<FormationTerminer />} />
+                <Route path="/FormationAvenir" element={<FormationAvenir />} />
 
-            {/* Autres pages */}
-            <Route path="/generate-link" element={<GenerateLink />} />
-            <Route path="/formulaire-evaluation" element={<FormulaireEvaluation />} />
-            <Route path="/EvaluationForm" element={<EvaluationForm />} />
-            <Route path="/formationModal" element={< FormationModal/>} />
-            <Route path="/EvaluationForm" element={< EvaluationForm/>}/>
-            <Route path="/BeneficiairesList" element={< BeneficiairesList/>} />
-            <Route path="/CalendarView" element={<CalendarView/>}/>
-            <Route path="/beneficiaires" element={<beneficiaires/>}/>
-            <Route path="/DetailsFormation" element={<DetailsFormation />} />
-            <Route path="/FormationTerminer" element={<FormationTerminer />} />
-            <Route path="/FormationAvenir" element={<FormationAvenir />} />
-            
-            <Route path="/formationModal" element={< FormationModal/>} />
-            {/* Page 404 */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Layout>
-      </BrowserRouter>
-      </AuthProvider>
-    </TooltipProvider>
+                <Route path="/formationModal" element={< FormationModal/>} />
+                {/* Page 404 */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Layout>
+          </BrowserRouter>
+        </TooltipProvider>
+      </FormationProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
