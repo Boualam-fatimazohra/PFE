@@ -4,7 +4,6 @@ const authenticated=require("../Middlewares/Authmiddleware.js");
 // const authenticated = require('../Middlewares/Authmiddleware')
 // const verifyRole = require('../Middlewares/verifyRole')
 const router = express.Router();
-
 router.post('/signIn', Login);
 router.post('/signup',createUser);
 router.get('/logout', Logout);
