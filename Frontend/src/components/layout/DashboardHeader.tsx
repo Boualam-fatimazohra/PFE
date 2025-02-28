@@ -36,7 +36,6 @@ export function DashboardHeader() {
     }
   }, []);
   
-
   const handleLogout = async () => {
     try {
       await logout();
@@ -91,6 +90,15 @@ export function DashboardHeader() {
     ];
   }
 
+  // Fonction pour vérifier si l'utilisateur est sur une page Dashboard
+  const isOnDashboard = () => {
+    return location.pathname.includes('/dashboard') || 
+           location.pathname === '/formateur/dashboardFormateur' || 
+           location.pathname === '/manager/dashboardManager' || 
+           location.pathname === '/coordinateur/dashboardCoordinateur' || 
+           location.pathname === '/technicien/dashboardTechnicien';
+  };
+
   return (
     <>
       <header className="fixed top-0 w-full bg-black text-white border-b border-gray-800 z-40">
@@ -125,18 +133,20 @@ export function DashboardHeader() {
 
             {/* Right: Try AI button, Notifications, User Info, and Menu */}
             <div className="flex items-center space-x-6">
-             {/* Try AI Button */}
-             <button
-                onClick={toggleChatbot}
-                className={`flex items-center space-x-1 ${
-                  isChatbotOpen 
-                    ? "bg-orange-500 hover:bg-orange-600" 
-                    : "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
-                } text-white px-3 py-2 rounded-full text-sm font-medium transition-all`}
-              >
-                <Sparkles className="w-4 h-4 mr-1" />
-                <span>Try AI</span>
-              </button>
+             {/* Try AI Button - Uniquement visible sur les pages Dashboard */}
+             {isOnDashboard() && (
+                <button
+                  onClick={toggleChatbot}
+                  className={`flex items-center space-x-1 ${
+                    isChatbotOpen 
+                      ? "bg-orange-500 hover:bg-orange-600" 
+                      : "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+                  } text-white px-3 py-2 rounded-full text-sm font-medium transition-all`}
+                >
+                  <Sparkles className="w-4 h-4 mr-1" />
+                  <span>Try AI</span>
+                </button>
+             )}
 
               {/* Notifications Icon */}
               <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
