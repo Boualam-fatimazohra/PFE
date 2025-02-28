@@ -1,0 +1,50 @@
+
+
+Hakim Toutay
+hakim.toutay@e-polytechnique.ma | +212 631 658 621 | LinkedIn | GitHub
+Bachelor in Mechanical Engineering (2018 - 2022)
+Programming Languages: Java, Python, JavaScript, PHP, C++, C
+Built a peer-to-peer chat application in Java with end-to-end encryption.
+Secured communications using public/private key cryptography.
+Used LocalTunnel for public IP simulation and Docker for deployment.
+Technologies: Java, Cryptography, Docker, Node.js.
+Engineering Degree in Software Engineering (2022-2025)
+Relevant Courses: Distributed Systems, Devops, Cryptography
+Developed a cryptocurrency simulation covering wallets, miners, and smart contracts.
+Implemented proof-of-work and multi-threading for secure transactions and mining.
+Technologies: Java, Cryptography, Multi-threading, C++, Git.
+Co-founder (July 2024)
+Developed an IoT system for real-time water consumption monitoring using sensors.
+Designed a React-based web application with Firebase for user engagement and showcasing solutions.
+Built a Flutter mobile app for users to monitor and manage water usage.
+Integrated Jira for project management and team collaboration.
+Clients and Stocks Management Application (June - August 2023)
+Developed a client and stock management system to automate customer appointments and streamline workflows.
+Designed and implemented a responsive front-end using Vue.js and Bootstrap.
+Created a secure backend with Node.js and MongoDB for handling application requests.
+Automated data export to Excel for detailed analytics.
+Improved scheduling efficiency by 50%.
+Chatbot for Company Websites (July - September 2024)
+Developed an AI-powered chatbot to assist company websites by answering questions based on uploaded business documents.
+Designed a system to process PDF files and provide intelligent, context-specific responses using natural language APIs.
+Ensured the chatbot securely handled data and remembered conversations for better user interaction.
+Technologies: Java, Spring Boot, MySQL, APIs.
+Education
+Technical Skills
+Professional Experience
+Internship - Inko Optique
+MyBlockchain - Simplified Bitcoin Simulation
+National School of Applied Sciences of Agadir
+Feecra - Startup Project: Intelligent Water Management
+P2P Chat App with Encryption
+Personal Projects
+Universiapolis - Agadir Polytechnic School
+Internship - BE-WISE
+Frameworks: Spring Boot, React.js, Node.js, Vue.js, Laravel
+Databases: MySQL, MongoDB, Firebase, PostgreSQL
+Tools: Docker, Git, Maven, JIRA
+Other: JUnit, Postman, JSON, XML
+Languages
+Arabic: Native
+French: Advanced
+English: Advanced

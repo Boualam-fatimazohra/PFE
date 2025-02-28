@@ -3,11 +3,12 @@ const  BeneficiareFormation=require("../Models/beneficiairesFormation.js");
 const {sendEvaluationLinkWithToken}=require("../utils/sendEvaluationLinkWithToken.js");
 const Beneficiaire=require("../Models/beneficiaire.model");
 const mongoose = require('mongoose');
+// debut fct : enregistrer la réponse du beneficiare
 const SubmitEvaluation = async (req, res) => {
   const { token } = req.params;
   try {
     if (!token) {
-      return res.status(400).json({ message: "Token manquant" });
+      return res.status(400).json({ message: "Token manquant"});
     }
     const beneficiaireFormation = await BeneficiareFormation.findOne({ token });
     beneficiaireFormation.isSubmited = true;
@@ -71,6 +72,9 @@ const SubmitEvaluation = async (req, res) => {
     res.status(500).json({ message: 'Erreur lors de la soumission de l\'évaluation', error: error.message });
   }
 };
+// fin fct : enregistrer la réponse du beneficiare
+
+// debut fct: envoyer les liens d'evaluation aux beneficiares
 
 const sendEvaluationLinksToBeneficiaries = async (req, res) => {
   try {
@@ -127,6 +131,8 @@ const sendEvaluationLinksToBeneficiaries = async (req, res) => {
     return res.status(500).json({ message: "Erreur interne du serveur." });
   }
 };
+// fin fct: envoyer les liens d'evaluation aux beneficiares
+
 const getLastEvaluation = async (req, res) => {
     console.log("debut de la fonction getLastEvaluation");
     try { 

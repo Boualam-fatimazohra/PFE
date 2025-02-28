@@ -1,38 +1,42 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatsCard } from "@/components/dashboardElement/StatsCard";
-import { FormationsTable } from "@/components/dashboardElement/FormationTable";
+import { FormationsTable, FormationTableItem } from "@/components/dashboardElement/FormationTable";
 import KitFormateur from "@/components/dashboardElement/KitFormateur";
 import RapportCard from "@/components/dashboardElement/RapportCard";
 import { FormationProvider } from "@/contexts/FormationContext";
-import { Plus, Share2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import { toast, ToastContainer } from 'react-toastify';
 import { EvaluationsTable } from "@/components/dashboardElement/EvaluationTable";
 import { SearchBar } from "@/components/dashboardElement/SearchBar";
-
-// Types definitions
-interface Formation {
-  nom: string;
-  dateDebut: string;
-  status: "En Cours" | "Terminé" | "Replanifier";
-}
 
 interface GenerateEvaluationLinkResponse {
   evaluationLink: string;
 }
 
-// Sample data
-const formationsData: Formation[] = [
-  { nom: "Conception d'application mobile", dateDebut: "25/02/2025", status: "En Cours" },
-  { nom: "Développement Web", dateDebut: "10/03/2025", status: "Terminé" },
-  { nom: "Cybersécurité", dateDebut: "05/04/2025", status: "Replanifier" },
-];
+
 
 const DashboardFormateur: React.FC = () => {
   const navigate = useNavigate();
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false);
+
+  // Listen for chatbot state changes from the header component
+  useEffect(() => {
+    const handleChatbotToggle = (event: CustomEvent) => {
+      if (event.detail) {
+        setIsChatbotOpen(event.detail.isOpen);
+      }
+    };
+
+    window.addEventListener('chatbotToggled', handleChatbotToggle as EventListener);
+    
+    return () => {
+      window.removeEventListener('chatbotToggled', handleChatbotToggle as EventListener);
+    };
+  }, []);
 
   const generateEvaluationLink = async (courseId: string): Promise<void> => {
     try {
@@ -74,8 +78,9 @@ const DashboardFormateur: React.FC = () => {
         <DashboardHeader />
         <ToastContainer />
         
-        <main className="flex-grow bg-gray-50">
-          <div className="container mx-auto px-4 py-8">
+        <main className={`flex-grow bg-gray-50 transition-all duration-300 ${isChatbotOpen ? 'translate-x-[-0rem]' : ''}`}>
+          <div className={`transition-all duration-300 px-4 py-8 ${isChatbotOpen ? 'w-[calc(100%-30rem)]' : 'container mx-auto'}`}>
+
             {/* Header Section */}
             <div className="flex justify-between items-center mb-8">
               <h1 className="text-2xl font-bold">Vue d'Ensemble</h1>
@@ -100,12 +105,12 @@ const DashboardFormateur: React.FC = () => {
             </div>
 
             {/* Formations and Evaluations Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 ">
               {/* Formations Card */}
-              <Card>
+              <Card className="border-[#999999] rounded-none">
                 <CardContent className="p-6">
                   <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-semibold">Mes Formations</h2>
+                    <h2 className="text-xl font-bold font-inter">Mes Formations</h2>
                     <button 
                       className="rounded-none bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors"
                       onClick={() => navigate("/formateur/mesformation")}
@@ -113,15 +118,15 @@ const DashboardFormateur: React.FC = () => {
                       Découvrir
                     </button>
                   </div>
-                  <FormationsTable formations={formationsData} />
+                  <FormationsTable />
                 </CardContent>
               </Card>
 
               {/* Evaluations Card */}
-              <Card>
-                <CardContent className="p-6">
+              <Card className="border-[#999999] rounded-none">
+                <CardContent className="p-6 ">
                   <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-semibold">Évaluations</h2>
+                    <h2 className="text-xl font-bold font-inter">Évaluations</h2>
                     <button 
                       className="rounded-none bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors"
                       onClick={() => navigate("/FormulaireEvaluation")}
@@ -135,6 +140,7 @@ const DashboardFormateur: React.FC = () => {
                   </div>
                 </CardContent>
               </Card>
+              
             </div>
 
             {/* Kit Formateur Section */}
