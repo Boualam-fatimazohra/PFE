@@ -725,6 +725,7 @@ const Chatbot = () => {
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
+
         {/* Suggestions - Modifiées pour correspondre à l'image */}
         {showSuggestions && messages.length <= 1 && !loading && (
           <div className="w-full">
@@ -787,21 +788,19 @@ const Chatbot = () => {
                 {showTags ? "Masquer les analyses prédéfinies" : "Afficher les analyses prédéfinies"}
               </button>
             </div>
-            
-            {showTags && (
-              <div className="flex flex-wrap gap-2 mb-2">
-                {analysisTags.map(tag => (
-                  <Badge 
-                    key={tag.id}
-                    variant="outline" 
-                    className="cursor-pointer hover:bg-orange-100 border-orange-300"
-                    onClick={() => applyAnalysisTag(tag)}
-                  >
-                    {tag.label}
-                  </Badge>
-                ))}
-              </div>
-            )}
+          </div>
+        )}
+
+        {/* Toggle pour afficher/masquer les analyses */}
+        {uploadedFiles.length > 0 && (
+          <div className="w-full flex justify-center mb-2">
+            <button 
+              onClick={() => setShowTags(!showTags)}
+              className="flex items-center text-xs text-orange-600 hover:text-orange-700"
+            >
+              <Tag className="w-3 h-3 mr-1" /> 
+              {showTags ? "Masquer les analyses" : "Afficher les analyses"}
+            </button>
           </div>
         )}
 
