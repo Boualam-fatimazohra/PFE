@@ -105,12 +105,12 @@ const DashboardFormateur: React.FC = () => {
             </div>
 
             {/* Formations and Evaluations Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 ">
               {/* Formations Card */}
-              <Card>
+              <Card className="border-[#999999] rounded-none">
                 <CardContent className="p-6">
                   <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-semibold">Mes Formations</h2>
+                    <h2 className="text-xl font-bold font-inter">Mes Formations</h2>
                     <button 
                       className="rounded-none bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors"
                       onClick={() => navigate("/formateur/mesformation")}
@@ -123,10 +123,10 @@ const DashboardFormateur: React.FC = () => {
               </Card>
 
               {/* Evaluations Card */}
-              <Card>
-                <CardContent className="p-6">
+              <Card className="border-[#999999] rounded-none">
+                <CardContent className="p-6 ">
                   <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-semibold">Évaluations</h2>
+                    <h2 className="text-xl font-bold font-inter">Évaluations</h2>
                     <button 
                       className="rounded-none bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors"
                       onClick={() => navigate("/FormulaireEvaluation")}
@@ -140,6 +140,7 @@ const DashboardFormateur: React.FC = () => {
                   </div>
                 </CardContent>
               </Card>
+              
             </div>
 
             {/* Kit Formateur Section */}
