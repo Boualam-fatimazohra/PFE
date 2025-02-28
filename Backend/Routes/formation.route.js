@@ -13,8 +13,7 @@ const { upload } = require('../Config/cloudinaryConfig.js');
 const authorizeFormationAccess = require('../Middlewares/FormationAccess.js');
 
 const router = express.Router();
-
-// Route to add a new formation
+// Route to add a new formation (Protected route: Only authenticated users can access)
 router.post('/Addformation', 
     authenticated, 
     authorizeRoles('Formateur'),
@@ -40,6 +39,7 @@ router.delete('/DeleteFormation/:id',
 router.put('/UpdateFormation/:id', 
     authenticated, 
     authorizeRoles('Admin', 'Manager', 'Formateur'),
+    upload.single("image"),
     authorizeFormationAccess('update'),
     UpdateFormation
 ); 

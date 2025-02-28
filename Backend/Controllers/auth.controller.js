@@ -1,74 +1,14 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { Utilisateur } = require('../Models/utilisateur.model.js');
-
-// const Login = async (req, res) => {
-//     const { email, password } = req.body;
-
-//     try {
-//     console.log("Login: Request body:", req.body);
-//     console.log("Login: Email from request:", email);
-
-//     console.log("debut de login avant findOne");
-//     const user = await Utilisateur.findOne({ email });
-//     console.log("aprés  findOne");
-
-//     if (!user) {
-//     console.log("Login: User not found");
-//     return res.status(400).json({ message: 'Login: User not found' });
-//     }
-
-//     console.log("Login: User found:", user);
-
-//     const isPasswordValid = await bcrypt.compare(password, user.password);
-
-//     if (!isPasswordValid) {
-//     console.log("Login: Invalid password");
-
-//     return res.status(400).json({ message: 'Login: Invalid password' });
-//     }
-
-//     console.log("Login: Password valid");
-
-//     const token = jwt.sign(
-//     { userId: user._id,
-//     role: user.role,
-//     nom: user.nom,
-//     prenom: user.prenom },
-//     process.env.JWT_SECRET,
-//     { expiresIn: '1w' } 
-//     );
-
-//     console.log("Login: Token generated:", token);
-
-//     res.cookie('token', token, {
-//     httpOnly: true, 
-//     sameSite: 'strict',
-//     secure: false,
-//     maxAge: 300000000 
-//     });
-
-//     console.log("Login: Token set in cookie");
-
-//     res.status(200).json({ 
-//     message: 'Login successful',
-//     role: user.role,
-//     user: {
-//     nom: user.nom,
-//     prenom: user.prenom
-//     }
-//     });
-//     console.log("Login: Success de login")
-
-//     } catch (error) {
-//     console.error('Login error:', error);
-//     res.status(500).json({ message: 'Internal server error' });
-//     }
-// };
-
+const generateRandomPassword = require('../utils/generateRandomPassword.js');
+const {sendMail} = require('../Config/auth.js');
+//
 const Login = async (req, res) => {
     const { email, password } = req.body;
-
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email et mot de passe sont requis" });
+  }
     try {
         console.log("Login: Request body:", req.body);
         const user = await Utilisateur.findOne({ email });
@@ -126,24 +66,17 @@ const Login = async (req, res) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 };
-
-
-//jD5IDdTVLoITMCpL mot de passe mongo 
-//mongodb+srv://salouaouissa:<db_password>@cluster0.nwqo9.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
 const createUser = async (req, res) => {
     const { nom, prenom, email, password } = req.body;
-    
     try {
         if (!nom || !prenom || !email || !password) {
             return res.status(400).json({ message: "Tous les champs sont obligatoires" });
         }
-
         const existingUser = await Utilisateur.findOne({ email });
         if (existingUser) {
             return res.status(409).json({ message: "Cet email est déjà utilisé" });
         }
-
-        const hashedPassword = await bcrypt.hash(password, 10); // Salt rounds = 10
+        const hashedPassword = await bcrypt.hash(password, 10); 
 
     // Création de l'utilisateur
     const newUser = new Utilisateur({
@@ -151,7 +84,7 @@ const createUser = async (req, res) => {
         prenom,
         email,
         password: hashedPassword,
-        role:"Formateur"
+        role:"Manager"
     });
 
 await newUser.save();
@@ -198,5 +131,143 @@ res.clearCookie('token');
 res.status(200).json({ message: 'Logged out successfully' });
 console.log("Token cookie cleared");
 };
+// auth.controller.js
+const ForgotPassword = async (req, res) => {
+  const { email } = req.body;
 
-module.exports = { Login, createUser, Logout };
+  console.log("ForgotPassword: Début de la requête");
+  // Vérification si l'email est fourni
+  if (!email) {
+    console.log("ForgotPassword: Aucune adresse email fournie");
+    return res.status(400).json({ message: "Veuillez fournir une adresse email" });
+  }
+
+  try {
+    console.log(`ForgotPassword: Recherche de l'utilisateur avec l'email: ${email}`);
+    const user = await Utilisateur.findOne({ email });
+
+    if (!user) {
+      console.log("ForgotPassword: Utilisateur non trouvé");
+      return res.status(400).json({ message: "Si l'email existe, un code a été envoyé" }); // Message plus générique
+    }
+
+    console.log("ForgotPassword: Utilisateur trouvé", user);
+
+    const resetCode = generateRandomPassword();
+    console.log(`ForgotPassword: Code de réinitialisation généré: ${resetCode}`);
+
+    const hashedCode = await bcrypt.hash(resetCode, 10);
+    console.log("ForgotPassword: Code de réinitialisation haché");
+
+    user.resetPasswordCode = hashedCode;
+    user.resetPasswordExpires = Date.now() + 3600000; // 1 heure
+
+    await user.save();
+    console.log("ForgotPassword: Code enregistré dans la base de données");
+
+    // Génération du JWT
+    const token = jwt.sign({ userId: user._id, email }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    console.log("ForgotPassword: JWT généré");
+
+    // Stockage du JWT dans un cookie sécurisé
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 3600000, // 1 heure
+    });
+    console.log("ForgotPassword: Cookie sécurisé stocké");
+
+    // Tentative d'envoi de l'email
+    try {
+      await sendMail(email, `Votre code de réinitialisation : ${resetCode}`);
+      console.log("ForgotPassword: Email envoyé avec succès");
+    } catch (mailError) {
+      console.error("ForgotPassword: Erreur lors de l'envoi de l'email", mailError);
+      return res.status(500).json({ message: "Erreur lors de l'envoi de l'email" });
+    }
+
+    res.status(200).json({ message: "Si l'email existe, un code a été envoyé" });
+
+  } catch (error) {
+    console.error("ForgotPassword: Erreur interne du serveur", error);
+    res.status(500).json({ message: "Erreur interne du serveur" });
+  }
+};
+
+
+const VerifyResetCode = async (req, res) => {
+    const { code } = req.body;
+    try {
+        const email = req.user?.email; //  Récupération directe via le middleware
+        if (!email) return res.status(400).json({ message: "Email non trouvé dans le token" });
+
+        console.log("Récupération directe via le middleware", email);
+
+        // Récupérer l'utilisateur sans chercher `resetPasswordCode` dans la requête
+        const user = await Utilisateur.findOne({
+            email,
+            resetPasswordExpires: { $gt: Date.now() }, // Vérifier l'expiration
+        });
+
+        if (!user || !user.resetPasswordCode) {
+            return res.status(400).json({ message: "Code invalide ou expiré" });
+        }
+
+        // Comparer le code reçu avec le code haché
+        const isCodeValid = await bcrypt.compare(code, user.resetPasswordCode);
+        if (!isCodeValid) {
+            return res.status(400).json({ message: "Code invalide ou expiré" });
+        }
+
+        console.log("Code vérifié, utilisateur trouvé :", user);
+        res.status(200).json({ message: "Code vérifié" });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+const ChangePassword = async (req, res) => {
+    const { newPassword } = req.body;
+  
+    try {
+      const email = req.user?.email; // Récupérer l'email à partir du token
+  
+      if (!email) return res.status(400).json({ message: "Email non trouvé dans le token" });
+  
+      //Vérification que le mot de passe est valide (par exemple, 8 caractères avec des majuscules, minuscules, chiffres, et caractères spéciaux)
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+])[A-Za-z\d!@#$%^&*()_+]{8,}$/;
+        if (!passwordRegex.test(newPassword)) {
+            return res.status(400).json({
+                message: "Le mot de passe doit contenir au moins 8 caractères, avec une majuscule, une minuscule, un chiffre et un caractère spécial.",
+            });
+        }
+  
+      // Trouver l'utilisateur à partir de l'email
+      const user = await Utilisateur.findOne({ email });
+  
+      if (!user) {
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
+      }
+  
+      // Hacher le nouveau mot de passe
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+  
+      // Mettre à jour le mot de passe dans la base de données
+      user.password = hashedPassword;
+      user.resetPasswordCode = null; // Supprimer le code de réinitialisation
+      user.resetPasswordExpires = null; // Supprimer l'expiration du code
+      await user.save();
+      res.clearCookie('token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production', // Assure-toi que le cookie est bien supprimé en production avec HTTPS
+        sameSite: 'Strict',
+      });
+      console.log("Mot de passe modifié avec succès");
+      // Répondre à l'utilisateur que le mot de passe a été modifié
+      res.status(200).json({ message: "Mot de passe modifié avec succès" });
+  
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  };
+module.exports = { Login, createUser, Logout ,ForgotPassword,VerifyResetCode,ChangePassword};

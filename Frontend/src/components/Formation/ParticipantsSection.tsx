@@ -27,7 +27,8 @@ const ParticipantsSection: React.FC<ParticipantsSectionProps> = ({
 }) => {
   const [selectAll, setSelectAll] = React.useState(false);
   const [selectedParticipants, setSelectedParticipants] = React.useState<number[]>([]);
-
+  const [search, setSearch] = React.useState("");
+ 
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const displayedParticipants = participants.slice(startIndex, endIndex);
@@ -61,7 +62,9 @@ const ParticipantsSection: React.FC<ParticipantsSectionProps> = ({
         <div className="relative flex-grow mr-4">
           <input
             type="text"
-            placeholder="Recherche participants ..."
+            placeholder="Rechercher un bénéficiaire..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             className="w-full px-4 py-2 border border-[#DDD] outline-none text-[#666] placeholder:text-[#999] text-sm rounded"
           />
           <div className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-[#FF7900] rounded-full p-1.5">

@@ -6,11 +6,12 @@ const {
   getBeneficiaireById,
   updateBeneficiaire,
   deleteBeneficiaire,
-  uploadBenificiaireExcel,
   uploadBeneficiairesFromExcel,
+  getBeneficiaireFormation
 } = require("../Controllers/beneficiaire.controller");
 const upload = require("../utils/upload");
-
+const authenticated = require("../Middlewares/Authmiddleware.js");
+const RoleMiddleware = require("../Middlewares/RoleMiddleware.js");
 router.post("/upload", upload.single("file"), uploadBeneficiairesFromExcel);
 
 // Route to create a new Beneficiaire (Must be associated with a Formation)
@@ -18,14 +19,12 @@ router.post("/upload", upload.single("file"), uploadBeneficiairesFromExcel);
 router.post('/createBeneficiaire', createBeneficiaire);
 // Route to get all Beneficiaires (with Formation details)
 router.get("/", getAllBeneficiaires);
-
 // Route to get a single Beneficiaire by ID (with Formation details)
 router.get("/:id", getBeneficiaireById);
-
+router.get("/getBeneficiaireByFormation/:id",authenticated,RoleMiddleware("Formateur"),getBeneficiaireFormation
+);
 // Route to update a Beneficiaire
-router.put("/:id", updateBeneficiaire);
-
+router.put("/:id", authenticated,RoleMiddleware("Formateur"),updateBeneficiaire);
 // Route to delete a Beneficiaire
 router.delete("/deleteAll", deleteBeneficiaire);
-
 module.exports = router;

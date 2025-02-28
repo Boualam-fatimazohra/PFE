@@ -1,5 +1,7 @@
 import * as React from "react";
 import oupsImage from '../assets/images/oups.png';
+
+import { StatsCard } from "@/components/dashboardElement/StatsCard";
 interface FormationAvenirProps {
   onRetourClick: () => void;
 }
@@ -47,40 +49,12 @@ export const FormationAvenir:React.FC<FormationAvenirProps> = ({ onRetourClick }
       </div>
 
       {/* Stats Grid - With Border */}
-      <div className="grid grid-cols-4 border border-gray-200 font-inter">
-
-        <div className="p-4 flex flex-row items-center border border-gray-200">
-          <div className="w-14 h-14 bg-gray-200 rounded-full mr-4"></div>
-          <div className="flex flex-col">
-            <span className="text-gray-800 font-medium">Total Bénéficiaires</span>
-            <span className="text-xl mt-1">-</span>
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <StatsCard title="Total Bénéficiaires" value="-" />
+                <StatsCard title="Total Formations" value="-" />
+                <StatsCard title="Prochain événement" value="-" />
+                <StatsCard title="Satisfaction moyenne" value="-" />
         </div>
-
-        <div className="p-4 flex flex-row items-center border border-gray-200">
-          <div className="w-14 h-14 bg-gray-200 rounded-full mr-4"></div>
-          <div className="flex flex-col">
-            <span className="text-gray-800 font-medium">Total Formations</span>
-            <span className="text-xl mt-1">-</span>
-          </div>
-        </div>
-
-        <div className="p-4 flex flex-row items-center border border-gray-200">
-          <div className="w-14 h-14 bg-gray-200 rounded-full mr-4"></div>
-          <div className="flex flex-col">
-            <span className="text-gray-800 font-medium">Prochain événement</span>
-            <span className="text-xl mt-1">-</span>
-          </div>
-        </div>
-
-        <div className="p-4 flex flex-row items-center border border-gray-200">
-          <div className="w-14 h-14 bg-gray-200 rounded-full mr-4"></div>
-          <div className="flex flex-col">
-            <span className="text-gray-800 font-medium">Satisfaction moyenne</span>
-            <span className="text-xl mt-1">-</span>
-          </div>
-        </div>
-      </div>
 
       {/* No Data Message with Illustration */}
       <div className="my-8 p-12 flex flex-col items-center justify-center font-inter">
