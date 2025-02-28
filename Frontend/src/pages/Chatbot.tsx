@@ -661,7 +661,7 @@ const Chatbot = () => {
           <h1 className="text-xl font-bold text-center">Ask our AI anything</h1>
         </div>
 
-        {/* Zone de messages - Corrigée avec un seul conteneur de défilement */}
+        {/* Zone de messages */}
         <div 
           className="w-full flex-1 overflow-y-auto mb-4 px-2 scrollbar-container"
           style={{
@@ -725,17 +725,17 @@ const Chatbot = () => {
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
-
-        {/* Suggestions uniquement s'il n'y a pas de messages utilisateur et pas de chargement */}
-        {showSuggestions && messages.filter(m => m.sender === 'user').length === 0 && !loading && (
-          <div className="w-full max-w-md flex-1 flex flex-col justify-center">
+        {/* Suggestions - Modifiées pour correspondre à l'image */}
+        {showSuggestions && messages.length <= 1 && !loading && (
+          <div className="w-full">
             <p className="text-gray-500 text-sm mb-2 text-center">Suggestions on what to ask Our AI</p>
-            <div className="flex flex-col space-y-2">
+            <div className="flex overflow-x-auto space-x-2 pb-2 no-scrollbar mb-4">
               {suggestions.map((suggestion) => (
                 <button
                   key={suggestion.id}
                   onClick={() => handleSuggestionClick(suggestion)}
-                  className="bg-orange-50 rounded-lg p-3 text-sm text-left shadow-sm border border-gray-200"
+                  className="bg-white rounded-xl p-3 shadow-sm border border-gray-200 text-xs min-w-[120px] text-left flex-shrink-0"
+                  style={{ maxWidth: '160px' }}
                 >
                   {suggestion.label}
                 </button>
@@ -744,33 +744,34 @@ const Chatbot = () => {
           </div>
         )}
 
-        {/* Tags d'analyses prédéfinies */}
-        {uploadedFiles.length > 0 && (
-          <div className="w-full max-w-md mb-4">
-            <div className="flex items-center mb-2">
-              <button 
-                onClick={() => setShowTags(!showTags)}
-                className="flex items-center text-sm text-orange-600 hover:text-orange-700"
-              >
-                <Tag className="w-4 h-4 mr-1" /> 
-                {showTags ? "Masquer les analyses prédéfinies" : "Afficher les analyses prédéfinies"}
-              </button>
+        {/* Tags d'analyses prédéfinies - Modifiés pour être semblables aux suggestions */}
+        {uploadedFiles.length > 0 && showTags && (
+          <div className="w-full mb-4">
+            <div className="flex overflow-x-auto space-x-2 pb-2 no-scrollbar">
+              {analysisTags.map(tag => (
+                <button
+                  key={tag.id}
+                  onClick={() => applyAnalysisTag(tag)}
+                  className="bg-white rounded-xl p-3 shadow-sm border border-gray-200 text-xs min-w-[120px] text-left flex-shrink-0"
+                  style={{ maxWidth: '160px' }}
+                >
+                  {tag.label}
+                </button>
+              ))}
             </div>
-            
-            {showTags && (
-              <div className="flex flex-wrap gap-2 mb-2">
-                {analysisTags.map(tag => (
-                  <Badge 
-                    key={tag.id}
-                    variant="outline" 
-                    className="cursor-pointer hover:bg-orange-100 border-orange-300"
-                    onClick={() => applyAnalysisTag(tag)}
-                  >
-                    {tag.label}
-                  </Badge>
-                ))}
-              </div>
-            )}
+          </div>
+        )}
+
+        {/* Toggle pour afficher/masquer les analyses */}
+        {uploadedFiles.length > 0 && (
+          <div className="w-full flex justify-center mb-2">
+            <button 
+              onClick={() => setShowTags(!showTags)}
+              className="flex items-center text-xs text-orange-600 hover:text-orange-700"
+            >
+              <Tag className="w-3 h-3 mr-1" /> 
+              {showTags ? "Masquer les analyses" : "Afficher les analyses"}
+            </button>
           </div>
         )}
 
@@ -805,7 +806,7 @@ const Chatbot = () => {
         )}
 
         {/* Input et bouton d'envoi */}
-        <div className="w-full max-w-md mt-2 mb-4 relative flex items-center">
+        <div className="w-full mt-2 mb-4 relative flex items-center">
           <label className="mr-2">
             <div className="bg-gray-100 hover:bg-gray-200 rounded-full p-2 cursor-pointer">
               <FileUp className="w-5 h-5 text-gray-600" />
@@ -838,9 +839,11 @@ const Chatbot = () => {
           <button
             onClick={() => sendMessage()}
             disabled={loading || !input.trim()}
-            className="absolute right-1 top-1/2 transform -translate-y-1/2 bg-orange-500 text-white p-2 rounded-full disabled:bg-gray-300"
+            className="absolute right-1 top-1/2 transform -translate-y-1/2 text-white p-2 rounded-full"
           >
-            <Send className="w-4 h-4" />
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M19.7101 0.516578C20.8107 0.131995 21.8681 1.18933 21.4835 2.28999L15.0647 20.6308C14.6477 21.8203 12.9902 21.8875 12.4788 20.7359L9.38157 13.7679L13.7409 9.4075C13.8844 9.25347 13.9626 9.04976 13.9588 8.83926C13.9551 8.62877 13.8699 8.42794 13.721 8.27907C13.5721 8.13021 13.3713 8.04494 13.1608 8.04122C12.9503 8.03751 12.7466 8.11564 12.5926 8.25916L8.23215 12.6185L1.26415 9.52125C0.112566 9.00883 0.180816 7.35241 1.36923 6.93533L19.7101 0.516578Z" fill="#FF7900"/>
+            </svg>
           </button>
         </div>
       </div>

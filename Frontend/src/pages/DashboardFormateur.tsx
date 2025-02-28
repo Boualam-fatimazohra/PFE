@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { Footer } from "@/components/layout/Footer";
@@ -7,21 +7,30 @@ import { StatsCard } from "@/components/dashboardElement/StatsCard";
 import { FormationsTable, FormationTableItem } from "@/components/dashboardElement/FormationTable";
 import KitFormateur from "@/components/dashboardElement/KitFormateur";
 import RapportCard from "@/components/dashboardElement/RapportCard";
-import { FormationProvider } from "@/contexts/FormationContext";
-import { Plus } from "lucide-react";
+import { Plus, Share2 } from "lucide-react";
 import { toast, ToastContainer } from 'react-toastify';
 import { EvaluationsTable } from "@/components/dashboardElement/EvaluationTable";
 import { SearchBar } from "@/components/dashboardElement/SearchBar";
+import { useFormations } from "@/contexts/FormationContext";
 
 interface GenerateEvaluationLinkResponse {
   evaluationLink: string;
 }
 
-
-
 const DashboardFormateur: React.FC = () => {
   const navigate = useNavigate();
+  const { formations } = useFormations(); // Get formations from context
+  const [formationCount, setFormationCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
+
+  useEffect(() => {
+    // First approach: You can use the formations already in context
+    if (formations) {
+      setFormationCount(formations.length);
+      setIsLoading(false);
+    }
+  }, [formations]);
 
   // Listen for chatbot state changes from the header component
   useEffect(() => {
@@ -73,7 +82,7 @@ const DashboardFormateur: React.FC = () => {
   };
 
   return (
-    <FormationProvider>
+
       <div className="min-h-screen flex flex-col">
         <DashboardHeader />
         <ToastContainer />
@@ -99,18 +108,20 @@ const DashboardFormateur: React.FC = () => {
             {/* Statistics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               <StatsCard title="Total Bénéficiaires" value={250} />
-              <StatsCard title="Total Formations" value={64} />
+              <StatsCard title="Total Formations" 
+                  value={isLoading ? '...' : formationCount} 
+              />
               <StatsCard title="Prochain événement" value="07" />
               <StatsCard title="Satisfaction moyenne" value="95%" />
             </div>
 
             {/* Formations and Evaluations Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 ">
               {/* Formations Card */}
-              <Card>
+              <Card className="border-[#999999] rounded-none">
                 <CardContent className="p-6">
                   <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-semibold">Mes Formations</h2>
+                    <h2 className="text-xl font-bold font-inter">Mes Formations</h2>
                     <button 
                       className="rounded-none bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors"
                       onClick={() => navigate("/formateur/mesformation")}
@@ -118,15 +129,15 @@ const DashboardFormateur: React.FC = () => {
                       Découvrir
                     </button>
                   </div>
-                  <FormationsTable />
+                  <FormationsTable/>
                 </CardContent>
               </Card>
 
               {/* Evaluations Card */}
-              <Card>
-                <CardContent className="p-6">
+              <Card className="border-[#999999] rounded-none">
+                <CardContent className="p-6 ">
                   <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-semibold">Évaluations</h2>
+                    <h2 className="text-xl font-bold font-inter">Évaluations</h2>
                     <button 
                       className="rounded-none bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors"
                       onClick={() => navigate("/FormulaireEvaluation")}
@@ -140,6 +151,7 @@ const DashboardFormateur: React.FC = () => {
                   </div>
                 </CardContent>
               </Card>
+              
             </div>
 
             {/* Kit Formateur Section */}
@@ -149,7 +161,7 @@ const DashboardFormateur: React.FC = () => {
         
         <Footer />
       </div>
-    </FormationProvider>
+
   );
 };
 
