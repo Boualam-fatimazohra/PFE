@@ -1,53 +1,66 @@
+
 const Formation = require('../Models/formation.model.js');
 const Formateur  = require('../Models/formateur.model.js');
+const { cloudinary } = require('../Config/cloudinaryConfig.js');
+
 //  debut : creation d'un formation par un formateur bien précis :
 const createFormation = async (req, res) => {
   try {
-    // 1. Vérifier l'authentification
+    // 1. Get user ID from authentication
     const userId = req.user?.userId;
     if (!userId) {
       return res.status(401).json({ message: "Utilisateur non authentifié" });
     }
 
-    // 2. Vérifier si l'utilisateur est un formateur
+    // 2. Find the formateur associated with this user
     const formateur = await Formateur.findOne({ utilisateur: userId });
     if (!formateur) {
       return res.status(401).json({ message: "Formateur non trouvé" });
     }
 
-    // 3. Extraire les données du corps de la requête
-    const { nom, dateDebut, dateFin, lienInscription } = req.body;
+    // 3. Extract data from request body
+    const { 
+      nom, 
+      dateDebut, 
+      dateFin,
+      description,
+      lienInscription,
+      status,
+      tags,
+      categorie,
+      niveau
+    } = req.body;
+
+    // 4. Validate required fields
     if (!nom) {
-      return res.status(400).json({ message: "Le nom de la formation est obligatoire" });
+      return res.status(400).json({ 
+        message: "Le nom de la formation est obligatoire" 
+      });
     }
 
     // 4. Récupérer l'image si elle est fournie
-    let imageBuffer = null;
-    let imageType = null;
-    if (req.file) {
-      imageBuffer = req.file.buffer;
-      imageType = req.file.mimetype;
-    }
+    // 5. Get image URL from Cloudinary (req.file is populated by multer)
+    const imageUrl = req.file ? req.file.path : null;
 
-    // 5. Créer une nouvelle formation
+    // 6. Create new formation
     const nouvelleFormation = new Formation({
       nom,
       dateDebut: dateDebut || null,
       dateFin: dateFin || null,
-      description: "Aucun description",
+      description: description || "Aucun description",
       lienInscription,
-      status: "Terminer",
-      tags: "",
-      categorie: "type1",
-      niveau: "type1",
-      formateur: formateur._id,
-      image: imageBuffer, // Stocke l’image en buffer
-      imageType: imageType // Stocke le type de l’image
+      status: status || "Avenir",
+      tags: tags || "",
+      categorie: categorie || "type1",
+      niveau: niveau || "type1",
+      formateur: formateur._id,  
+      image: imageUrl // This is now the Cloudinary URL
     });
 
-    // 6. Sauvegarder dans MongoDB
+    // 7. Save the formation
     const formationEnregistree = await nouvelleFormation.save();
 
+    // 8. Return the saved formation
     res.status(201).json({
       message: "Formation créée avec succès",
       formation: formationEnregistree
@@ -55,13 +68,15 @@ const createFormation = async (req, res) => {
 
   } catch (error) {
     console.error("Erreur création formation:", error);
-    res.status(500).json({ message: "Erreur lors de la création de la formation", error: error.message });
+    res.status(500).json({ 
+      message: "Erreur lors de la création de la formation", 
+      error: error.message 
+    });
   }
 };
 
-// fin : creation d'un formation par un formateur bien précis
-// debut : recupération de tout les formations de tous les formateurs
-const GetFormations = async (req, res) => {
+// Get All Formateurs formations
+const getAllFormations = async (req, res) => {
   try {
     const formations = await Formation.find()
       .populate({ path: 'formateur', populate: { path: 'utilisateur' } });
@@ -82,8 +97,35 @@ const GetFormations = async (req, res) => {
   }
 };
 
-// fin : recupération de tout les formations de tous les formateurs
-// debut :récupérer une formation par id passé en paramétre 
+// Get Formateur connected formations
+const getFormations = async (req, res) => {
+  try {
+    // 1. Get user ID from authentication
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ message: "Utilisateur non authentifié" });
+    }
+
+    // 2. Find the formateur associated with this user
+    const formateur = await Formateur.findOne({ utilisateur: userId });
+    if (!formateur) {
+      return res.status(404).json({ message: "Formateur non trouvé" });
+    }
+
+    // 3. Fetch all formations of this formateur
+    const formations = await Formation.find({ formateur: formateur._id });
+
+    // 4. Return formations
+    res.status(200).json(formations);
+  } catch (error) {
+    res.status(500).json({ 
+      message: "Erreur lors de la récupération des formations",
+      error: error.message 
+    });
+  }
+};
+
+// Get One formation by Id
 const GetOneFormation = async (req, res) => {
   try {
     const { id } = req.params; 
@@ -114,48 +156,62 @@ const GetOneFormation = async (req, res) => {
   }
 };
 
-// fin: récupérer une formation par id passé en paramétre 
-// todo => debut : modifier une formation 
+// Update formation by Id
 const UpdateFormation = async (req, res) => {
   const { id } = req.params;
-  const { nom, dateDebut, dateFin, lienInscription, tags } = req.body;
+  const { nom, dateDebut, dateFin, lienInscription, tags, description, status, categorie, niveau } = req.body;
 
   try {
-    // Récupérer l'image si elle est fournie
-    let imageBuffer = null;
-    let imageType = null;
+    const updateData = { nom, dateDebut, dateFin, lienInscription, tags, description, status, categorie, niveau };
+    
+    // If a new image is uploaded, add it to the update data
     if (req.file) {
-      imageBuffer = req.file.buffer;
-      imageType = req.file.mimetype;
+      updateData.image = req.file.path; // Cloudinary URL
     }
 
-    const updatedFields = { nom, dateDebut, dateFin, lienInscription, tags };
-    if (imageBuffer) {
-      updatedFields.image = imageBuffer;
-      updatedFields.imageType = imageType;
-    }
-
-    const updatedFormation = await Formation.findByIdAndUpdate(id, updatedFields, { new: true });
+    const updatedFormation = await Formation.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true } 
+    );
 
     if (!updatedFormation) {
-      return res.status(404).json({ message: "Formation non trouvée" });
+      return res.status(404).json({ message: 'Formation non trouvée' });
     }
 
-    res.status(200).json({ message: "Formation mise à jour avec succès", formation: updatedFormation });
+    res.status(200).json({ message: 'Formation mise à jour avec succès', formation: updatedFormation });
   } catch (error) {
     res.status(500).json({ message: "Erreur lors de la mise à jour de la formation", error: error.message });
   }
 };
 
-// fin : modifier une formation
-// debut : deleteFormation par id 
+// Delete Formation by Id
 const DeleteFormation = async (req, res) => {
   const { id } = req.params; 
   try {
-    const result = await Formation.findByIdAndDelete(id);
-    if (!result) {
+    // Get the formation first to get the image URL
+    const formation = await Formation.findById(id);
+    
+    if (!formation) {
       return res.status(404).json({ message: 'Formation non trouvée avec l\'ID fourni.' });
     }
+    
+    // If there's an image, delete it from Cloudinary
+    if (formation.image) {
+      // Extract the public_id from the Cloudinary URL
+      const publicId = formation.image.split('/').pop().split('.')[0];
+      
+      try {
+        await cloudinary.uploader.destroy('formations/' + publicId);
+      } catch (cloudinaryError) {
+        console.error('Error deleting image from Cloudinary:', cloudinaryError);
+        // Continue with deletion even if Cloudinary delete fails
+      }
+    }
+    
+    // Delete the formation from the database
+    await Formation.findByIdAndDelete(id);
+    
     res.status(200).json({ message: 'Formation supprimée avec succès.' });
   } catch (error) {
     res.status(500).json({
@@ -164,8 +220,5 @@ const DeleteFormation = async (req, res) => {
     });
   }
 };
-// fin  : deleteFormation par id 
 
-// fin: fonction qui retourne le nombre des formation d'un formateur
-// fin:récupérer les formations d'un seule formateur
-module.exports = { createFormation, GetFormations, GetOneFormation, UpdateFormation,DeleteFormation};
+module.exports = { createFormation, getAllFormations, GetOneFormation, UpdateFormation,DeleteFormation, getFormations };

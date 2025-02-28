@@ -1,7 +1,7 @@
 import { Bell, UserCircle, X, Sparkles } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { logout } from "@/services/authServices";
+import { logout } from "../../services/authServices";
 import Chatbot from "@/pages/Chatbot"; // Import the Chatbot component
 
 export function DashboardHeader() {
