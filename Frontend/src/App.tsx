@@ -30,6 +30,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import AddFormation from "./pages/apiTesting/AddFormation";
 import FormateurFormations from "./pages/apiTesting/FormateurFormations";
 import { FormationProvider } from "./contexts/FormationContext";
+import BeneficiairesList from "./components/Formation/Beneficiaires";
 
 
 
@@ -61,8 +62,12 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/verify-code" element={<VerifyPassword/>} />
+                <Route  path="/reset-password" element={<NewPassword />} />
                 <Route path="/evaluation/:id" element={<EvaluationForm />} />
                 <Route path="/Chatbot" element={<Chatbot />} />
+                <Route path="/ValidatePassword" element={<ValidatePassword />} />
+                <Route path="/NewPassword" element={<NewPassword />} />
                 {/* Routes pour les différents types d'utilisateurs */}
                 <Route path="/formateur/*" element={<FormateurRoutes />} />
                 <Route path="/manager/*" element={<ManagerRoutes />} />
@@ -79,6 +84,7 @@ const App = () => (
                 <Route path="/EvaluationForm" element={<EvaluationForm />} />
                 <Route path="/formationModal" element={< FormationModal/>} />
                 <Route path="/EvaluationForm" element={< EvaluationForm/>}/>
+                <Route path="/BeneficiairesList" element={< BeneficiairesList/>} />
                 <Route path="/CalendarView" element={<CalendarView/>}/>
                 <Route path="/beneficiaires" element={<beneficiaires/>}/>
                 <Route path="/DetailsFormation" element={<DetailsFormation />} />
