@@ -10,18 +10,24 @@ const createBeneficiaire = async (req, res) => {
   try {
       // Extraction des données du body
       const {
-          nom,
-          prenom,
-          dateNaissance,
-          email,
-          genre,
-          pays,
-          niveau,
-          specialite,
-          etablissement,
-          profession,
-          nationalite,
-          idFormation 
+  nom,
+  prenom,
+  dateNaissance,
+  email,
+  genre,
+  telephone,
+  pays,
+  niveau,
+  specialite,
+  etablissement,
+  profession,
+  situationProfessionnel,
+  isBlack,
+  isSaturate,
+  nationalite,
+  region,
+  categorieAge,
+  idFormation
       } = req.body;
       // Validation de l'idFormation
       if (!idFormation || !mongoose.Types.ObjectId.isValid(idFormation)) {
@@ -56,19 +62,23 @@ const createBeneficiaire = async (req, res) => {
       }
       // Création du nouveau bénéficiaire
       const newBeneficiaire = new Beneficiaire({
-          nom,
-          prenom,
-          dateNaissance: dateNaissance ? new Date(dateNaissance) : undefined,
-          email,
-          genre,
-          pays,
-          niveau,
-          specialite,
-          etablissement,
-          profession,
-          nationalite,
-          isBlack: false,
-          isSaturate: false
+        nom,
+        prenom,
+        dateNaissance,
+        email,
+        genre,
+        telephone,
+        pays,
+        niveau,
+        specialite,
+        etablissement,
+        profession,
+        situationProfessionnel,
+        isBlack,
+        isSaturate,
+        nationalite,
+        region,
+        categorieAge,
       });
 
       // Sauvegarde du bénéficiaire
@@ -138,7 +148,7 @@ const createBeneficiaire = async (req, res) => {
 // Get all Beneficiaires (with optional formation details)
 const getAllBeneficiaires = async (req, res) => {
   try {
-    const beneficiaires = await Beneficiaire.find().populate("formation");
+    const beneficiaires = await Beneficiaire.find();
     res.status(200).json(beneficiaires);
   } catch (error) {
     res.status(500).json({ message: "Error fetching beneficiaires", error: error.message });
@@ -148,7 +158,7 @@ const getAllBeneficiaires = async (req, res) => {
 // Get a single Beneficiaire by ID (with formation details)
 const getBeneficiaireById = async (req, res) => {
   try {
-    const beneficiaire = await Beneficiaire.findById(req.params.id).populate("formation");
+    const beneficiaire = await Beneficiaire.findById(req.params.id);
     if (!beneficiaire) {
       return res.status(404).json({ message: "Beneficiaire not found" });
     }
@@ -161,26 +171,18 @@ const getBeneficiaireById = async (req, res) => {
 // Update a Beneficiaire
 const updateBeneficiaire = async (req, res) => {
   try {
-    const { nom, prenom, dateNaissance, niveau, formationId, isBlack, isSuturate } = req.body;
+    const {  isBlack, isSuturate } = req.body;
 
-    // Check if formation exists before updating
-    if (formationId) {
-      const formationExists = await Formation.findById(formationId);
-      if (!formationExists) {
-        return res.status(404).json({ message: "Formation not found" });
-      }
-    }
-
+    // todo:  Check if formation exists before updating by chcking formtionId passed in params
     const updatedBeneficiaire = await Beneficiaire.findByIdAndUpdate(
       req.params.id,
-      { nom, prenom, dateNaissance, niveau, formation: formationId, isBlack, isSuturate },
+      {isBlack, isSuturate },
       { new: true, runValidators: true }
-    ).populate("formation");
+    );
 
     if (!updatedBeneficiaire) {
       return res.status(404).json({ message: "Beneficiaire not found" });
     }
-
     res.status(200).json(updatedBeneficiaire);
   } catch (error) {
     res.status(500).json({ message: "Error updating beneficiaire", error: error.message });
@@ -263,9 +265,7 @@ const uploadBeneficiairesFromExcel = async (req, res) => {
     session.startTransaction();
 
     try {
-      
       const insertedBeneficiaires = await Beneficiaire.insertMany(beneficiaires, { session });
-      
       const beneficiareFormations = insertedBeneficiaires.map(b => ({
         formation: new mongoose.Types.ObjectId(idFormation), // Convertir en ObjectId
         beneficiaire: b._id,
@@ -296,30 +296,41 @@ const uploadBeneficiairesFromExcel = async (req, res) => {
     });
   }
 };
-
-
-
 // Simple read data from excel testing
-const uploadBenificiaireExcel = async (req, res) => {
+const getBeneficiaireFormation = async (req, res) => {
+  const idFormation = req.params.id || req.body.idFormation;
+
+  console.log("ID Formation reçu :", idFormation); // Debug
+
   try {
-    if (!req.file) {
-      return res.status(400).json({ message: "Please upload an Excel file" });
+    // Vérifier si l'ID est valide
+    if (!idFormation || !mongoose.Types.ObjectId.isValid(idFormation.toString())) {
+      return res.status(400).json({ message: "ID de formation invalide" });
     }
 
-    const filePath = req.file.path;
+    // Convertir en ObjectId pour éviter les problèmes
+    const formationId = new mongoose.Types.ObjectId(idFormation.toString());
 
-    console.log(`File uploaded to: ${filePath}`); // Log the file path to confirm where the file is stored
+    // Récupérer les bénéficiaires liés à la formation
+    const beneficiaires = await BeneficiareFormation.find({ formation: formationId })
+      .populate({
+        path: "beneficiaire",
+        model: "Beneficiaire", // S'assurer que c'est bien le bon modèle
+      });
 
-    const data = readExcelFile(filePath);
+    // Vérifier si on a trouvé des bénéficiaires
+    if (!beneficiaires.length) {
+      return res.status(404).json({ message: "Aucun bénéficiaire trouvé pour cette formation" });
+    }
 
-    console.log(data);
-
-    res.status(200).json({ message: "Data uploaded successfully", data });
+    res.status(200).json(beneficiaires);
   } catch (error) {
-    console.error("Error processing file:", error);
-    res.status(500).json({ message: "Error processing file", error: error.message });
+    console.error("Erreur lors de la récupération des bénéficiaires:", error);
+    res.status(500).json({ message: "Erreur serveur", error: error.message });
   }
-}
+};
+
+
 
 // Export the functions for use in routes
 module.exports = {
@@ -328,5 +339,6 @@ module.exports = {
     updateBeneficiaire,
     deleteBeneficiaire,
     uploadBeneficiairesFromExcel,
-    createBeneficiaire
+    createBeneficiaire,
+    getBeneficiaireFormation
 };

@@ -6,7 +6,7 @@ interface CourseHeaderProps {
   title: string;
   subtitle: string;
   status: StatusType;
-}
+} 
 
 const CourseHeader: React.FC<CourseHeaderProps> = ({ title, subtitle, status }) => {
   // Définir les styles en fonction du statut

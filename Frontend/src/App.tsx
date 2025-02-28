@@ -3,6 +3,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Index from "./pages/Index";
 import ForgotPassword from "./pages/ForgotPassword";
+import VerifyPassword from "./pages/VerifyPassword"
+import ValidatePassword from "./pages/ValidatePassword";
+import NewPassword from "./pages/UpdatePassword";
 import NotFound from "./pages/NotFound";
 import EvaluationForm from "./pages/FormulaireEvaluation";
 import FormateurRoutes from "./routes/FormateurRoutes";
@@ -22,6 +25,11 @@ import FormationModal from "./components/dashboardElement/formationModal";
 import MesFormation from "./pages/MesFormation";
 import { Calendar } from "lucide-react";
 import CalendarView from "./components/dashboardElement/CalendarView";
+import Chatbot from "./pages/Chatbot";
+import { AuthProvider } from "@/contexts/AuthContext";
+import ParticipantsSection from "./components/Formation/ParticipantsSection";
+import BeneficiairesList from "./components/Formation/Beneficiaires";
+
 
 
 const queryClient = new QueryClient();
@@ -42,14 +50,21 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 };
 
 const App = () => (
+  
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+    <AuthProvider>
       <BrowserRouter>
         <Layout>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/verify-code" element={<VerifyPassword/>} />
+            <Route  path="/reset-password" element={<NewPassword />} />
             <Route path="/evaluation/:id" element={<EvaluationForm />} />
+            <Route path="/Chatbot" element={<Chatbot />} />
+            <Route path="/ValidatePassword" element={<ValidatePassword />} />
+            <Route path="/NewPassword" element={<NewPassword />} />
 
             {/* Routes pour les différents types d'utilisateurs */}
             <Route path="/formateur/*" element={<FormateurRoutes />} />
@@ -64,17 +79,20 @@ const App = () => (
             <Route path="/EvaluationForm" element={<EvaluationForm />} />
             <Route path="/formationModal" element={< FormationModal/>} />
             <Route path="/EvaluationForm" element={< EvaluationForm/>}/>
+            <Route path="/BeneficiairesList" element={< BeneficiairesList/>} />
             <Route path="/CalendarView" element={<CalendarView/>}/>
+            <Route path="/beneficiaires" element={<beneficiaires/>}/>
             <Route path="/DetailsFormation" element={<DetailsFormation />} />
             <Route path="/FormationTerminer" element={<FormationTerminer />} />
             <Route path="/FormationAvenir" element={<FormationAvenir />} />
-
+            
             <Route path="/formationModal" element={< FormationModal/>} />
             {/* Page 404 */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Layout>
       </BrowserRouter>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
