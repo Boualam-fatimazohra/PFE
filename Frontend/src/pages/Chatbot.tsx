@@ -16,9 +16,14 @@ interface UploadedFile {
   name: string;
   data: string;
   fullLength?: number;
+  response?: string;
+  fullData?: any;
+  fullPath?: any;
 }
 
 interface ChatResponse {
+  fullPath?: any;
+  fullData?: any;
   message?: string;
   response?: string;
   success?: boolean;
@@ -176,17 +181,46 @@ const Chatbot = () => {
     }
    
     try {
-      // Determine which files to send
+      // Determine which files to send - priorité à fullData et fullPath
       let fileContextToSend = [];
       if (activeFile) {
         const file = uploadedFiles.find(f => f.name === activeFile);
         if (file) {
-          fileContextToSend = [file];
+          // S'assurer que les données complètes sont envoyées
+          const preparedFile = {
+            ...file,
+            // S'assurer que fullData est prioritaire
+            fullData: file.fullData || undefined,
+            // S'assurer que le chemin est correctement inclus
+            fullPath: file.fullPath || undefined
+          };
+          fileContextToSend = [preparedFile];
         }
       } else if (uploadedFiles.length > 0) {
-        fileContextToSend = uploadedFiles;
+        // Préparation de tous les fichiers avec priorité aux données complètes
+        fileContextToSend = uploadedFiles.map(file => ({
+          ...file,
+          fullData: file.fullData || undefined,
+          fullPath: file.fullPath || undefined
+        }));
       }
 
+      // Afficher un message d'attente pour les fichiers volumineux
+      const totalSize = fileContextToSend.reduce((sum, file) => 
+        sum + (file.fullLength || (file.fullData?.length || file.data?.length || 0)), 0);
+      
+      if (totalSize > 200000) {
+        setMessages(prev => [...prev, {
+          sender: 'bot',
+          text: `Analyse de ${fileContextToSend.length} fichier(s) volumineux en cours (${Math.round(totalSize/1024)} Ko au total). Cela peut prendre un peu plus de temps...`,
+          id: Date.now() - 1
+        }]);
+      }
+
+      // Implémenter un timeout plus long pour les gros fichiers
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutes
+      
       const response = await fetch(`${API_BASE_URL}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -194,7 +228,10 @@ const Chatbot = () => {
           message: messageToSend,
           fileContext: fileContextToSend
         }),
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -223,7 +260,15 @@ const Chatbot = () => {
       }
     } catch (err) {
       console.error("Erreur d'envoi:", err);
-      const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
+      
+      // Gestion spéciale pour les erreurs de timeout
+      let errorMessage;
+      if (err.name === 'AbortError') {
+        errorMessage = "Le traitement a pris trop de temps. Les fichiers sont peut-être trop volumineux.";
+      } else {
+        errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
+      }
+      
       setError(`Erreur lors de l'envoi du message: ${errorMessage}`);
       setMessages(prev => [...prev, { 
         sender: 'bot', 
@@ -272,10 +317,17 @@ const Chatbot = () => {
           id: Date.now()
         }]);
         
+        // Implémenter un timeout plus long pour les gros fichiers
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutes
+        
         const response = await fetch(`${API_BASE_URL}/upload-csv`, {
           method: 'POST',
           body: formData,
+          signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
   
         if (!response.ok) {
           const errorData = await response.json();
@@ -284,19 +336,23 @@ const Chatbot = () => {
         
         const data: ChatResponse = await response.json();
         
-        if (data.success && data.data) {
-          // Vérifier que data.data contient des données valides
-          if (typeof data.data === 'string' && data.data.trim().length === 0) {
+        if (data.success && (data.data || data.fullData)) {
+          // Vérifier que les données sont valides - priorité à fullData
+          const fileContent = data.fullData || data.data;
+          if (typeof fileContent === 'string' && fileContent.trim().length === 0) {
             throw new Error("Le fichier semble être vide ou son contenu n'a pas pu être extrait");
           }
           
-          console.log(`Fichier ${file.name} chargé, taille des données:`, typeof data.data === 'string' ? data.data.length : 'N/A');
+          console.log(`Fichier ${file.name} chargé, taille totale:`, data.fullLength || (typeof fileContent === 'string' ? fileContent.length : 'N/A'));
           
-          // Stocker les données du fichier
+          // Stocker les données du fichier - s'assurer que fullData est bien conservé
           const newFile: UploadedFile = { 
             name: file.name, 
-            data: typeof data.data === 'string' ? data.data : JSON.stringify(data.data),
-            fullLength: data.fullLength
+            data: data.data || "", // Version tronquée pour l'affichage
+            fullData: data.fullData || data.data, // Données complètes - priorité à fullData
+            response: data.response,
+            fullPath: data.fullPath, // Chemin vers le fichier complet
+            fullLength: data.fullLength || (typeof fileContent === 'string' ? fileContent.length : 0)
           };
           
           setUploadedFiles(prev => {
@@ -317,11 +373,11 @@ const Chatbot = () => {
           
           const fileSizeInfo = data.fullLength 
             ? `(${typeof data.data === 'string' ? data.data.length : 'N/A'} caractères affichés sur ${data.fullLength} au total)`
-            : `(${typeof data.data === 'string' ? data.data.length : 'N/A'} caractères)`;
+            : `(${typeof fileContent === 'string' ? fileContent.length : 'N/A'} caractères)`;
             
           setMessages(prev => [...prev, {
             sender: 'bot',
-            text: `Le fichier ${file.name} a été téléchargé avec succès ${fileSizeInfo}. Vous pouvez maintenant me poser des questions sur son contenu.`,
+            text: `Le fichier ${file.name} a été téléchargé avec succès ${fileSizeInfo}. Vous pouvez maintenant me poser des questions sur son contenu complet.`,
             id: Date.now()
           }]);
         } else {
@@ -329,11 +385,19 @@ const Chatbot = () => {
         }
       } catch (err) {
         console.error("Erreur d'upload:", err);
-        const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
+        
+        // Gestion spéciale pour les erreurs de timeout
+        let errorMessage;
+        if (err.name === 'AbortError') {
+          errorMessage = "Le traitement du fichier a pris trop de temps. Le fichier est peut-être trop volumineux.";
+        } else {
+          errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
+        }
+        
         setError(`Erreur lors du téléchargement de ${file.name}: ${errorMessage}`);
         setMessages(prev => [...prev, {
           sender: 'bot',
-          text: `Erreur lors du traitement du fichier ${file.name}: ${errorMessage}. Veuillez réessayer avec un autre fichier.`,
+          text: `Erreur lors du traitement du fichier ${file.name}: ${errorMessage}. Veuillez réessayer avec un autre fichier ou diviser ce fichier en plusieurs parties.`,
           id: Date.now()
         }]);
       }
@@ -465,28 +529,38 @@ const Chatbot = () => {
         for (const file of files) {
           try {
             // Convertir le File en UploadedFile
-            const reader = new FileReader();
+            const formData = new FormData();
+            formData.append('csvFile', file);
             
-            reader.onload = async (e) => {
-              const fileData = e.target?.result as string;
-              
-              // Ajouter le fichier à la liste
-              setUploadedFiles(prev => {
-                const newFile: UploadedFile = { 
-                  name: file.name, 
-                  data: fileData,
-                  fullLength: fileData.length
-                };
-                return [...prev, newFile];
-              });
-              
-              // Définir le premier fichier comme actif
-              if (files.indexOf(file) === 0) {
-                setActiveFile(file.name);
-              }
-            };
+            const response = await fetch(`${API_BASE_URL}/upload-csv`, {
+              method: 'POST',
+              body: formData,
+            });
             
-            reader.readAsText(file);
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.error || `Erreur HTTP: ${response.status}`);
+            }
+            
+            const data: ChatResponse = await response.json();
+            
+            // Ajouter le fichier à la liste
+            setUploadedFiles(prev => {
+              const newFile: UploadedFile = { 
+                name: file.name, 
+                data: data.data || "", 
+                fullData: data.fullData || data.data || "", 
+                response: data.response || "",
+                fullPath: data.fullPath, 
+                fullLength: data.fullLength
+              };
+              return [...prev, newFile];
+            });
+            
+            // Définir le premier fichier comme actif
+            if (files.indexOf(file) === 0) {
+              setActiveFile(file.name);
+            }
           } catch (err) {
             console.error("Erreur lors du traitement du fichier:", err);
           }
@@ -587,7 +661,7 @@ const Chatbot = () => {
           <h1 className="text-xl font-bold text-center">Ask our AI anything</h1>
         </div>
 
-        {/* Zone de messages - CORRIGÉE avec un seul conteneur de défilement */}
+        {/* Zone de messages - Corrigée avec un seul conteneur de défilement */}
         <div 
           className="w-full flex-1 overflow-y-auto mb-4 px-2 scrollbar-container"
           style={{
@@ -652,8 +726,8 @@ const Chatbot = () => {
           </Alert>
         )}
 
-        {/* Suggestions uniquement s'il n'y a pas de messages et pas de chargement */}
-        {showSuggestions && messages.length === 0 && !loading && (
+        {/* Suggestions uniquement s'il n'y a pas de messages utilisateur et pas de chargement */}
+        {showSuggestions && messages.filter(m => m.sender === 'user').length === 0 && !loading && (
           <div className="w-full max-w-md flex-1 flex flex-col justify-center">
             <p className="text-gray-500 text-sm mb-2 text-center">Suggestions on what to ask Our AI</p>
             <div className="flex flex-col space-y-2">
@@ -661,12 +735,42 @@ const Chatbot = () => {
                 <button
                   key={suggestion.id}
                   onClick={() => handleSuggestionClick(suggestion)}
-                  className="orange-50 rounded-lg p-3 text-sm text-left shadow-sm border border-gray-200"
+                  className="bg-orange-50 rounded-lg p-3 text-sm text-left shadow-sm border border-gray-200"
                 >
                   {suggestion.label}
                 </button>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Tags d'analyses prédéfinies */}
+        {uploadedFiles.length > 0 && (
+          <div className="w-full max-w-md mb-4">
+            <div className="flex items-center mb-2">
+              <button 
+                onClick={() => setShowTags(!showTags)}
+                className="flex items-center text-sm text-orange-600 hover:text-orange-700"
+              >
+                <Tag className="w-4 h-4 mr-1" /> 
+                {showTags ? "Masquer les analyses prédéfinies" : "Afficher les analyses prédéfinies"}
+              </button>
+            </div>
+            
+            {showTags && (
+              <div className="flex flex-wrap gap-2 mb-2">
+                {analysisTags.map(tag => (
+                  <Badge 
+                    key={tag.id}
+                    variant="outline" 
+                    className="cursor-pointer hover:bg-orange-100 border-orange-300"
+                    onClick={() => applyAnalysisTag(tag)}
+                  >
+                    {tag.label}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
