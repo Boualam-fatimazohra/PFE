@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, ChangeEvent } from "react";
-import { Send, Loader2, FileUp, Trash } from 'lucide-react';
+import { Send, Loader2, FileUp, Trash, Tag } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { useLocation } from "react-router-dom";
 
 // Define types for clarity and type safety
 interface Message {
@@ -25,392 +26,578 @@ interface ChatResponse {
   fullLength?: number;
 }
 
+interface AnalysisTag {
+  id: string;
+  label: string;
+  query: string;
+}
+
 const Chatbot = () => {
-    const [messages, setMessages] = useState<Message[]>([]);
-    const [input, setInput] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
-    const [activeFile, setActiveFile] = useState<string | null>(null);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
-    const inputRef = useRef<HTMLTextAreaElement>(null);
-    
-    // URL de base API - facilite le changement d'environnement
-    const API_BASE_URL = 'http://localhost:5000';
-  
-    useEffect(() => {
-      fetchWelcomeMessage();
-    }, []);
-  
-    useEffect(() => {
-      scrollToBottom();
-    }, [messages]);
-  
-    const scrollToBottom = () => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    };
-  
-    const fetchWelcomeMessage = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/chat`, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' }
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Erreur HTTP: ${response.status}`);
-        }
-        
-        const data: ChatResponse = await response.json();
-        if (data.message) {
-          setMessages([{ 
-            sender: 'bot', 
-            text: data.message + (uploadedFiles.length > 0 ? "\n\nVous avez déjà téléchargé des fichiers. Vous pouvez me poser des questions à leur sujet." : "")
-          }]);
-        }
-      } catch (err) {
-        console.error("Erreur de connexion:", err);
-        setError(`Erreur de connexion au chatbot: ${err instanceof Error ? err.message : 'Erreur inconnue'}. Vérifiez que le serveur est en cours d'exécution sur ${API_BASE_URL}`);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [activeFile, setActiveFile] = useState<string | null>(null);
+  const [showTags, setShowTags] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(true);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const location = useLocation(); // Si vous utilisez React Router
+
+  // Analyses prédéfinies sous forme de tags
+  const analysisTags: AnalysisTag[] = [
+    {
+      id: 'beneficiaires-par-formation-genre',
+      label: 'Bénéficiaires par formation/genre (%)',
+      query: 'Calcule le nombre de bénéficiaires pour chaque formation assistée par un formateur selon le genre (F/H) avec pourcentages'
+    },
+    {
+      id: 'moyenne-participants-age',
+      label: 'Moyenne participants par âge',
+      query: 'Calcule la moyenne des participants par catégorie d\'âge'
+    },
+    {
+      id: 'beneficiaires-par-formation-nationalite',
+      label: 'Bénéficiaires par formation/nationalité (%)',
+      query: 'Calcule le nombre de bénéficiaires pour chaque formation assistée par un formateur selon la nationalité avec pourcentages'
+    }
+  ];
+
+  // Suggestions prédéfinies pour l'accueil
+  const suggestions = [
+    {
+      id: 'rapport-participation',
+      label: 'Générer un rapport détaillé sur la participation des apprenants à ma dernière session'
+    },
+    {
+      id: 'analyse-retours',
+      label: 'Analyser les retours des participants sur ma dernière formation'
+    },
+    {
+      id: 'creer-planning',
+      label: 'Créer un planning pour mes prochaines sessions'
+    }
+  ];
+
+  // URL de base API - facilite le changement d'environnement
+  const API_BASE_URL = 'http://localhost:5000';
+
+  // Fonction pour faire défiler vers le bas
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Fonction pour récupérer le message de bienvenue
+  const fetchWelcomeMessage = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/chat`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP: ${response.status}`);
+      }
+      
+      const data: ChatResponse = await response.json();
+      if (data.message) {
         setMessages([{ 
           sender: 'bot', 
-          text: "Je suis actuellement indisponible. Veuillez vérifier que le serveur backend est en cours d'exécution."
+          text: data.message + (uploadedFiles.length > 0 ? "\n\nVous avez déjà téléchargé des fichiers. Vous pouvez me poser des questions à leur sujet." : "")
         }]);
       }
-    };
+    } catch (err) {
+      console.error("Erreur de connexion:", err);
+      setError(`Erreur de connexion au chatbot: ${err instanceof Error ? err.message : 'Erreur inconnue'}. Vérifiez que le serveur est en cours d'exécution sur ${API_BASE_URL}`);
+      setMessages([{ 
+        sender: 'bot', 
+        text: "Je suis actuellement indisponible. Veuillez vérifier que le serveur backend est en cours d'exécution."
+      }]);
+    }
+  };
+
+  // Fonction pour gérer l'envoi de messages
+  const sendMessage = async (customMessage?: string) => {
+    const messageToSend = customMessage || input;
+    if (!messageToSend.trim()) return;
   
-    const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
+    const userMessage: Message = { sender: 'user', text: messageToSend };
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setLoading(true);
+    setError('');
+    setShowSuggestions(false);
+  
+    try {
+      // Déterminer quels fichiers envoyer
+      let fileContextToSend = [];
+      if (activeFile) {
+        const file = uploadedFiles.find(f => f.name === activeFile);
+        if (file) {
+          fileContextToSend = [file];
+          console.log(`Envoi du fichier actif: ${file.name} avec ${file.data.length} caractères`);
+        }
+      } else if (uploadedFiles.length > 0) {
+        fileContextToSend = uploadedFiles;
+        console.log(`Envoi de ${uploadedFiles.length} fichiers`);
       }
-    };
   
-    const sendMessage = async () => {
-      if (!input.trim()) return;
+      // Vérifier si les fichiers sont de taille raisonnable
+      const totalSize = fileContextToSend.reduce((total, file) => total + file.data.length, 0);
+      if (totalSize > 500000) {
+        console.warn(`Attention: Envoi de ${totalSize} caractères. Possibles problèmes de performance.`);
+      }
+  
+      const response = await fetch(`${API_BASE_URL}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: messageToSend,
+          fileContext: fileContextToSend
+        }),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Erreur HTTP: ${response.status}`);
+      }
+  
+      const data: ChatResponse = await response.json();
+      if (data.response) {
+        setMessages(prev => [...prev, { sender: 'bot', text: data.response }]);
+      } else if (data.error) {
+        throw new Error(data.error);
+      } else {
+        throw new Error("Réponse inattendue du serveur");
+      }
+    } catch (err) {
+      console.error("Erreur d'envoi:", err);
+      const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
+      setError(`Erreur lors de l'envoi du message: ${errorMessage}`);
+      setMessages(prev => [...prev, { 
+        sender: 'bot', 
+        text: `Désolé, une erreur s'est produite lors du traitement de votre demande: ${errorMessage}`
+      }]);
+    } finally {
+      setLoading(false);
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
+  const handleFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const fileList = event.target.files;
+    if (!fileList || fileList.length === 0) return;
     
-      const userMessage: Message = { sender: 'user', text: input };
-      setMessages(prev => [...prev, userMessage]);
-      setInput('');
-      setLoading(true);
-      setError('');
-    
+    const files = Array.from(fileList);
+    setLoading(true);
+    setError('');
+  
+    for (const file of files) {
+      // Accepter CSV, mais aussi PDF, TXT et d'autres formats courants
+      const acceptedFormats = ['.csv', '.txt', '.pdf', '.docx', '.xlsx'];
+      const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
+      
+      if (!acceptedFormats.includes(fileExtension)) {
+        setError(`Format de fichier ${fileExtension} non supporté. Formats acceptés: CSV, TXT, PDF, DOCX, XLSX`);
+        setLoading(false);
+        return;
+      }
+  
+      const formData = new FormData();
+      formData.append('csvFile', file);
+  
       try {
-        // Déterminer quels fichiers envoyer
-        let fileContextToSend = [];
-        if (activeFile) {
-          const file = uploadedFiles.find(f => f.name === activeFile);
-          if (file) {
-            fileContextToSend = [file];
-            console.log(`Envoi du fichier actif: ${file.name} avec ${file.data.length} caractères`);
-          }
-        } else if (uploadedFiles.length > 0) {
-          fileContextToSend = uploadedFiles;
-          console.log(`Envoi de ${uploadedFiles.length} fichiers`);
-        }
-    
-        // Vérifier si les fichiers sont de taille raisonnable
-        const totalSize = fileContextToSend.reduce((total, file) => total + file.data.length, 0);
-        if (totalSize > 500000) {
-          console.warn(`Attention: Envoi de ${totalSize} caractères. Possibles problèmes de performance.`);
-        }
-    
-        const response = await fetch(`${API_BASE_URL}/chat`, {
+        setMessages(prev => [...prev, {
+          sender: 'bot',
+          text: `Traitement du fichier ${file.name} en cours...`
+        }]);
+        
+        const response = await fetch(`${API_BASE_URL}/upload-csv`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            message: input,
-            fileContext: fileContextToSend
-          }),
+          body: formData,
         });
-    
+  
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || `Erreur HTTP: ${response.status}`);
         }
-    
+        
         const data: ChatResponse = await response.json();
-        if (data.response) {
-          setMessages(prev => [...prev, { sender: 'bot', text: data.response }]);
-        } else if (data.error) {
-          throw new Error(data.error);
+        
+        if (data.success && data.data) {
+          // Vérifier que data.data contient des données valides
+          if (data.data.trim().length === 0) {
+            throw new Error("Le fichier semble être vide ou son contenu n'a pas pu être extrait");
+          }
+          
+          console.log(`Fichier ${file.name} chargé, taille des données:`, data.data.length);
+          
+          // Stocker les données du fichier
+          const newFile: UploadedFile = { 
+            name: file.name, 
+            data: data.data,
+            fullLength: data.fullLength
+          };
+          
+          setUploadedFiles(prev => {
+            // Éviter les doublons
+            const existingIndex = prev.findIndex(f => f.name === file.name);
+            if (existingIndex >= 0) {
+              const updated = [...prev];
+              updated[existingIndex] = newFile;
+              return updated;
+            }
+            return [...prev, newFile];
+          });
+          
+          // Si c'est le premier fichier, le définir comme actif automatiquement
+          if (uploadedFiles.length === 0 && !activeFile) {
+            setActiveFile(file.name);
+          }
+          
+          const fileSizeInfo = data.fullLength 
+            ? `(${data.data.length} caractères affichés sur ${data.fullLength} au total)`
+            : `(${data.data.length} caractères)`;
+            
+          setMessages(prev => [...prev, {
+            sender: 'bot',
+            text: `Le fichier ${file.name} a été téléchargé avec succès ${fileSizeInfo}. Vous pouvez maintenant me poser des questions sur son contenu.`
+          }]);
         } else {
-          throw new Error("Réponse inattendue du serveur");
+          throw new Error(data.error || "Erreur lors du traitement du fichier - aucune donnée retournée");
         }
       } catch (err) {
-        console.error("Erreur d'envoi:", err);
+        console.error("Erreur d'upload:", err);
         const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
-        setError(`Erreur lors de l'envoi du message: ${errorMessage}`);
-        setMessages(prev => [...prev, { 
-          sender: 'bot', 
-          text: `Désolé, une erreur s'est produite lors du traitement de votre demande: ${errorMessage}`
+        setError(`Erreur lors du téléchargement de ${file.name}: ${errorMessage}`);
+        setMessages(prev => [...prev, {
+          sender: 'bot',
+          text: `Erreur lors du traitement du fichier ${file.name}: ${errorMessage}. Veuillez réessayer avec un autre fichier.`
         }]);
-      } finally {
-        setLoading(false);
-        if (inputRef.current) {
-          inputRef.current.focus();
-        }
       }
-    };
+    }
+  
+    event.target.value = '';
+    setLoading(false);
+  };
     
-    const handleFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
-      const fileList = event.target.files;
-      if (!fileList || fileList.length === 0) return;
-      
-      const files = Array.from(fileList);
-      setLoading(true);
-      setError('');
+  const removeFile = (fileName: string) => {
+    setUploadedFiles(prev => prev.filter(file => file.name !== fileName));
     
-      for (const file of files) {
-        // Accepter CSV, mais aussi PDF, TXT et d'autres formats courants
-        const acceptedFormats = ['.csv', '.txt', '.pdf', '.docx', '.xlsx'];
-        const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
-        
-        if (!acceptedFormats.includes(fileExtension)) {
-          setError(`Format de fichier ${fileExtension} non supporté. Formats acceptés: CSV, TXT, PDF, DOCX, XLSX`);
-          setLoading(false);
-          return;
-        }
+    if (activeFile === fileName) {
+      // Si on supprime le fichier actif, définir le premier fichier restant comme actif ou null
+      setActiveFile(prev => {
+        const remainingFiles = uploadedFiles.filter(file => file.name !== fileName);
+        return remainingFiles.length > 0 ? remainingFiles[0].name : null;
+      });
+    }
     
-        const formData = new FormData();
-        formData.append('csvFile', file);
-    
-        try {
-          setMessages(prev => [...prev, {
-            sender: 'bot',
-            text: `Traitement du fichier ${file.name} en cours...`
-          }]);
-          
-          const response = await fetch(`${API_BASE_URL}/upload-csv`, {
-            method: 'POST',
-            body: formData,
-          });
-    
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || `Erreur HTTP: ${response.status}`);
-          }
-          
-          const data: ChatResponse = await response.json();
-          
-          if (data.success && data.data) {
-            // Vérifier que data.data contient des données valides
-            if (data.data.trim().length === 0) {
-              throw new Error("Le fichier semble être vide ou son contenu n'a pas pu être extrait");
-            }
-            
-            console.log(`Fichier ${file.name} chargé, taille des données:`, data.data.length);
-            
-            // Stocker les données du fichier
-            const newFile: UploadedFile = { 
-              name: file.name, 
-              data: data.data,
-              fullLength: data.fullLength
-            };
-            
-            setUploadedFiles(prev => {
-              // Éviter les doublons
-              const existingIndex = prev.findIndex(f => f.name === file.name);
-              if (existingIndex >= 0) {
-                const updated = [...prev];
-                updated[existingIndex] = newFile;
-                return updated;
-              }
-              return [...prev, newFile];
-            });
-            
-            // Si c'est le premier fichier, le définir comme actif automatiquement
-            if (uploadedFiles.length === 0 && !activeFile) {
-              setActiveFile(file.name);
-            }
-            
-            const fileSizeInfo = data.fullLength 
-              ? `(${data.data.length} caractères affichés sur ${data.fullLength} au total)`
-              : `(${data.data.length} caractères)`;
-              
-            setMessages(prev => [...prev, {
-              sender: 'bot',
-              text: `Le fichier ${file.name} a été téléchargé avec succès ${fileSizeInfo}. Vous pouvez maintenant me poser des questions sur son contenu.`
-            }]);
-          } else {
-            throw new Error(data.error || "Erreur lors du traitement du fichier - aucune donnée retournée");
-          }
-        } catch (err) {
-          console.error("Erreur d'upload:", err);
-          const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
-          setError(`Erreur lors du téléchargement de ${file.name}: ${errorMessage}`);
-          setMessages(prev => [...prev, {
-            sender: 'bot',
-            text: `Erreur lors du traitement du fichier ${file.name}: ${errorMessage}. Veuillez réessayer avec un autre fichier.`
-          }]);
-        }
-      }
-    
-      event.target.value = '';
-      setLoading(false);
-    };
-      
-    const removeFile = (fileName: string) => {
-      setUploadedFiles(prev => prev.filter(file => file.name !== fileName));
-      
-      if (activeFile === fileName) {
-        // Si on supprime le fichier actif, définir le premier fichier restant comme actif ou null
-        setActiveFile(prev => {
-          const remainingFiles = uploadedFiles.filter(file => file.name !== fileName);
-          return remainingFiles.length > 0 ? remainingFiles[0].name : null;
-        });
-      }
-      
+    setMessages(prev => [...prev, {
+      sender: 'bot',
+      text: `Le fichier ${fileName} a été supprimé.`
+    }]);
+  };
+  
+  const toggleActiveFile = (fileName: string) => {
+    if (activeFile === fileName) {
+      // Désactiver le fichier actif
+      setActiveFile(null);
       setMessages(prev => [...prev, {
         sender: 'bot',
-        text: `Le fichier ${fileName} a été supprimé.`
+        text: `Toutes les questions seront désormais traitées avec tous les fichiers disponibles.`
       }]);
-    };
+    } else {
+      // Activer un nouveau fichier
+      setActiveFile(fileName);
+      setMessages(prev => [...prev, {
+        sender: 'bot',
+        text: `Le fichier ${fileName} est maintenant actif. Toutes les questions seront traitées dans le contexte de ce fichier.`
+      }]);
+    }
+  };
+  
+  // Fonction pour appliquer une analyse prédéfinie
+  const applyAnalysisTag = (tag: AnalysisTag) => {
+    if (uploadedFiles.length === 0) {
+      setError("Veuillez d'abord télécharger un fichier pour effectuer cette analyse");
+      return;
+    }
     
-    const toggleActiveFile = (fileName: string) => {
-      if (activeFile === fileName) {
-        // Désactiver le fichier actif
-        setActiveFile(null);
-        setMessages(prev => [...prev, {
-          sender: 'bot',
-          text: `Toutes les questions seront désormais traitées avec tous les fichiers disponibles.`
-        }]);
-      } else {
-        // Activer un nouveau fichier
-        setActiveFile(fileName);
-        setMessages(prev => [...prev, {
-          sender: 'bot',
-          text: `Le fichier ${fileName} est maintenant actif. Toutes les questions seront traitées dans le contexte de ce fichier.`
-        }]);
+    setInput(tag.query);
+    sendMessage(tag.query);
+    setShowTags(false); // Masquer les tags après la sélection
+  };
+
+  // Fonction pour utiliser une suggestion
+  const handleSuggestionClick = (suggestion: any) => {
+    setInput(suggestion.label);
+    sendMessage(suggestion.label);
+    setShowSuggestions(false);
+  };
+  
+  // Fonction pour formater le texte avec des retours à la ligne
+  const formatMessageText = (text: string) => {
+    return text.split('\n').map((line, i) => (
+      <span key={i}>
+        {line}
+        {i < text.split('\n').length - 1 && <br />}
+      </span>
+    ));
+  };
+
+  useEffect(() => {
+    fetchWelcomeMessage();
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  useEffect(() => {
+    // Vérifier si des fichiers ont été passés via la navigation
+    const checkForEnhancedFiles = async () => {
+      if (location?.state?.enhancedFiles && location.state.enhancedFiles.length > 0) {
+        const files = location.state.enhancedFiles;
+        
+        // Traiter les fichiers
+        setLoading(true);
+        for (const file of files) {
+          try {
+            // Convertir le File en UploadedFile
+            const reader = new FileReader();
+            
+            reader.onload = async (e) => {
+              const fileData = e.target?.result as string;
+              
+              // Ajouter le fichier à la liste
+              setUploadedFiles(prev => {
+                const newFile: UploadedFile = { 
+                  name: file.name, 
+                  data: fileData,
+                  fullLength: fileData.length
+                };
+                return [...prev, newFile];
+              });
+              
+              // Définir le premier fichier comme actif
+              if (files.indexOf(file) === 0) {
+                setActiveFile(file.name);
+              }
+            };
+            
+            reader.readAsText(file);
+          } catch (err) {
+            console.error("Erreur lors du traitement du fichier:", err);
+          }
+        }
+        setLoading(false);
+        
+        // Envoyer une question automatique pour analyser les fichiers
+        setTimeout(() => {
+          setInput("Pouvez-vous calculer le total des personnes inscrites, bénéficiaires éligibles, et faire une répartition par genre à partir de ces fichiers?");
+          // Utiliser setTimeout à nouveau pour s'assurer que l'état est mis à jour
+          setTimeout(() => {
+            sendMessage();
+          }, 100);
+        }, 500);
       }
     };
     
-    // Fonction pour formater le texte avec des retours à la ligne
-    const formatMessageText = (text: string) => {
-      return text.split('\n').map((line, i) => (
-        <span key={i}>
-          {line}
-          {i < text.split('\n').length - 1 && <br />}
-        </span>
-      ));
-    };
-    
-    return (
-      <Card className="max-w-4xl mx-auto">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center text-orange-600">
-            Assistant virtuel avec analyse de fichiers
-          </CardTitle>
-        </CardHeader>
+    checkForEnhancedFiles();
+  }, [location]); // Dépendance à location pour détecter les changements
   
-        <CardContent className="space-y-4">
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-  
-          <div className="h-[500px] overflow-y-auto border rounded-lg p-4 bg-gray-50">
-            {messages.map((msg, index) => (
-              <div
-                key={index}
-                className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} mb-4`}
-              >
-                <div
-                  className={`max-w-[85%] p-3 rounded-lg whitespace-pre-wrap ${
-                    msg.sender === 'user'
-                      ? 'bg-orange-500 text-white'
-                      : 'bg-white border shadow-sm'
-                  }`}
-                >
-                  {formatMessageText(msg.text)}
-                </div>
-              </div>
-            ))}
-            {loading && (
-              <div className="flex justify-start mb-4">
-                <div className="bg-white border shadow-sm p-3 rounded-lg flex items-center">
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  Traitement en cours...
-                </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
+  return (
+    <div className="flex flex-col h-screen bg-orange-50">
+      {/* Header avec fermeture */}
+      <div className="flex justify-between p-4">
+        <button className="text-black font-bold text-xl">×</button>
+        <button className="text-black">⋮</button>
+      </div>
+
+      {/* Conteneur principal */}
+      <div className="flex-1 flex flex-col items-center justify-between py-4 px-4">
+        {/* Section supérieure avec icône et titre */}
+        <div className="flex flex-col items-center my-[10px]">
+          <div className="text-orange-500 mb-1">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 3l1.7 4.8h5.1l-4 3.6 1.3 5.6-4.1-3.4-4.1 3.4 1.3-5.6-4-3.6h5.1z" fill="currentColor"/>
+              <path d="M17 10l1.7 2.8h3.1l-2.5 2.2 0.8 3.6-3.1-2.4-3.1 2.4 0.8-3.6-2.5-2.2h3.1z" fill="currentColor"/>
+              <path d="M7 10l1.7 2.8h3.1l-2.5 2.2 0.8 3.6-3.1-2.4-3.1 2.4 0.8-3.6-2.5-2.2h3.1z" fill="currentColor"/>
+            </svg>
           </div>
-  
-          <div className="space-y-2">
-            {uploadedFiles.length > 0 && (
-              <div className="border rounded-lg p-2 bg-gray-50">
-                <p className="font-medium mb-2">Fichiers téléchargés ({uploadedFiles.length}):</p>
-                <div className="max-h-32 overflow-y-auto">
-                  {uploadedFiles.map((file, index) => (
-                    <div key={index} className={`flex items-center justify-between p-2 hover:bg-gray-100 rounded ${activeFile === file.name ? 'bg-orange-100' : ''}`}>
-                      <button 
-                        onClick={() => toggleActiveFile(file.name)}
-                        className={`text-left truncate flex-1 ${activeFile === file.name ? 'font-bold text-orange-600' : ''}`}
-                        title={activeFile === file.name ? "Désactiver ce fichier" : "Activer ce fichier comme contexte principal"}
-                      >
-                        {file.name} {activeFile === file.name ? '(actif)' : ''}
-                        {file.fullLength && file.fullLength > file.data.length && 
-                          <span className="text-xs text-gray-500 ml-2">
-                            (tronqué: {Math.round(file.data.length/1000)}k/{Math.round(file.fullLength/1000)}k)
-                          </span>
-                        }
-                      </button>
-                      <button
-                        onClick={() => removeFile(file.name)}
-                        className="text-red-500 hover:text-red-700 ml-2"
-                        title="Supprimer ce fichier"
-                      >
-                        <Trash className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-  
-            <div className="flex gap-2">
-              <label className="flex-none">
-                <div className="bg-gray-100 hover:bg-gray-200 rounded-lg p-2 cursor-pointer">
-                  <FileUp className="w-6 h-6 text-gray-600" />
-                </div>
-                <input
-                  type="file"
-                  accept=".csv,.txt,.pdf,.docx,.xlsx"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  multiple
-                  disabled={loading}
-                />
-              </label>
-  
-              <div className="flex-1 flex gap-2">
-                <textarea
-                  ref={inputRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  className="flex-1 min-h-[40px] max-h-[120px] p-2 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  placeholder={activeFile 
-                    ? `Posez une question sur ${activeFile}...` 
-                    : uploadedFiles.length > 0 
-                      ? "Posez une question sur vos fichiers..."
-                      : "Écrivez votre message..."}
-                  disabled={loading}
-                />
-                <button
-                  onClick={sendMessage}
-                  disabled={loading || !input.trim()}
-                  className="flex-none bg-orange-500 text-white p-2 rounded-lg hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
-                >
-                  <Send className="w-6 h-6" />
-                </button>
+          <h1 className="text-xl font-bold text-center">Ask our AI anything</h1>
+        </div>
+
+        {/* Zone de messages */}
+        <div 
+          className="w-full flex-1 overflow-y-auto mb-4 px-2 scrollbar-container"
+          style={{
+            scrollbarWidth: 'thin',
+            scrollbarColor: '#e2e8f0 #f8fafc',
+            maxHeight: 'calc(100vh - 250px)'
+          }}
+        >
+          <style>
+            {`
+              .scrollbar-container::-webkit-scrollbar {
+                width: 8px;
+                height: 8px;
+              }
+              .scrollbar-container::-webkit-scrollbar-track {
+                background: #f8fafc;
+                border-radius: 4px;
+              }
+              .scrollbar-container::-webkit-scrollbar-thumb {
+                background-color: #e2e8f0;
+                border-radius: 4px;
+                border: 2px solid #f8fafc;
+              }
+              .scrollbar-container::-webkit-scrollbar-thumb:hover {
+                background-color: #cbd5e1;
+              }
+            `}
+          </style>
+          
+          {messages.map((msg, index) => (
+            <div
+              key={index}
+              className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} mb-3`}
+            >
+              <div
+                className={`max-w-[90%] p-4 rounded-lg whitespace-pre-wrap ${
+                  msg.sender === 'user'
+                    ? 'bg-orange-500 text-white'
+                    : 'bg-orange-50 border shadow-sm'
+                }`}
+              >
+                {formatMessageText(msg.text)}
               </div>
             </div>
+          ))}
+          
+          {loading && (
+            <div className="flex justify-start mb-3">
+              <div className="bg-white border shadow-sm p-3 rounded-lg flex items-center">
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                Traitement en cours...
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Erreur */}
+        {error && (
+          <Alert variant="destructive" className="mb-4 w-full max-w-md">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {/* Suggestions - Modifiées pour correspondre à l'image */}
+        {showSuggestions && messages.length <= 1 && !loading && (
+          <div className="w-full">
+            <p className="text-gray-500 text-sm mb-2 text-center">Suggestions on what to ask Our AI</p>
+            <div className="flex overflow-x-auto space-x-2 pb-2 no-scrollbar mb-4">
+              {suggestions.map((suggestion) => (
+                <button
+                  key={suggestion.id}
+                  onClick={() => handleSuggestionClick(suggestion)}
+                  className="bg-white rounded-xl p-3 shadow-sm border border-gray-200 text-xs min-w-[120px] text-left flex-shrink-0"
+                  style={{ maxWidth: '160px' }}
+                >
+                  {suggestion.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </CardContent>
-      </Card>
-    );
+        )}
+
+        {/* Tags d'analyses prédéfinies - Modifiés pour être semblables aux suggestions */}
+        {uploadedFiles.length > 0 && showTags && (
+          <div className="w-full mb-4">
+            <div className="flex overflow-x-auto space-x-2 pb-2 no-scrollbar">
+              {analysisTags.map(tag => (
+                <button
+                  key={tag.id}
+                  onClick={() => applyAnalysisTag(tag)}
+                  className="bg-white rounded-xl p-3 shadow-sm border border-gray-200 text-xs min-w-[120px] text-left flex-shrink-0"
+                  style={{ maxWidth: '160px' }}
+                >
+                  {tag.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Toggle pour afficher/masquer les analyses */}
+        {uploadedFiles.length > 0 && (
+          <div className="w-full flex justify-center mb-2">
+            <button 
+              onClick={() => setShowTags(!showTags)}
+              className="flex items-center text-xs text-orange-600 hover:text-orange-700"
+            >
+              <Tag className="w-3 h-3 mr-1" /> 
+              {showTags ? "Masquer les analyses" : "Afficher les analyses"}
+            </button>
+          </div>
+        )}
+
+        {/* Input et bouton d'envoi */}
+        <div className="w-full mt-2 mb-4 relative flex items-center">
+          <label className="mr-2">
+            <div className="bg-gray-100 hover:bg-gray-200 rounded-full p-2 cursor-pointer">
+              <FileUp className="w-5 h-5 text-gray-600" />
+            </div>
+            <input
+              type="file"
+              accept=".csv,.txt,.pdf,.docx,.xlsx"
+              onChange={handleFileUpload}
+              className="hidden"
+              multiple
+              disabled={loading}
+            />
+          </label>
+
+          <textarea
+            ref={inputRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyPress={handleKeyPress}
+            className="flex-1 py-2 px-4 pr-12 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none overflow-hidden"
+            placeholder={activeFile 
+              ? `Posez une question sur ${activeFile}...` 
+              : uploadedFiles.length > 0 
+                ? "Posez une question sur vos fichiers..."
+                : "Ask me anything about your dashboard..."}
+            disabled={loading}
+            rows={1}
+            style={{ minHeight: '44px', maxHeight: '100px' }}
+          />
+          
+          <button
+            onClick={() => sendMessage()}
+            disabled={loading || !input.trim()}
+            className="absolute right-1 top-1/2 transform -translate-y-1/2 text-white p-2 rounded-full"
+          >
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M19.7101 0.516578C20.8107 0.131995 21.8681 1.18933 21.4835 2.28999L15.0647 20.6308C14.6477 21.8203 12.9902 21.8875 12.4788 20.7359L9.38157 13.7679L13.7409 9.4075C13.8844 9.25347 13.9626 9.04976 13.9588 8.83926C13.9551 8.62877 13.8699 8.42794 13.721 8.27907C13.5721 8.13021 13.3713 8.04494 13.1608 8.04122C12.9503 8.03751 12.7466 8.11564 12.5926 8.25916L8.23215 12.6185L1.26415 9.52125C0.112566 9.00883 0.180816 7.35241 1.36923 6.93533L19.7101 0.516578Z" fill="#FF7900"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default Chatbot;

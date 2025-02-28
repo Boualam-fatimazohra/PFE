@@ -3,6 +3,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Index from "./pages/Index";
 import ForgotPassword from "./pages/ForgotPassword";
+import VerifyPassword from "./pages/VerifyPassword"
+import ValidatePassword from "./pages/ValidatePassword";
+import NewPassword from "./pages/UpdatePassword";
 import NotFound from "./pages/NotFound";
 import EvaluationForm from "./pages/FormulaireEvaluation";
 import FormateurRoutes from "./routes/FormateurRoutes";
@@ -18,7 +21,6 @@ import { Footer } from "@/components/layout/Footer";
 import FormationTerminer from "./pages/FormationTerminer";
 import generateEvaluationLink from "./pages/Evaluation";
 import { FormationAvenir } from "./pages/FormationAvenir";
-import beneficiaires from "./components/dashboardElement/beneficiaires"
 import FormationModal from "./components/dashboardElement/formationModal";
 import MesFormation from "./pages/MesFormation";
 import { Calendar } from "lucide-react";
@@ -49,6 +51,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 };
 
 const App = () => (
+  
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <FormationProvider>

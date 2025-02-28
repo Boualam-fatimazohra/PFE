@@ -78,16 +78,22 @@ const createFormation = async (req, res) => {
 // Get All Formateurs formations
 const getAllFormations = async (req, res) => {
   try {
-    // Populate formateur (et l'utilisateur lié) + classes
     const formations = await Formation.find()
-      .populate({ path: 'formateur', populate: { path: 'utilisateur' } });    
+      .populate({ path: 'formateur', populate: { path: 'utilisateur' } });
 
-    res.status(200).json(formations);
-  } catch (error) {
-    res.status(500).json({ 
-      message: 'Error fetching formations', 
-      error: error.message 
+    // Convertir l'image en base64 si elle existe
+    const formationsAvecImages = formations.map((formation) => {
+      return {
+        ...formation._doc,
+        image: formation.image
+          ? `data:${formation.imageType};base64,${formation.image.toString("base64")}`
+          : null
+      };
     });
+
+    res.status(200).json(formationsAvecImages);
+  } catch (error) {
+    res.status(500).json({ message: "Erreur lors de la récupération des formations", error: error.message });
   }
 };
 
@@ -125,15 +131,23 @@ const GetOneFormation = async (req, res) => {
     const { id } = req.params; 
     if (!id || id.length !== 24) {
       return res.status(400).json({ message: "ID de formation invalide" });
-    };
+    }
+
     const formation = await Formation.findById(id)
-      .populate({ path: 'formateur', populate: { path: 'utilisateur' } }); 
+      .populate({ path: 'formateur', populate: { path: 'utilisateur' } });
     // Vérifier si la formation existe
     if (!formation) {
       return res.status(404).json({ message: "Formation non trouvée" });
     }
-    // Retourner la formation trouvée
-    res.status(200).json(formation);
+    // Convertir l'image en base64 si elle existe
+    const formationAvecImage = {
+      ...formation._doc,
+      image: formation.image
+        ? `data:${formation.imageType};base64,${formation.image.toString("base64")}`
+        : null
+    };
+
+    res.status(200).json(formationAvecImage);
   } catch (error) {
     res.status(500).json({ 
       message: "Erreur lors de la récupération de la formation",
@@ -167,7 +181,7 @@ const UpdateFormation = async (req, res) => {
 
     res.status(200).json({ message: 'Formation mise à jour avec succès', formation: updatedFormation });
   } catch (error) {
-    res.status(500).json({ message: 'Erreur lors de la mise à jour de la formation', error: error.message });
+    res.status(500).json({ message: "Erreur lors de la mise à jour de la formation", error: error.message });
   }
 };
 

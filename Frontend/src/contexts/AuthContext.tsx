@@ -1,91 +1,117 @@
-import * as React from 'react';
-import { createContext, useContext, useState, useEffect } from 'react';
-import { login as apiLogin, logout as apiLogout } from '../api/services/authService';
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { 
+  login as loginService, 
+  logout as logoutService,
+  forgotPassword as forgotPasswordService,
+  verifyResetCode as verifyResetCodeService,
+  changePassword as changePasswordService
+} from "../services/authServices";
 
 interface User {
   nom: string;
   prenom: string;
-  role: string;
   userId: string;
+  role: string;
 }
 
 interface AuthContextType {
-  isAuthenticated: boolean;
   user: User | null;
-  login: (credentials: { email: string; password: string }) => Promise<any>;
-  logout: () => Promise<void>;
-  isLoading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => void;
+  forgotPassword: (email: string) => Promise<void>;
+  verifyResetCode: (code: string) => Promise<void>;
+  resetPassword: (newPassword: string) => Promise<void>;
+  resetState: {
+    email: string | null;
+    codeVerified: boolean;
+  };
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [resetState, setResetState] = useState<{
+    email: string | null;
+    codeVerified: boolean;
+  }>({
+    email: null,
+    codeVerified: false
+  });
 
   useEffect(() => {
-    // Check if user is logged in on mount
-    const userRole = localStorage.getItem('userRole');
-    const nom = localStorage.getItem('nom');
-    const prenom = localStorage.getItem('prenom');
-    const userId = localStorage.getItem('userId');
-
-    if (userRole && userId) {
-      setIsAuthenticated(true);
-      setUser({
-        role: userRole,
-        nom: nom || '',
-        prenom: prenom || '',
-        userId
-      });
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
     }
-    
-    setIsLoading(false);
   }, []);
 
-  const handleLogin = async (credentials: { email: string; password: string }) => {
-    setIsLoading(true);
+  const login = async (email: string, password: string) => {
     try {
-      const response = await apiLogin(credentials);
-      
-      setUser({
+      const response = await loginService(email, password);
+      const userData = {
+        nom: response.user.nom,
+        prenom: response.user.prenom,
+        userId: response.user.userId,
         role: response.role,
-        nom: response.user?.nom || '',
-        prenom: response.user?.prenom || '',
-        userId: response.user?.userId || ''
-      });
-      
-      setIsAuthenticated(true);
-      return response;
+      };
+      setUser(userData);
+      localStorage.setItem("user", JSON.stringify(userData));
     } catch (error) {
-      throw error;
-    } finally {
-      setIsLoading(false);
+      throw new Error(error.message);
     }
   };
 
-  const handleLogout = async () => {
-    setIsLoading(true);
+  const logout = () => {
+    logoutService();
+    setUser(null);
+    localStorage.removeItem("user");
+  };
+
+  const forgotPassword = async (email: string) => {
     try {
-      await apiLogout();
-      setIsAuthenticated(false);
-      setUser(null);
+      await forgotPasswordService(email);
+      // Enregistrer l'email pour les étapes suivantes
+      setResetState(prev => ({ ...prev, email }));
     } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      setIsLoading(false);
+      throw new Error(error.message);
+    }
+  };
+
+  const verifyResetCode = async (code: string) => {
+    try {
+      await verifyResetCodeService(code);
+      // Marquer que le code a été vérifié
+      setResetState(prev => ({ ...prev, codeVerified: true }));
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  };
+
+  const resetPassword = async (newPassword: string) => {
+    try {
+      // Vérifier que le code a été vérifié avant de permettre le changement de mot de passe
+      if (!resetState.codeVerified) {
+        throw new Error("Le code de vérification doit d'abord être validé");
+      }
+      await changePasswordService(newPassword);
+      // Réinitialiser l'état après un changement de mot de passe réussi
+      setResetState({ email: null, codeVerified: false });
+    } catch (error) {
+      throw new Error(error.message);
     }
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        isAuthenticated,
-        user,
-        login: handleLogin,
-        logout: handleLogout,
-        isLoading
+    <AuthContext.Provider 
+      value={{ 
+        user, 
+        login, 
+        logout, 
+        forgotPassword, 
+        verifyResetCode, 
+        resetPassword,
+        resetState
       }}
     >
       {children}
@@ -93,10 +119,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-export const useAuth = () => {
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };

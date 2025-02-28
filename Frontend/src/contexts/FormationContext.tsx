@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { getAllFormations as fetchFormations, createFormation as addFormation } from '../api/services/formationService';
-import { deleteFormation as apiDeleteFormation, updateFormation as ipUpdateFormation } from '../api/services/formationService';
+import { getAllFormations as fetchFormations, createFormation as addFormation } from '../services/formationService';
+import { deleteFormation as apiDeleteFormation, updateFormation as ipUpdateFormation } from '../services/formationService';
 
 interface Formation {
   _id?: string;
@@ -33,7 +33,7 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
   const [formations, setFormations] = useState<Formation[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
+   
   useEffect(() => {
     const getFormations = async () => {
       try {

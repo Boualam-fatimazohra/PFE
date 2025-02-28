@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import apiClient from '../apiClient';
+import apiClient from './apiClient';
 
 interface LoginResponse {
   message: string;
