@@ -333,10 +333,8 @@ const getBeneficiaireFormation = async (req, res) => {
 
 const getNombreBeneficiairesParFormateur = async (req, res) => {
   console.log("debut de la fct getNbrBeneficiaire par formateur");
-
   try {
     const utilisateurId = req.user.userId;
-    
     if (!mongoose.Types.ObjectId.isValid(utilisateurId)) {
       return res.status(400).json({ message: "ID utilisateur invalide" });
     }
