@@ -55,7 +55,6 @@ const App = () => (
   
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <FormationProvider>
         <TooltipProvider>
           <BrowserRouter>
             <Layout>
@@ -98,7 +97,6 @@ const App = () => (
             </Layout>
           </BrowserRouter>
         </TooltipProvider>
-      </FormationProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
