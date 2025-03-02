@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from "react";
 import { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import { Eye, Download, Trash2, PlusCircle, ChevronDown, ChevronLeft, ChevronRight, Search, Filter } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import ParticipantsSection from "../Formation/ParticipantsSection";
-import EnhanceListButton from "./EnhanceListButton";
+import { useFormations } from "../../contexts/FormationContext";
+
 // Types
 interface Step {
   number: string;
@@ -26,32 +26,34 @@ interface Participant {
 }
 
 interface FormState {
-  title: string;
+  title: string;  // Will map to 'nom'
   description: string;
-  status: string;
-  category: string;
-  level: string;
-  imageFormation: File | null;
-  registrationLink: string;
-  listeParticipants?: File[];
+  status: "En Cours" | "Terminer" | "Replanifier"; // Specific string literals
+  category: string;  // Will map to 'categorie'
+  level: string;  // Will map to 'niveau'
+  imageFormation: File | null;  // Will map to 'image'
+  registrationLink: string;  // Will map to 'lienInscription'
   dateDebut: string;
   dateFin: string;
+  tags: string;  // Add this field
 }
 
+// Initial form state
+const initialFormState: FormState = {
+  title: "",
+  description: "",
+  status: "En Cours",
+  category: "",
+  level: "",
+  imageFormation: null,
+  registrationLink: "",
+  dateDebut: "",
+  dateFin: "",
+  tags: "",  // Initialize tags field
+};
+
 const FormationModal = () => {
-  // Initial form state
-  const initialFormState: FormState = {
-    title: "",
-    description: "",
-    status: "",
-    category: "",
-    level: "",
-    imageFormation: null,
-    registrationLink: "",
-    listeParticipants: [],
-    dateDebut: "",
-    dateFin: ""
-  };
+  const { addNewFormation, error: contextError } = useFormations();
 
   // State
   const [currentStep, setCurrentStep] = useState(1);
@@ -149,20 +151,15 @@ const FormationModal = () => {
         return;
       }
       
-      // Pour Step 1 (image)
-      if (currentStep === 1) {
-        setFormState(prev => ({
-          ...prev,
-          imageFormation: file
-        }));
-      }
-      // Pour Step 2 (liste de participants)
-      else if (currentStep === 2) {
-        setFileList(prev => [...prev, file]);
-      }
+      setFormState(prev => ({
+        ...prev,
+        imageFormation: file
+      }));
     }
   };
  
+  
+
   // Form validation
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -216,45 +213,31 @@ const FormationModal = () => {
       return;
     }
     setIsSubmitting(true);
-
+  
     try {
-      const formData = new FormData();
+      // Map formState to the structure needed by the API
+      const formationData = {
+        nom: formState.title,
+        description: formState.description,
+        status: formState.status as "En Cours" | "Terminer" | "Replanifier", // Add type assertion here
+        categorie: formState.category,
+        niveau: formState.level,
+        image: formState.imageFormation,
+        lienInscription: formState.registrationLink,
+        dateDebut: formState.dateDebut,
+        dateFin: formState.dateFin,
+        tags: formState.tags
+      };
+  
+      await addNewFormation(formationData);
       
-      formData.append('nom', formState.title);
-      formData.append('description', formState.description);
-      formData.append('status', formState.status);
-      formData.append('categorie', formState.category);
-      formData.append('niveau', formState.level);
-      formData.append('lienInscription', formState.registrationLink);
-      formData.append('dateDebut', formState.dateDebut);
-      formData.append('dateFin', formState.dateFin);
-      
-      if (formState.imageFormation) {
-        formData.append('image', formState.imageFormation);
-      }
-
-      // Ajouter les fichiers de participants s'il y en a
-      fileList.forEach((file, index) => {
-        formData.append(`listeParticipants[${index}]`, file);
-      });
-
-      const response = await fetch('/api/Addformation', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: formData
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      await response.json();
       alert('Formation créée avec succès!');
       setFormState(initialFormState);
       setCurrentStep(1);
       setFileList([]);
+      
+      // Optionally redirect after creation
+      // window.location.href = '/formateur/mesformation';
     } catch (error) {
       console.error('Error submitting formation:', error);
       alert('Erreur lors de la création de la formation. Veuillez réessayer.');
@@ -276,15 +259,16 @@ const FormationModal = () => {
           )}
           {/* Cercle du step */}
           <div
-            className={`w-12 h-12 flex items-center justify-center rounded-full 
-            ${step.active ? "bg-white border-4 border-orange-400" : 
-              step.completed ? "bg-white border-2 border-black text-black" : 
-              "bg-white border-2 border-gray-300 text-gray-500"} 
-            text-lg font-medium mb-2 z-10`}
-          >
-            {step.number}
-          </div>
-          
+  className={`w-12 h-12 flex items-center justify-center rounded-full 
+    ${step.active ? "bg-white border-4 border-orange-400" : 
+      step.completed ? "bg-white border-2 border-black text-black" : 
+      "bg-white border-2 border-gray-300 text-gray-500"} 
+    text-lg font-medium mb-2 z-10`}
+>
+  {step.number}
+</div>
+
+  
           {/* Label */}
           <span className={`text-sm font-medium ${step.active ? "text-gray-900" : "text-gray-500"}`}>
             {step.label}
@@ -293,6 +277,8 @@ const FormationModal = () => {
       ))}
     </div>
   );
+  
+  
   
   // Render functions
   const renderStep1 = () => (
@@ -358,7 +344,7 @@ const FormationModal = () => {
             </label>
             <select
               value={formState.status}
-              onChange={(e) => setFormState({ ...formState, status: e.target.value })}
+              onChange={(e) => setFormState({ ...formState, status: e.target.value as "En Cours" | "Terminer" | "Replanifier"})}
               className={`rounded-none w-full p-2.5 border ${errors.status ? 'border-red-500' : 'border-gray-300'} rounded-lg`}
             >
               <option value="">Sélectionnez un status</option>
@@ -404,38 +390,39 @@ const FormationModal = () => {
           </div>
         </div>
         <div>
-          <label className="block text-sm font-bold text-black mb-1">
-            Image de formation <span className="text-red-500">*</span>
-          </label>
-          <div className="border-4 border-dashed border-gray-300 p-10 relative" style={{ borderSpacing: '10px' }}>
-            <div className="flex flex-col items-center">
-              <input
-                type="file"
-                onChange={handleFileChange}
-                accept=".jpg,.jpeg,.png"
-                className="rounded-none hidden"
-                ref={fileInputRef}
-              />
-              <button
-                onClick={handleFileButtonClick}
-                className="flex flex-col items-center cursor-pointer"
-              >
-                <div className="w-12 h-12 mb-4 text-black">
-                  <svg width="68" height="68" viewBox="0 0 68 68" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M29.75 38.25H38.25V21.25H51L34 4.25L17 21.25H29.75V38.25ZM42.5 28.6875V35.241L61.9608 42.5L34 52.9253L6.03925 42.5L25.5 35.241V28.6875L0 38.25V55.25L34 68L68 55.25V38.25L42.5 28.6875Z" fill="black"/>
-                  </svg>
-                </div>
-                <p className="mt-2 text-sm text-gray-500">
-                  Maximum file size: <strong>2 MB</strong>. Supported files: jpg, jpeg, png. Several files possible.
-                </p>
-                <span className="mt-3 border-2 border-black px-4 py-2 text-black font-bold text-sm">
-                  Select a file
-                </span>
-              </button>
-            </div>
-          </div>
+  <label className="block text-sm font-bold text-black mb-1">
+    Image de formation <span className="text-red-500">*</span>
+  </label>
+  <div className="border-4 border-dashed border-gray-300 p-10 relative" style={{ borderSpacing: '10px' }}>
+    <div className="flex flex-col items-center">
+      <input
+        type="file"
+        onChange={handleFileChange}
+        accept=".jpg,.jpeg,.png"
+        className="rounded-none hidden"
+        ref={fileInputRef}
+      />
+      <button
+        onClick={handleFileButtonClick}
+        className="flex flex-col items-center cursor-pointer"
+      >
+        <div className="w-12 h-12 mb-4 text-black">
+          <svg width="68" height="68" viewBox="0 0 68 68" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M29.75 38.25H38.25V21.25H51L34 4.25L17 21.25H29.75V38.25ZM42.5 28.6875V35.241L61.9608 42.5L34 52.9253L6.03925 42.5L25.5 35.241V28.6875L0 38.25V55.25L34 68L68 55.25V38.25L42.5 28.6875Z" fill="black"/>
+          </svg>
         </div>
+        <p className="mt-2 text-sm text-gray-500">
+          Maximum file size: <strong>2 MB</strong>. Supported files: jpg, jpeg, png. Several files possible.
+        </p>
+        <span className="mt-3 border-2 border-black px-4 py-2 text-black font-bold text-sm">
+          Select a file
+        </span>
+      </button>
+    </div>
+  </div>
+</div>
 
+     
         <div className="rounded-none bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-bold">Lien d'inscription</h2>
@@ -460,15 +447,101 @@ const FormationModal = () => {
             {errors.registrationLink && <p className="mt-1 text-sm text-red-500">{errors.registrationLink}</p>}
           </div>
         </div>
-      </div>
-    </div>
-  );
+        </div>
+     </div>
+      );
+   
+  
+
+  // const renderStep2 = () => (
+  //   <div className="bg-white rounded-lg border border-gray-200 p-6">
+  //     <div className="space-y-6">
+  //       <div className="flex justify-between items-center mb-4">
+  //         <h2 className="text-lg font-semibold">Listes des Participants</h2>
+  //         <button className="bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+  //           <PlusCircle size={20} />
+  //           Enhance List
+  //         </button>
+  //       </div>
+
+  //       <div className="space-y-4">
+  //         {fileList.map((file, index) => (
+  //           <div key={index} className="border rounded-lg p-4">
+  //             <div className="flex items-center justify-between">
+  //               <div className="flex items-center gap-3">
+  //                 <div className="text-gray-600">
+  //                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  //                     <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+  //                     <polyline points="13 2 13 9 20 9"></polyline>
+  //                   </svg>
+  //                 </div>
+  //                 <div>
+  //                   <div className="font-medium">{file.name}</div>
+  //                   <div className="text-sm text-gray-500">
+  //                     {new Date().toLocaleDateString()}
+  //                   </div>
+  //                 </div>
+  //               </div>
+  //               <div className="flex items-center gap-2">
+  //                 <button className="p-2 text-gray-600">
+  //                   <Eye size={20} />
+  //                 </button>
+  //                 <button className="p-2 text-gray-600">
+  //                   <Download size={20} />
+  //                 </button>
+  //                 <button 
+  //                   className="p-2 text-gray-600"
+  //                   onClick={() => setFileList(fileList.filter((_, i) => i !== index))}
+  //                 >
+  //                   <Trash2 size={20} />
+  //                 </button>
+  //               </div>
+  //             </div>
+  //           </div>
+  //         ))}
+
+  //         <div className="border-2 border-dashed border-gray-300 rounded-lg p-8">
+  //           <div className="flex flex-col items-center">
+  //             <div className="mb-4">
+                
+  //               <svg width="68" height="68" viewBox="0 0 68 68" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M29.75 38.25H38.25V21.25H51L34 4.25L17 21.25H29.75V38.25ZM42.5 28.6875V35.241L61.9608 42.5L34 52.9253L6.03925 42.5L25.5 35.241V28.6875L0 38.25V55.25L34 68L68 55.25V38.25L42.5 28.6875Z" fill="black"/> </svg>
+  //             </div>
+  //             <p className="text-sm text-gray-500 mb-1">Maximum file size: 100 MB, liste Excel ou fichier CSV</p>
+  //             <button
+  //               onClick={handleFileButtonClick}
+  //               className="mt-4 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+  //             >
+  //               Select a file
+  //             </button>
+  //             <input
+  //               type="file"
+  //               ref={fileInputRef}
+  //               className="hidden"
+  //               onChange={handleFileChange}
+  //               accept=".xlsx,.xls,.csv"
+  //             />
+  //           </div>
+  //         </div>
+  //       </div>
+  //     </div>
+  //   </div>
+  // );
   const renderStep2 = () => (
     <div className="bg-white rounded-lg border border-gray-200 p-6">
       <div className="space-y-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold">Listes des Participants</h2>
-          <EnhanceListButton fileList={fileList} />
+          <button 
+            className={`${
+              fileList.length > 0 
+                ? "bg-purple-600 hover:bg-purple-700" 
+                : "bg-gray-400 cursor-not-allowed"
+            } text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors duration-200`}
+            disabled={fileList.length === 0}
+          >
+            <PlusCircle size={20} />
+            Enhance List
+          </button>
         </div>
   
         <div className="space-y-4">
@@ -534,77 +607,6 @@ const FormationModal = () => {
       </div>
     </div>
   );
-  // const renderStep2 = () => (
-  //   <div className="bg-white rounded-lg border border-gray-200 p-6">
-  //     <div className="space-y-6">
-  //       <div className="flex justify-between items-center mb-4">
-  //         <h2 className="text-lg font-semibold">Listes des Participants</h2>
-  //         <EnhanceListButton />
-  //       </div>
-  
-  //       <div className="space-y-4">
-  //         {fileList.map((file, index) => (
-  //           <div key={index} className="border rounded-lg p-4">
-  //             <div className="flex items-center justify-between">
-  //               <div className="flex items-center gap-3">
-  //                 <div className="text-gray-600">
-  //                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-  //                     <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
-  //                     <polyline points="13 2 13 9 20 9"></polyline>
-  //                   </svg>
-  //                 </div>
-  //                 <div>
-  //                   <div className="font-medium">{file.name}</div>
-  //                   <div className="text-sm text-gray-500">
-  //                     {new Date().toLocaleDateString()}
-  //                   </div>
-  //                 </div>
-  //               </div>
-  //               <div className="flex items-center gap-2">
-  //                 <button className="p-2 text-gray-600 hover:text-gray-800">
-  //                   <Eye size={20} />
-  //                 </button>
-  //                 <button className="p-2 text-gray-600 hover:text-gray-800">
-  //                   <Download size={20} />
-  //                 </button>
-  //                 <button 
-  //                   className="p-2 text-gray-600 hover:text-gray-800"
-  //                   onClick={() => setFileList(fileList.filter((_, i) => i !== index))}
-  //                 >
-  //                   <Trash2 size={20} />
-  //                 </button>
-  //               </div>
-  //             </div>
-  //           </div>
-  //         ))}
-  
-  //         <div className="border-2 border-dashed border-gray-300 rounded-lg p-8">
-  //           <div className="flex flex-col items-center">
-  //             <div className="mb-4">
-  //               <svg width="68" height="68" viewBox="0 0 68 68" fill="none" xmlns="http://www.w3.org/2000/svg">
-  //                 <path d="M29.75 38.25H38.25V21.25H51L34 4.25L17 21.25H29.75V38.25ZM42.5 28.6875V35.241L61.9608 42.5L34 52.9253L6.03925 42.5L25.5 35.241V28.6875L0 38.25V55.25L34 68L68 55.25V38.25L42.5 28.6875Z" fill="black"/>
-  //               </svg>
-  //             </div>
-  //             <p className="text-sm text-gray-500 mb-1">Maximum file size: 100 MB, liste Excel ou fichier CSV</p>
-  //             <button
-  //               onClick={handleFileButtonClick}
-  //               className="mt-4 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-  //             >
-  //               Select a file
-  //             </button>
-  //             <input
-  //               type="file"
-  //               ref={fileInputRef}
-  //               className="hidden"
-  //               onChange={handleFileChange}
-  //               accept=".xlsx,.xls,.csv"
-  //             />
-  //           </div>
-  //         </div>
-  //       </div>
-  //     </div>
-  //   </div>
-  // );
 
   const renderStep3 = () => (
     <div className="bg-white rounded-lg border border-gray-200 p-8 w-full h-auto">
