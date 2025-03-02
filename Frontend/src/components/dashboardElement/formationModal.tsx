@@ -1,11 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from "react";
 import { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { Eye, Download, Trash2, PlusCircle, ChevronDown, ChevronLeft, ChevronRight, Search, Filter, Loader2 } from "lucide-react";
+import { Eye, Download, Trash2, PlusCircle, ChevronDown, ChevronLeft, ChevronRight, Search, Filter } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import ParticipantsSection from "../Formation/ParticipantsSection";
 import { useFormations } from "../../contexts/FormationContext";
-import EnhanceListButton from "./EnhanceListButton";
+
 // Types
 interface Step {
   number: string;
@@ -25,52 +25,35 @@ interface Participant {
   confEmail: string;
 }
 
-interface UploadedFile {
-  name: string;
-  data: string;
-  fullLength?: number;
-  type: 'image' | 'participant-list'; // Added type to differentiate
-}
-
-interface Message {
-  sender: 'user' | 'bot';
-  text: string;
-  id?: number;
-}
-
-interface ProcessingResults {
-  totalBeneficiaries?: number;
-  eligiblePhoneNumbers?: number;
-  totalContacts?: number;
-}
-
 interface FormState {
-  title: string;
+  title: string;  // Will map to 'nom'
   description: string;
-  status: string;
-  category: string;
-  level: string;
-  imageFormation: File | null;
-  registrationLink: string;
-  listeParticipants?: File[];
+  status: "En Cours" | "Terminer" | "Replanifier"; // Specific string literals
+  category: string;  // Will map to 'categorie'
+  level: string;  // Will map to 'niveau'
+  imageFormation: File | null;  // Will map to 'image'
+  registrationLink: string;  // Will map to 'lienInscription'
   dateDebut: string;
   dateFin: string;
+  tags: string;  // Add this field
 }
 
+// Initial form state
+const initialFormState: FormState = {
+  title: "",
+  description: "",
+  status: "En Cours",
+  category: "",
+  level: "",
+  imageFormation: null,
+  registrationLink: "",
+  dateDebut: "",
+  dateFin: "",
+  tags: "",  // Initialize tags field
+};
+
 const FormationModal = () => {
-  // Initial form state
-  const initialFormState: FormState = {
-    title: "",
-    description: "",
-    status: "",
-    category: "",
-    level: "",
-    imageFormation: null,
-    registrationLink: "",
-    listeParticipants: [],
-    dateDebut: "",
-    dateFin: ""
-  };
+  const { addNewFormation, error: contextError } = useFormations();
 
   // State
   const [currentStep, setCurrentStep] = useState(1);
@@ -79,27 +62,8 @@ const FormationModal = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fileList, setFileList] = useState<File[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [isProcessing, setIsProcessing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-
-  // Separate refs for different file inputs
-  const imageInputRef = useRef<HTMLInputElement>(null);
-  const participantListInputRef = useRef<HTMLInputElement>(null);
-  
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [processingResults, setProcessingResults] = useState<ProcessingResults | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [useIcon, setUseIcon] = useState(true);
-  
-  // Ajout d'un état pour l'URL de prévisualisation de l'image
-  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
-  
-  const handleEnhanceComplete = (results: ProcessingResults) => {
-    console.log("Enhancement complete with results:", results);
-    // You can add other actions here if necessary
-  };
-  
   // Options for select inputs
   const statusOptions = [
     { label: "En Cours", value: "En Cours" },
@@ -125,6 +89,7 @@ const FormationModal = () => {
     { number: "3", label: "Confirmations", active: currentStep === 3, completed: currentStep > 3 },
     { number: "✓", label: "Terminé", active: currentStep === 4, completed: currentStep > 3 }
   ];
+  const [useIcon, setUseIcon] = useState(true); // Valeur par défaut à true ou false selon votre besoin
 
   // Sample participant data
   const participants: Participant[] = [
@@ -170,92 +135,31 @@ const FormationModal = () => {
     }
   ];
 
-  // Handlers for image upload
-  const handleImageButtonClick = () => {
-    if (imageInputRef.current) {
-      imageInputRef.current.click();
+  // Handlers
+  const handleFileButtonClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
     }
   };
 
-  // Handler for participant list upload
-  const handleParticipantListButtonClick = () => {
-    if (participantListInputRef.current) {
-      participantListInputRef.current.click();
-    }
-  };
-
-  // Handler for image file change - modifié pour définir l'URL de prévisualisation
-  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files.length > 0) {
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
-  
+      
       if (file.size > 2 * 1024 * 1024) {
         alert("Le fichier est trop volumineux. La taille maximum est de 2MB.");
-        event.target.value = "";
-        return;
-      }
-  
-      setFormState(prevState => ({ ...prevState, imageFormation: file }));
-  
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        if (e.target && e.target.result) {
-          const dataUrl = e.target.result as string;
-          
-          // Définir l'URL de prévisualisation
-          setImagePreviewUrl(dataUrl);
-          
-          setUploadedFiles(prev => [...prev, { 
-            name: file.name, 
-            data: dataUrl,
-            type: 'image'  // Mark this as an image type
-          }]);
-        }
-      };
-  
-      reader.readAsDataURL(file); // Use readAsDataURL for images
-      event.target.value = "";
-    }
-  };
-  
-  // Handler for participant list file change
-  const handleParticipantListChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files.length > 0) {
-      const file = event.target.files[0];
-      
-      if (file.size > 100 * 1024 * 1024) {
-        alert("Le fichier est trop volumineux. La taille maximum est de 100MB.");
-        event.target.value = "";
         return;
       }
       
-      // Add to fileList for participant files
-      setFileList(prevList => [...prevList, file]);
-      
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        if (e.target && e.target.result) {
-          setUploadedFiles(prev => [...prev, { 
-            name: file.name, 
-            data: e.target.result as string,
-            type: 'participant-list'  // Mark this as a participant list type
-          }]);
-        }
-      };
-      
-      reader.readAsDataURL(file);
-      event.target.value = "";
+      setFormState(prev => ({
+        ...prev,
+        imageFormation: file
+      }));
     }
-  };
-  
-  // Fonction pour supprimer l'image
-  const handleRemoveImage = () => {
-    setImagePreviewUrl(null);
-    setFormState(prevState => ({ ...prevState, imageFormation: null }));
-    // Supprimer du tableau uploadedFiles
-    setUploadedFiles(prev => prev.filter(file => file.type !== 'image'));
   };
  
+  
+
   // Form validation
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -309,45 +213,31 @@ const FormationModal = () => {
       return;
     }
     setIsSubmitting(true);
-
+  
     try {
-      const formData = new FormData();
+      // Map formState to the structure needed by the API
+      const formationData = {
+        nom: formState.title,
+        description: formState.description,
+        status: formState.status as "En Cours" | "Terminer" | "Replanifier", // Add type assertion here
+        categorie: formState.category,
+        niveau: formState.level,
+        image: formState.imageFormation,
+        lienInscription: formState.registrationLink,
+        dateDebut: formState.dateDebut,
+        dateFin: formState.dateFin,
+        tags: formState.tags
+      };
+  
+      await addNewFormation(formationData);
       
-      formData.append('nom', formState.title);
-      formData.append('description', formState.description);
-      formData.append('status', formState.status);
-      formData.append('categorie', formState.category);
-      formData.append('niveau', formState.level);
-      formData.append('lienInscription', formState.registrationLink);
-      formData.append('dateDebut', formState.dateDebut);
-      formData.append('dateFin', formState.dateFin);
-      
-      if (formState.imageFormation) {
-        formData.append('image', formState.imageFormation);
-      }
-
-      // Ajouter les fichiers de participants s'il y en a
-      fileList.forEach((file, index) => {
-        formData.append(`listeParticipants[${index}]`, file);
-      });
-
-      const response = await fetch('/api/Addformation', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: formData
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      await response.json();
       alert('Formation créée avec succès!');
       setFormState(initialFormState);
       setCurrentStep(1);
       setFileList([]);
+      
+      // Optionally redirect after creation
+      // window.location.href = '/formateur/mesformation';
     } catch (error) {
       console.error('Error submitting formation:', error);
       alert('Erreur lors de la création de la formation. Veuillez réessayer.');
@@ -369,15 +259,16 @@ const FormationModal = () => {
           )}
           {/* Cercle du step */}
           <div
-            className={`w-12 h-12 flex items-center justify-center rounded-full 
-            ${step.active ? "bg-white border-4 border-orange-400" : 
-              step.completed ? "bg-white border-2 border-black text-black" : 
-              "bg-white border-2 border-gray-300 text-gray-500"} 
-            text-lg font-medium mb-2 z-10`}
-          >
-            {step.number}
-          </div>
-          
+  className={`w-12 h-12 flex items-center justify-center rounded-full 
+    ${step.active ? "bg-white border-4 border-orange-400" : 
+      step.completed ? "bg-white border-2 border-black text-black" : 
+      "bg-white border-2 border-gray-300 text-gray-500"} 
+    text-lg font-medium mb-2 z-10`}
+>
+  {step.number}
+</div>
+
+  
           {/* Label */}
           <span className={`text-sm font-medium ${step.active ? "text-gray-900" : "text-gray-500"}`}>
             {step.label}
@@ -386,6 +277,8 @@ const FormationModal = () => {
       ))}
     </div>
   );
+  
+  
   
   // Render functions
   const renderStep1 = () => (
@@ -451,7 +344,7 @@ const FormationModal = () => {
             </label>
             <select
               value={formState.status}
-              onChange={(e) => setFormState({ ...formState, status: e.target.value })}
+              onChange={(e) => setFormState({ ...formState, status: e.target.value as "En Cours" | "Terminer" | "Replanifier"})}
               className={`rounded-none w-full p-2.5 border ${errors.status ? 'border-red-500' : 'border-gray-300'} rounded-lg`}
             >
               <option value="">Sélectionnez un status</option>
@@ -497,62 +390,39 @@ const FormationModal = () => {
           </div>
         </div>
         <div>
-          <label className="block text-sm font-bold text-black mb-1">
-            Image de formation <span className="text-red-500">*</span>
-          </label>
-          <div className="border-4 border-dashed border-gray-300 p-6 relative" style={{ borderSpacing: '10px' }}>
-            {imagePreviewUrl ? (
-              <div className="flex flex-col items-center">
-                <div className="relative mb-4 w-full max-w-sm mx-auto">
-                  <img 
-                    src={imagePreviewUrl} 
-                    alt="Prévisualisation" 
-                    className="w-full h-auto rounded object-cover max-h-60"
-                  />
-                  <div className="flex justify-between items-center mt-2">
-                    <span className="text-sm text-gray-700 truncate flex-1">
-                      {formState.imageFormation?.name}
-                    </span>
-                    <button 
-                      onClick={handleRemoveImage}
-                      className="p-1 text-gray-600 hover:text-red-500"
-                    >
-                      <Trash2 size={20} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center">
-                <input
-                  type="file"
-                  onChange={handleImageChange}
-                  accept=".jpg,.jpeg,.png"
-                  className="rounded-none hidden"
-                  ref={imageInputRef}
-                />
-                <button
-                  onClick={handleImageButtonClick}
-                  className="flex flex-col items-center cursor-pointer"
-                >
-                  <div className="w-12 h-12 mb-4 text-black">
-                    <svg width="68" height="68" viewBox="0 0 68 68" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M29.75 38.25H38.25V21.25H51L34 4.25L17 21.25H29.75V38.25ZM42.5 28.6875V35.241L61.9608 42.5L34 52.9253L6.03925 42.5L25.5 35.241V28.6875L0 38.25V55.25L34 68L68 55.25V38.25L42.5 28.6875Z" fill="black"/>
-                    </svg>
-                  </div>
-                  <p className="mt-2 text-sm text-gray-500">
-                    Maximum file size: <strong>2 MB</strong>. Supported files: jpg, jpeg, png.
-                  </p>
-                  <span className="mt-3 border-2 border-black px-4 py-2 text-black font-bold text-sm">
-                    Select a file
-                  </span>
-                </button>
-              </div>
-            )}
-            {errors.imageFormation && <p className="mt-1 text-sm text-red-500">{errors.imageFormation}</p>}
-          </div>
+  <label className="block text-sm font-bold text-black mb-1">
+    Image de formation <span className="text-red-500">*</span>
+  </label>
+  <div className="border-4 border-dashed border-gray-300 p-10 relative" style={{ borderSpacing: '10px' }}>
+    <div className="flex flex-col items-center">
+      <input
+        type="file"
+        onChange={handleFileChange}
+        accept=".jpg,.jpeg,.png"
+        className="rounded-none hidden"
+        ref={fileInputRef}
+      />
+      <button
+        onClick={handleFileButtonClick}
+        className="flex flex-col items-center cursor-pointer"
+      >
+        <div className="w-12 h-12 mb-4 text-black">
+          <svg width="68" height="68" viewBox="0 0 68 68" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M29.75 38.25H38.25V21.25H51L34 4.25L17 21.25H29.75V38.25ZM42.5 28.6875V35.241L61.9608 42.5L34 52.9253L6.03925 42.5L25.5 35.241V28.6875L0 38.25V55.25L34 68L68 55.25V38.25L42.5 28.6875Z" fill="black"/>
+          </svg>
         </div>
+        <p className="mt-2 text-sm text-gray-500">
+          Maximum file size: <strong>2 MB</strong>. Supported files: jpg, jpeg, png. Several files possible.
+        </p>
+        <span className="mt-3 border-2 border-black px-4 py-2 text-black font-bold text-sm">
+          Select a file
+        </span>
+      </button>
+    </div>
+  </div>
+</div>
 
+     
         <div className="rounded-none bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-bold">Lien d'inscription</h2>
@@ -577,32 +447,103 @@ const FormationModal = () => {
             {errors.registrationLink && <p className="mt-1 text-sm text-red-500">{errors.registrationLink}</p>}
           </div>
         </div>
-      </div>
-    </div>
-  );
+        </div>
+     </div>
+      );
+   
   
- // This would be part of your renderStep2 function or component
 
- const renderStep2 = () => {
-  const handleEnhanceComplete = (results) => {
-    setProcessingResults(results);
-  };
+  // const renderStep2 = () => (
+  //   <div className="bg-white rounded-lg border border-gray-200 p-6">
+  //     <div className="space-y-6">
+  //       <div className="flex justify-between items-center mb-4">
+  //         <h2 className="text-lg font-semibold">Listes des Participants</h2>
+  //         <button className="bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+  //           <PlusCircle size={20} />
+  //           Enhance List
+  //         </button>
+  //       </div>
 
-  return (
+  //       <div className="space-y-4">
+  //         {fileList.map((file, index) => (
+  //           <div key={index} className="border rounded-lg p-4">
+  //             <div className="flex items-center justify-between">
+  //               <div className="flex items-center gap-3">
+  //                 <div className="text-gray-600">
+  //                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  //                     <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+  //                     <polyline points="13 2 13 9 20 9"></polyline>
+  //                   </svg>
+  //                 </div>
+  //                 <div>
+  //                   <div className="font-medium">{file.name}</div>
+  //                   <div className="text-sm text-gray-500">
+  //                     {new Date().toLocaleDateString()}
+  //                   </div>
+  //                 </div>
+  //               </div>
+  //               <div className="flex items-center gap-2">
+  //                 <button className="p-2 text-gray-600">
+  //                   <Eye size={20} />
+  //                 </button>
+  //                 <button className="p-2 text-gray-600">
+  //                   <Download size={20} />
+  //                 </button>
+  //                 <button 
+  //                   className="p-2 text-gray-600"
+  //                   onClick={() => setFileList(fileList.filter((_, i) => i !== index))}
+  //                 >
+  //                   <Trash2 size={20} />
+  //                 </button>
+  //               </div>
+  //             </div>
+  //           </div>
+  //         ))}
+
+  //         <div className="border-2 border-dashed border-gray-300 rounded-lg p-8">
+  //           <div className="flex flex-col items-center">
+  //             <div className="mb-4">
+                
+  //               <svg width="68" height="68" viewBox="0 0 68 68" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M29.75 38.25H38.25V21.25H51L34 4.25L17 21.25H29.75V38.25ZM42.5 28.6875V35.241L61.9608 42.5L34 52.9253L6.03925 42.5L25.5 35.241V28.6875L0 38.25V55.25L34 68L68 55.25V38.25L42.5 28.6875Z" fill="black"/> </svg>
+  //             </div>
+  //             <p className="text-sm text-gray-500 mb-1">Maximum file size: 100 MB, liste Excel ou fichier CSV</p>
+  //             <button
+  //               onClick={handleFileButtonClick}
+  //               className="mt-4 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+  //             >
+  //               Select a file
+  //             </button>
+  //             <input
+  //               type="file"
+  //               ref={fileInputRef}
+  //               className="hidden"
+  //               onChange={handleFileChange}
+  //               accept=".xlsx,.xls,.csv"
+  //             />
+  //           </div>
+  //         </div>
+  //       </div>
+  //     </div>
+  //   </div>
+  // );
+  const renderStep2 = () => (
     <div className="bg-white rounded-lg border border-gray-200 p-6">
       <div className="space-y-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold">Listes des Participants</h2>
-          <EnhanceListButton 
-            fileList={uploadedFiles.filter(file => file.type === 'participant-list')}
-            setMessages={setMessages}
-            setProcessingResults={setProcessingResults}
-            setLoading={setLoading}
-            onEnhanceComplete={handleEnhanceComplete}
-          />
+          <button 
+            className={`${
+              fileList.length > 0 
+                ? "bg-purple-600 hover:bg-purple-700" 
+                : "bg-gray-400 cursor-not-allowed"
+            } text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors duration-200`}
+            disabled={fileList.length === 0}
+          >
+            <PlusCircle size={20} />
+            Enhance List
+          </button>
         </div>
-        
-        {/* Toujours afficher la liste des fichiers, que ce soit en cours de traitement ou après */}
+  
         <div className="space-y-4">
           {fileList.map((file, index) => (
             <div key={index} className="border rounded-lg p-4">
@@ -638,67 +579,35 @@ const FormationModal = () => {
               </div>
             </div>
           ))}
-          
-          {/* Afficher le champ d'importation seulement s'il n'y a pas de fichiers */}
-          {fileList.length === 0 && (
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8">
-              <div className="flex flex-col items-center">
-                <div className="mb-4">
-                  <svg width="68" height="68" viewBox="0 0 68 68" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M29.75 38.25H38.25V21.25H51L34 4.25L17 21.25H29.75V38.25ZM42.5 28.6875V35.241L61.9608 42.5L34 52.9253L6.03925 42.5L25.5 35.241V28.6875L0 38.25V55.25L34 68L68 55.25V38.25L42.5 28.6875Z" fill="black"/>
-                  </svg>
-                </div>
-                <p className="text-sm text-gray-500 mb-1">Maximum file size: 100 MB, liste Excel ou fichier CSV</p>
-                <button
-                  onClick={handleParticipantListButtonClick}
-                  className="mt-4 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-                >
-                  Select a file
-                </button>
-                <input
-                  type="file"
-                  ref={participantListInputRef}
-                  className="hidden"
-                  onChange={handleParticipantListChange}
-                  accept=".xlsx,.xls,.csv,.pdf"
-                />
+  
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8">
+            <div className="flex flex-col items-center">
+              <div className="mb-4">
+                <svg width="68" height="68" viewBox="0 0 68 68" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M29.75 38.25H38.25V21.25H51L34 4.25L17 21.25H29.75V38.25ZM42.5 28.6875V35.241L61.9608 42.5L34 52.9253L6.03925 42.5L25.5 35.241V28.6875L0 38.25V55.25L34 68L68 55.25V38.25L42.5 28.6875Z" fill="black"/>
+                </svg>
               </div>
+              <p className="text-sm text-gray-500 mb-1">Maximum file size: 100 MB, liste Excel ou fichier CSV</p>
+              <button
+                onClick={handleFileButtonClick}
+                className="mt-4 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Select a file
+              </button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                onChange={handleFileChange}
+                accept=".xlsx,.xls,.csv"
+              />
             </div>
-          )}
-        </div>
-        
-        {/* Afficher le spinner de chargement lorsque loading est vrai */}
-        {loading && (
-          <div className="flex flex-col items-center justify-center p-8">
-            <Loader2 size={24} className="text-purple-600 animate-spin mb-2" />
-            <div className="text-purple-600 font-medium">AI Loading...</div>
-          </div>
-        )}
-        
-        {/* Afficher les résultats du traitement s'ils existent, même si les fichiers sont affichés */}
-        {processingResults && !loading && (
-          <div className="w-full border border-purple-300 rounded-lg p-4">
-          <h3 className="text-lg font-medium mb-4">Résultat AI</h3>
-          <div className="grid grid-cols-5 gap-4">
-            {[
-              { label: "Numéros éligibles", value: processingResults.eligiblePhoneNumbers },
-              { label: "Total des inscrits", value: processingResults.totalContacts },
-              { label: "Total bénéficiaires", value: processingResults.totalBeneficiaries },
-              { label: "Total inscription", value: processingResults.totalBeneficiaries },
-            ].map((item, index) => (
-              <div key={index} className="bg-white shadow-md border rounded-lg p-4 text-center">
-                <p className="text-gray-500 text-sm">{item.label}</p>
-                <p className="text-lg font-semibold">{item.value}</p>
-              </div>
-            ))}
           </div>
         </div>
-        
-        )}
       </div>
     </div>
   );
-};
+
   const renderStep3 = () => (
     <div className="bg-white rounded-lg border border-gray-200 p-8 w-full h-auto">
       <div className="space-y-6">
@@ -737,17 +646,18 @@ const FormationModal = () => {
 
     {/* Bouton Filtre */}
     <button className="p-3 border rounded-lg flex items-center justify-center w-12 h-12 bg-black">
-      <Filter size={20} className="text-white" />
-    </button>
+  <Filter size={20} className="text-white" />
+</button>
+
   </div>
   </div>
   {/* Bouton Générer liste en dessous */}
   <div className="flex justify-end">
-    <button className="bg-gray-900 text-white px-4 py-2 rounded-lg flex items-center gap-2">
-      <Download size={20} />
-      Générer liste présence
-    </button>
-  </div>
+  <button className="bg-gray-900 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+    <Download size={20} />
+    Générer liste présence
+  </button>
+</div>
 <div className="overflow-x-auto">
   <table className="w-full border-collapse">
     <thead>

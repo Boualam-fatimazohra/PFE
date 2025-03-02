@@ -73,15 +73,11 @@ const App = () => (
                 <Route path="/coordinateur/*" element={<CoordinateurRoutes />} />
                 <Route path="/technicien/*" element={<TechnicienRoutes />} />
                 <Route path="/evaluation/:id/:token" element={<EvaluationForm />} />
-                
-                <Route path="/addformation" element={<AddFormation />} /> 
-                <Route path="/formations" element={<FormateurFormations />} /> 
 
                 {/* Autres pages */}
                 <Route path="/generate-link" element={<GenerateLink />} />
                 <Route path="/formulaire-evaluation" element={<FormulaireEvaluation />} />
                 <Route path="/EvaluationForm" element={<EvaluationForm />} />
-                <Route path="/formationModal" element={< FormationModal/>} />
                 <Route path="/EvaluationForm" element={< EvaluationForm/>}/>
                 <Route path="/BeneficiairesList" element={< BeneficiairesList/>} />
                 <Route path="/CalendarView" element={<CalendarView/>}/>
@@ -90,7 +86,6 @@ const App = () => (
                 <Route path="/FormationTerminer" element={<FormationTerminer />} />
                 <Route path="/FormationAvenir" element={<FormationAvenir />} />
 
-                <Route path="/formationModal" element={< FormationModal/>} />
                 {/* Page 404 */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

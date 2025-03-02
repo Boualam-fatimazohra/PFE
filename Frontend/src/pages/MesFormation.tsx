@@ -43,7 +43,7 @@ const MesFormations = () => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleOpenModal = () => {
-    navigate("/formationModal");
+    navigate("/formateur/formationModal");
   };
 
   // Add a useEffect to map the context formations to your local state format
