@@ -73,7 +73,7 @@ const DashboardFormateur: React.FC = () => {
   };
 
   const handleOpenModal = (): void => {
-    navigate("/formationModal");
+    navigate("/formateur/formationModal");
   };
 
   const handleSearch = (searchValue: string): void => {
