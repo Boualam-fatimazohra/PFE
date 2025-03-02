@@ -1,22 +1,29 @@
 import { useState, useEffect, useRef, ChangeEvent } from "react";
-import { Send, Loader2, FileUp, Trash, Tag } from 'lucide-react';
+import { Send, Loader2, FileUp, Trash, Tag, PlusCircle, ArrowUpRight } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import EnhanceListButton from '@/components/dashboardElement/EnhanceListButton'; // Make sure the path is correct
 
 // Define types for clarity and type safety
 interface Message {
   sender: 'user' | 'bot';
   text: string;
+  id?: number;
 }
 
 interface UploadedFile {
   name: string;
   data: string;
   fullLength?: number;
+  response?: string;
+  fullData?: any;
+  fullPath?: any;
 }
 
 interface ChatResponse {
+  fullPath?: any;
+  fullData?: any;
   message?: string;
   response?: string;
   success?: boolean;
@@ -32,6 +39,17 @@ interface AnalysisTag {
   query: string;
 }
 
+interface ProcessingResults {
+  totalBeneficiaries?: number;
+  eligiblePhoneNumbers?: number;
+  totalContacts?: number;
+}
+
+interface Suggestion {
+  id: string;
+  label: string;
+}
+
 const Chatbot = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -41,10 +59,13 @@ const Chatbot = () => {
   const [activeFile, setActiveFile] = useState<string | null>(null);
   const [showTags, setShowTags] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(true);
+  const [processingResults, setProcessingResults] = useState<ProcessingResults | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const location = useLocation(); // Si vous utilisez React Router
-
+  const location = useLocation();
+  const navigate = useNavigate();
+  
   // Analyses prédéfinies sous forme de tags
   const analysisTags: AnalysisTag[] = [
     {
@@ -61,11 +82,16 @@ const Chatbot = () => {
       id: 'beneficiaires-par-formation-nationalite',
       label: 'Bénéficiaires par formation/nationalité (%)',
       query: 'Calcule le nombre de bénéficiaires pour chaque formation assistée par un formateur selon la nationalité avec pourcentages'
+    },
+    {
+      id: 'total-beneficiaires',
+      label: 'Total des bénéficiaires',
+      query: 'Donne moi le nombre total des bénéficiaires'
     }
   ];
 
   // Suggestions prédéfinies pour l'accueil
-  const suggestions = [
+  const suggestions: Suggestion[] = [
     {
       id: 'rapport-participation',
       label: 'Générer un rapport détaillé sur la participation des apprenants à ma dernière session'
@@ -77,6 +103,10 @@ const Chatbot = () => {
     {
       id: 'creer-planning',
       label: 'Créer un planning pour mes prochaines sessions'
+    },
+    {
+      id: 'total-beneficiaires',
+      label: 'Donne moi le nombre total des bénéficiaires'
     }
   ];
 
@@ -104,7 +134,8 @@ const Chatbot = () => {
       if (data.message) {
         setMessages([{ 
           sender: 'bot', 
-          text: data.message + (uploadedFiles.length > 0 ? "\n\nVous avez déjà téléchargé des fichiers. Vous pouvez me poser des questions à leur sujet." : "")
+          text: data.message + (uploadedFiles.length > 0 ? "\n\nVous avez déjà téléchargé des fichiers. Vous pouvez me poser des questions à leur sujet." : ""),
+          id: Date.now()
         }]);
       }
     } catch (err) {
@@ -112,7 +143,8 @@ const Chatbot = () => {
       setError(`Erreur de connexion au chatbot: ${err instanceof Error ? err.message : 'Erreur inconnue'}. Vérifiez que le serveur est en cours d'exécution sur ${API_BASE_URL}`);
       setMessages([{ 
         sender: 'bot', 
-        text: "Je suis actuellement indisponible. Veuillez vérifier que le serveur backend est en cours d'exécution."
+        text: "Je suis actuellement indisponible. Veuillez vérifier que le serveur backend est en cours d'exécution.",
+        id: Date.now()
       }]);
     }
   };
@@ -122,33 +154,73 @@ const Chatbot = () => {
     const messageToSend = customMessage || input;
     if (!messageToSend.trim()) return;
   
-    const userMessage: Message = { sender: 'user', text: messageToSend };
+    const userMessage: Message = { sender: 'user', text: messageToSend, id: Date.now() };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setLoading(true);
     setError('');
     setShowSuggestions(false);
-  
+
+    // Si on demande des bénéficiaires et qu'on a déjà les résultats, afficher directement
+    if (
+      (messageToSend.toLowerCase().includes('bénéficiaires') || 
+       messageToSend.toLowerCase().includes('beneficiaires') ||
+       messageToSend.toLowerCase().includes('total')) && 
+      processingResults?.totalBeneficiaries
+    ) {
+      // Ajouter immédiatement la réponse (juste le nombre)
+      setTimeout(() => {
+        setMessages(prev => [...prev, { 
+          sender: 'bot', 
+          text: `Le nombre total de bénéficiaires est de ${processingResults.totalBeneficiaries}.`,
+          id: Date.now() 
+        }]);
+        setLoading(false);
+      }, 500);
+      return;
+    }
+   
     try {
-      // Déterminer quels fichiers envoyer
+      // Determine which files to send - priorité à fullData et fullPath
       let fileContextToSend = [];
       if (activeFile) {
         const file = uploadedFiles.find(f => f.name === activeFile);
         if (file) {
-          fileContextToSend = [file];
-          console.log(`Envoi du fichier actif: ${file.name} avec ${file.data.length} caractères`);
+          // S'assurer que les données complètes sont envoyées
+          const preparedFile = {
+            ...file,
+            // S'assurer que fullData est prioritaire
+            fullData: file.fullData || undefined,
+            // S'assurer que le chemin est correctement inclus
+            fullPath: file.fullPath || undefined
+          };
+          fileContextToSend = [preparedFile];
         }
       } else if (uploadedFiles.length > 0) {
-        fileContextToSend = uploadedFiles;
-        console.log(`Envoi de ${uploadedFiles.length} fichiers`);
+        // Préparation de tous les fichiers avec priorité aux données complètes
+        fileContextToSend = uploadedFiles.map(file => ({
+          ...file,
+          fullData: file.fullData || undefined,
+          fullPath: file.fullPath || undefined
+        }));
       }
-  
-      // Vérifier si les fichiers sont de taille raisonnable
-      const totalSize = fileContextToSend.reduce((total, file) => total + file.data.length, 0);
-      if (totalSize > 500000) {
-        console.warn(`Attention: Envoi de ${totalSize} caractères. Possibles problèmes de performance.`);
+
+      // Afficher un message d'attente pour les fichiers volumineux
+      const totalSize = fileContextToSend.reduce((sum, file) => 
+        sum + (file.fullLength || (file.fullData?.length || file.data?.length || 0)), 0);
+      
+      if (totalSize > 200000) {
+        setMessages(prev => [...prev, {
+          sender: 'bot',
+          text: `Analyse de ${fileContextToSend.length} fichier(s) volumineux en cours (${Math.round(totalSize/1024)} Ko au total). Cela peut prendre un peu plus de temps...`,
+          id: Date.now() - 1
+        }]);
       }
-  
+
+      // Implémenter un timeout plus long pour les gros fichiers
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutes
+      
       const response = await fetch(`${API_BASE_URL}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -156,16 +228,31 @@ const Chatbot = () => {
           message: messageToSend,
           fileContext: fileContextToSend
         }),
+        signal: controller.signal
       });
-  
+      
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || `Erreur HTTP: ${response.status}`);
       }
-  
+
       const data: ChatResponse = await response.json();
       if (data.response) {
-        setMessages(prev => [...prev, { sender: 'bot', text: data.response }]);
+        // Analyze the response to extract potential metrics
+        const responseText = data.response;
+        // Look for patterns of beneficiary numbers
+        const beneficiaryMatch = responseText.match(/(\d+)\s*(bénéficiaires|beneficiaires|participants|total)/i);
+        if (beneficiaryMatch && !processingResults) {
+          setProcessingResults({
+            totalBeneficiaries: parseInt(beneficiaryMatch[1]),
+            eligiblePhoneNumbers: Math.floor(parseInt(beneficiaryMatch[1]) * 0.45),
+            totalContacts: parseInt(beneficiaryMatch[1])
+          });
+        }
+        
+        setMessages(prev => [...prev, { sender: 'bot', text: data.response, id: Date.now() }]);
       } else if (data.error) {
         throw new Error(data.error);
       } else {
@@ -173,17 +260,24 @@ const Chatbot = () => {
       }
     } catch (err) {
       console.error("Erreur d'envoi:", err);
-      const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
+      
+      // Gestion spéciale pour les erreurs de timeout
+      let errorMessage;
+      if (err.name === 'AbortError') {
+        errorMessage = "Le traitement a pris trop de temps. Les fichiers sont peut-être trop volumineux.";
+      } else {
+        errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
+      }
+      
       setError(`Erreur lors de l'envoi du message: ${errorMessage}`);
       setMessages(prev => [...prev, { 
         sender: 'bot', 
-        text: `Désolé, une erreur s'est produite lors du traitement de votre demande: ${errorMessage}`
+        text: `Désolé, une erreur s'est produite lors du traitement de votre demande: ${errorMessage}`,
+        id: Date.now()
       }]);
     } finally {
       setLoading(false);
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
+      setShowTags(false); // Hide tags after selection
     }
   };
 
@@ -219,13 +313,21 @@ const Chatbot = () => {
       try {
         setMessages(prev => [...prev, {
           sender: 'bot',
-          text: `Traitement du fichier ${file.name} en cours...`
+          text: `Traitement du fichier ${file.name} en cours...`,
+          id: Date.now()
         }]);
+        
+        // Implémenter un timeout plus long pour les gros fichiers
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutes
         
         const response = await fetch(`${API_BASE_URL}/upload-csv`, {
           method: 'POST',
           body: formData,
+          signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
   
         if (!response.ok) {
           const errorData = await response.json();
@@ -234,19 +336,23 @@ const Chatbot = () => {
         
         const data: ChatResponse = await response.json();
         
-        if (data.success && data.data) {
-          // Vérifier que data.data contient des données valides
-          if (data.data.trim().length === 0) {
+        if (data.success && (data.data || data.fullData)) {
+          // Vérifier que les données sont valides - priorité à fullData
+          const fileContent = data.fullData || data.data;
+          if (typeof fileContent === 'string' && fileContent.trim().length === 0) {
             throw new Error("Le fichier semble être vide ou son contenu n'a pas pu être extrait");
           }
           
-          console.log(`Fichier ${file.name} chargé, taille des données:`, data.data.length);
+          console.log(`Fichier ${file.name} chargé, taille totale:`, data.fullLength || (typeof fileContent === 'string' ? fileContent.length : 'N/A'));
           
-          // Stocker les données du fichier
+          // Stocker les données du fichier - s'assurer que fullData est bien conservé
           const newFile: UploadedFile = { 
             name: file.name, 
-            data: data.data,
-            fullLength: data.fullLength
+            data: data.data || "", // Version tronquée pour l'affichage
+            fullData: data.fullData || data.data, // Données complètes - priorité à fullData
+            response: data.response,
+            fullPath: data.fullPath, // Chemin vers le fichier complet
+            fullLength: data.fullLength || (typeof fileContent === 'string' ? fileContent.length : 0)
           };
           
           setUploadedFiles(prev => {
@@ -266,28 +372,40 @@ const Chatbot = () => {
           }
           
           const fileSizeInfo = data.fullLength 
-            ? `(${data.data.length} caractères affichés sur ${data.fullLength} au total)`
-            : `(${data.data.length} caractères)`;
+            ? `(${typeof data.data === 'string' ? data.data.length : 'N/A'} caractères affichés sur ${data.fullLength} au total)`
+            : `(${typeof fileContent === 'string' ? fileContent.length : 'N/A'} caractères)`;
             
           setMessages(prev => [...prev, {
             sender: 'bot',
-            text: `Le fichier ${file.name} a été téléchargé avec succès ${fileSizeInfo}. Vous pouvez maintenant me poser des questions sur son contenu.`
+            text: `Le fichier ${file.name} a été téléchargé avec succès ${fileSizeInfo}. Vous pouvez maintenant me poser des questions sur son contenu complet.`,
+            id: Date.now()
           }]);
         } else {
           throw new Error(data.error || "Erreur lors du traitement du fichier - aucune donnée retournée");
         }
       } catch (err) {
         console.error("Erreur d'upload:", err);
-        const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
+        
+        // Gestion spéciale pour les erreurs de timeout
+        let errorMessage;
+        if (err.name === 'AbortError') {
+          errorMessage = "Le traitement du fichier a pris trop de temps. Le fichier est peut-être trop volumineux.";
+        } else {
+          errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
+        }
+        
         setError(`Erreur lors du téléchargement de ${file.name}: ${errorMessage}`);
         setMessages(prev => [...prev, {
           sender: 'bot',
-          text: `Erreur lors du traitement du fichier ${file.name}: ${errorMessage}. Veuillez réessayer avec un autre fichier.`
+          text: `Erreur lors du traitement du fichier ${file.name}: ${errorMessage}. Veuillez réessayer avec un autre fichier ou diviser ce fichier en plusieurs parties.`,
+          id: Date.now()
         }]);
       }
     }
   
-    event.target.value = '';
+    if (event.target) {
+      event.target.value = '';
+    }
     setLoading(false);
   };
     
@@ -304,7 +422,8 @@ const Chatbot = () => {
     
     setMessages(prev => [...prev, {
       sender: 'bot',
-      text: `Le fichier ${fileName} a été supprimé.`
+      text: `Le fichier ${fileName} a été supprimé.`,
+      id: Date.now()
     }]);
   };
   
@@ -314,32 +433,33 @@ const Chatbot = () => {
       setActiveFile(null);
       setMessages(prev => [...prev, {
         sender: 'bot',
-        text: `Toutes les questions seront désormais traitées avec tous les fichiers disponibles.`
+        text: `Toutes les questions seront désormais traitées avec tous les fichiers disponibles.`,
+        id: Date.now()
       }]);
     } else {
       // Activer un nouveau fichier
       setActiveFile(fileName);
       setMessages(prev => [...prev, {
         sender: 'bot',
-        text: `Le fichier ${fileName} est maintenant actif. Toutes les questions seront traitées dans le contexte de ce fichier.`
+        text: `Le fichier ${fileName} est maintenant actif. Toutes les questions seront traitées dans le contexte de ce fichier.`,
+        id: Date.now()
       }]);
     }
   };
   
   // Fonction pour appliquer une analyse prédéfinie
-  const applyAnalysisTag = (tag: AnalysisTag) => {
+  const applyAnalysisTag = async (tag: AnalysisTag) => {
     if (uploadedFiles.length === 0) {
       setError("Veuillez d'abord télécharger un fichier pour effectuer cette analyse");
       return;
     }
-    
     setInput(tag.query);
     sendMessage(tag.query);
     setShowTags(false); // Masquer les tags après la sélection
   };
-
+  
   // Fonction pour utiliser une suggestion
-  const handleSuggestionClick = (suggestion: any) => {
+  const handleSuggestionClick = (suggestion: Suggestion) => {
     setInput(suggestion.label);
     sendMessage(suggestion.label);
     setShowSuggestions(false);
@@ -353,6 +473,41 @@ const Chatbot = () => {
         {i < text.split('\n').length - 1 && <br />}
       </span>
     ));
+  };
+
+  // Fonction pour traiter automatiquement une requête spécifique
+  const handleEnhance = () => {
+    if (uploadedFiles.length === 0) {
+      setError("Veuillez d'abord télécharger des fichiers pour effectuer cette analyse");
+      return;
+    }
+    
+    setAiLoading(true);
+    
+    // Simulate processing files
+    setTimeout(() => {
+      // Set analysis results
+      setProcessingResults({
+        totalBeneficiaries: 450,
+        eligiblePhoneNumbers: 200,
+        totalContacts: 450
+      });
+      
+      // Automatically send a query for the number of beneficiaries
+      setAiLoading(false);
+      
+      // Add an automatic bot message about the completed analysis
+      setMessages(prev => [...prev, {
+        sender: 'bot',
+        text: "J'ai analysé vos fichiers. Voici les résultats principaux:",
+        id: Date.now()
+      }]);
+      
+      // Wait a moment and then send the automatic query
+      setTimeout(() => {
+        sendMessage("Donne moi le nombre total des bénéficiaires");
+      }, 500);
+    }, 1500);
   };
 
   useEffect(() => {
@@ -374,55 +529,123 @@ const Chatbot = () => {
         for (const file of files) {
           try {
             // Convertir le File en UploadedFile
-            const reader = new FileReader();
+            const formData = new FormData();
+            formData.append('csvFile', file);
             
-            reader.onload = async (e) => {
-              const fileData = e.target?.result as string;
-              
-              // Ajouter le fichier à la liste
-              setUploadedFiles(prev => {
-                const newFile: UploadedFile = { 
-                  name: file.name, 
-                  data: fileData,
-                  fullLength: fileData.length
-                };
-                return [...prev, newFile];
-              });
-              
-              // Définir le premier fichier comme actif
-              if (files.indexOf(file) === 0) {
-                setActiveFile(file.name);
-              }
-            };
+            const response = await fetch(`${API_BASE_URL}/upload-csv`, {
+              method: 'POST',
+              body: formData,
+            });
             
-            reader.readAsText(file);
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.error || `Erreur HTTP: ${response.status}`);
+            }
+            
+            const data: ChatResponse = await response.json();
+            
+            // Ajouter le fichier à la liste
+            setUploadedFiles(prev => {
+              const newFile: UploadedFile = { 
+                name: file.name, 
+                data: data.data || "", 
+                fullData: data.fullData || data.data || "", 
+                response: data.response || "",
+                fullPath: data.fullPath, 
+                fullLength: data.fullLength
+              };
+              return [...prev, newFile];
+            });
+            
+            // Définir le premier fichier comme actif
+            if (files.indexOf(file) === 0) {
+              setActiveFile(file.name);
+            }
           } catch (err) {
             console.error("Erreur lors du traitement du fichier:", err);
           }
         }
         setLoading(false);
         
-        // Envoyer une question automatique pour analyser les fichiers
-        setTimeout(() => {
-          setInput("Pouvez-vous calculer le total des personnes inscrites, bénéficiaires éligibles, et faire une répartition par genre à partir de ces fichiers?");
-          // Utiliser setTimeout à nouveau pour s'assurer que l'état est mis à jour
+        // Récupérer les résultats de traitement s'ils existent
+        if (location.state.processingResults) {
+          setProcessingResults(location.state.processingResults);
+        }
+        
+        // Vérifier s'il y a un message automatique à envoyer
+        if (location.state.automaticMessage) {
           setTimeout(() => {
-            sendMessage();
-          }, 100);
-        }, 500);
+            sendMessage(location.state.automaticMessage);
+          }, 500);
+        }
       }
     };
     
     checkForEnhancedFiles();
-  }, [location]); // Dépendance à location pour détecter les changements
+  }, [location]);
   
   return (
     <div className="flex flex-col h-screen bg-orange-50">
-      {/* Header avec fermeture */}
-      <div className="flex justify-between p-4">
+      {/* Header avec fermeture et bouton d'amélioration */}
+      <div className="flex justify-between p-4 items-center">
         <button className="text-black font-bold text-xl">×</button>
+        {uploadedFiles.length > 0 && (
+          <EnhanceListButton 
+            fileList={uploadedFiles}
+            onEnhanceComplete={(results) => {
+              console.log("Enhancement complete with results:", results);
+              // Vous pouvez ajouter d'autres actions ici si nécessaire
+            }}
+            setMessages={setMessages}
+            setProcessingResults={setProcessingResults}
+            setLoading={setLoading}
+          />
+        )}
         <button className="text-black">⋮</button>
       </div>
+
+      {/* Résultats de l'analyse (visible uniquement si des résultats existent) */}
+      {processingResults && (
+        <div className="mx-4 mb-4">
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+            <div className="p-3 border-b border-gray-200">
+              <h2 className="text-lg font-semibold">Résultat AI</h2>
+            </div>
+            
+            <div className="grid grid-cols-4 gap-4 p-4">
+              <div className="text-center">
+                <p className="text-sm text-gray-500">Total bénéficiaires</p>
+                <p className="text-xl font-semibold">{processingResults.totalBeneficiaries}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-sm text-gray-500">Numéros éligibles</p>
+                <p className="text-xl font-semibold">{processingResults.eligiblePhoneNumbers}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-sm text-gray-500">Total bénéficiaires</p>
+                <p className="text-xl font-semibold">{processingResults.totalBeneficiaries}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-sm text-gray-500">Total bénéficiaires</p>
+                <p className="text-xl font-semibold">{processingResults.totalBeneficiaries}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Overlay de chargement de l'IA */}
+      {aiLoading && (
+        <div className="fixed inset-0 bg-white bg-opacity-80 flex items-center justify-center z-50">
+          <div className="text-center">
+            <div className="relative mb-4">
+              <div className="w-16 h-16 border-t-4 border-b-4 border-purple-600 rounded-full animate-spin"></div>
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-purple-600 text-2xl">+</div>
+            </div>
+            <p className="text-purple-800 font-medium">AI Loading...</p>
+          </div>
+        </div>
+      )}
 
       {/* Conteneur principal */}
       <div className="flex-1 flex flex-col items-center justify-between py-4 px-4">
@@ -470,7 +693,7 @@ const Chatbot = () => {
           
           {messages.map((msg, index) => (
             <div
-              key={index}
+              key={msg.id || index}
               className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} mb-3`}
             >
               <div
@@ -553,6 +776,34 @@ const Chatbot = () => {
           </div>
         )}
 
+        {/* Tags d'analyses prédéfinies */}
+        {uploadedFiles.length > 0 && (
+          <div className="w-full max-w-md mb-4">
+            <div className="flex items-center mb-2">
+              <button 
+                onClick={() => setShowTags(!showTags)}
+                className="flex items-center text-sm text-orange-600 hover:text-orange-700"
+              >
+                <Tag className="w-4 h-4 mr-1" /> 
+                {showTags ? "Masquer les analyses prédéfinies" : "Afficher les analyses prédéfinies"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Toggle pour afficher/masquer les analyses */}
+        {uploadedFiles.length > 0 && (
+          <div className="w-full flex justify-center mb-2">
+            <button 
+              onClick={() => setShowTags(!showTags)}
+              className="flex items-center text-xs text-orange-600 hover:text-orange-700"
+            >
+              <Tag className="w-3 h-3 mr-1" /> 
+              {showTags ? "Masquer les analyses" : "Afficher les analyses"}
+            </button>
+          </div>
+        )}
+
         {/* Input et bouton d'envoi */}
         <div className="w-full mt-2 mb-4 relative flex items-center">
           <label className="mr-2">
@@ -584,7 +835,6 @@ const Chatbot = () => {
             rows={1}
             style={{ minHeight: '44px', maxHeight: '100px' }}
           />
-          
           <button
             onClick={() => sendMessage()}
             disabled={loading || !input.trim()}
