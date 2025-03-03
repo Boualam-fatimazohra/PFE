@@ -19,7 +19,7 @@ interface GenerateEvaluationLinkResponse {
 
 const DashboardFormateur: React.FC = () => {
   const navigate = useNavigate();
-  const { formations } = useFormations(); // Get formations from context
+  const { formations,nombreBeneficiaires } = useFormations(); // Get formations from context
   const [formationCount, setFormationCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
@@ -107,7 +107,7 @@ const DashboardFormateur: React.FC = () => {
 
             {/* Statistics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <StatsCard title="Total Bénéficiaires" value={250} />
+              <StatsCard title="Total Bénéficiaires" value={isLoading ? '...' : nombreBeneficiaires} />
               <StatsCard title="Total Formations" 
                   value={isLoading ? '...' : formationCount} 
               />
