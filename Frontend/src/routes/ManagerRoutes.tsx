@@ -5,7 +5,7 @@ import NotFound from "../pages/NotFound";
 const ManagerRoutes = () => {
   return (
     <Routes>
-      <Route path="/DashboardManager" element={<DashboardManager />} />
+      <Route path="/dashboardManager" element={<DashboardManager />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
