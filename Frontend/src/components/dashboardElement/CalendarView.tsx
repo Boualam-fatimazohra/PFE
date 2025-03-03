@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -83,7 +83,44 @@ const CalendarView = () => {
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [eventColor, setEventColor] = useState("#3788d8");
+  const [calendarEvents, setCalendarEvents] = useState([]);
   const mainCalendarRef = useRef(null);
+
+  
+  useEffect(() => {
+    if (mainCalendarRef.current) {
+      const updateEvents = () => {
+        const api = mainCalendarRef.current.getApi();
+        const currentEvents = api.getEvents().map(event => ({
+          id: event.id,
+          title: event.title,
+          start: event.start,
+          end: event.end || event.start,
+          backgroundColor: event.backgroundColor,
+          type: event.extendedProps.type || ''
+        }));
+        setCalendarEvents(currentEvents);
+      };
+      
+      
+      updateEvents();
+      
+      
+      const api = mainCalendarRef.current.getApi();
+      api.on('eventAdd', updateEvents);
+      api.on('eventChange', updateEvents);
+      api.on('eventRemove', updateEvents);
+      
+      return () => {
+        if (mainCalendarRef.current) {
+          const api = mainCalendarRef.current.getApi();
+          api.off('eventAdd', updateEvents);
+          api.off('eventChange', updateEvents);
+          api.off('eventRemove', updateEvents);
+        }
+      };
+    }
+  }, [mainCalendarRef.current]);
 
   const handleDateClick = (arg) => {
     mainCalendarRef.current.getApi().gotoDate(arg.date);
@@ -108,6 +145,7 @@ const CalendarView = () => {
       guests: info.event.extendedProps.guests || "",
       location: info.event.extendedProps.location || "",
       description: info.event.extendedProps.description || "",
+      type: info.event.extendedProps.type || "",
     });
     setEventColor(info.event.backgroundColor || "#3788d8");
     setIsEventDialogOpen(true);
@@ -123,6 +161,7 @@ const CalendarView = () => {
       guests: "",
       location: "",
       description: "",
+      type: undefined 
     });
     setIsEventDialogOpen(true);
   };
@@ -135,14 +174,19 @@ const CalendarView = () => {
       guests: "",
       location: "",
       description: "",
+      type: undefined
     });
     setIsEventDialogOpen(true);
   };
 
   const handleSave = () => {
+    if (!selectedEvent.type) {
+      alert("Veuillez sélectionner un type d'événement");
+      return;
+    }
+
     const calendarApi = mainCalendarRef.current.getApi();
     if (selectedEvent.id) {
-      
       const event = calendarApi.getEventById(selectedEvent.id);
       event.setProp("title", selectedEvent.title);
       event.setStart(selectedEvent.start);
@@ -150,6 +194,7 @@ const CalendarView = () => {
       event.setExtendedProp("guests", selectedEvent.guests);
       event.setExtendedProp("location", selectedEvent.location);
       event.setExtendedProp("description", selectedEvent.description);
+      event.setExtendedProp("type", selectedEvent.type);
       event.setProp("backgroundColor", eventColor);
     } else {
       // Add new event
@@ -161,7 +206,14 @@ const CalendarView = () => {
         guests: selectedEvent.guests,
         location: selectedEvent.location,
         description: selectedEvent.description,
+        type: selectedEvent.type,
         backgroundColor: eventColor,
+        extendedProps: {
+          type: selectedEvent.type,
+          guests: selectedEvent.guests,
+          location: selectedEvent.location,
+          description: selectedEvent.description
+        }
       });
     }
     setIsEventDialogOpen(false);
@@ -179,8 +231,8 @@ const CalendarView = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-white">
-     <style>{`
+    <div className="flex min-h-screen bg-white flex-col">
+      <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
 
         * {
@@ -189,22 +241,29 @@ const CalendarView = () => {
 
         .fc {
           font-family: 'Inter', sans-serif !important;
+          width: 100%;
+          max-width: 100%;
         }
+        
         .fc-header-toolbar {
           padding: 1rem 0 !important;
         }
+        
         .fc-toolbar-title {
           font-size: 1.5rem !important;
           font-weight: 400 !important;
           text-transform: capitalize;
         }
+        
         .fc-col-header {
           background: white !important;
         }
+        
         .fc-col-header-cell {
           padding: 8px 0 !important;
           vertical-align: top !important;
         }
+        
         .fc-col-header-cell-cushion {
           display: flex !important;
           flex-direction: column !important;
@@ -213,6 +272,7 @@ const CalendarView = () => {
           text-decoration: none !important;
           padding: 4px !important;
         }
+        
         .fc-day-today .fc-col-header-cell-cushion {
           background: #F16E00 !important;
           color: white !important;
@@ -223,19 +283,24 @@ const CalendarView = () => {
           align-items: center !important;
           justify-content: center !important;
         }
+        
         .fc-timegrid-slot {
           height: 48px !important;
         }
+        
         .fc-timegrid-slot-label {
           font-size: 0.75rem !important;
           color: #70757a !important;
         }
+        
         .fc-theme-standard td, .fc-theme-standard th {
           border-color: #DFE0E1 !important;
         }
+        
         .fc-scrollgrid {
           border: none !important;
         }
+        
         .fc .fc-button {
           background: white !important;
           border: 1px solid #DFE0E1 !important;
@@ -276,6 +341,7 @@ const CalendarView = () => {
           padding: 16px;
           background: white;
         }
+        
         .fc-toolbar-chunk {
           gap: 12px !important;
         }
@@ -291,19 +357,42 @@ const CalendarView = () => {
         .fc-header-toolbar .fc-toolbar-chunk:first-child {
           gap: 8px !important;
         }
+        
+        .calendar-content {
+          display: flex;
+          width: 100%;
+        }
+        
+        .mini-calendar-wrapper {
+          width: 200px;
+          padding-top: 150px;
+          margin-left: 300px;  /*50px */
+          flex-shrink: 0;
+        }
+        
+        .main-calendar-wrapper {
+          flex-grow: 1;
+          max-width: 1200px; /* Ajuste la largeur max selon ton besoin */
+          margin-left: 0px; /*70px */
+          margin-right: 0px; /* Centrage horizontal */
+          padding: 0 80px; /* 0 10 Ajoute du padding si besoin */
+        }
       `}</style>
-      <div className="flex w-full gap-6 p-4">
-        {/* Mini Calendar */}
-        <div className="w-60">
+
+      {/* Contenu du calendrier */}
+      <div className="calendar-content">
+        {/* Mini Calendar (reste à gauche) */}
+        <div className="mini-calendar-wrapper">
           <MiniCalendar
             currentMonth={currentMonth}
             onMonthChange={navigateMonth}
             onDateClick={handleDateClick}
+            events={calendarEvents}
           />
         </div>
 
-        {/* Main Calendar */}
-        <div className="flex-1">
+        {/* Main Calendar (centré) */}
+        <div className="main-calendar-wrapper">
           <FullCalendar
             ref={mainCalendarRef}
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
@@ -328,7 +417,7 @@ const CalendarView = () => {
             slotMaxTime="21:00:00"
             eventColor="#039BE5"
             eventBorderColor="transparent"
-            height="calc(100vh - 2rem)"
+            height="calc(100vh - 120px)" 
             nowIndicator={true}
             allDaySlot={true}
             allDayText="All day"
@@ -361,33 +450,6 @@ const CalendarView = () => {
         handleSave={handleSave}
         handleDelete={handleDelete}
       />
-
-      {/* Footer */}
-      <footer className="fixed bottom-0 w-full bg-black border-t border-gray-200 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="mb-4 md:mb-0">
-              <p className="text-sm text-white">© Orange 2025</p>
-            </div>
-            <nav className="flex space-x-6">
-              <a
-                href="#"
-                className="text-sm text-white hover:text-orange-500 transition-colors duration-200"
-                aria-label="Accessibility statement"
-              >
-                Accessibility statement
-              </a>
-              <a
-                href="#"
-                className="text-sm text-white hover:text-orange-500 transition-colors duration-200"
-                aria-label="Contact us"
-              >
-                Contact
-              </a>
-            </nav>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };

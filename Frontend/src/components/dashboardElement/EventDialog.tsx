@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { Clock, MapPin, Users, AlignLeft, Check, X, ChevronDown, Calendar } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // TimePicker Component
-const TimePicker = ({ selectedTime, onChange }) => {
+const TimePicker = ({ selectedTime, onChange }: { selectedTime: Date, onChange: (date: Date) => void }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const generateTimeOptions = () => {
     const times = [];
@@ -23,8 +24,8 @@ const TimePicker = ({ selectedTime, onChange }) => {
   const timeOptions = generateTimeOptions();
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
@@ -33,7 +34,7 @@ const TimePicker = ({ selectedTime, onChange }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const formatTime = (date) => {
+  const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], {
       hour: 'numeric',
       minute: '2-digit',
@@ -65,7 +66,7 @@ const TimePicker = ({ selectedTime, onChange }) => {
                 setIsOpen(false);
               }}
             >
-              {formatTime(time)} ({time.getMinutes()} min)
+              {formatTime(time)}
             </button>
           ))}
         </div>
@@ -75,16 +76,16 @@ const TimePicker = ({ selectedTime, onChange }) => {
 };
 
 // DatePicker Component
-const DatePicker = ({ selectedDate, onChange }) => {
+const DatePicker = ({ selectedDate, onChange }: { selectedDate: Date, onChange: (date: Date) => void }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date(selectedDate));
-  const dropdownRef = useRef(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const getDaysInMonth = (year, month) => {
+  const getDaysInMonth = (year: number, month: number) => {
     return new Date(year, month + 1, 0).getDate();
   };
 
-  const getFirstDayOfMonth = (year, month) => {
+  const getFirstDayOfMonth = (year: number, month: number) => {
     return new Date(year, month, 1).getDay();
   };
 
@@ -137,7 +138,7 @@ const DatePicker = ({ selectedDate, onChange }) => {
 
   const days = generateDays();
 
-  const handleMonthChange = (direction) => {
+  const handleMonthChange = (direction: 'prev' | 'next') => {
     const newDate = new Date(currentMonth);
     if (direction === "prev") {
       newDate.setMonth(newDate.getMonth() - 1);
@@ -147,7 +148,7 @@ const DatePicker = ({ selectedDate, onChange }) => {
     setCurrentMonth(newDate);
   };
 
-  const handleDayClick = (day) => {
+  const handleDayClick = (day: number) => {
     const newDate = new Date(currentMonth);
     newDate.setDate(day);
     onChange(newDate);
@@ -155,8 +156,8 @@ const DatePicker = ({ selectedDate, onChange }) => {
   };
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
@@ -165,7 +166,7 @@ const DatePicker = ({ selectedDate, onChange }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const formatDate = (date) => {
+  const formatDate = (date: Date) => {
     return date.toLocaleDateString('fr-FR', {
       weekday: 'short',
       month: 'short',
@@ -236,8 +237,19 @@ const DatePicker = ({ selectedDate, onChange }) => {
   );
 };
 
+interface EventDialogProps {
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+  selectedEvent: any;
+  setSelectedEvent: (event: any) => void;
+  eventColor: string;
+  setEventColor: (color: string) => void;
+  handleSave: () => void;
+  handleDelete: (id: string) => void;
+}
+
 // EventDialog Component
-const EventDialog = ({
+const EventDialog: React.FC<EventDialogProps> = ({
   isOpen,
   setIsOpen,
   selectedEvent,
@@ -257,6 +269,17 @@ const EventDialog = ({
   ];
 
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
+  const [placeholder, setPlaceholder] = useState("Définir le type");
+
+  useEffect(() => {
+    if (selectedEvent?.type === "Formation") {
+      setPlaceholder("Titre de la formation");
+    } else if (selectedEvent?.type === "Événement") {
+      setPlaceholder("Titre de l'événement");
+    }
+  }, [selectedEvent?.type]);
+
+  if (!selectedEvent) return null;
 
   return (
     <div
@@ -270,9 +293,27 @@ const EventDialog = ({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800">
-            {selectedEvent?.id ? "Modifier l'événement" : "Nouvel événement"}
-          </h2>
+          <div className="flex items-center space-x-2">
+            <Select
+              value={selectedEvent.type || ""}
+              onValueChange={(value) => {
+                setSelectedEvent({ ...selectedEvent, type: value });
+                if (value === "Formation") {
+                  setPlaceholder("Titre de la formation");
+                } else if (value === "Événement") {
+                  setPlaceholder("Titre de l'événement");
+                }
+              }}
+            >
+              <SelectTrigger className="w-36 border-none focus:ring-0">
+                <SelectValue placeholder="Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Événement">Événement</SelectItem>
+                <SelectItem value="Formation">Formation</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <button
             className="p-2 hover:bg-gray-100"
             onClick={() => setIsOpen(false)}
@@ -284,91 +325,85 @@ const EventDialog = ({
         <div className="p-4 space-y-6">
           <input
             type="text"
-            placeholder="Titre de l'événement"
+            placeholder={placeholder}
             value={selectedEvent?.title || ""}
-            onChange={(e) =>
-              setSelectedEvent({ ...selectedEvent, title: e.target.value })
-            }
+            onChange={(e) => setSelectedEvent({ ...selectedEvent, title: e.target.value })}
             className="w-full p-2 text-lg font-medium border-0 focus:ring-0 focus:outline-none"
           />
 
           <div className="space-y-4">
-          <div className="flex items-start gap-4">
-  <Calendar className="h-5 w-5 text-gray-500 mt-1" />
-  <div className="flex-1 flex gap-2">
-    <DatePicker
-      selectedDate={selectedEvent?.start || new Date()}
-      onChange={(date) => {
-        const newStart = new Date(date);
-      
-        newStart.setHours(selectedEvent?.start?.getHours() || 0);
-        newStart.setMinutes(selectedEvent?.start?.getMinutes() || 0);
-        
-        setSelectedEvent(prev => ({
-          ...prev,
-          start: newStart,
-          
-          end: prev.end < newStart ? newStart : prev.end
-        }));
-      }}
-    />
-    <span className="text-gray-500">to</span>
-    <DatePicker
-      selectedDate={selectedEvent?.end || new Date()}
-      onChange={(date) => {
-        const newEnd = new Date(date);
-       
-        newEnd.setHours(selectedEvent?.end?.getHours() || 0);
-        newEnd.setMinutes(selectedEvent?.end?.getMinutes() || 0);
-        
-        setSelectedEvent(prev => ({
-          ...prev,
-          end: newEnd,
-          
-          start: prev.start > newEnd ? newEnd : prev.start
-        }));
-      }}
-    />
-  </div>
-</div>
+            <div className="flex items-start gap-4">
+              <Calendar className="h-5 w-5 text-gray-500 mt-1" />
+              <div className="flex-1 flex gap-2">
+                <DatePicker
+                  selectedDate={selectedEvent?.start || new Date()}
+                  onChange={(date) => {
+                    const newStart = new Date(date);
+                  
+                    newStart.setHours(selectedEvent?.start?.getHours() || 0);
+                    newStart.setMinutes(selectedEvent?.start?.getMinutes() || 0);
+                    
+                    setSelectedEvent((prev: any) => ({
+                      ...prev,
+                      start: newStart,
+                      end: prev.end < newStart ? newStart : prev.end
+                    }));
+                  }}
+                />
+                <span className="text-gray-500">to</span>
+                <DatePicker
+                  selectedDate={selectedEvent?.end || new Date()}
+                  onChange={(date) => {
+                    const newEnd = new Date(date);
+                  
+                    newEnd.setHours(selectedEvent?.end?.getHours() || 0);
+                    newEnd.setMinutes(selectedEvent?.end?.getMinutes() || 0);
+                    
+                    setSelectedEvent((prev: any) => ({
+                      ...prev,
+                      end: newEnd,
+                      start: prev.start > newEnd ? newEnd : prev.start
+                    }));
+                  }}
+                />
+              </div>
+            </div>
 
-<div className="flex items-start gap-4">
-  <Clock className="h-5 w-5 text-gray-500 mt-1" />
-  <div className="flex-1">
-    <div className="flex items-center gap-2">
-      <TimePicker
-        selectedTime={selectedEvent?.start || new Date()}
-        onChange={(time) => {
-          const newStart = new Date(selectedEvent.start);
-          newStart.setHours(time.getHours());
-          newStart.setMinutes(time.getMinutes());
-          
-          setSelectedEvent(prev => ({
-            ...prev,
-            start: newStart,
-            end: newStart > prev.end ? newStart : prev.end
-          }));
-        }}
-      />
-      <span className="text-gray-500">-</span>
-      <TimePicker
-        selectedTime={selectedEvent?.end || new Date()}
-        onChange={(time) => {
-          const newEnd = new Date(selectedEvent.end);
-          newEnd.setHours(time.getHours());
-          newEnd.setMinutes(time.getMinutes());
-          
-          setSelectedEvent(prev => ({
-            ...prev,
-            end: newEnd,
-            start: prev.start > newEnd ? newEnd : prev.start
-          }));
-        }}
-      />
-    </div>
-  </div>
-
-
+            <div className="flex items-start gap-4">
+              <Clock className="h-5 w-5 text-gray-500 mt-1" />
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <TimePicker
+                    selectedTime={selectedEvent?.start || new Date()}
+                    onChange={(time) => {
+                      const newStart = new Date(selectedEvent.start);
+                      newStart.setHours(time.getHours());
+                      newStart.setMinutes(time.getMinutes());
+                      
+                      setSelectedEvent((prev: any) => ({
+                        ...prev,
+                        start: newStart,
+                        end: newStart > prev.end ? newStart : prev.end
+                      }));
+                    }}
+                  />
+                  <span className="text-gray-500">-</span>
+                  <TimePicker
+                    selectedTime={selectedEvent?.end || new Date()}
+                    onChange={(time) => {
+                      const newEnd = new Date(selectedEvent.end);
+                      newEnd.setHours(time.getHours());
+                      newEnd.setMinutes(time.getMinutes());
+                      
+                      setSelectedEvent((prev: any) => ({
+                        ...prev,
+                        end: newEnd,
+                        start: prev.start > newEnd ? newEnd : prev.start
+                      }));
+                    }}
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="flex items-start gap-4">
@@ -456,20 +491,20 @@ const EventDialog = ({
         <div className="flex justify-end gap-2 p-4 border-t border-gray-200">
           {selectedEvent?.id && (
             <button
-              className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700"
+              className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded"
               onClick={() => handleDelete(selectedEvent.id)}
             >
               Supprimer
             </button>
           )}
           <button
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded"
             onClick={() => setIsOpen(false)}
           >
             Annuler
           </button>
           <button
-            className="px-4 py-2 text-sm font-medium text-white bg-[#F16E00]"
+            className="px-4 py-2 text-sm font-medium text-white bg-[#F16E00] rounded"
             onClick={handleSave}
           >
             Sauvegarder

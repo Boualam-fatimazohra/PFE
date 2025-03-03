@@ -1,6 +1,6 @@
-import  { useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 
-const MiniCalendar = ({ currentMonth, onMonthChange, onDateClick }) => {
+const MiniCalendar = ({ currentMonth, onMonthChange, onDateClick, events }) => {
   const getDaysInMonth = (year, month) => {
     return new Date(year, month + 1, 0).getDate();
   };
@@ -49,6 +49,27 @@ const MiniCalendar = ({ currentMonth, onMonthChange, onDateClick }) => {
     );
   };
 
+  
+  const getEventForDay = (day, isCurrentMonth) => {
+    if (!events || !isCurrentMonth) return null;
+    
+    const date = new Date(year, month, day);
+    const dateStr = date.toISOString().split('T')[0];
+    const dayEvents = events.filter(event => {
+      const eventStart = new Date(event.start);
+      const eventEnd = new Date(event.end || event.start);
+      const start = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate());
+      const end = new Date(eventEnd.getFullYear(), eventEnd.getMonth(), eventEnd.getDate());
+      return date >= start && date <= end;
+    });
+    
+    if (dayEvents.length === 0) return null;
+    
+    // Retourne le premier événement (pour la couleur)
+    // On pourrait améliorer ça pour gérer plusieurs événements par jour
+    return dayEvents[0];
+  };
+
   const handleDateClick = (day, isCurrentMonth) => {
     if (!isCurrentMonth) return;
     const clickedDate = new Date(year, month, day);
@@ -58,6 +79,33 @@ const MiniCalendar = ({ currentMonth, onMonthChange, onDateClick }) => {
   const renderDay = (day, isCurrentMonth, index) => {
     const dayIsToday = isCurrentMonth && isToday(day);
     const dayIsSelected = isCurrentMonth && isSelected(day);
+    const eventForDay = isCurrentMonth ? getEventForDay(day, isCurrentMonth) : null;
+    let bgColor = '';
+    let textColor = 'text-gray-900';
+    
+    if (dayIsToday) {
+      bgColor = 'bg-gray-500';
+      textColor = 'text-white';
+    } else if (eventForDay) {
+      if (eventForDay.title?.toLowerCase().includes('spring') || 
+          eventForDay.type === 'Formation') {
+        bgColor = 'bg-red-500';
+        textColor = 'text-white';
+      } else if (eventForDay.title?.toLowerCase().includes('java') || 
+                eventForDay.type === 'Événement') {
+        bgColor = 'bg-blue-500';
+        textColor = 'text-white';
+      } else {
+        bgColor = 'bg-orange-500';
+        textColor = 'text-white';
+      }
+    } else if (dayIsSelected) {
+      bgColor = 'bg-orange-100';
+    }
+    
+    if (!isCurrentMonth) {
+      textColor = 'text-gray-400';
+    }
     
     return (
       <div 
@@ -65,18 +113,17 @@ const MiniCalendar = ({ currentMonth, onMonthChange, onDateClick }) => {
         onClick={() => handleDateClick(day, isCurrentMonth)}
         className={`
             w-8 h-8 flex items-center justify-center text-sm cursor-pointer
-            ${!isCurrentMonth ? 'text-gray-400' : 'text-gray-900'}
-            ${dayIsToday ? 'bg-orange-500 text-white rounded-full' : ''} 
-
-            ${dayIsSelected ? 'bg-orange-100 rounded-full' : ''} 
+            ${textColor}
+            ${bgColor}
+            ${bgColor ? 'rounded-full' : ''} 
             hover:bg-gray-100 rounded-full transition-colors duration-200
           `}
-          
       >
         {day}
       </div>
     );
   };
+  
   return (
     <div className="w-full sm:w-60 p-4 border border-black shadow-sm">
       <div className="flex items-center justify-between mb-4">
@@ -117,21 +164,6 @@ const MiniCalendar = ({ currentMonth, onMonthChange, onDateClick }) => {
         {getCurrentMonthDays().map((day, index) => renderDay(day, true, 'current' + index))}
         {getNextMonthDays().map((day, index) => renderDay(day, false, 'next' + index))}
       </div>
-
-      {/* search bar */}
-      
-      {/* <div className="mt-4 sm:mt-6">
-        <div className="flex items-center px-3 py-2 bg-gray-50 rounded-lg">
-          <svg className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-          <input
-            type="text"
-            placeholder="Rechercher des personnes"
-            className="ml-2 bg-transparent border-none focus:outline-none text-sm w-full"
-          />
-        </div>
-      </div> */}
     </div>
   );
 };
