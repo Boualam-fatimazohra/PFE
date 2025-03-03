@@ -34,23 +34,24 @@ export const fetchFormations = async (): Promise<Formation[]> => {
   }
 };
 
-export const addFormation = async (formationData: Formation): Promise<Formation> => {
-  try {
-    const response = await api.post(ADD_URL, formationData, {
-      withCredentials: true, // Active l'envoi des cookies avec la requête
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
+// In api/services/api.js or wherever your addFormation function is defined
 
-    return response.data;
-  } catch (error) {
-    console.error("Erreur lors de l'ajout de la formation", error);
+export const addFormation = async (formData) => {
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_LINK}/api/formation/Addformation`, {
+      method: 'POST',
+      body: formData, // Don't set Content-Type header for multipart/form-data
+      credentials: 'include'
+    });
     
-    if (axios.isAxiosError(error) && error.response?.status === 401) {
-      throw new Error('Veuillez vous connecter pour ajouter une formation');
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to add formation');
     }
     
+    return await response.json();
+  } catch (error) {
+    console.error('Error adding formation:', error);
     throw error;
   }
 };

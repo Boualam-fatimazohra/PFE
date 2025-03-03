@@ -1,16 +1,15 @@
 import * as React from "react";
-import {  Clock, ArrowRight } from 'lucide-react';
-import { Printer, Search, FileDown } from 'lucide-react';
-import CourseHeader from "../Formation/CoursHeader";
+import { Clock, ArrowRight, Printer, Search, FileDown, Send } from 'lucide-react';
+import CourseHeader from "@/components/Formation/CoursHeader";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card"; // Ajout de l'import manquant pour Card
+import { Card } from "@/components/ui/card";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-// Suppression de l'import motion qui n'est pas utilisé
 import test from '@/assets/images/test.jpg';
 
 // Types
 interface Beneficiaire {
+  _id?: string;
   nom: string;
   prenom: string;
   email: string;
@@ -23,7 +22,6 @@ interface Beneficiaire {
   isSaturate: boolean;
 }
 
-// Définition correcte de l'interface Formation
 interface Formation {
   id: string;
   title: string;
@@ -33,180 +31,14 @@ interface Formation {
   duration: string;
 }
 
-// Cohérence des interfaces - suppression de FormationItem redondante
-// et correction des statuts pour qu'ils correspondent au reste du code
-
-// Correction de l'interface FormationCardProps
 interface FormationCardProps {
   formation: Formation;
   onAccess: () => void;
-  onEdit?: (formation: Formation) => void; // rendu optionnel
-  onDelete?: (id: string) => void; // rendu optionnel et type corrigé
+  onEdit?: (formation: Formation) => void;
+  onDelete?: (id: string) => void;
 }
 
-// App Component
-const BeneficiairesList = () => {
-  const [showBeneficiaires, setShowBeneficiaires] = React.useState(false);
-  const [selectedFormation, setSelectedFormation] = React.useState<string | null>(null);
-  
-  // Simulated formations data
-  const formationsData: Formation[] = [
-    {
-      id: "1",
-      title: "Formation React Avancé",
-      description: "Maîtrisez les concepts avancés de React et ses hooks",
-      status: "En cours",
-      image: "/api/placeholder/400/300",
-      duration: "20 heures"
-    },
-    {
-      id: "2",
-      title: "Développement Frontend avec Tailwind CSS",
-      description: "Apprenez à utiliser Tailwind CSS pour des interfaces modernes",
-      status: "A venir",
-      image: "/api/placeholder/400/300",
-      duration: "15 heures"
-    },
-    {
-      id: "3",
-      title: "Backend avec Node.js",
-      description: "Développez des API RESTful avec Express et Node.js",
-      status: "Terminé", // Correction du statut pour correspondre au type
-      image: "/api/placeholder/400/300",
-      duration: "25 heures"
-    },
-    {
-      id: "4",
-      title: "Backend avec laravel",
-      description: "Développez des API RESTful avec laravel",
-      status: "Terminé", // Correction du statut pour correspondre au type
-      image: "/api/placeholder/400/300",
-      duration: "18 heures"
-    },
-    {
-      id: "5",
-      title: "Décisionnelle avec talend",
-      description: "Décisionnelle avec talend",
-      status: "Terminé", // Correction du statut pour correspondre au type
-      image: "/api/placeholder/400/300",
-      duration: "25 heures"
-    },
-    {
-      id: "6",
-      title: "Backend avec Node.js",
-      description: "Développez des API RESTful avec Express et Node.js",
-      status: "Terminé", // Correction du statut pour correspondre au type
-      image: "/api/placeholder/400/300",
-      duration: "25 heures"
-    }
-  ];
-  
-  const handleAccessBeneficiaires = (formationId: string) => {
-    setSelectedFormation(formationId);
-    setShowBeneficiaires(true);
-  };
-  
-  const handleBackToFormations = () => {
-    setShowBeneficiaires(false);
-    setSelectedFormation(null);
-  };
-  
-  return (
-    <div className="container mx-auto p-6">
-      {!showBeneficiaires ? (
-        <FormationsList 
-          formations={formationsData} 
-          onAccessBeneficiaires={handleAccessBeneficiaires}
-        />
-      ) : (
-        <div>
-           <div className="flex justify-between items-center mb-4  ">
-            <Button 
-              variant="outline" 
-              className="flex items-center gap-1 text-xl font-medium text-orange-600 hover:text-orange-800 transition"
-              onClick={handleBackToFormations}
-            >
-               <svg width="18" height="19" viewBox="0 0 18 19" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M10.6665 4.65625L5.21143 10L10.6665 15.3437L12.2251 13.8177L8.32784 10L12.2251 6.1838L10.6665 4.65625Z" fill="#F16E00"/>
-            </svg>
-            <span className="text-lg font-bold text-[#000000] "> Retour</span> 
-            </Button>
-          </div>
-          
-           <CourseHeader 
-          title="Formation" 
-          subtitle="AWS : Développement, déploiement et gestion" 
-          status="En Cours" 
-        />
-          <BeneficiairesListe />
-        </div>
-      )}
-    </div>
-  );
-};
-
-// Formations List Component
-interface FormationsListProps {
-  formations: Formation[];
-  onAccessBeneficiaires: (formationId: string) => void;
-}
-
-const FormationsList = ({ formations, onAccessBeneficiaires }: FormationsListProps) => {
-  // Séparer les formations en deux groupes : "En cours" et autres
-  const formationsEnCours = formations.filter(formation => formation.status === "En cours");
-  const autresFormations = formations.filter(formation => formation.status !== "En cours");
-
-  return (
-    <div>
-      <h2 className="text-2xl font-bold mb-6">Liste des formations</h2>
-      
-      {/* Afficher d'abord les formations "En cours" */}
-      {formationsEnCours.length > 0 && (
-        <>
-          <div className="flex items-center mb-4">
-      <hr className="flex-grow border-t border-gray-300" />
-      <h3 className="text-xl font-semibold mx-4 whitespace-nowrap">Formations en cours</h3>
-      <hr className="flex-grow border-t border-gray-300" />
-    </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {formationsEnCours.map((formation) => (
-              <FormationCard 
-                key={formation.id} 
-                formation={formation} 
-                onAccess={() => onAccessBeneficiaires(formation.id)}
-              />
-            ))}
-          </div>
-        </>
-      )}
-
-      {/* Séparateur visuel */}
-      {formationsEnCours.length > 0 && autresFormations.length > 0 }
-
-      {/* Afficher ensuite les autres formations */}
-      {autresFormations.length > 0 && (
-        <>
-          <div className="flex items-center mb-4">
-            <hr className="flex-grow border-t border-gray-300" />
-            <h3 className="text-xl font-semibold mx-4 whitespace-nowrap">Autres formations</h3>
-            <hr className="flex-grow border-t border-gray-300" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {autresFormations.map((formation) => (
-              <FormationCard 
-                key={formation.id} 
-                formation={formation} 
-                onAccess={() => onAccessBeneficiaires(formation.id)}
-              />
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  );
-};
-
-// Formation Card Component corrigé
+// Formation Card Component
 const FormationCard = ({ formation, onAccess, onEdit, onDelete }: FormationCardProps) => {
   const getStatusClass = () => {
     switch (formation.status) {
@@ -214,9 +46,9 @@ const FormationCard = ({ formation, onAccess, onEdit, onDelete }: FormationCardP
         return "bg-[#FFF4EB] text-[#FF7900]";
       case "A venir":
         return "bg-[#F2E7FF] text-[#9C00C3]";
-      case "Terminé": // Correction pour correspondre à l'interface Formation
+      case "Terminé":
         return "bg-[#E6F7EA] text-[#00C31F]";
-      case "Replanifié": // Correction pour correspondre à l'interface Formation
+      case "Replanifié":
         return "bg-[#F5F5F5] text-[#4D4D4D]"; 
       default:
         return "";
@@ -245,7 +77,7 @@ const FormationCard = ({ formation, onAccess, onEdit, onDelete }: FormationCardP
             variant="orange"
             size="sm"
             className="rounded-none"
-            onClick={() => onAccess()}
+            onClick={onAccess}
           >
             Accéder →
           </Button>
@@ -255,15 +87,79 @@ const FormationCard = ({ formation, onAccess, onEdit, onDelete }: FormationCardP
   );
 };
 
-// Beneficiaires List Component
-const BeneficiairesListe = () => {
+// Formations List Component
+interface FormationsListProps {
+  formations: Formation[];
+  onAccessBeneficiaires: (formationId: string) => void;
+}
+
+const FormationsList = ({ formations, onAccessBeneficiaires }: FormationsListProps) => {
+  // Trier les formations: "En cours" d'abord, puis les autres
+  const sortedFormations = React.useMemo(() => {
+    const enCoursFormations = formations.filter(formation => formation.status === "En cours");
+    const otherFormations = formations.filter(formation => formation.status !== "En cours");
+    
+    return { enCoursFormations, otherFormations };
+  }, [formations]);
+  
+  return (
+    <div>
+      <h2 className="text-2xl font-bold mb-6">Liste des formations</h2>
+      
+      {/* Afficher les formations "En cours" */}
+      {sortedFormations.enCoursFormations.length > 0 && (
+        <>
+          <div className="flex items-center mb-4">
+            <hr className="flex-grow border-t border-gray-300" />
+            <h3 className="text-xl font-semibold mx-4 whitespace-nowrap">Formations en cours</h3>
+            <hr className="flex-grow border-t border-gray-300" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {sortedFormations.enCoursFormations.map((formation) => (
+              <FormationCard 
+                key={formation.id} 
+                formation={formation} 
+                onAccess={() => onAccessBeneficiaires(formation.id)}
+              />
+            ))}
+          </div>
+        </>
+      )}
+      
+      {/* Afficher les autres formations */}
+      {sortedFormations.otherFormations.length > 0 && (
+        <>
+          <div className="flex items-center mb-4">
+            <hr className="flex-grow border-t border-gray-300" />
+            <h3 className="text-xl font-semibold mx-4 whitespace-nowrap">Autres formations</h3>
+            <hr className="flex-grow border-t border-gray-300" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {sortedFormations.otherFormations.map((formation) => (
+              <FormationCard 
+                key={formation.id} 
+                formation={formation} 
+                onAccess={() => onAccessBeneficiaires(formation.id)}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+// Composant de la liste des bénéficiaires avec fonctionnalité d'envoi
+const BeneficiairesListe = ({ formationId }) => {
   const [beneficiaires, setBeneficiaires] = React.useState<Beneficiaire[]>([]);
   const [search, setSearch] = React.useState("");
   const [selectAll, setSelectAll] = React.useState(false);
   const [selectedBeneficiaires, setSelectedBeneficiaires] = React.useState<number[]>([]);
   const [expandedRow, setExpandedRow] = React.useState<number | null>(null);
-  // Ajout des états pour la pagination
   const [currentPage, setCurrentPage] = React.useState(1);
+  const [linkSent, setLinkSent] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null); 
   const itemsPerPage = 11;
 
   React.useEffect(() => {
@@ -292,6 +188,30 @@ const BeneficiairesListe = () => {
         profession: "Designer",
         isBlack: true,
         isSaturate: false
+      },
+      {
+        nom: "Dubois", 
+        prenom: "Pierre", 
+        email: "pierre.dubois@example.com", 
+        genre: "Homme", 
+        pays: "Belgique", 
+        specialite: "Data Science", 
+        etablissement: "Université de Bruxelles", 
+        profession: "Ingénieur",
+        isBlack: false,
+        isSaturate: true
+      },
+      {
+        nom: "Garcia", 
+        prenom: "Maria", 
+        email: "maria.garcia@example.com", 
+        genre: "Femme", 
+        pays: "Espagne", 
+        specialite: "IA", 
+        etablissement: "Universidad de Madrid", 
+        profession: "Chercheuse",
+        isBlack: false,
+        isSaturate: false
       }
     ];
     
@@ -308,7 +228,9 @@ const BeneficiairesListe = () => {
   }, []);
 
   const filteredBeneficiaires = beneficiaires.filter(b =>
-    b.nom.toLowerCase().includes(search.toLowerCase())
+    b.nom.toLowerCase().includes(search.toLowerCase()) ||
+    b.prenom.toLowerCase().includes(search.toLowerCase()) ||
+    b.email.toLowerCase().includes(search.toLowerCase())
   );
 
   // Calcul pour la pagination
@@ -337,6 +259,44 @@ const BeneficiairesListe = () => {
     setSelectAll(newSelected.length === displayedBeneficiaires.length);
   };
 
+  const sendLink = async () => {
+    if (selectedBeneficiaires.length === 0) {
+      alert("Veuillez sélectionner au moins un bénéficiaire");
+      return;
+    }
+    
+    // Simulation d'envoi de lien
+    console.log("Envoi du lien aux bénéficiaires sélectionnés:", 
+      selectedBeneficiaires.map(index => displayedBeneficiaires[index])
+    );
+    
+    const selectedBeneficiairesList = selectedBeneficiaires.map(index => displayedBeneficiaires[index]);
+    const beneficiaryIds = selectedBeneficiairesList.map(beneficiaire => beneficiaire._id || "");
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Appel à l'API backend pour envoyer les liens d'évaluation
+      const response = await axios.post('/api/formations/send-evaluation-links', {
+        beneficiaryIds,
+        formationId
+      });
+      
+      console.log("Réponse de l'API:", response.data);
+      
+      // Afficher un message de confirmation
+      setLinkSent(true);
+      setTimeout(() => setLinkSent(false), 3000);
+      
+    } catch (error) {
+      console.error("Erreur lors de l'envoi des liens:", error);
+      setError(error.response?.data?.message || "Une erreur est survenue lors de l'envoi des liens");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Fonctions de navigation pour la pagination
   const goToPage = (page: number) => {
     setCurrentPage(page);
@@ -363,7 +323,46 @@ const BeneficiairesListe = () => {
 
   return (
     <div className="bg-white border border-[#DDD] p-6">
-      <h2 className="text-2xl font-bold mb-6">Liste des bénéficiaires</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Liste des bénéficiaires</h2>
+        
+        <Button
+          variant="orange"
+          className="flex items-center gap-2 px-4 py-2"
+          onClick={sendLink}
+          disabled={selectedBeneficiaires.length === 0 || loading}
+        >
+          {loading ? (
+            <>
+              <span className="animate-spin h-5 w-5 mr-2 border-b-2 border-white rounded-full"></span>
+              Envoi en cours...
+            </>
+          ) : (
+            <>
+              <Send size={18} />
+              Envoyer le lien
+            </>
+          )}
+        </Button>
+      </div>
+
+      {linkSent && (
+        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4 flex items-center">
+          <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          </svg>
+          <span>Lien envoyé avec succès aux bénéficiaires sélectionnés!</span>
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 flex items-center">
+          <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+          </svg>
+          <span>{error}</span>
+        </div>
+      )}
 
       <div className="flex items-center mb-6 gap-3">
         <div className="relative flex-grow mr-4">
@@ -415,6 +414,7 @@ const BeneficiairesListe = () => {
                 onChange={handleSelectAll} 
               />
             </th>
+            <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">ID</th>
             <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Nom</th>
             <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Prénom</th>
             <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Email</th>
@@ -436,6 +436,7 @@ const BeneficiairesListe = () => {
                     onChange={() => handleSelectOne(index)}
                   />
                 </td>
+                <td className="p-3 text-[#333] text-sm">{beneficiaire._id}</td>
                 <td className="p-3 text-[#333] text-sm">{beneficiaire.nom}</td>
                 <td className="p-3 text-[#333] text-sm">{beneficiaire.prenom}</td>
                 <td className="p-3 text-[#333] text-sm">{beneficiaire.email}</td>
@@ -461,10 +462,6 @@ const BeneficiairesListe = () => {
                       className={`transform transition-transform ${expandedRow === index ? "rotate-90" : ""}`}
                     >
                       <path fillRule="evenodd" clipRule="evenodd" d="M1.77778 12L8 6L1.77778 0L0 1.71343L4.44533 6L0 10.2849L1.77778 12Z" fill="black"/>
-                      <mask id="mask0_717_3240" maskUnits="userSpaceOnUse" x="0" y="0" width="8" height="12">
-                        <path fillRule="evenodd" clipRule="evenodd" d="M1.77778 12L8 6L1.77778 0L0 1.71343L4.44533 6L0 10.2849L1.77778 12Z" fill="white"/>
-                      </mask>
-                      <g mask="url(#mask0_717_3240)"></g>
                     </svg>
                   </button>
                 </td>
@@ -548,4 +545,81 @@ const BeneficiairesListe = () => {
   );
 };
 
-export default BeneficiairesList;
+// App Component
+const EvaluationPages = () => {
+  const [showBeneficiaires, setShowBeneficiaires] = React.useState(false);
+  const [selectedFormation, setSelectedFormation] = React.useState<string | null>(null);
+  
+  // Simulated formations data
+  const formationsData: Formation[] = [
+    {
+      id: "1",
+      title: "Formation React Avancé",
+      description: "Maîtrisez les concepts avancés de React et ses hooks",
+      status: "En cours",
+      image: "/api/placeholder/400/300",
+      duration: "20 heures"
+    },
+    {
+      id: "2",
+      title: "Formation TypeScript",
+      description: "Apprenez TypeScript pour des applications React robustes",
+      status: "A venir",
+      image: "/api/placeholder/400/300",
+      duration: "15 heures"
+    },
+    {
+      id: "3",
+      title: "Formation Node.js",
+      description: "Créez des API RESTful avec Node.js et Express",
+      status: "Terminé",
+      image: "/api/placeholder/400/300",
+      duration: "18 heures"
+    }
+  ];
+  
+  const handleAccessBeneficiaires = (formationId: string) => {
+    setSelectedFormation(formationId);
+    setShowBeneficiaires(true);
+  };
+  
+  const handleBackToFormations = () => {
+    setShowBeneficiaires(false);
+    setSelectedFormation(null);
+  };
+    return (
+      <div className="container mx-auto p-6">
+        {!showBeneficiaires ? (
+          <FormationsList 
+            formations={formationsData} 
+            onAccessBeneficiaires={handleAccessBeneficiaires}
+          />
+        ) : (
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <Button 
+                variant="outline" 
+                className="flex items-center gap-1 text-xl font-medium text-orange-600 hover:text-orange-800 transition"
+                onClick={handleBackToFormations}
+              >
+                <svg width="18" height="19" viewBox="0 0 18 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M10.6665 4.65625L5.21143 10L10.6665 15.3437L12.2251 13.8177L8.32784 10L12.2251 6.1838L10.6665 4.65625Z" fill="#F16E00"/>
+                </svg>
+                <span className="text-lg font-bold text-[#000000]"> Retour</span> 
+              </Button>
+            </div>
+            
+            <CourseHeader 
+              title="Formation" 
+              subtitle={formationsData.find(f => f.id === selectedFormation)?.title || "Formation"} 
+              status="En Cours" 
+            />
+            {/* Passage de l'ID de la formation au composant BeneficiairesListe */}
+            <BeneficiairesListe formationId={selectedFormation} />
+          </div>
+        )}
+      </div>
+    );
+  };
+
+export default EvaluationPages;

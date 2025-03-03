@@ -1,7 +1,7 @@
 import { Bell, UserCircle, X, Sparkles } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { logout } from "@/services/authServices";
+import { logout } from "../../services/authServices";
 import Chatbot from "@/pages/Chatbot"; // Import the Chatbot component
 
 export function DashboardHeader() {
@@ -65,13 +65,13 @@ export function DashboardHeader() {
       { name: "Mes Formations", path: "/formateur/mesformation" },
       { name: "Calendrier", path: "/CalendarView" },
       { name: "Mes Bénéficiaires", path: "/BeneficiairesList" },
-      { name: "Evaluation", path: "/formulaire-evaluation" },
+      { name: "Evaluation", path: "/EvaluationPages" },
     ];
   } else if (user?.role === "Manager") {
     navigationLinks = [
       { name: "Dashboard", path: "/manager/dashboardManager" },
-      { name: "Page Link", path: "/page-link" },
-      { name: "Page Link", path: "/page-link-2" },
+      { name: "Formations", path: "/manager/FormationDashboard" },
+      { name: "Formateurs", path: "/manager/FormateurManager" },
       { name: "Page Link", path: "/page-link-3" },
     ];
   } else if (user?.role === "Coordinateur") {

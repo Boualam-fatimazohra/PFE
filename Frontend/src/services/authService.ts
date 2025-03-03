@@ -1,58 +1,47 @@
-import axios from "axios";
+import apiClient from './apiClient';
 
-const API_BASE_URL = "http://localhost:5000/api/auth";
-
-export const login = async (credentials) => {
+export const login = async (credentials: { email: string; password: string }) => {
   try {
-    console.log("Sending login request with credentials:", {
-      email: credentials.email,
-      hasPassword: !!credentials.password,
-    });
-
-    const response = await axios.post(`${API_BASE_URL}/signIn`, credentials, {
-      withCredentials: true,
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    console.log("Complete axios response:", response);
-
-    if (!response.data) {
-      throw new Error("Empty response from server");
+    const response = await apiClient.post('/auth/signIn', credentials);
+    
+    // Store user info in localStorage for client-side access
+    if (response.data.user) {
+      localStorage.setItem('userRole', response.data.role);
+      localStorage.setItem('nom', response.data.user.nom || '');
+      localStorage.setItem('prenom', response.data.user.prenom || '');
+      localStorage.setItem('userId', response.data.user.userId || '');
     }
-
-    const { role, user } = response.data;
-
-    console.log("User object from response:", user);
-
-    if (!role) {
-      throw new Error("Role missing in response");
-    }
-
-    if (!user || typeof user !== "object" || Object.keys(user).length === 0) {
-      throw new Error("User data missing or invalid in response");
-    }
-
-    // Vérification et stockage dans localStorage
-    localStorage.setItem("nom", user.nom || "");
-    localStorage.setItem("prenom", user.prenom || "");
-    localStorage.setItem("userRole", role || "");
-
-    console.log("Stored localStorage values:", {
-      nom: localStorage.getItem("nom"),
-      prenom: localStorage.getItem("prenom"),
-      userRole: localStorage.getItem("userRole"),
-    });
-
+    
     return response.data;
   } catch (error) {
-    console.error("Login API error details:", {
-      message: error.message,
-      response: error.response?.data,
-      status: error.response?.status,
-    });
+    console.error('Login error:', error);
+    throw error;
+  }
+};
 
+export const logout = async () => {
+  try {
+    await apiClient.get('/auth/logout');
+    
+    // Clear localStorage
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('nom');
+    localStorage.removeItem('prenom');
+    localStorage.removeItem('userId');
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Logout error:', error);
+    throw error;
+  }
+};
+
+export const forgotPassword = async (email: string) => {
+  try {
+    const response = await apiClient.post('/auth/forgot-password', { email });
+    return response.data;
+  } catch (error) {
+    console.error('Forgot password error:', error);
     throw error;
   }
 };

@@ -4,6 +4,7 @@ const readExcelFile = require("../utils/excelReader");
 const XLSX = require("xlsx");
 const  BeneficiareFormation=require("../Models/beneficiairesFormation.js");
 const mongoose = require('mongoose');
+const Formateur=require("../Models/formateur.model");
 const createBeneficiaire = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -331,6 +332,61 @@ const getBeneficiaireFormation = async (req, res) => {
 };
 
 
+const getNombreBeneficiairesParFormateur = async (req, res) => {
+  console.log("debut de la fct getNbrBeneficiaire par formateur");
+  const  utilisateurId = req.user.userId;
+  const role=req.user.role;
+  let formateur; // Déclaration dans la portée supérieure
+
+  try {
+    if (role === "Formateur") {
+      if (!mongoose.Types.ObjectId.isValid(utilisateurId)) {
+        return res.status(400).json({ message: "ID utilisateur invalide" });
+      }
+
+      formateur = await Formateur.findOne({ utilisateur: utilisateurId }); // Assignation
+
+    } else if (role === "Manager") {
+      const id = req.body.idFormateur;
+
+      if (!id) {
+        return res.status(400).json({ message: "idFormateur requis dans le body" });
+      }
+      
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ message: "ID formateur invalide" });
+      }
+
+      formateur = await Formateur.findById(id); // Correction: .findById(id) au lieu de .findById({id})
+
+    } else {
+      // Cas où le rôle n'est ni Formateur ni Manager
+      return res.status(403).json({ message: "Accès interdit" });
+    }
+
+    if (!formateur) {
+      return res.status(404).json({ message: "Formateur non trouvé" });
+    }
+
+    // Le reste reste inchangé
+    const formations = await Formation.find({ formateur: formateur._id }).select("_id");
+
+    if (formations.length === 0) {
+      return res.json({ nombreBeneficiaires: 0 });
+    }
+
+    const formationIds = formations.map(f => f._id);
+    const nombreBeneficiaires = await BeneficiareFormation.countDocuments({
+      formation: { $in: formationIds }
+    });
+
+    res.json({ nombreBeneficiaires });
+
+  } catch (error) {
+    console.error("Erreur :", error);
+    res.status(500).json({ message: "Erreur interne du serveur", error: error.message });
+  }
+};
 
 // Export the functions for use in routes
 module.exports = {
@@ -340,5 +396,6 @@ module.exports = {
     deleteBeneficiaire,
     uploadBeneficiairesFromExcel,
     createBeneficiaire,
-    getBeneficiaireFormation
+    getBeneficiaireFormation,
+    getNombreBeneficiairesParFormateur
 };
