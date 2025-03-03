@@ -1,4 +1,3 @@
-// 📌 Importation des composants et du contexte
 import {
   Table,
   TableBody,
@@ -9,7 +8,7 @@ import {
 } from "@/components/ui/table";
 import { useFormations } from "../../contexts/FormationContext";
 
-// 📌 Interface des formations - assurez-vous d'utiliser la même définition partout
+// Formation interface
 export interface FormationTableItem {
   _id: string;
   nom: string;
@@ -18,12 +17,12 @@ export interface FormationTableItem {
   status: string;
 }
 
-// Interface des props pour FormationsTable
+// Define props interface
 interface FormationsTableProps {
-  formations?: FormationTableItem[];
+  formations?: FormationTableItem[]; // Make the prop optional
 }
 
-// Fonction pour formater la date (extrait uniquement la partie date)
+// Formatage de date
 const formatDate = (dateString: string) => {
   try {
     const date = new Date(dateString);
@@ -33,20 +32,18 @@ const formatDate = (dateString: string) => {
       year: 'numeric'
     });
   } catch (e) {
-    return dateString; // En cas d'erreur, retourne la chaîne d'origine
+    return dateString;
   }
 };
 
-// Composant helper pour afficher le statut avec un badge stylisé
 const StatusBadge = ({ status }: { status: string }) => {
   const statusStyles: Record<string, string> = {
     "En Cours": "bg-orange-100 text-orange-700",
     "Terminer": "bg-green-100 text-green-700",
     "Replanifier": "bg-gray-100 text-gray-700",
-    "Avenir": "bg-red-100 text-red-700", // A venir en rouge
+    "Avenir": "bg-red-100 text-red-700",
   };
   
-  // Si le statut est inconnu, on applique un style par défaut
   const badgeStyle = statusStyles[status] || "bg-red-100 text-red-700";
   
   return (
@@ -56,17 +53,18 @@ const StatusBadge = ({ status }: { status: string }) => {
   );
 };
 
-// 📌 Composant principal de la table des formations
-export const FormationsTable = ({ formations: propFormations }: FormationsTableProps) => {
-  // Utiliser les formations passées en props ou celles du contexte
-  const formationsContext = useFormations();
-  const loading = formationsContext.loading;
-  // Cast des formations du contexte au type FormationTableItem[]
-  const contextFormations = formationsContext.formations as unknown as FormationTableItem[];
-  const formations = propFormations || contextFormations;
+// Update component to accept formations prop
+export const FormationsTable: React.FC<FormationsTableProps> = ({ formations: propFormations }) => {
+  // Use formations from props if provided, otherwise use from context
+  const { formations: contextFormations, loading } = useFormations();
+  const formationsToDisplay = propFormations || contextFormations;
   
   if (loading && !propFormations) {
     return <p>Chargement des formations...</p>;
+  }
+  
+  if (!formationsToDisplay || formationsToDisplay.length === 0) {
+    return <p className="text-center py-4 text-gray-500">Aucune formation trouvée</p>;
   }
   
   return (
@@ -81,12 +79,12 @@ export const FormationsTable = ({ formations: propFormations }: FormationsTableP
           </TableRow>
         </TableHeader>
         <TableBody>
-          {formations
-            .filter((formation: FormationTableItem) => 
+          {formationsToDisplay
+            .filter(formation => 
               ["En Cours", "Terminer", "Replanifier", "Avenir"].includes(formation.status)
             )
-            .slice(-8) // Récupérer les 8 dernières formations
-            .map((formation: FormationTableItem) => (
+            .slice(-8)
+            .map(formation => (
               <TableRow key={formation._id} className="border-b">
                 <TableCell className="py-3">{formation.nom}</TableCell>
                 <TableCell>{formatDate(formation.dateDebut)}</TableCell>
