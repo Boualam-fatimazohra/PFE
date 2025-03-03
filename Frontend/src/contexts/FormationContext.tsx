@@ -75,10 +75,6 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
     getFormations();
     fetchNombreBeneficiaires();
   }, []);
-
-  // debut : 
- 
-  // fin : 
   const refreshFormations = async () => {
     setLoading(true);
     try {
