@@ -222,5 +222,33 @@ const getFormateurs = async (req, res) => {
     res.status(500).json({ message: "Erreur lors de la récupération des formations", error: error.message });
   }
 };
-  
-  module.exports = { createFormateur, getFormateurs, getFormateurById, updateFormateur, deleteFormateur, GetFormateurFormations,getFormateurByManager };
+// debut :
+// Get Formations of connected formateur
+const getFormations = async (req, res) => {
+  try {
+    // 1. Get user ID from authentication
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ message: "Utilisateur non authentifié" });
+    }
+
+    // 2. Find the formateur associated with this user
+    const formateur = await Formateur.findOne({ utilisateur: userId });
+    if (!formateur) {
+      return res.status(404).json({ message: "Formateur non trouvé" });
+    }
+
+    // 3. Fetch all formations of this formateur
+    const formations = await Formation.find({ formateur: formateur._id });
+
+    // 4. Return formations
+    res.status(200).json(formations);
+  } catch (error) {
+    res.status(500).json({ 
+      message: "Erreur lors de la récupération des formations",
+      error: error.message 
+    });
+  }
+}; 
+// fin : 
+  module.exports = { createFormateur, getFormateurs, getFormateurById, updateFormateur, deleteFormateur, GetFormateurFormations,getFormateurByManager,getFormations };

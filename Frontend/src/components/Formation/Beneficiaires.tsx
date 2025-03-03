@@ -152,18 +152,56 @@ interface FormationsListProps {
 }
 
 const FormationsList = ({ formations, onAccessBeneficiaires }: FormationsListProps) => {
+  // Séparer les formations en deux groupes : "En cours" et autres
+  const formationsEnCours = formations.filter(formation => formation.status === "En cours");
+  const autresFormations = formations.filter(formation => formation.status !== "En cours");
+
   return (
     <div>
       <h2 className="text-2xl font-bold mb-6">Liste des formations</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {formations.map((formation) => (
-          <FormationCard 
-            key={formation.id} 
-            formation={formation} 
-            onAccess={() => onAccessBeneficiaires(formation.id)}
-          />
-        ))}
-      </div>
+      
+      {/* Afficher d'abord les formations "En cours" */}
+      {formationsEnCours.length > 0 && (
+        <>
+          <div className="flex items-center mb-4">
+      <hr className="flex-grow border-t border-gray-300" />
+      <h3 className="text-xl font-semibold mx-4 whitespace-nowrap">Formations en cours</h3>
+      <hr className="flex-grow border-t border-gray-300" />
+    </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {formationsEnCours.map((formation) => (
+              <FormationCard 
+                key={formation.id} 
+                formation={formation} 
+                onAccess={() => onAccessBeneficiaires(formation.id)}
+              />
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* Séparateur visuel */}
+      {formationsEnCours.length > 0 && autresFormations.length > 0 }
+
+      {/* Afficher ensuite les autres formations */}
+      {autresFormations.length > 0 && (
+        <>
+          <div className="flex items-center mb-4">
+            <hr className="flex-grow border-t border-gray-300" />
+            <h3 className="text-xl font-semibold mx-4 whitespace-nowrap">Autres formations</h3>
+            <hr className="flex-grow border-t border-gray-300" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {autresFormations.map((formation) => (
+              <FormationCard 
+                key={formation.id} 
+                formation={formation} 
+                onAccess={() => onAccessBeneficiaires(formation.id)}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 };
