@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Eye, Upload, Trash2 } from "lucide-react";
+import { useFormations } from "../../contexts/FormationContext";
 
 const ModalEditFormation = ({ formation, onClose }) => {
   if (!formation) return null;
@@ -9,6 +10,33 @@ const ModalEditFormation = ({ formation, onClose }) => {
   const [status, setStatus] = useState(formation.status || "En cours");
   const [image, setImage] = useState(null);
   const [fileName, setFileName] = useState("");
+
+  const { updateFormation, refreshFormations } = useFormations();
+
+  // Add a function to handle the form submission
+  const handleSubmit = async () => {
+    try {
+      // Create updated formation object
+      const updatedFormation = {
+        ...formation,
+        nom: title,
+        description: description,
+        status: status,
+        // Add any other fields that need updating
+      };
+      console.log("formation._id: " + formation._id);
+      console.log("formation.id: " + formation.id);
+      // Call API to update formation (you'll need to add this function to your context)
+      await updateFormation(formation.id, updatedFormation);
+      // Refresh formations
+      await refreshFormations();
+      // Close the modal
+      onClose();
+    } catch (error) {
+      console.error("Error updating formation:", error);
+      // You might want to show an error message to the user
+    }
+  };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -97,7 +125,10 @@ const ModalEditFormation = ({ formation, onClose }) => {
           >
             Annuler
           </button>
-          <button className="bg-orange-500 text-white px-6 py-3 rounded-md text-lg hover:bg-orange-600">
+          <button 
+            className="bg-orange-500 text-white px-6 py-3 rounded-md text-lg hover:bg-orange-600"
+            onClick={handleSubmit}
+            >
             Valider
           </button>
         </div>

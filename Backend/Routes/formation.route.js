@@ -4,12 +4,12 @@ const {
     createFormation, 
     GetOneFormation, 
     UpdateFormation, 
-    GetFormations, 
-    DeleteFormation 
+    getAllFormations, 
+    DeleteFormation,
+    getFormations
 } = require('../Controllers/formation.controller.js');
 const authorizeRoles = require('../Middlewares/RoleMiddleware.js');
-const upload = require('../utils/uploadImage.js');
-
+const { upload } = require('../Config/cloudinaryConfig.js');
 const authorizeFormationAccess = require('../Middlewares/FormationAccess.js');
 
 const router = express.Router();
@@ -22,9 +22,9 @@ router.post('/Addformation',
 );
 
 // Route to get all formations
-router.get('/GetFormations', 
+router.get('/getAllFormations', 
     authenticated, 
-    GetFormations
+    getAllFormations
 );
 
 // Route to delete a formation by ID
@@ -51,5 +51,13 @@ router.get('/GetOneFormation/:id',
     authorizeFormationAccess('read'),
     GetOneFormation
 );
+
+// Route to get all formations of a specific formateur
+router.get('/getFormations', 
+    authenticated, 
+    authorizeRoles('Formateur'),
+    getFormations
+);
+
 
 module.exports = router;

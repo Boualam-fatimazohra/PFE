@@ -1,7 +1,7 @@
 import * as React from "react";
 import { ArrowLeft, RefreshCw } from "lucide-react";
 import CourseHeader from "../components/Formation/CoursHeader";
-import StatisticsCards from "../components/Formation/StatisticsCards";
+import { StatsCard } from "@/components/dashboardElement/StatsCard";
 import DocumentsSection from "../components/Formation/DocumentsSection";
 import StatsSection from "../components/Formation/StatsSection";
 import ParticipantsSection from "../components/Formation/ParticipantsSection";
@@ -83,7 +83,12 @@ const FormationTerminer: React.FC<FormationTerminerProps> = ({ onRetourClick }) 
           status="Terminer" 
         />
 
-        <StatisticsCards cards={statsCards} />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <StatsCard title="Total Bénéficiaires" value={250} />
+                <StatsCard title="Total Formations" value={64} />
+                <StatsCard title="Prochain événement" value="07" />
+                <StatsCard title="Satisfaction moyenne" value="95%" />
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <DocumentsSection documents={documents} />
