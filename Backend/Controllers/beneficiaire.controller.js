@@ -334,29 +334,48 @@ const getBeneficiaireFormation = async (req, res) => {
 
 const getNombreBeneficiairesParFormateur = async (req, res) => {
   console.log("debut de la fct getNbrBeneficiaire par formateur");
+  const  utilisateurId = req.user.userId;
+  const role=req.user.role;
+  let formateur; // Déclaration dans la portée supérieure
 
   try {
-    const utilisateurId = req.user.userId;
-    
-    if (!mongoose.Types.ObjectId.isValid(utilisateurId)) {
-      return res.status(400).json({ message: "ID utilisateur invalide" });
+    if (role === "Formateur") {
+      if (!mongoose.Types.ObjectId.isValid(utilisateurId)) {
+        return res.status(400).json({ message: "ID utilisateur invalide" });
+      }
+
+      formateur = await Formateur.findOne({ utilisateur: utilisateurId }); // Assignation
+
+    } else if (role === "Manager") {
+      const id = req.body.idFormateur;
+
+      if (!id) {
+        return res.status(400).json({ message: "idFormateur requis dans le body" });
+      }
+      
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ message: "ID formateur invalide" });
+      }
+
+      formateur = await Formateur.findById(id); // Correction: .findById(id) au lieu de .findById({id})
+
+    } else {
+      // Cas où le rôle n'est ni Formateur ni Manager
+      return res.status(403).json({ message: "Accès interdit" });
     }
 
-    const formateur = await Formateur.findOne({ utilisateur: utilisateurId });
-    
     if (!formateur) {
       return res.status(404).json({ message: "Formateur non trouvé" });
     }
 
+    // Le reste reste inchangé
     const formations = await Formation.find({ formateur: formateur._id }).select("_id");
 
     if (formations.length === 0) {
       return res.json({ nombreBeneficiaires: 0 });
     }
 
-    // CORRECTION ICI 
-    const formationIds = formations.map(f => f._id); 
-
+    const formationIds = formations.map(f => f._id);
     const nombreBeneficiaires = await BeneficiareFormation.countDocuments({
       formation: { $in: formationIds }
     });
