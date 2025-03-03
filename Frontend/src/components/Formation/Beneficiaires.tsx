@@ -1,7 +1,7 @@
 import * as React from "react";
 import {  Clock, ArrowRight } from 'lucide-react';
 import { Printer, Search, FileDown } from 'lucide-react';
-
+import CourseHeader from "../Formation/CoursHeader";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card"; // Ajout de l'import manquant pour Card
 import axios from "axios";
@@ -120,26 +120,24 @@ const BeneficiairesList = () => {
         />
       ) : (
         <div>
-          <div className="mb-4">
+           <div className="flex justify-between items-center mb-4  ">
             <Button 
               variant="outline" 
-              className="flex items-center gap-2"
+              className="flex items-center gap-1 text-xl font-medium text-orange-600 hover:text-orange-800 transition"
               onClick={handleBackToFormations}
             >
-              <svg width="8" height="12" viewBox="0 0 8 12" fill="none" xmlns="http://www.w3.org/2000/svg" className="transform rotate-180">
-                <path fillRule="evenodd" clipRule="evenodd" d="M1.77778 12L8 6L1.77778 0L0 1.71343L4.44533 6L0 10.2849L1.77778 12Z" fill="currentColor"/>
-              </svg>
-              Retour aux formations
+               <svg width="18" height="19" viewBox="0 0 18 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M10.6665 4.65625L5.21143 10L10.6665 15.3437L12.2251 13.8177L8.32784 10L12.2251 6.1838L10.6665 4.65625Z" fill="#F16E00"/>
+            </svg>
+            <span className="text-lg font-bold text-[#000000] "> Retour</span> 
             </Button>
           </div>
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold">
-              {formationsData.find(f => f.id === selectedFormation)?.title}
-            </h1>
-            <p className="text-gray-600">
-              Gestion des bénéficiaires pour cette formation
-            </p>
-          </div>
+          
+           <CourseHeader 
+          title="Formation" 
+          subtitle="AWS : Développement, déploiement et gestion" 
+          status="En Cours" 
+        />
           <BeneficiairesListe />
         </div>
       )}
@@ -365,7 +363,7 @@ const BeneficiairesListe = () => {
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path fillRule="evenodd" clipRule="evenodd" d="M20.9998 19.8H2.9998C2.33706 19.8 1.7998 19.2627 1.7998 18.6V12.6C1.7998 11.9372 2.33706 11.4 2.9998 11.4H5.3998V4.19995H13.7998L18.5998 8.99995V11.4H20.9998C21.6625 11.4 22.1998 11.9252 22.1998 12.588V18.6C22.1998 19.2627 21.6625 19.8 20.9998 19.8ZM11.9998 18.6C12.3312 18.6 12.5998 18.3313 12.5998 18C12.5998 17.6686 12.3312 17.4 11.9998 17.4C11.6684 17.4 11.3998 17.6686 11.3998 18C11.3998 18.3313 11.6684 18.6 11.9998 18.6ZM6.5998 14.4H17.3998V9.59995H14.3998C13.7371 9.59995 13.1998 9.06269 13.1998 8.39995V5.39995H6.5998V14.4Z" fill="#999999"/>
           </svg>
-        </Button>
+        </Button> 
       </div>
 
       <table className="w-full border-collapse">

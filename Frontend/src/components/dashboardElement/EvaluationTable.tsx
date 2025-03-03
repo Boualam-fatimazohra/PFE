@@ -115,13 +115,13 @@ export const EvaluationsTable = ({ onGenerateLink }: EvaluationsTableProps) => {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+    <div className="bg-white rounded-none shadow-md overflow-hidden">
       <Table>
-        <TableHeader>
-          <TableRow className="bg-gray-100">
-            <TableHead className="py-3">Titre</TableHead>
-            <TableHead className="py-3">Status</TableHead>
-            <TableHead className="py-3">Action</TableHead>
+        <TableHeader className="bg-[#EBEBEB]">
+          <TableRow >
+            <TableHead className="py-3 font-bold text-black">Titre</TableHead>
+            <TableHead className="py-3 font-bold text-black">Status</TableHead>
+            <TableHead className="py-3 font-bold text-black">Action</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

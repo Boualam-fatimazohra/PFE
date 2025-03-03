@@ -5,7 +5,7 @@ import {
   forgotPassword as forgotPasswordService,
   verifyResetCode as verifyResetCodeService,
   changePassword as changePasswordService
-} from "@/services/authServices";
+} from "../services/authServices";
 
 interface User {
   nom: string;
