@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getAllFormations as fetchFormations, createFormation as addFormation } from '../services/formationService';
 import { deleteFormation as apiDeleteFormation, updateFormation as ipUpdateFormation } from '../services/formationService';
-import {getNbrBeneficiairesParFormateur} from "../services/formationService";
+
 interface Formation {
   _id?: string;
   nom: string;
@@ -21,7 +21,6 @@ interface FormationContextType {
   deleteFormation: (id: string) => Promise<void>;
   updateFormation: (id: string, formationData: Partial<Formation>) => Promise<void>;
   refreshFormations: () => Promise<void>;
-  nombreBeneficiaires: number | null; // Ajoutez par saloua
 }
 
 interface FormationProviderProps {
@@ -34,51 +33,24 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
   const [formations, setFormations] = useState<Formation[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [nombreBeneficiaires, setNombreBeneficiaires] = useState<number | null>(null); // Nouvel état
-  const fetchNombreBeneficiaires = async () => {
-    try {
-      setError(null);
-      const data = await getNbrBeneficiairesParFormateur();
-      setNombreBeneficiaires(data.nombreBeneficiaires);
-      return data.nombreBeneficiaires;
-    } catch (error) {
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : "Erreur lors de la récupération du nombre de bénéficiaires";
-      console.error(errorMessage);
-      setError(errorMessage);
-      throw error;
-    }
-  };
+   
   useEffect(() => {
     const getFormations = async () => {
       try {
-        setLoading(true);
-        
-        // Chargement parallèle des formations et du nombre de bénéficiaires
-        const [formationsData, beneficiairesData] = await Promise.all([
-          fetchFormations(),
-          getNbrBeneficiairesParFormateur()
-        ]);
-        
-        setFormations(formationsData);
-        setNombreBeneficiaires(beneficiairesData.nombreBeneficiaires);
+        const data = await fetchFormations();
+        setFormations(data);
         setError(null);
       } catch (error) {
-        console.error('Erreur lors du chargement des données', error);
-        setError('Impossible de charger les données');
+        console.error('Erreur lors de la récupération des formations', error);
+        setError('Impossible de charger les formations');
       } finally {
         setLoading(false);
       }
     };
 
     getFormations();
-    fetchNombreBeneficiaires();
   }, []);
 
-  // debut : 
- 
-  // fin : 
   const refreshFormations = async () => {
     setLoading(true);
     try {
@@ -157,7 +129,7 @@ const addNewFormation = async (formationData: Formation) => {
   };
 
   return (
-    <FormationContext.Provider value={{ formations, loading, error, addNewFormation, deleteFormation, updateFormation, refreshFormations ,nombreBeneficiaires,}}>
+    <FormationContext.Provider value={{ formations, loading, error, addNewFormation, deleteFormation, updateFormation, refreshFormations }}>
       {children}
     </FormationContext.Provider>
   );
