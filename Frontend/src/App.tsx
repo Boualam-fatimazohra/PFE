@@ -19,7 +19,6 @@ import { ToastContainer } from "react-toastify";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { Footer } from "@/components/layout/Footer";
 import FormationTerminer from "./pages/FormationTerminer";
-import generateEvaluationLink from "./pages/Evaluation";
 import { FormationAvenir } from "./pages/FormationAvenir";
 import FormationModal from "./components/dashboardElement/formationModal";
 import MesFormation from "./pages/MesFormation";
@@ -32,8 +31,8 @@ import FormateurFormations from "./pages/apiTesting/FormateurFormations";
 import { FormationProvider } from "./contexts/FormationContext";
 import BeneficiairesList from "./components/Formation/Beneficiaires";
 import EvaluationPages from "@/pages/EvaluationPages";
-import FormationDashboard from "@/components/dashboardElement/FormationManager"
-import FormateurManager from "@/components/dashboardElement/FormateurManager"
+import FormationDashboard from "@/components/dashboardElement/FormationManager";
+import FormateurManager from "@/components/dashboardElement/FormateurManager";
 import BootcampsList from "./components/dashboardElement/Bootcamps";
 
 const queryClient = new QueryClient();
@@ -54,9 +53,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 };
 
 const App = () => (
-  
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
+      <FormationProvider>
         <TooltipProvider>
           <BrowserRouter>
             <Layout>
@@ -64,45 +63,43 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/verify-code" element={<VerifyPassword/>} />
-                <Route  path="/reset-password" element={<NewPassword />} />
+                <Route path="/reset-password" element={<NewPassword />} />
                 <Route path="/evaluation/:id" element={<EvaluationForm />} />
                 <Route path="/Chatbot" element={<Chatbot />} />
                 <Route path="/ValidatePassword" element={<ValidatePassword />} />
-                <Route path="/NewPassword" element={<NewPassword />} />
+                <Route path="/NewPassword" element={<NewPassword />} />
                 {/* Routes pour les différents types d'utilisateurs */}
+
                 <Route path="/formateur/*" element={<FormateurRoutes />} />
                 <Route path="/manager/*" element={<ManagerRoutes />} />
                 <Route path="/coordinateur/*" element={<CoordinateurRoutes />} />
                 <Route path="/technicien/*" element={<TechnicienRoutes />} />
                 <Route path="/evaluation/:id/:token" element={<EvaluationForm />} />
-<<<<<<< Updated upstream
-=======
-                <Route path="/FormationDashboard" element={<FormationDashboard />} /> 
-                <Route path="/addformation" element={<AddFormation />} /> 
-                <Route path="/formations" element={<FormateurFormations />} /> 
-                <Route path="/FormateurManager" element={<FormateurManager />} /> 
-                <Route path="/BootcampsList" element={<BootcampsList />} /> 
->>>>>>> Stashed changes
 
                 {/* Autres pages */}
                 <Route path="/generate-link" element={<GenerateLink />} />
                 <Route path="/formulaire-evaluation" element={<FormulaireEvaluation />} />
                 <Route path="/EvaluationForm" element={<EvaluationForm />} />
-                <Route path="/EvaluationForm" element={< EvaluationForm/>}/>
-                <Route path="/BeneficiairesList" element={< BeneficiairesList/>} />
+                <Route path="/BeneficiairesList" element={<BeneficiairesList />} />
                 <Route path="/CalendarView" element={<CalendarView/>}/>
-                <Route path="/beneficiaires" element={<beneficiaires/>}/>
+                <Route path="/beneficiaires" element={<BeneficiairesList/>}/>
                 <Route path="/DetailsFormation" element={<DetailsFormation />} />
                 <Route path="/FormationTerminer" element={<FormationTerminer />} />
                 <Route path="/FormationAvenir" element={<FormationAvenir />} />
                 <Route path="/EvaluationPages" element={<EvaluationPages />} />
 
+                <Route path="/FormationDashboard" element={<FormationDashboard />} /> 
+                <Route path="/addformation" element={<AddFormation />} /> 
+                <Route path="/formations" element={<FormateurFormations />} /> 
+                <Route path="/FormateurManager" element={<FormateurManager />} /> 
+                <Route path="/BootcampsList" element={<BootcampsList />} />
                 {/* Page 404 */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Layout>
           </BrowserRouter>
         </TooltipProvider>
+      </FormationProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
