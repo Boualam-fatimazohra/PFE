@@ -269,7 +269,7 @@ const upload = multer({ storage: storage });
 // Routes d'API
 app.use("/api/auth", Auth);
 app.use("/api/formation", formationRoutes);
-app.use("/api/beneficiaires", beneficiaireRoutes);
+app.use("/api/beneficiaires",beneficiaireRoutes);
 app.use("/api/coordinateurs", coordinateurRoutes);
 app.use("/api/managers", managerRoutes);
 app.use("/api/formateur",formateurRoutes);
