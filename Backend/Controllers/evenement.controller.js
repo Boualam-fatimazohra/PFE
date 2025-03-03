@@ -213,10 +213,10 @@ exports.deleteEvenement = async (req, res) => {
 // Récupérer les événements d'un utilisateur spécifique (formateur ou coordinateur)
 exports.getMesEvenements = async (req, res) => {
   try {
-    const { utilisateurId, role } = req.user;
+    const { userId, role } = req.user;
     
     // Vérifier si l'ID utilisateur est valide
-    if (!mongoose.Types.ObjectId.isValid(utilisateurId)) {
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({ message: 'ID utilisateur invalide' });
     }
     
@@ -226,7 +226,7 @@ exports.getMesEvenements = async (req, res) => {
     // Déterminer le type d'organisateur et son ID
     if (role === 'Formateur') {
       organisateurType = 'Formateur';
-      const formateur = await Formateur.findOne({ utilisateur: utilisateurId });
+      const formateur = await Formateur.findOne({ utilisateur: userId });
       
       if (!formateur) {
         return res.status(404).json({ message: 'Formateur non trouvé' });
@@ -236,7 +236,7 @@ exports.getMesEvenements = async (req, res) => {
     } 
     else if (role === 'Coordinateur') {
       organisateurType = 'Coordinateur';
-      const coordinateur = await Coordinateur.findOne({ utilisateur: utilisateurId });
+      const coordinateur = await Coordinateur.findOne({ utilisateur: userId });
       
       if (!coordinateur) {
         return res.status(404).json({ message: 'Coordinateur non trouvé' });
