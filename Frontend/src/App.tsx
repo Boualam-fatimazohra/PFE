@@ -31,8 +31,10 @@ import AddFormation from "./pages/apiTesting/AddFormation";
 import FormateurFormations from "./pages/apiTesting/FormateurFormations";
 import { FormationProvider } from "./contexts/FormationContext";
 import BeneficiairesList from "./components/Formation/Beneficiaires";
-
-
+import EvaluationPages from "@/pages/EvaluationPages";
+import FormationDashboard from "@/components/dashboardElement/FormationManager"
+import FormateurManager from "@/components/dashboardElement/FormateurManager"
+import BootcampsList from "./components/dashboardElement/Bootcamps";
 
 const queryClient = new QueryClient();
 
@@ -73,6 +75,14 @@ const App = () => (
                 <Route path="/coordinateur/*" element={<CoordinateurRoutes />} />
                 <Route path="/technicien/*" element={<TechnicienRoutes />} />
                 <Route path="/evaluation/:id/:token" element={<EvaluationForm />} />
+<<<<<<< Updated upstream
+=======
+                <Route path="/FormationDashboard" element={<FormationDashboard />} /> 
+                <Route path="/addformation" element={<AddFormation />} /> 
+                <Route path="/formations" element={<FormateurFormations />} /> 
+                <Route path="/FormateurManager" element={<FormateurManager />} /> 
+                <Route path="/BootcampsList" element={<BootcampsList />} /> 
+>>>>>>> Stashed changes
 
                 {/* Autres pages */}
                 <Route path="/generate-link" element={<GenerateLink />} />
@@ -85,6 +95,7 @@ const App = () => (
                 <Route path="/DetailsFormation" element={<DetailsFormation />} />
                 <Route path="/FormationTerminer" element={<FormationTerminer />} />
                 <Route path="/FormationAvenir" element={<FormationAvenir />} />
+                <Route path="/EvaluationPages" element={<EvaluationPages />} />
 
                 {/* Page 404 */}
                 <Route path="*" element={<NotFound />} />

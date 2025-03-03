@@ -65,13 +65,13 @@ export function DashboardHeader() {
       { name: "Mes Formations", path: "/formateur/mesformation" },
       { name: "Calendrier", path: "/CalendarView" },
       { name: "Mes Bénéficiaires", path: "/BeneficiairesList" },
-      { name: "Evaluation", path: "/formulaire-evaluation" },
+      { name: "Evaluation", path: "/EvaluationPages" },
     ];
   } else if (user?.role === "Manager") {
     navigationLinks = [
       { name: "Dashboard", path: "/manager/dashboardManager" },
-      { name: "Page Link", path: "/page-link" },
-      { name: "Page Link", path: "/page-link-2" },
+      { name: "Formations", path: "/FormationDashboard" },
+      { name: "Formateurs", path: "/FormateurManager" },
       { name: "Page Link", path: "/page-link-3" },
     ];
   } else if (user?.role === "Coordinateur") {
