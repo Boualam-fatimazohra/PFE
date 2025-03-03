@@ -15,13 +15,15 @@ interface Formation {
 
 interface FormationContextType {
   formations: Formation[];
+  filteredFormations: Formation[];
   loading: boolean;
   error: string | null;
   addNewFormation: (formationData: Formation) => Promise<void>;
   deleteFormation: (id: string) => Promise<void>;
   updateFormation: (id: string, formationData: Partial<Formation>) => Promise<void>;
   refreshFormations: () => Promise<void>;
-  nombreBeneficiaires: number | null; // Ajoutez par saloua
+  searchFormations: (query: string) => void;
+  nombreBeneficiaires: number | null; 
 }
 
 interface FormationProviderProps {
@@ -32,6 +34,7 @@ const FormationContext = createContext<FormationContextType | undefined>(undefin
 
 export const FormationProvider: React.FC<FormationProviderProps> = ({ children }) => {
   const [formations, setFormations] = useState<Formation[]>([]);
+  const [filteredFormations, setFilteredFormations] = useState<Formation[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [nombreBeneficiaires, setNombreBeneficiaires] = useState<number | null>(null); // Nouvel état
@@ -63,6 +66,7 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
         
         setFormations(formationsData);
         setNombreBeneficiaires(beneficiairesData.nombreBeneficiaires);
+        setFilteredFormations(formationsData); // Initially, filtered is same as all
         setError(null);
       } catch (error) {
         console.error('Erreur lors du chargement des données', error);
@@ -152,8 +156,25 @@ const addNewFormation = async (formationData: Formation) => {
     }
   };
 
+  const searchFormations = (query: string) => {
+    if (!query.trim()) {
+      // If query is empty, show all formations
+      setFilteredFormations(formations);
+      return;
+    }
+
+    // Filter formations based on query (case-insensitive)
+    const results = formations.filter(formation => 
+      formation.nom.toLowerCase().includes(query.toLowerCase()) ||
+      formation.status.toLowerCase().includes(query.toLowerCase()) ||
+      (formation.tags && formation.tags.toLowerCase().includes(query.toLowerCase()))
+    );
+    
+    setFilteredFormations(results);
+  };
+
   return (
-    <FormationContext.Provider value={{ formations, loading, error, addNewFormation, deleteFormation, updateFormation, refreshFormations ,nombreBeneficiaires,}}>
+    <FormationContext.Provider value={{ formations, loading, error, addNewFormation, deleteFormation, updateFormation, refreshFormations, filteredFormations,searchFormations, nombreBeneficiaires }}>
       {children}
     </FormationContext.Provider>
   );
