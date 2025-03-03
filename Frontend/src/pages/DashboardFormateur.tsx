@@ -12,6 +12,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import { EvaluationsTable } from "@/components/dashboardElement/EvaluationTable";
 import { SearchBar } from "@/components/dashboardElement/SearchBar";
 import { useFormations } from "@/contexts/FormationContext";
+import BeneficiairesList from "@/components/Formation/Beneficiaires";
 
 interface GenerateEvaluationLinkResponse {
   evaluationLink: string;
@@ -19,7 +20,7 @@ interface GenerateEvaluationLinkResponse {
 
 const DashboardFormateur: React.FC = () => {
   const navigate = useNavigate();
-  const { formations, searchFormations, filteredFormations } = useFormations();
+  const { formations, searchFormations, filteredFormations, nombreBeneficiaires } = useFormations();
   const [formationCount, setFormationCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
@@ -146,7 +147,7 @@ const DashboardFormateur: React.FC = () => {
 
           {/* Statistics Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <StatsCard title="Total Bénéficiaires" value={250} />
+            <StatsCard title="Total Bénéficiaires" value={isLoading ? '...' : nombreBeneficiaires} />
             <StatsCard title="Total Formations" 
                 value={isLoading ? '...' : formationCount} 
             />

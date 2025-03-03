@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getAllFormations as fetchFormations, createFormation as addFormation } from '../services/formationService';
 import { deleteFormation as apiDeleteFormation, updateFormation as ipUpdateFormation } from '../services/formationService';
-
+import {getNbrBeneficiairesParFormateur} from "../services/formationService";
 interface Formation {
   _id?: string;
   nom: string;
@@ -23,6 +23,7 @@ interface FormationContextType {
   updateFormation: (id: string, formationData: Partial<Formation>) => Promise<void>;
   refreshFormations: () => Promise<void>;
   searchFormations: (query: string) => void;
+  nombreBeneficiaires: number | null; 
 }
 
 interface FormationProviderProps {
@@ -36,25 +37,48 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
   const [filteredFormations, setFilteredFormations] = useState<Formation[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-   
+  const [nombreBeneficiaires, setNombreBeneficiaires] = useState<number | null>(null); // Nouvel état
+  const fetchNombreBeneficiaires = async () => {
+    try {
+      setError(null);
+      const data = await getNbrBeneficiairesParFormateur();
+      setNombreBeneficiaires(data.nombreBeneficiaires);
+      return data.nombreBeneficiaires;
+    } catch (error) {
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "Erreur lors de la récupération du nombre de bénéficiaires";
+      console.error(errorMessage);
+      setError(errorMessage);
+      throw error;
+    }
+  };
   useEffect(() => {
     const getFormations = async () => {
       try {
-        const data = await fetchFormations();
-        setFormations(data);
-        setFilteredFormations(data); // Initially, filtered is same as all
+        setLoading(true);
+        
+        // Chargement parallèle des formations et du nombre de bénéficiaires
+        const [formationsData, beneficiairesData] = await Promise.all([
+          fetchFormations(),
+          getNbrBeneficiairesParFormateur()
+        ]);
+        
+        setFormations(formationsData);
+        setNombreBeneficiaires(beneficiairesData.nombreBeneficiaires);
+        setFilteredFormations(formationsData); // Initially, filtered is same as all
         setError(null);
       } catch (error) {
-        console.error('Erreur lors de la récupération des formations', error);
-        setError('Impossible de charger les formations');
+        console.error('Erreur lors du chargement des données', error);
+        setError('Impossible de charger les données');
       } finally {
         setLoading(false);
       }
     };
 
     getFormations();
+    fetchNombreBeneficiaires();
   }, []);
-
   const refreshFormations = async () => {
     setLoading(true);
     try {
@@ -150,7 +174,7 @@ const addNewFormation = async (formationData: Formation) => {
   };
 
   return (
-    <FormationContext.Provider value={{ formations, loading, error, addNewFormation, deleteFormation, updateFormation, refreshFormations, filteredFormations,searchFormations }}>
+    <FormationContext.Provider value={{ formations, loading, error, addNewFormation, deleteFormation, updateFormation, refreshFormations, filteredFormations,searchFormations, nombreBeneficiaires }}>
       {children}
     </FormationContext.Provider>
   );
