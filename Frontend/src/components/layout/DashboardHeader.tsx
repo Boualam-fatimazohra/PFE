@@ -70,8 +70,8 @@ export function DashboardHeader() {
   } else if (user?.role === "Manager") {
     navigationLinks = [
       { name: "Dashboard", path: "/manager/dashboardManager" },
-      { name: "Formations", path: "/FormationDashboard" },
-      { name: "Formateurs", path: "/FormateurManager" },
+      { name: "Formations", path: "/manager/FormationDashboard" },
+      { name: "Formateurs", path: "/manager/FormateurManager" },
       { name: "Page Link", path: "/page-link-3" },
     ];
   } else if (user?.role === "Coordinateur") {

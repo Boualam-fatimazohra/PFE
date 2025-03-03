@@ -55,7 +55,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <FormationProvider>
         <TooltipProvider>
           <BrowserRouter>
             <Layout>
@@ -87,19 +86,17 @@ const App = () => (
                 <Route path="/FormationTerminer" element={<FormationTerminer />} />
                 <Route path="/FormationAvenir" element={<FormationAvenir />} />
                 <Route path="/EvaluationPages" element={<EvaluationPages />} />
-
-                <Route path="/FormationDashboard" element={<FormationDashboard />} /> 
                 <Route path="/addformation" element={<AddFormation />} /> 
                 <Route path="/formations" element={<FormateurFormations />} /> 
-                <Route path="/FormateurManager" element={<FormateurManager />} /> 
-                <Route path="/BootcampsList" element={<BootcampsList />} />
+
+
+
                 {/* Page 404 */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Layout>
           </BrowserRouter>
         </TooltipProvider>
-      </FormationProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
