@@ -8,4 +8,5 @@ const router = express.Router();
 router.post('/addEvenement',authenticated,addEvenement);
 router.put('/updateEvenement/:id',authenticated,updateEvenement);
 router.delete('/deleteEvenement/:id',authenticated,deleteEvenement);
+// fin
 module.exports = router;
