@@ -57,7 +57,7 @@ const MesFormations = () => {
         id: formation._id || `temp-${formation.nom}`,
         title: formation.nom,
         status: formation.status,
-        image: formation.image
+        image: formation.image as string
       }));
       setFormations(mappedFormations);
       
