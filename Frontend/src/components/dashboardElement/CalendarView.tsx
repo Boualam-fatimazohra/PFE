@@ -28,55 +28,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
+import { Loader2 } from 'lucide-react';
+import { getAllFormations } from '@/services/formationService';
+import { getMesEvenements } from '@/services/evenementService';
 
-interface EventItem {
-  id: string;
-  title: string;
-  start: string;
-  end: string;
-  type: 'Formation' | 'Événement';
-  location: string;
-  status: 'En cours' | 'Terminé' | 'À venir';
-}
-
-const events: EventItem[] = [
-  {
-    id: '1',
-    title: 'Conception Mobile',
-    start: '2025-03-01',
-    end: '2025-03-05',
-    type: 'Formation',
-    location: 'Salle A',
-    status: 'En cours',
-  },
-  {
-    id: '2',
-    title: 'Développement Web',
-    start: '2025-04-10',
-    end: '2025-04-15',
-    type: 'Formation',
-    location: 'Salle B',
-    status: 'À venir',
-  },
-  {
-    id: '3',
-    title: 'Atelier IA',
-    start: '2025-03-12',
-    end: '2025-03-12',
-    type: 'Événement',
-    location: 'Amphi 1',
-    status: 'Terminé',
-  },
-  {
-    id: '4',
-    title: 'Hackathon',
-    start: '2025-04-22',
-    end: '2025-04-23',
-    type: 'Événement',
-    location: 'Espace Innovation',
-    status: 'À venir',
-  },
-];
+// This is your original component with minimal modifications
 
 const CalendarView = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -84,9 +40,109 @@ const CalendarView = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [eventColor, setEventColor] = useState("#3788d8");
   const [calendarEvents, setCalendarEvents] = useState([]);
+  const [loading, setLoading] = useState(false);
   const mainCalendarRef = useRef(null);
 
+  // ** NEW CODE ** - Fetch events from backend when component mounts
+  useEffect(() => {
+    const fetchBackendEvents = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch formations and events from backend
+        const [formations, evenements] = await Promise.all([
+          getAllFormations(),
+          getMesEvenements()
+        ]);
+        
+        console.log('Fetched formations:', formations);
+        console.log('Fetched evenements:', evenements);
+        
+        // Wait for calendar to be ready
+        setTimeout(() => {
+          if (mainCalendarRef.current) {
+            const calendarApi = mainCalendarRef.current.getApi();
+            
+            // Add formations to calendar
+            formations.forEach(formation => {
+              calendarApi.addEvent({
+                id: `formation-${formation._id}`,
+                title: formation.nom,
+                start: formation.dateDebut,
+                end: formation.dateFin,
+                backgroundColor: getEventColor('Formation', formation.status),
+                borderColor: 'transparent',
+                extendedProps: {
+                  type: 'Formation',
+                  status: formation.status,
+                  originalData: formation
+                }
+              });
+            });
+            
+            // Add events to calendar
+            evenements.forEach(evenement => {
+              // Create start and end dates with time
+              const startDate = new Date(evenement.dateDebut);
+              const endDate = new Date(evenement.dateFin);
+              
+              // Add time portion if available
+              if (evenement.heureDebut) {
+                const [hours, minutes] = evenement.heureDebut.split(':').map(Number);
+                startDate.setHours(hours || 0, minutes || 0);
+              }
+              
+              if (evenement.heureFin) {
+                const [hours, minutes] = evenement.heureFin.split(':').map(Number);
+                endDate.setHours(hours || 0, minutes || 0);
+              }
+              
+              calendarApi.addEvent({
+                id: `evenement-${evenement._id}`,
+                title: evenement.sujet,
+                start: startDate,
+                end: endDate,
+                backgroundColor: getEventColor('Evenement'),
+                borderColor: 'transparent',
+                extendedProps: {
+                  type: 'Evenement',
+                  originalData: evenement
+                }
+              });
+            });
+          }
+        }, 500); // Small delay to ensure calendar is initialized
+      } catch (error) {
+        console.error('Error fetching calendar data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchBackendEvents();
+  }, []);
   
+  // ** NEW CODE ** - Helper function to get event color based on type and status
+  const getEventColor = (type, status = '') => {
+    if (type === 'Formation') {
+      switch (status) {
+        case 'En Cours':
+          return '#FF7900'; // Orange
+        case 'Terminer':
+          return '#00C31F'; // Green
+        case 'Replanifier':
+          return '#9C00C3'; // Purple
+        case 'A venir':
+          return '#4D4D4D'; // Gray
+        default:
+          return '#FF7900'; // Default orange for formations
+      }
+    } else {
+      return '#3788d8'; // Blue for regular events
+    }
+  };
+
+  // Your existing useEffect for tracking calendar events
   useEffect(() => {
     if (mainCalendarRef.current) {
       const updateEvents = () => {
@@ -97,14 +153,12 @@ const CalendarView = () => {
           start: event.start,
           end: event.end || event.start,
           backgroundColor: event.backgroundColor,
-          type: event.extendedProps.type || ''
+          type: event.extendedProps?.type || ''
         }));
         setCalendarEvents(currentEvents);
       };
       
-      
       updateEvents();
-      
       
       const api = mainCalendarRef.current.getApi();
       api.on('eventAdd', updateEvents);
@@ -122,6 +176,7 @@ const CalendarView = () => {
     }
   }, [mainCalendarRef.current]);
 
+  // Your existing event handlers
   const handleDateClick = (arg) => {
     mainCalendarRef.current.getApi().gotoDate(arg.date);
   };
@@ -136,17 +191,23 @@ const CalendarView = () => {
     setSelectedEvent(null);
   };
 
+  // ** MODIFIED ** - Updated to handle backend data in events
   const handleEventClick = (info) => {
+    const eventType = info.event.extendedProps?.type || '';
+    const originalData = info.event.extendedProps?.originalData || {};
+    
     setSelectedEvent({
       id: info.event.id,
       title: info.event.title || "",
       start: info.event.start,
       end: info.event.end || info.event.start,
-      guests: info.event.extendedProps.guests || "",
-      location: info.event.extendedProps.location || "",
-      description: info.event.extendedProps.description || "",
-      type: info.event.extendedProps.type || "",
+      guests: info.event.extendedProps?.guests || "",
+      location: info.event.extendedProps?.location || "",
+      description: eventType === 'Formation' ? originalData.description : originalData.sujet,
+      type: eventType,
+      originalData: originalData
     });
+    
     setEventColor(info.event.backgroundColor || "#3788d8");
     setIsEventDialogOpen(true);
   };
@@ -393,6 +454,13 @@ const CalendarView = () => {
 
         {/* Main Calendar (centré) */}
         <div className="main-calendar-wrapper">
+          {loading && (
+            <div className="absolute inset-0 bg-white bg-opacity-70 z-10 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+              <span className="ml-2">Chargement des événements...</span>
+            </div>
+          )}
+          
           <FullCalendar
             ref={mainCalendarRef}
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
