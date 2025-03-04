@@ -28,9 +28,9 @@ import { Button } from "@/components/ui/button";
 import { toast } from "react-toastify";
 
 interface FormationItem {
-  id: string; // Changed to string to match actual _id from API
+  id: string;
   title: string;
-  status: "En cours" | "A venir" | "Terminer" | "Replanifier";
+  status: "En Cours" | "Terminé" | "Avenir" | "Replanifier";
   image: string;
 }
 
@@ -54,10 +54,10 @@ const MesFormations = () => {
   useEffect(() => {
     if (contextFormations && contextFormations.length > 0) {
       const mappedFormations = contextFormations.map((formation) => ({
-        id: formation._id || `temp-${formation.nom}`, // Use _id from API
+        id: formation._id || `temp-${formation.nom}`,
         title: formation.nom,
-        status: formation.status as "En cours" | "A venir" | "Terminer" | "Replanifier",
-        image: formation.image // Add this line to include the image URL
+        status: formation.status,
+        image: formation.image
       }));
       setFormations(mappedFormations);
       
@@ -66,7 +66,7 @@ const MesFormations = () => {
         handleSearch(searchTerm);
       }
     }
-  }, [contextFormations]);
+  }, [contextFormations, searchTerm]);
 
   // Show error toast if there's an error in the context
   useEffect(() => {
@@ -201,14 +201,16 @@ const MesFormations = () => {
     if (!selectedFormation) return null;
   
     switch (selectedFormation.status) {
-      case "En cours":
+      case "En Cours":
         return <DetailsFormation onRetourClick={handleRetourClick} />;
-      case "A venir":
+      case "Avenir":
         return <FormationAvenir onRetourClick={handleRetourClick} />;
-      case "Terminer":
-        return <FormationTerminer onRetourClick={handleRetourClick}/>;
+      case "Terminé":
+        return <FormationTerminer onRetourClick={handleRetourClick} />;
+      case "Replanifier":
+        return <FormationAvenir onRetourClick={handleRetourClick} />;
       default:
-        return <div>Statut inconnu</div>;
+        return <div>Statut inconnu: {selectedFormation.status}</div>;
     }
   };
 
@@ -285,10 +287,10 @@ const MesFormations = () => {
                       </SelectTrigger>
                       <SelectContent className="rounded-none">
                         <SelectItem value="null">Tous les statuts</SelectItem>
-                        <SelectItem value="En cours">En Cours</SelectItem>
-                        <SelectItem value="A venir">A Venir</SelectItem>
+                        <SelectItem value="En Cours">En Cours</SelectItem>
+                        <SelectItem value="Avenir">À venir</SelectItem>
+                        <SelectItem value="Terminé">Terminé</SelectItem>
                         <SelectItem value="Replanifier">Replanifier</SelectItem>
-                        <SelectItem value="Terminer">Terminer</SelectItem>
                       </SelectContent>
                   </Select>
 
@@ -324,8 +326,8 @@ const MesFormations = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 <StatsCard title="Total Formations" value={loading ? "..." : formations.length} />
-                <StatsCard title="Formations en cours" value={loading ? "..." : formations.filter(f => f.status === "En cours").length} />
-                <StatsCard title="Formations à venir" value={loading ? "..." : formations.filter(f => f.status === "A venir").length} />
+                <StatsCard title="Formations en cours" value={loading ? "..." : formations.filter(f => f.status === "En Cours").length} />
+                <StatsCard title="Formations à venir" value={loading ? "..." : formations.filter(f => f.status === "Avenir").length} />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
