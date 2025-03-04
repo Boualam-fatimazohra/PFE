@@ -1,7 +1,8 @@
 const Formateur = require("../Models/formateur.model.js");
 const Formation = require("../Models/formation.model.js");
 const Manager = require("../Models/manager.model.js");
-
+const Coordinateur = require("../Models/coordinateur.model.js");
+const Evenement=require("../Models/evenement.model.js");
 const bcrypt = require('bcryptjs');
 const { Utilisateur } = require('../Models/utilisateur.model.js');
 const generateRandomPassword = require('../utils/generateRandomPassword.js');
@@ -250,5 +251,67 @@ const getFormations = async (req, res) => {
     });
   }
 }; 
+const getNbrEvenementsAssocies = async (req, res) => {
+  try {
+    const { userId, role } = req.user;
+    const currentDate = new Date();
+
+    if (role !== 'Formateur') {
+      return res.status(403).json({ message: 'Accès réservé aux formateurs' });
+    }
+
+    //  Récupération du formateur et vérification
+    const formateur = await Formateur.findOne({ utilisateur: userId })
+      .populate('manager');
+    if (!formateur?.manager?._id) {
+      return res.status(404).json({ message: 'Formateur ou manager non trouvé' });
+    }
+    //  Recherche du coordinateur associé 
+    const coordinateurAssocie = await Coordinateur.findOne({ 
+      manager: formateur.manager._id 
+    });
+    //  Construction dynamique des conditions de recherche
+    const organisateursConditions = [
+      { 
+        organisateurType: 'Formateur', 
+        organisateur: formateur._id 
+      }
+    ];
+
+    if (coordinateurAssocie?._id) {
+      organisateursConditions.push({
+        organisateurType: 'Coordinateur',
+        organisateur: coordinateurAssocie._id
+      });
+    }
+
+    //  Requête des événements
+    const evenements = await Evenement.find({
+      $or: organisateursConditions,
+      dateDebut: { $gte: currentDate }
+    })
+    .populate('organisateur')
+    .sort({ dateDebut: 1 });
+
+    // 5. Calcul des stats
+    const stats = {
+      total: evenements.length,
+      parType: {
+        formateur: evenements.filter(e => e.organisateurType === 'Formateur').length,
+        coordinateur: evenements.filter(e => e.organisateurType === 'Coordinateur').length
+      },
+      prochainEvenement: evenements[0] || null
+    };
+
+    res.status(200).json(stats);
+
+  } catch (error) {
+    console.error('Erreur lors de la récupération des événements:', error);
+    res.status(500).json({ 
+      message: 'Erreur serveur', 
+      error: error.message 
+    });
+  }
+};
 // fin : 
-  module.exports = { createFormateur, getFormateurs, getFormateurById, updateFormateur, deleteFormateur, GetFormateurFormations,getFormateurByManager,getFormations };
+  module.exports = {getNbrEvenementsAssocies,createFormateur, getFormateurs, getFormateurById, updateFormateur, deleteFormateur, GetFormateurFormations,getFormateurByManager,getFormations };

@@ -9,6 +9,7 @@ const beneficiaireRoutes = require("./Routes/beneficiaire.route.js");
 const coordinateurRoutes = require("./Routes/coordinateur.route.js");
 const managerRoutes = require("./Routes/manager.route.js");
 const evaluationRoutes =require("./Routes/evaluation.route.js");
+const evenementRoutes = require("./Routes/evenement.route.js");
 const multer = require("multer");
 const fs = require("fs");
 const cookieParser = require("cookie-parser");
@@ -275,6 +276,7 @@ app.use("/api/managers", managerRoutes);
 app.use("/api/formateur",formateurRoutes);
 app.use("/api/evaluation",evaluationRoutes);
 app.use("/api/formation/Addformation", formationRoutes);
+app.use("/api/evenement", evenementRoutes);
 
 // Route pour télécharger des fichiers
 app.post("/upload-csv", upload.single("csvFile"), (req, res) => {
