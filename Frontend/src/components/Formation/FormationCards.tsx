@@ -7,8 +7,8 @@ import test from '@/assets/images/test.jpg';
 interface FormationItem {
     id: string;
     title: string;
-    status: "En cours" | "A venir" | "Terminer" | "Replanifier";
-    image?: string; // Added imageUrl
+    status: "En Cours" | "Avenir" | "Terminé" | "Replanifier";
+    image?: string; 
 }
 
 interface FormationCardProps {
@@ -21,11 +21,11 @@ interface FormationCardProps {
 const FormationCard = ({ formation, onEdit, onDelete, onAccess }: FormationCardProps) => {
   const getStatusClass = () => {
     switch (formation.status) {
-      case "En cours":
+      case "En Cours":
         return "bg-[#FFF4EB] text-[#FF7900]";
-      case "A venir":
+      case "Avenir":
         return "bg-[#F2E7FF] text-[#9C00C3]";
-      case "Terminer":
+      case "Terminé":
         return "bg-[#E6F7EA] text-[#00C31F]";
       case "Replanifier":
         return "bg-[#F5F5F5] text-[#4D4D4D]"; 
