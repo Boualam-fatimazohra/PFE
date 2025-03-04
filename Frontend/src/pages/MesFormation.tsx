@@ -32,19 +32,28 @@ interface FormationItem {
   title: string;
   status: "En Cours" | "Terminé" | "Avenir" | "Replanifier";
   image: string;
+  dateDebut?: string; // Add date field
+  dateCreated?: string; // Add creation date if available
 }
 
 const MesFormations = () => {
   const navigate = useNavigate();
   // Use the FormationContext hook
   const { formations: contextFormations, loading, deleteFormation, error, searchFormations } = useFormations();
-  
+  const [sortOrder, setSortOrder] = useState<'recent' | 'oldest'>('recent');
   // State for formations and search
   const [formations, setFormations] = useState<FormationItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<FormationItem[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+
+  // This effect resets pagination when sorting or filtering changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [sortOrder, selectedStatus]);
 
   const handleOpenModal = () => {
     navigate("/formateur/formationModal");
@@ -57,7 +66,9 @@ const MesFormations = () => {
         id: formation._id || `temp-${formation.nom}`,
         title: formation.nom,
         status: formation.status,
-        image: formation.image as string
+        image: formation.image as string,
+        dateDebut: formation.dateDebut,
+        dateCreated: new Date(formation.dateDebut).toISOString() 
       }));
       setFormations(mappedFormations);
       
@@ -66,7 +77,7 @@ const MesFormations = () => {
         handleSearch(searchTerm);
       }
     }
-  }, [contextFormations, searchTerm]);
+  }, [contextFormations, searchTerm, sortOrder]);
 
   // Show error toast if there's an error in the context
   useEffect(() => {
@@ -214,7 +225,23 @@ const MesFormations = () => {
     }
   };
 
-  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+
+  // Get sorted formations based on date
+  const getSortedFormations = (formationsToSort: FormationItem[]) => {
+    // First, make a copy to avoid modifying the original array
+    const sortedFormations = [...formationsToSort];
+    
+    // Sort by date (assuming there's a date field in your formations)
+    return sortedFormations.sort((a, b) => {
+      // For this example, I'm assuming you have a formation.dateDebut field
+      // If not, you may need to extract the date from another field
+      const dateA = new Date(a.dateCreated || a.dateDebut || 0).getTime();
+      const dateB = new Date(b.dateCreated || b.dateDebut || 0).getTime();
+      
+      // Sort by descending date (newest first) or ascending (oldest first)
+      return sortOrder === 'recent' ? dateB - dateA : dateA - dateB;
+    });
+  };
   
   // Apply both search and status filtering
   const getFilteredFormations = () => {
@@ -225,7 +252,13 @@ const MesFormations = () => {
       result = result.filter(formation => formation.status === selectedStatus);
     }
     
-    return result;
+    // Apply sorting
+    return getSortedFormations(result);
+  };
+
+  const handleSortChange = (value: 'recent' | 'oldest') => {
+    setSortOrder(value);
+    setCurrentPage(1); // Reset to first page when sorting changes
   };
   
   const filteredFormations = getFilteredFormations();
@@ -294,7 +327,10 @@ const MesFormations = () => {
                       </SelectContent>
                   </Select>
 
-                  <Select>
+                  <Select 
+                    onValueChange={(value) => handleSortChange(value as 'recent' | 'oldest')} 
+                    defaultValue="recent"
+                  >
                     <SelectTrigger className="w-[150px] rounded-none shadow-sm border">
                       <SelectValue placeholder="Trier par date" />
                     </SelectTrigger>
