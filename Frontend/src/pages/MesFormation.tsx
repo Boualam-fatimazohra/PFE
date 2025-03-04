@@ -68,7 +68,7 @@ const MesFormations = () => {
         status: formation.status,
         image: formation.image as string,
         dateDebut: formation.dateDebut,
-        dateCreated: new Date(formation.dateDebut).toISOString() 
+        dateCreated: formation.createdAt ? new Date(formation.createdAt).toISOString() : new Date().toISOString() // Use real creation date
       }));
       setFormations(mappedFormations);
       

@@ -11,6 +11,7 @@ interface Formation {
   tags: string;
   status?: "En Cours" | "Terminé" | "Avenir" | "Replanifier";
   image?: File | string; // include image url
+  createdAt?: string; // ✅ Add this field
 }
 
 interface FormationContextType {
