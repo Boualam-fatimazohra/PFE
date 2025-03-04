@@ -13,7 +13,7 @@ import { EvaluationsTable } from "@/components/dashboardElement/EvaluationTable"
 import { SearchBar } from "@/components/dashboardElement/SearchBar";
 import { useFormations } from "@/contexts/FormationContext";
 import BeneficiairesList from "@/components/Formation/Beneficiaires";
-
+import { useEvenementsAssocies } from '../contexts/FormateurContext';
 interface GenerateEvaluationLinkResponse {
   evaluationLink: string;
 }
@@ -26,7 +26,7 @@ const DashboardFormateur: React.FC = () => {
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-
+  const { stats, isLoadingEvenements, error } = useEvenementsAssocies();
   useEffect(() => {
     // First approach: You can use the formations already in context
     if (formations) {
@@ -151,7 +151,7 @@ const DashboardFormateur: React.FC = () => {
             <StatsCard title="Total Formations" 
                 value={isLoading ? '...' : formationCount} 
             />
-            <StatsCard title="Prochain événement" value="07" />
+            <StatsCard title="Prochain événement" value={isLoadingEvenements ?'...':stats?.total ?? 0} />
             <StatsCard title="Satisfaction moyenne" value="95%" />
           </div>
 
