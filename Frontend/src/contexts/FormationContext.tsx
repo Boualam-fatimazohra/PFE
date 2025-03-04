@@ -178,8 +178,6 @@ const addNewFormation = async (formationData: Formation) => {
       {children}
     </FormationContext.Provider>
   );
-
-
 };
 
 export const useFormations = (): FormationContextType => {

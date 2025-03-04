@@ -1,5 +1,5 @@
 const express = require('express');
-const { createFormateur, getFormateurs, updateFormateur, deleteFormateur, getFormateurById, GetFormateurFormations,getFormateurByManager ,getFormations } = require('../Controllers/formateur.controller.js');
+const { createFormateur, getFormateurs, updateFormateur, deleteFormateur, getFormateurById, GetFormateurFormations,getFormateurByManager ,getFormations,getNbrEvenementsAssocies } = require('../Controllers/formateur.controller.js');
 const authorizeRoles = require('../Middlewares/RoleMiddleware.js');
 const authenticated = require('../Middlewares/Authmiddleware.js');
 const authorizeOwnership = require('../Middlewares/OwnershipMiddleware.js');
@@ -58,5 +58,5 @@ router.get('/getFormateurByManager',
 router.get('/getFormationsOfFormateurConnected',
     authenticated,
     authorizeRoles('Formateur'),getFormations);
-
+router.get('/getNbrEvenementsAssocies',authenticated,getNbrEvenementsAssocies);
 module.exports = router;
