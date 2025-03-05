@@ -56,9 +56,9 @@ const FormationDashboard = () => {
 
   // Sample data
   const formateurs = [
-    { id: "f1", name: "Thomas Dubois", avatar: "/avatars/thomas.jpg", formations: 3 },
-    { id: "f2", name: "Marie Laurent", avatar: "/avatars/marie.jpg", formations: 2 },
-    { id: "f3", name: "Jean Martin", avatar: "/avatars/jean.jpg", formations: 4 },
+    { id: "f1", name: "Mehdi", avatar: "/avatars/thomas.jpg", formations: 3 },
+    { id: "f2", name: "Hamza", avatar: "/avatars/marie.jpg", formations: 2 },
+    { id: "f3", name: "Mohamed", avatar: "/avatars/jean.jpg", formations: 4 },
   ];
 
   const formations = [
@@ -208,7 +208,7 @@ const FormationDashboard = () => {
     // Implement comprehensive search logic here
   };
   const handleBootcampClick = () => {
-    navigate("/BootcampsList"); // Redirige vers Bootcamps.tsx
+    navigate("/manager/BootcampsList"); // Redirige vers Bootcamps.tsx
   };
   
 

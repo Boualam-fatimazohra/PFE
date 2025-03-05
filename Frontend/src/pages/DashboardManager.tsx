@@ -1,530 +1,233 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { DashboardHeader } from "@/components/layout/DashboardHeader";
-import { Footer } from "@/components/layout/Footer";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { StatsCard } from "@/components/dashboardElement/StatsCard";
-import { FormationsTable } from "@/components/dashboardElement/FormationTable";
-import KitFormateur from "@/components/dashboardElement/KitFormateur";
-import RapportCard from "@/components/dashboardElement/RapportCard";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
-  Plus, 
-  Share2, 
   Calendar, 
-  BarChart2, 
-  Users, 
-  Activity, 
-  Clock, 
+  Users,  
   AlertTriangle,
-  Book,
-  Search,
-  UserCheck
+  Icon,
 } from "lucide-react";
-import { toast, ToastContainer } from 'react-toastify';
-import { EvaluationsTable } from "@/components/dashboardElement/EvaluationTable";
-import { SearchBar } from "@/components/dashboardElement/SearchBar";
-import { useFormations } from "@/contexts/FormationContext";
-import BarChart from "recharts/lib/chart/BarChart";
-import Bar from "recharts/lib/cartesian/Bar";
-import XAxis from "recharts/lib/cartesian/XAxis";
-import YAxis from "recharts/lib/cartesian/YAxis";
-import CartesianGrid from "recharts/lib/cartesian/CartesianGrid";
-import Tooltip from "recharts/lib/component/Tooltip";
-import ResponsiveContainer from "recharts/lib/component/ResponsiveContainer";
-import Line  from "recharts/lib/component/ResponsiveContainer";
-import LineChart  from "recharts/lib/component/ResponsiveContainer";
-import  Legend   from "recharts/lib/component/ResponsiveContainer";
-import PieChart  from "recharts/lib/component/ResponsiveContainer";
-import Pie  from "recharts/lib/component/ResponsiveContainer";
-import Cell  from "recharts/lib/component/ResponsiveContainer";
+import { DatePicker } from "@/components/ui/DatePicker";
+import KPIStats from "@/components/dashboardElement/KPIStats";
+import AbsenceManager from "./AbsenceManager";
+import BenificairesManager from "@/components/dashboardElement/BenificairesManager";
+import { parseClassNames } from "@fullcalendar/core/internal";
 
-const DashboardManager = () => {
-  const navigate = useNavigate();
-  const { formations } = useFormations();
-  const [formationCount, setFormationCount] = useState(0);
-  const [beneficiaryCount, setBeneficiaryCount] = useState(250);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isChatbotOpen, setIsChatbotOpen] = useState(false);
-  const [timePeriod, setTimePeriod] = useState("semestre");
-  const [ageFilter, setAgeFilter] = useState("all");
-  const [notificationCount, setNotificationCount] = useState(3);
+// Define proper type for DatePicker props
+interface CustomDatePickerProps {
+  date: Date;
+  onDateChange: (date: Date) => void;
+  placeholder: string;
+}
 
-  // Sample data for visualizations
-  const absenceData = [
-    { name: 'Jan', rate: 5 },
-    { name: 'Feb', rate: 7 },
-    { name: 'Mar', rate: 8 },
-    { name: 'Apr', rate: 3 },
-    { name: 'May', rate: 4 },
-    { name: 'Jun', rate: 6 },
-  ];
-
-  const kpiData = [
-    { name: 'Chercheur d\'emploi', value: 65 },
-    { name: 'En emploi', value: 35 },
-  ];
-
-  const genderData = [
-    { name: 'Homme', value: 55 },
-    { name: 'Femme', value: 45 },
-  ];
-
-  const mobilityData = [
-    { name: 'Standard', value: 85 },
-    { name: 'Mobilité réduite', value: 15 },
-  ];
-
-  const educationData = [
-    { level: 'Baccalauréat', percentage: 30 },
-    { level: 'Licence', percentage: 40 },
-    { level: 'Master', percentage: 20 },
-    { level: 'Doctorat', percentage: 5 },
-    { level: 'Autre', percentage: 5 },
-  ];
-
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
-
-  useEffect(() => {
-    if (formations) {
-      setFormationCount(formations.length);
-      setIsLoading(false);
-    }
-  }, [formations]);
-
-  useEffect(() => {
-    const handleChatbotToggle = (event) => {
-      if (event.detail) {
-        setIsChatbotOpen(event.detail.isOpen);
-      }
-    };
-
-    window.addEventListener('chatbotToggled', handleChatbotToggle);
-    
-    return () => {
-      window.removeEventListener('chatbotToggled', handleChatbotToggle);
-    };
-  }, []);
-
-  const handleOpenModal = () => {
-    navigate("/formationModal");
-  };
-
-  const handleSearch = (searchValue) => {
-    console.log("Searching for:", searchValue);
-    // Implement comprehensive search logic here
-  };
-
-  const handlePeriodChange = (value) => {
-    setTimePeriod(value);
-    console.log("Time period changed to:", value);
-    // Update data based on selected time period
-  };
-
-  const handleAgeFilterChange = (value) => {
-    setAgeFilter(value);
-    console.log("Age filter changed to:", value);
-    // Filter data based on age group
-  };
-
+// Assuming DatePicker actually accepts these props
+const CustomDatePicker = ({ date, onDateChange, placeholder }: CustomDatePickerProps) => {
   return (
-    <div className="min-h-screen flex flex-col">
-      <DashboardHeader />
-      <ToastContainer />
-      
-      <main className={`flex-grow bg-gray-50 transition-all duration-300 ${isChatbotOpen ? 'translate-x-[-0rem]' : ''}`}>
-        <div className={`transition-all duration-300 px-4 py-8 ${isChatbotOpen ? 'w-[calc(100%-30rem)]' : 'container mx-auto'}`}>
-
-          {/* Header Section with Notifications */}
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <h1 className="text-2xl font-bold">Vue d'Ensemble</h1>
-              <p className="text-gray-500">Dashboard Principal</p>
-            </div>
-            <div className="flex gap-4 items-center">
-              <div className="relative">
-                <div className="absolute hidden group-hover:block right-0 mt-2 bg-white shadow-lg rounded-md p-2 w-64">
-                  <p className="text-sm">3 bénéficiaires n'ont pas signé le règlement intérieur.</p>
-                </div>
-              </div>              
-            </div>
-          </div>
-
-          {/* Filter Controls */}
-          <div className="flex justify-between items-center mb-6 bg-white p-4 rounded-md shadow-sm">
-            <div className="flex items-center gap-4">
-              <span className="font-medium">Période:</span>
-              <Select value={timePeriod} onValueChange={handlePeriodChange}>
-                <SelectTrigger className="w-36">
-                  <SelectValue placeholder="Période" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="semaine">Semaine</SelectItem>
-                  <SelectItem value="mois">Mois</SelectItem>
-                  <SelectItem value="trimestre">Trimestre</SelectItem>
-                  <SelectItem value="semestre">Semestre</SelectItem>
-                  <SelectItem value="annee">Année</SelectItem>
-                  <SelectItem value="toujours">Toujours</SelectItem>
-                </SelectContent>
-              </Select>
-              <span className="font-medium">Tranche d'âge:</span>
-              <Select value={ageFilter} onValueChange={handleAgeFilterChange}>
-                <SelectTrigger className="w-36">
-                  <SelectValue placeholder="Âge" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous</SelectItem>
-                  <SelectItem value="under18">-18 ans</SelectItem>
-                  <SelectItem value="18to24">18 à 24 ans</SelectItem>
-                  <SelectItem value="25to35">25 à 35 ans</SelectItem>
-                  <SelectItem value="over35">+35 ans</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <button className="text-orange-500 flex items-center gap-2">
-              <Share2 size={18} />
-              <span>Exporter</span>
-            </button>
-          </div>
-
-          {/* Statistics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <StatsCard 
-              title="Total Bénéficiaires" 
-              value={beneficiaryCount} 
-              // icon={<Users className="text-blue-500" />} 
-              // change="+5% depuis dernier mois"
-            />
-            <StatsCard 
-              title="Total Formations" 
-              value={isLoading ? '...' : formationCount} 
-              // icon={<Book className="text-green-500" />}
-              // change="+2 nouvelles ce mois"
-            />
-            <StatsCard 
-              title="Prochain événement" 
-              value="07 jours" 
-              // icon={<Calendar className="text-purple-500" />}
-              // change="Formation JavaScript"
-            />
-            <StatsCard 
-              title="Satisfaction moyenne" 
-              value="95%" 
-              // icon={<Activity className="text-orange-500" />}
-              // change="+2% depuis dernier mois"
-            />
-          </div>
-
-          {/* Main Dashboard Tabs */}
-          <Tabs defaultValue="planification" className="mb-8">
-            <TabsList className="mb-6 bg-white p-1 w-full">
-              <TabsTrigger value="planification" className="flex-1 py-3">
-                <Calendar size={18} className="mr-2" />
-                Planification
-              </TabsTrigger>
-              <TabsTrigger value="kpi" className="flex-1 py-3">
-                <BarChart2 size={18} className="mr-2" />
-                KPI Performance
-              </TabsTrigger>
-              <TabsTrigger value="absences" className="flex-1 py-3">
-                <Clock size={18} className="mr-2" />
-                Gestion d'Absence
-              </TabsTrigger>
-              <TabsTrigger value="beneficiaires" className="flex-1 py-3">
-                <Users size={18} className="mr-2" />
-                Bénéficiaires
-              </TabsTrigger>
-            </TabsList>
-
-            {/* Planification Content */}
-            <TabsContent value="planification" className="border-none p-0">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card className="border-[#999999] rounded-none">
-                  <CardHeader>
-                    <CardTitle>Calendrier des Formations</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-lg font-semibold">Formations à venir</h3>
-                      <button className="text-orange-500">Voir tout</button>
-                    </div>
-                    <FormationsTable />
-                  </CardContent>
-                </Card>
-
-                <Card className="border-[#999999] rounded-none">
-                  <CardHeader>
-                    <CardTitle>Évaluations en cours</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <RapportCard />
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-
-            {/* KPI Performance Content */}
-            <TabsContent value="kpi" className="border-none p-0">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card className="border-[#999999] rounded-none">
-                  <CardHeader>
-                    <CardTitle>Situation Professionnelle</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={250}>
-                      <PieChart>
-                        <Pie
-                          data={kpiData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          paddingAngle={5}
-                          dataKey="value"
-                          label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                        >
-                          {kpiData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-[#999999] rounded-none">
-                  <CardHeader>
-                    <CardTitle>Participation par Genre et Mobilité</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <h3 className="text-sm font-medium mb-2">Répartition par Genre</h3>
-                        <ResponsiveContainer width="100%" height={100}>
-                          <PieChart>
-                            <Pie
-                              data={genderData}
-                              cx="50%"
-                              cy="50%"
-                              outerRadius={40}
-                              fill="#8884d8"
-                              dataKey="value"
-                              label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                            >
-                              {genderData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                              ))}
-                            </Pie>
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-medium mb-2">Mobilité</h3>
-                        <ResponsiveContainer width="100%" height={100}>
-                          <PieChart>
-                            <Pie
-                              data={mobilityData}
-                              cx="50%"
-                              cy="50%"
-                              outerRadius={40}
-                              fill="#8884d8"
-                              dataKey="value"
-                              label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                            >
-                              {mobilityData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                              ))}
-                            </Pie>
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-
-            {/* Gestion d'Absence Content */}
-            <TabsContent value="absences" className="border-none p-0">
-              <Card className="border-[#999999] rounded-none">
-                <CardHeader>
-                  <CardTitle>Taux de Déperdition des Formations</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="mb-4">
-                    <h3 className="text-lg font-semibold">Vue d'ensemble</h3>
-                    <p className="text-gray-500">Taux moyen d'absence: 5.5%</p>
-                  </div>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={absenceData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Line type="monotone" dataKey="rate" stroke="#FF8042" activeDot={{ r: 8 }} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Bénéficiaires Content */}
-            <TabsContent value="beneficiaires" className="border-none p-0">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card className="border-[#999999] rounded-none">
-                  <CardHeader>
-                    <CardTitle>Niveau de Scolarité</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={educationData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="level" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Bar dataKey="percentage" fill="#8884d8" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-[#999999] rounded-none">
-                  <CardHeader>
-                    <CardTitle>Contrôle des Règlements Intérieurs</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h3 className="text-lg font-semibold">État des signatures</h3>
-                        <p className="text-gray-500">3 bénéficiaires n'ont pas signé</p>
-                      </div>
-                      <span className="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm">
-                        Action requise
-                      </span>
-                    </div>
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead>
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Formation</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        <tr>
-                          <td className="px-6 py-4 whitespace-nowrap">Jean Dupont</td>
-                          <td className="px-6 py-4 whitespace-nowrap">JavaScript Avancé</td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">
-                              Non signé
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <button className="text-orange-500">Rappeler</button>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td className="px-6 py-4 whitespace-nowrap">Marie Martin</td>
-                          <td className="px-6 py-4 whitespace-nowrap">React Fundamentals</td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">
-                              Non signé
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <button className="text-orange-500">Rappeler</button>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td className="px-6 py-4 whitespace-nowrap">Lucas Bernard</td>
-                          <td className="px-6 py-4 whitespace-nowrap">UX Design</td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">
-                              Non signé
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <button className="text-orange-500">Rappeler</button>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Recherche Bénéficiaire et Recommandations */}
-              <div className="grid grid-cols-1 mt-6">
-                <Card className="border-[#999999] rounded-none">
-                  <CardHeader>
-                    <CardTitle>Historique et Recommandations</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-col md:flex-row gap-6">
-                      <div className="w-full md:w-1/2">
-                        <h3 className="text-lg font-semibold mb-4">Recherche Historique</h3>
-                        <div className="mb-4">
-                          <SearchBar onSearch={handleSearch} />
-                        </div>
-                        <div className="bg-gray-50 p-4 rounded-md">
-                          <p className="text-gray-500 text-sm text-center">
-                            Recherchez un bénéficiaire pour voir son historique de formations
-                          </p>
-                        </div>
-                      </div>
-                      <div className="w-full md:w-1/2">
-                        <h3 className="text-lg font-semibold mb-4">Recommandations Formateurs</h3>
-                        <div className="space-y-4">
-                          <div className="p-4 border rounded-md">
-                            <div className="flex justify-between">
-                              <div>
-                                <h4 className="font-medium">Sophie Dubois</h4>
-                                <p className="text-sm text-gray-500">Formation: UX Design</p>
-                              </div>
-                              <div className="flex items-center">
-                                <span className="text-yellow-500">★★★★☆</span>
-                                <span className="ml-2 text-sm text-gray-500">4.2/5</span>
-                              </div>
-                            </div>
-                            <p className="mt-2 text-sm">
-                              "Excellente participante, très investie et créative."
-                            </p>
-                          </div>
-                          <div className="p-4 border rounded-md">
-                            <div className="flex justify-between">
-                              <div>
-                                <h4 className="font-medium">Thomas Leroy</h4>
-                                <p className="text-sm text-gray-500">Formation: JavaScript</p>
-                              </div>
-                              <div className="flex items-center">
-                                <span className="text-yellow-500">★★★★★</span>
-                                <span className="ml-2 text-sm text-gray-500">4.8/5</span>
-                              </div>
-                            </div>
-                            <p className="mt-2 text-sm">
-                              "Apprend rapidement et aide ses camarades. Potentiel pour devenir formateur."
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </div>
-      </main>
-      
-      <Footer />
-    </div>
+    <DatePicker 
+      date={date}
+      setDate={onDateChange}
+    />
   );
 };
 
-export default DashboardManager;
+const DashboardManager = () => {
+  const [timePeriod, setTimePeriod] = useState("janvier-2023");
+  const [selectedTab, setSelectedTab] = useState("overview");
+  const [year, setYear] = useState("2023");
+  
+  // Sample data for statistics
+  const stats = [
+    { title: "Participants actifs", value: 412, subtitle: "↑ +8% ce mois", icon: <svg xmlns="http://www.w3.org/2000/svg" width="33" height="26" viewBox="0 0 33 26" fill="none"><g clip-path="url(#clip0_865_2062)"><path d="M7.3125 0C8.38994 0 9.42325 0.428012 10.1851 1.18988C10.947 1.95175 11.375 2.98506 11.375 4.0625C11.375 5.13994 10.947 6.17325 10.1851 6.93512C9.42325 7.69699 8.38994 8.125 7.3125 8.125C6.23506 8.125 5.20175 7.69699 4.43988 6.93512C3.67801 6.17325 3.25 5.13994 3.25 4.0625C3.25 2.98506 3.67801 1.95175 4.43988 1.18988C5.20175 0.428012 6.23506 0 7.3125 0ZM26 0C27.0774 0 28.1108 0.428012 28.8726 1.18988C29.6345 1.95175 30.0625 2.98506 30.0625 4.0625C30.0625 5.13994 29.6345 6.17325 28.8726 6.93512C28.1108 7.69699 27.0774 8.125 26 8.125C24.9226 8.125 23.8892 7.69699 23.1274 6.93512C22.3655 6.17325 21.9375 5.13994 21.9375 4.0625C21.9375 2.98506 22.3655 1.95175 23.1274 1.18988C23.8892 0.428012 24.9226 0 26 0ZM0 15.1684C0 12.1773 2.42734 9.75 5.41836 9.75H7.58672C8.39414 9.75 9.16094 9.92773 9.85156 10.2426C9.78555 10.6082 9.75508 10.9891 9.75508 11.375C9.75508 13.3148 10.6082 15.0566 11.9539 16.25C11.9437 16.25 11.9336 16.25 11.9184 16.25H1.08164C0.4875 16.25 0 15.7625 0 15.1684ZM20.5816 16.25C20.5715 16.25 20.5613 16.25 20.5461 16.25C21.8969 15.0566 22.7449 13.3148 22.7449 11.375C22.7449 10.9891 22.7094 10.6133 22.6484 10.2426C23.3391 9.92266 24.1059 9.75 24.9133 9.75H27.0816C30.0727 9.75 32.5 12.1773 32.5 15.1684C32.5 15.7676 32.0125 16.25 31.4184 16.25H20.5816ZM11.375 11.375C11.375 10.0821 11.8886 8.84209 12.8029 7.92785C13.7171 7.01361 14.9571 6.5 16.25 6.5C17.5429 6.5 18.7829 7.01361 19.6971 7.92785C20.6114 8.84209 21.125 10.0821 21.125 11.375C21.125 12.6679 20.6114 13.9079 19.6971 14.8221C18.7829 15.7364 17.5429 16.25 16.25 16.25C14.9571 16.25 13.7171 15.7364 12.8029 14.8221C11.8886 13.9079 11.375 12.6679 11.375 11.375ZM6.5 24.6441C6.5 20.9066 9.53164 17.875 13.2691 17.875H19.2309C22.9684 17.875 26 20.9066 26 24.6441C26 25.3906 25.3957 26 24.6441 26H7.85586C7.10938 26 6.5 25.3957 6.5 24.6441Z" fill="#FF7900"/></g><defs><clipPath id="clip0_865_2062"><path d="M0 0H32.5V26H0V0Z" fill="white"/></clipPath></defs></svg> },
+    { title: "Taux de satisfaction", value: "89%", subtitle: "↑ +2% ce mois", icon: <svg xmlns="http://www.w3.org/2000/svg" width="29" height="25" viewBox="0 0 29 25" fill="none"><g clip-path="url(#clip0_865_2078)"><path d="M14.8438 11.7188V0.810547C14.8438 0.371094 15.1855 0 15.625 0C21.665 0 26.5625 4.89746 26.5625 10.9375C26.5625 11.377 26.1914 11.7188 25.752 11.7188H14.8438ZM1.5625 13.2812C1.5625 7.3584 5.96191 2.45605 11.6699 1.6748C12.1191 1.61133 12.5 1.97266 12.5 2.42676V14.0625L20.1416 21.7041C20.4688 22.0312 20.4443 22.5684 20.0684 22.832C18.1543 24.1992 15.8105 25 13.2812 25C6.81152 25 1.5625 19.7559 1.5625 13.2812ZM27.2656 14.0625C27.7197 14.0625 28.0762 14.4434 28.0176 14.8926C27.6416 17.6221 26.3281 20.0488 24.4092 21.8408C24.1162 22.1143 23.6572 22.0947 23.374 21.8066L15.625 14.0625H27.2656Z" fill="#FF7900"/></g><defs><clipPath id="clip0_865_2078"><path d="M0 0H28.125V25H0V0Z" fill="white"/></clipPath></defs></svg> },
+    { title: "Événements", value: 10, subtitle: "↓ -2 événements", icon: <svg xmlns="http://www.w3.org/2000/svg" width="28" height="22" viewBox="0 0 28 22" fill="none"><g clip-path="url(#clip0_865_2094)"><path d="M13.7501 1.375C13.402 1.375 13.0583 1.43516 12.7317 1.55117L0.678957 5.90391C0.270754 6.0543 5.1035e-05 6.44102 5.1035e-05 6.875C5.1035e-05 7.30898 0.270754 7.6957 0.678957 7.84609L3.16685 8.74414C2.46216 9.85273 2.06255 11.1633 2.06255 12.5426V13.75C2.06255 14.9703 1.59849 16.2293 1.10435 17.2219C0.825051 17.7805 0.507082 18.3305 0.137551 18.8375C5.10365e-05 19.0223 -0.0386208 19.2629 0.0387229 19.482C0.116067 19.7012 0.296535 19.8645 0.519973 19.9203L3.26997 20.6078C3.45044 20.6551 3.6438 20.6207 3.80279 20.5219C3.96177 20.423 4.07349 20.2598 4.10786 20.075C4.47739 18.2359 4.29263 16.5859 4.01763 15.4043C3.88013 14.7941 3.69536 14.1711 3.43755 13.5996V12.5426C3.43755 11.2449 3.87583 10.0203 4.63638 9.04062C5.19068 8.37461 5.90825 7.8375 6.75044 7.50664L13.4965 4.85547C13.8489 4.71797 14.2485 4.88984 14.386 5.24219C14.5235 5.59453 14.3516 5.99414 13.9993 6.13164L7.25318 8.78281C6.72036 8.99336 6.252 9.31563 5.86958 9.71094L12.7274 12.1859C13.054 12.302 13.3977 12.3621 13.7458 12.3621C14.0938 12.3621 14.4376 12.302 14.7641 12.1859L26.8211 7.84609C27.2293 7.7 27.5 7.30898 27.5 6.875C27.5 6.44102 27.2293 6.0543 26.8211 5.90391L14.7684 1.55117C14.4418 1.43516 14.0981 1.375 13.7501 1.375ZM5.50005 17.5312C5.50005 19.048 9.19536 20.625 13.7501 20.625C18.3047 20.625 22 19.048 22 17.5312L21.3426 11.2836L15.2325 13.4922C14.7555 13.6641 14.2528 13.75 13.7501 13.75C13.2473 13.75 12.7403 13.6641 12.2676 13.4922L6.15747 11.2836L5.50005 17.5312Z" fill="#FF7900"/></g><defs><clipPath id="clip0_865_2094"><path d="M0 0H27.5V22H0V0Z" fill="white"/></clipPath></defs></svg>},
+    { title: "Taux d'abondance", value: 17, subtitle: "↓ -3% ce mois", icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><g clip-path="url(#clip0_865_2107)"><path d="M7.5 0C8.32969 0 9 0.670312 9 1.5V3H15V1.5C15 0.670312 15.6703 0 16.5 0C17.3297 0 18 0.670312 18 1.5V3H20.25C21.4922 3 22.5 4.00781 22.5 5.25V7.5H1.5V5.25C1.5 4.00781 2.50781 3 3.75 3H6V1.5C6 0.670312 6.67031 0 7.5 0ZM1.5 9H22.5V21.75C22.5 22.9922 21.4922 24 20.25 24H3.75C2.50781 24 1.5 22.9922 1.5 21.75V9ZM15.7969 14.2969C16.2375 13.8562 16.2375 13.1438 15.7969 12.7078C15.3562 12.2719 14.6438 12.2672 14.2078 12.7078L12.0047 14.9109L9.80156 12.7078C9.36094 12.2672 8.64844 12.2672 8.2125 12.7078C7.77656 13.1484 7.77187 13.8609 8.2125 14.2969L10.4156 16.5L8.2125 18.7031C7.77187 19.1437 7.77187 19.8562 8.2125 20.2922C8.65312 20.7281 9.36563 20.7328 9.80156 20.2922L12.0047 18.0891L14.2078 20.2922C14.6484 20.7328 15.3609 20.7328 15.7969 20.2922C16.2328 19.8516 16.2375 19.1391 15.7969 18.7031L13.5938 16.5L15.7969 14.2969Z" fill="#FF7900"/></g><defs><clipPath id="clip0_865_2107"><path d="M0 0H24V24H0V0Z" fill="white"/></clipPath></defs></svg> },
+];
+
+
+
+  // Sample data for chart
+  const chartData = [
+    { month: 'Jan', value: 150 },
+    { month: 'Fév', value: 220 },
+    { month: 'Mar', value: 180 },
+    { month: 'Avr', value: 240 },
+    { month: 'Mai', value: 120 },
+    { month: 'Juin', value: 220 },
+    { month: 'Juil', value: 180 },
+    { month: 'Août', value: 210 },
+    { month: 'Sep', value: 270 },
+    { month: 'Oct', value: 230 },
+    { month: 'Nov', value: 120 },
+    { month: 'Déc', value: 190 },
+  ];
+
+  // Sample data for upcoming events
+  const events = [
+    { id: 1, title: "Développement Web Full-Stack", date: "11 Mars 2023", time: "14h00-16h00", location: "Agora" ,icon:<svg xmlns="http://www.w3.org/2000/svg" width="21" height="17" viewBox="0 0 21 17" fill="none"><g clip-path="url(#clip0_886_7078)"><path d="M10.3889 1.0625C10.1259 1.0625 9.86621 1.10898 9.61947 1.19863L0.512963 4.56211C0.204543 4.67832 1.1433e-05 4.97715 1.1433e-05 5.3125C1.1433e-05 5.64785 0.204543 5.94668 0.512963 6.06289L2.3927 6.75684C1.86027 7.61348 1.55834 8.62617 1.55834 9.69199V10.625C1.55834 11.568 1.20772 12.5408 0.834369 13.3078C0.623345 13.7395 0.383102 14.1645 0.1039 14.5562C1.14341e-05 14.699 -0.0292073 14.885 0.0292302 15.0543C0.0876677 15.2236 0.224022 15.3498 0.392841 15.393L2.47062 15.9242C2.60697 15.9607 2.75307 15.9342 2.87319 15.8578C2.99331 15.7814 3.07772 15.6553 3.10369 15.5125C3.38289 14.0914 3.24329 12.8164 3.03551 11.9033C2.93163 11.4318 2.79203 10.9504 2.59723 10.5088V9.69199C2.59723 8.68926 2.92838 7.74297 3.50301 6.98594C3.92182 6.47129 4.46399 6.05625 5.10031 5.80059L10.1974 3.75195C10.4636 3.6457 10.7655 3.77852 10.8694 4.05078C10.9733 4.32305 10.8434 4.63184 10.5772 4.73809L5.48015 6.78672C5.07758 6.94941 4.72371 7.19844 4.43477 7.50391L9.61623 9.41641C9.86296 9.50605 10.1227 9.55254 10.3857 9.55254C10.6486 9.55254 10.9083 9.50605 11.1551 9.41641L20.2648 6.06289C20.5733 5.95 20.7778 5.64785 20.7778 5.3125C20.7778 4.97715 20.5733 4.67832 20.2648 4.56211L11.1583 1.19863C10.9116 1.10898 10.6519 1.0625 10.3889 1.0625ZM4.15557 13.5469C4.15557 14.7189 6.94758 15.9375 10.3889 15.9375C13.8302 15.9375 16.6222 14.7189 16.6222 13.5469L16.1255 8.71914L11.509 10.4258C11.1486 10.5586 10.7687 10.625 10.3889 10.625C10.0091 10.625 9.62597 10.5586 9.26885 10.4258L4.65229 8.71914L4.15557 13.5469Z" fill="black"/></g><defs><clipPath id="clip0_886_7078"><path d="M0 0H20.7778V17H0V0Z" fill="white"/></clipPath></defs></svg> },
+    { id: 2, title: "Orange Summer Challenge", date: "15 Mars 2023", time: "10h00-12h00", location: "Coworking" ,icon :<svg xmlns="http://www.w3.org/2000/svg" width="21" height="17" viewBox="0 0 21 17" fill="none"><g clip-path="url(#clip0_886_7078)"><path d="M10.3889 1.0625C10.1259 1.0625 9.86621 1.10898 9.61947 1.19863L0.512963 4.56211C0.204543 4.67832 1.1433e-05 4.97715 1.1433e-05 5.3125C1.1433e-05 5.64785 0.204543 5.94668 0.512963 6.06289L2.3927 6.75684C1.86027 7.61348 1.55834 8.62617 1.55834 9.69199V10.625C1.55834 11.568 1.20772 12.5408 0.834369 13.3078C0.623345 13.7395 0.383102 14.1645 0.1039 14.5562C1.14341e-05 14.699 -0.0292073 14.885 0.0292302 15.0543C0.0876677 15.2236 0.224022 15.3498 0.392841 15.393L2.47062 15.9242C2.60697 15.9607 2.75307 15.9342 2.87319 15.8578C2.99331 15.7814 3.07772 15.6553 3.10369 15.5125C3.38289 14.0914 3.24329 12.8164 3.03551 11.9033C2.93163 11.4318 2.79203 10.9504 2.59723 10.5088V9.69199C2.59723 8.68926 2.92838 7.74297 3.50301 6.98594C3.92182 6.47129 4.46399 6.05625 5.10031 5.80059L10.1974 3.75195C10.4636 3.6457 10.7655 3.77852 10.8694 4.05078C10.9733 4.32305 10.8434 4.63184 10.5772 4.73809L5.48015 6.78672C5.07758 6.94941 4.72371 7.19844 4.43477 7.50391L9.61623 9.41641C9.86296 9.50605 10.1227 9.55254 10.3857 9.55254C10.6486 9.55254 10.9083 9.50605 11.1551 9.41641L20.2648 6.06289C20.5733 5.95 20.7778 5.64785 20.7778 5.3125C20.7778 4.97715 20.5733 4.67832 20.2648 4.56211L11.1583 1.19863C10.9116 1.10898 10.6519 1.0625 10.3889 1.0625ZM4.15557 13.5469C4.15557 14.7189 6.94758 15.9375 10.3889 15.9375C13.8302 15.9375 16.6222 14.7189 16.6222 13.5469L16.1255 8.71914L11.509 10.4258C11.1486 10.5586 10.7687 10.625 10.3889 10.625C10.0091 10.625 9.62597 10.5586 9.26885 10.4258L4.65229 8.71914L4.15557 13.5469Z" fill="black"/></g><defs><clipPath id="clip0_886_7078"><path d="M0 0H20.7778V17H0V0Z" fill="white"/></clipPath></defs></svg>},
+    { id: 3, title: "FabLab 3D Workshop", date: "17 Mars 2023", time: "09h00-12h00", location: "Agora" ,icon:<svg xmlns="http://www.w3.org/2000/svg" width="21" height="17" viewBox="0 0 21 17" fill="none"><g clip-path="url(#clip0_886_7078)"><path d="M10.3889 1.0625C10.1259 1.0625 9.86621 1.10898 9.61947 1.19863L0.512963 4.56211C0.204543 4.67832 1.1433e-05 4.97715 1.1433e-05 5.3125C1.1433e-05 5.64785 0.204543 5.94668 0.512963 6.06289L2.3927 6.75684C1.86027 7.61348 1.55834 8.62617 1.55834 9.69199V10.625C1.55834 11.568 1.20772 12.5408 0.834369 13.3078C0.623345 13.7395 0.383102 14.1645 0.1039 14.5562C1.14341e-05 14.699 -0.0292073 14.885 0.0292302 15.0543C0.0876677 15.2236 0.224022 15.3498 0.392841 15.393L2.47062 15.9242C2.60697 15.9607 2.75307 15.9342 2.87319 15.8578C2.99331 15.7814 3.07772 15.6553 3.10369 15.5125C3.38289 14.0914 3.24329 12.8164 3.03551 11.9033C2.93163 11.4318 2.79203 10.9504 2.59723 10.5088V9.69199C2.59723 8.68926 2.92838 7.74297 3.50301 6.98594C3.92182 6.47129 4.46399 6.05625 5.10031 5.80059L10.1974 3.75195C10.4636 3.6457 10.7655 3.77852 10.8694 4.05078C10.9733 4.32305 10.8434 4.63184 10.5772 4.73809L5.48015 6.78672C5.07758 6.94941 4.72371 7.19844 4.43477 7.50391L9.61623 9.41641C9.86296 9.50605 10.1227 9.55254 10.3857 9.55254C10.6486 9.55254 10.9083 9.50605 11.1551 9.41641L20.2648 6.06289C20.5733 5.95 20.7778 5.64785 20.7778 5.3125C20.7778 4.97715 20.5733 4.67832 20.2648 4.56211L11.1583 1.19863C10.9116 1.10898 10.6519 1.0625 10.3889 1.0625ZM4.15557 13.5469C4.15557 14.7189 6.94758 15.9375 10.3889 15.9375C13.8302 15.9375 16.6222 14.7189 16.6222 13.5469L16.1255 8.71914L11.509 10.4258C11.1486 10.5586 10.7687 10.625 10.3889 10.625C10.0091 10.625 9.62597 10.5586 9.26885 10.4258L4.65229 8.71914L4.15557 13.5469Z" fill="black"/></g><defs><clipPath id="clip0_886_7078"><path d="M0 0H20.7778V17H0V0Z" fill="white"/></clipPath></defs></svg>},
+    { id: 4, title: "Développement Web Full-Stack", date: "18 Mars 2023", time: "14h00-16h00", location: "Agora" ,icon:<svg xmlns="http://www.w3.org/2000/svg" width="21" height="17" viewBox="0 0 21 17" fill="none"><g clip-path="url(#clip0_886_7078)"><path d="M10.3889 1.0625C10.1259 1.0625 9.86621 1.10898 9.61947 1.19863L0.512963 4.56211C0.204543 4.67832 1.1433e-05 4.97715 1.1433e-05 5.3125C1.1433e-05 5.64785 0.204543 5.94668 0.512963 6.06289L2.3927 6.75684C1.86027 7.61348 1.55834 8.62617 1.55834 9.69199V10.625C1.55834 11.568 1.20772 12.5408 0.834369 13.3078C0.623345 13.7395 0.383102 14.1645 0.1039 14.5562C1.14341e-05 14.699 -0.0292073 14.885 0.0292302 15.0543C0.0876677 15.2236 0.224022 15.3498 0.392841 15.393L2.47062 15.9242C2.60697 15.9607 2.75307 15.9342 2.87319 15.8578C2.99331 15.7814 3.07772 15.6553 3.10369 15.5125C3.38289 14.0914 3.24329 12.8164 3.03551 11.9033C2.93163 11.4318 2.79203 10.9504 2.59723 10.5088V9.69199C2.59723 8.68926 2.92838 7.74297 3.50301 6.98594C3.92182 6.47129 4.46399 6.05625 5.10031 5.80059L10.1974 3.75195C10.4636 3.6457 10.7655 3.77852 10.8694 4.05078C10.9733 4.32305 10.8434 4.63184 10.5772 4.73809L5.48015 6.78672C5.07758 6.94941 4.72371 7.19844 4.43477 7.50391L9.61623 9.41641C9.86296 9.50605 10.1227 9.55254 10.3857 9.55254C10.6486 9.55254 10.9083 9.50605 11.1551 9.41641L20.2648 6.06289C20.5733 5.95 20.7778 5.64785 20.7778 5.3125C20.7778 4.97715 20.5733 4.67832 20.2648 4.56211L11.1583 1.19863C10.9116 1.10898 10.6519 1.0625 10.3889 1.0625ZM4.15557 13.5469C4.15557 14.7189 6.94758 15.9375 10.3889 15.9375C13.8302 15.9375 16.6222 14.7189 16.6222 13.5469L16.1255 8.71914L11.509 10.4258C11.1486 10.5586 10.7687 10.625 10.3889 10.625C10.0091 10.625 9.62597 10.5586 9.26885 10.4258L4.65229 8.71914L4.15557 13.5469Z" fill="black"/></g><defs><clipPath id="clip0_886_7078"><path d="M0 0H20.7778V17H0V0Z" fill="white"/></clipPath></defs></svg>},
+    { id: 5, title: "Développement Web Full-Stack", date: "22 Mars 2023", time: "14h00-16h00", location: "Agora", icon:<svg xmlns="http://www.w3.org/2000/svg" width="21" height="17" viewBox="0 0 21 17" fill="none"><g clip-path="url(#clip0_886_7078)"><path d="M10.3889 1.0625C10.1259 1.0625 9.86621 1.10898 9.61947 1.19863L0.512963 4.56211C0.204543 4.67832 1.1433e-05 4.97715 1.1433e-05 5.3125C1.1433e-05 5.64785 0.204543 5.94668 0.512963 6.06289L2.3927 6.75684C1.86027 7.61348 1.55834 8.62617 1.55834 9.69199V10.625C1.55834 11.568 1.20772 12.5408 0.834369 13.3078C0.623345 13.7395 0.383102 14.1645 0.1039 14.5562C1.14341e-05 14.699 -0.0292073 14.885 0.0292302 15.0543C0.0876677 15.2236 0.224022 15.3498 0.392841 15.393L2.47062 15.9242C2.60697 15.9607 2.75307 15.9342 2.87319 15.8578C2.99331 15.7814 3.07772 15.6553 3.10369 15.5125C3.38289 14.0914 3.24329 12.8164 3.03551 11.9033C2.93163 11.4318 2.79203 10.9504 2.59723 10.5088V9.69199C2.59723 8.68926 2.92838 7.74297 3.50301 6.98594C3.92182 6.47129 4.46399 6.05625 5.10031 5.80059L10.1974 3.75195C10.4636 3.6457 10.7655 3.77852 10.8694 4.05078C10.9733 4.32305 10.8434 4.63184 10.5772 4.73809L5.48015 6.78672C5.07758 6.94941 4.72371 7.19844 4.43477 7.50391L9.61623 9.41641C9.86296 9.50605 10.1227 9.55254 10.3857 9.55254C10.6486 9.55254 10.9083 9.50605 11.1551 9.41641L20.2648 6.06289C20.5733 5.95 20.7778 5.64785 20.7778 5.3125C20.7778 4.97715 20.5733 4.67832 20.2648 4.56211L11.1583 1.19863C10.9116 1.10898 10.6519 1.0625 10.3889 1.0625ZM4.15557 13.5469C4.15557 14.7189 6.94758 15.9375 10.3889 15.9375C13.8302 15.9375 16.6222 14.7189 16.6222 13.5469L16.1255 8.71914L11.509 10.4258C11.1486 10.5586 10.7687 10.625 10.3889 10.625C10.0091 10.625 9.62597 10.5586 9.26885 10.4258L4.65229 8.71914L4.15557 13.5469Z" fill="black"/></g><defs><clipPath id="clip0_886_7078"><path d="M0 0H20.7778V17H0V0Z" fill="white"/></clipPath></defs></svg>},
+  ];
+
+  // Sample data for fab labs
+  const fabLabs = [
+    { name: "École du Code", value: 4856, subtitle: "Développeurs", color: "bg-gray-100" },
+    { name: "Fablab", value: 12, subtitle: "Projets Maker", color: "bg-gray-100" },
+    { name: "Orange Fab", value: "07", subtitle: "Startups", color: "bg-gray-100" },
+  ];
+
+  return (
+    <div className="min-h-screen bg-white p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold">Vue Manager</h1>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {stats.map((stat, index) => (
+            <div key={index} className="bg-white p-4 rounded-none border border-gray-200 flex items-start">
+              <div className="mr-3 mt-1">
+                {stat.icon}
+              </div>
+              <div>
+  <p className="text-xl text-gray-500">{stat.title}</p>
+  <p className="text-2xl font-bold">{stat.value}</p>
+  <p
+    className={`text-sm font-inter ${
+      index < 2 ? "text-[#10B981]" : index === 2 ? "text-gray-500" : "text-red-500"
+    }`}
+  >
+    {stat.subtitle}
+  </p>
+</div>
+
+            </div>
+          ))}
+        </div>
+
+        {/* Main Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Chart */}
+          <div className="lg:col-span-2">
+          <div className="bg-white p-4 rounded-none border border-gray-200 mb-6 w-full h-[400px]">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl  font-bold">Performance ODC</h2>
+                <select 
+                  className="border border-gray-300 rounded px-2 py-1 text-sm"
+                  value={year}
+                  onChange={(e) => setYear(e.target.value)}
+                >
+                  <option value="2023">Année 2023</option>
+                  <option value="2022">Année 2022</option>
+                </select>
+              </div>
+              
+              {/* Chart */}
+              <div className="h-64 w-full">
+                <div className="relative h-full">
+                  {/* Y-axis labels */}
+                  <div className="absolute left-0 top-0 bottom-0 w-10 flex flex-col justify-between text-xs text-gray-500">
+                    <span>400</span>
+                    <span>300</span>
+                    <span>200</span>
+                    <span>100</span>
+                    <span>0</span>
+                  </div>
+                  
+                  {/* Chart bars */}
+                  <div className="ml-10 h-full flex items-end">
+                    {chartData.map((item, index) => (
+                      <div key={index} className="flex-1 flex flex-col items-center">
+                        <div 
+                          className="w-4/5 bg-purple-400 rounded-sm" 
+                          style={{ height: `${(item.value / 400) * 100}%` }}
+                        ></div>
+                        <span className="text-xs mt-1 text-gray-500">{item.month}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Events */}
+            <div className="bg-white p-4 rounded-none border border-gray-200">
+              <h2 className="font-bold text-2xl  mb-4">Événements à venir</h2>
+              <div className="space-y-3">
+                {events.map((event) => (
+                  <div key={event.id} className="flex items-center justify-between border-b border-gray-100 pb-2">
+                    <div className="flex items-start">
+                      <div className="bg-gray-100 p-1 rounded mr-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="21" height="17" viewBox="0 0 21 17" fill="none"><g clip-path="url(#clip0_886_7078)"><path d="M10.3889 1.0625C10.1259 1.0625 9.86621 1.10898 9.61947 1.19863L0.512963 4.56211C0.204543 4.67832 1.1433e-05 4.97715 1.1433e-05 5.3125C1.1433e-05 5.64785 0.204543 5.94668 0.512963 6.06289L2.3927 6.75684C1.86027 7.61348 1.55834 8.62617 1.55834 9.69199V10.625C1.55834 11.568 1.20772 12.5408 0.834369 13.3078C0.623345 13.7395 0.383102 14.1645 0.1039 14.5562C1.14341e-05 14.699 -0.0292073 14.885 0.0292302 15.0543C0.0876677 15.2236 0.224022 15.3498 0.392841 15.393L2.47062 15.9242C2.60697 15.9607 2.75307 15.9342 2.87319 15.8578C2.99331 15.7814 3.07772 15.6553 3.10369 15.5125C3.38289 14.0914 3.24329 12.8164 3.03551 11.9033C2.93163 11.4318 2.79203 10.9504 2.59723 10.5088V9.69199C2.59723 8.68926 2.92838 7.74297 3.50301 6.98594C3.92182 6.47129 4.46399 6.05625 5.10031 5.80059L10.1974 3.75195C10.4636 3.6457 10.7655 3.77852 10.8694 4.05078C10.9733 4.32305 10.8434 4.63184 10.5772 4.73809L5.48015 6.78672C5.07758 6.94941 4.72371 7.19844 4.43477 7.50391L9.61623 9.41641C9.86296 9.50605 10.1227 9.55254 10.3857 9.55254C10.6486 9.55254 10.9083 9.50605 11.1551 9.41641L20.2648 6.06289C20.5733 5.95 20.7778 5.64785 20.7778 5.3125C20.7778 4.97715 20.5733 4.67832 20.2648 4.56211L11.1583 1.19863C10.9116 1.10898 10.6519 1.0625 10.3889 1.0625ZM4.15557 13.5469C4.15557 14.7189 6.94758 15.9375 10.3889 15.9375C13.8302 15.9375 16.6222 14.7189 16.6222 13.5469L16.1255 8.71914L11.509 10.4258C11.1486 10.5586 10.7687 10.625 10.3889 10.625C10.0091 10.625 9.62597 10.5586 9.26885 10.4258L4.65229 8.71914L4.15557 13.5469Z" fill="black"/></g><defs><clipPath id="clip0_886_7078"><path d="M0 0H20.7778V17H0V0Z" fill="white"/></clipPath></defs></svg>                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{event.title}</p>
+                        <div className="flex items-center text-xs text-gray-500 mt-1">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M11.9 1.4H10.5V0.7C10.5 0.514348 10.4263 0.336301 10.295 0.205025C10.1637 0.0737498 9.98565 0 9.8 0C9.61435 0 9.4363 0.0737498 9.30503 0.205025C9.17375 0.336301 9.1 0.514348 9.1 0.7V1.4H4.9V0.7C4.9 0.514348 4.82625 0.336301 4.69497 0.205025C4.5637 0.0737498 4.38565 0 4.2 0C4.01435 0 3.8363 0.0737498 3.70503 0.205025C3.57375 0.336301 3.5 0.514348 3.5 0.7V1.4H2.1C1.54305 1.4 1.0089 1.62125 0.615076 2.01508C0.221249 2.4089 0 2.94305 0 3.5V11.9C0 12.457 0.221249 12.9911 0.615076 13.3849C1.0089 13.7788 1.54305 14 2.1 14H11.9C12.457 14 12.9911 13.7788 13.3849 13.3849C13.7788 12.9911 14 12.457 14 11.9V3.5C14 2.94305 13.7788 2.4089 13.3849 2.01508C12.9911 1.62125 12.457 1.4 11.9 1.4ZM12.6 11.9C12.6 12.0857 12.5263 12.2637 12.395 12.395C12.2637 12.5263 12.0857 12.6 11.9 12.6H2.1C1.91435 12.6 1.7363 12.5263 1.60503 12.395C1.47375 12.2637 1.4 12.0857 1.4 11.9V7H12.6V11.9ZM12.6 5.6H1.4V3.5C1.4 3.31435 1.47375 3.1363 1.60503 3.00503C1.7363 2.87375 1.91435 2.8 2.1 2.8H3.5V3.5C3.5 3.68565 3.57375 3.8637 3.70503 3.99497C3.8363 4.12625 4.01435 4.2 4.2 4.2C4.38565 4.2 4.5637 4.12625 4.69497 3.99497C4.82625 3.8637 4.9 3.68565 4.9 3.5V2.8H9.1V3.5C9.1 3.68565 9.17375 3.8637 9.30503 3.99497C9.4363 4.12625 9.61435 4.2 9.8 4.2C9.98565 4.2 10.1637 4.12625 10.295 3.99497C10.4263 3.8637 10.5 3.68565 10.5 3.5V2.8H11.9C12.0857 2.8 12.2637 2.87375 12.395 3.00503C12.5263 3.1363 12.6 3.31435 12.6 3.5V5.6Z" fill="#FF7900"/></svg>
+                          <span>{event.date}</span>
+                          <span>{event.time}</span>
+                        </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px'}}>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3.16668 6.66559H3.16668V6.66334C3.16668 4.00236 5.33529 1.83334 8.00001 1.83334C10.6645 1.83334 12.8333 4.00215 12.8333 6.66668L12.8334 6.66893C12.8421 8.61982 11.6196 10.499 10.3046 11.9396C9.65652 12.6496 9.00622 13.231 8.51749 13.6351C8.31052 13.8062 8.13322 13.9449 7.99825 14.0475C7.52751 13.6951 6.56604 12.9296 5.62056 11.8865C4.3346 10.4677 3.15787 8.62228 3.16668 6.66559ZM4.83335 6.66668C4.83335 8.41615 6.25054 9.83334 8.00001 9.83334C9.74949 9.83334 11.1667 8.41615 11.1667 6.66668C11.1667 4.9172 9.74949 3.50001 8.00001 3.50001C6.25054 3.50001 4.83335 4.9172 4.83335 6.66668Z" stroke="#FF7900"/></svg>
+                          <span>{event.location}</span>
+                          </div>
+                          <span className="mx-1">•</span>
+                        </div>
+                      </div>
+                    </div>
+                    <button className="bg-gray-800 text-white text-xs px-3 py-1 rounded-none">
+                      Accéder
+                    </button>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Pagination */}
+              <div className="flex items-center justify-between mt-4">
+                <span className="text-xs text-gray-500">Précédent</span>
+                <div className="flex space-x-1">
+                  {[1, 2, 3, '...', 8].map((page, index) => (
+                    <button 
+                      key={index}
+                      className={`w-6 h-6 flex items-center justify-center rounded text-xs ${
+                        page === 1 ? 'bg-gray-800 text-white' : 'text-gray-500'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+                <span className="text-xs text-gray-500">Suivant</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column - KPIs and Fab Labs */}
+          <div className="space-y-6">
+            {/* KPIs */}
+            {/* Fab Labs */}
+            {fabLabs.map((lab, index) => (
+              <div key={index} className={`${lab.color} p-4 `}>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="text-xl font-bold">{lab.name}</h3>
+                    <p className="text-3xl font-bold mt-1">{lab.value}</p>
+                    <p className="text-sm text-gray-600">{lab.subtitle}</p>
+                  </div>
+                  <button className="bg-orange-500 text-white text-xs px-3 py-1 rounded-none">
+                    Accéder
+                  </button>
+                </div>
+              </div>
+            ))}
+            <KPIStats></KPIStats>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+  export default DashboardManager;
