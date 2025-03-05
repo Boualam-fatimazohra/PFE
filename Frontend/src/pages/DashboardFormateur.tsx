@@ -12,27 +12,40 @@ import { toast, ToastContainer } from 'react-toastify';
 import { EvaluationsTable } from "@/components/dashboardElement/EvaluationTable";
 import { SearchBar } from "@/components/dashboardElement/SearchBar";
 import { useFormations } from "@/contexts/FormationContext";
+import DetailsFormation from "@/components/dashboardElement/DetailsFormation";
+import { FormationAvenir } from "@/pages/FormationAvenir";
+import FormationTerminer from "@/pages/FormationTerminer";
 
 interface GenerateEvaluationLinkResponse {
   evaluationLink: string;
 }
 
+// Définir le type FormationItem pour correspondre à ce que les composants attendent
+interface FormationItem {
+  id: string;
+  title: string;
+  nom: string;
+  dateDebut: string;
+  dateFin?: string;
+  status: string;
+  image?: string;
+}
+
 const DashboardFormateur: React.FC = () => {
   const navigate = useNavigate();
-  const { formations } = useFormations(); // Get formations from context
+  const { formations } = useFormations(); 
   const [formationCount, setFormationCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
+  const [selectedFormation, setSelectedFormation] = useState<FormationItem | null>(null);
 
   useEffect(() => {
-    // First approach: You can use the formations already in context
     if (formations) {
       setFormationCount(formations.length);
       setIsLoading(false);
     }
   }, [formations]);
 
-  // Listen for chatbot state changes from the header component
   useEffect(() => {
     const handleChatbotToggle = (event: CustomEvent) => {
       if (event.detail) {
@@ -81,88 +94,139 @@ const DashboardFormateur: React.FC = () => {
     // Implement search functionality here
   };
 
-  return (
+  const handleAccessClick = (formation: FormationTableItem) => {
+    // Mapper FormationTableItem à FormationItem
+    setSelectedFormation({
+      ...formation,
+      id: formation._id, // Map _id to id
+      title: formation.nom, // Map nom to title
+    });
+  };
 
-      <div className="min-h-screen flex flex-col">
-        <DashboardHeader />
-        <ToastContainer />
-        
-        <main className={`flex-grow bg-gray-50 transition-all duration-300 ${isChatbotOpen ? 'translate-x-[-0rem]' : ''}`}>
-          <div className={`transition-all duration-300 px-4 py-8 ${isChatbotOpen ? 'w-[calc(100%-30rem)]' : 'container mx-auto'}`}>
+  const handleRetourClick = () => {
+    setSelectedFormation(null);
+  };
 
-            {/* Header Section */}
-            <div className="flex justify-between items-center mb-8">
-              <h1 className="text-2xl font-bold">Vue d'Ensemble</h1>
-              <div className="flex gap-4">
-                <SearchBar onSearch={handleSearch} />
-                <button 
-                  onClick={handleOpenModal}
-                  className="rounded-none bg-orange-500 text-white px-4 py-2 rounded-md flex items-center space-x-2 hover:bg-orange-600 transition-colors"
-                >
-                  <Plus size={20} />
-                  <span>Créer une formation</span>
-                </button>
-              </div>
-            </div>
+  const renderDetails = () => {
+    if (!selectedFormation) return null;
+    
+    const status = selectedFormation.status === "Terminer" ? "Terminé" : selectedFormation.status;
 
-            {/* Statistics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <StatsCard title="Total Bénéficiaires" value={250} />
-              <StatsCard title="Total Formations" 
-                  value={isLoading ? '...' : formationCount} 
-              />
-              <StatsCard title="Prochain événement" value="07" />
-              <StatsCard title="Satisfaction moyenne" value="95%" />
-            </div>
-
-            {/* Formations and Evaluations Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 ">
-              {/* Formations Card */}
-              <Card className="border-[#999999] rounded-none">
-                <CardContent className="p-6">
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-bold font-inter">Mes Formations</h2>
-                    <button 
-                      className="rounded-none bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors"
-                      onClick={() => navigate("/formateur/mesformation")}
-                    >
-                      Découvrir
-                    </button>
-                  </div>
-                  <FormationsTable/>
-                </CardContent>
-              </Card>
-
-              {/* Evaluations Card */}
-              <Card className="border-[#999999] rounded-none">
-                <CardContent className="p-6 ">
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-bold font-inter">Évaluations</h2>
-                    <button 
-                      className="rounded-none bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors"
-                      onClick={() => navigate("/FormulaireEvaluation")}
-                    >
-                      Découvrir
-                    </button>
-                  </div>
-                  <EvaluationsTable onGenerateLink={generateEvaluationLink} />
-                  <div className="mt-6">
-                    <RapportCard />
-                  </div>
-                </CardContent>
-              </Card>
-              
-            </div>
-
-            {/* Kit Formateur Section */}
-            <KitFormateur />
+    switch (status) {
+      case "En Cours":
+        return <DetailsFormation formation={selectedFormation} onRetourClick={handleRetourClick} />;
+      case "Avenir":
+        return <FormationAvenir formation={selectedFormation} onRetourClick={handleRetourClick} />;
+      case "Terminé":
+        return <FormationTerminer formation={selectedFormation} onRetourClick={handleRetourClick} />;
+      default:
+        return (
+          <div className="p-4">
+            <h2 className="text-xl font-bold mb-4">Statut inconnu</h2>
+            <button 
+              className="bg-black text-white px-4 py-2 rounded-none"
+              onClick={handleRetourClick}
+            >
+              Retour
+            </button>
           </div>
-        </main>
-        
-        <Footer />
-      </div>
+        );
+    }
+  };
 
+  return (
+    <div className="min-h-screen flex flex-col">
+      <DashboardHeader />
+      <ToastContainer />
+      
+      <main
+        className={`flex-grow transition-all duration-300 ${
+          isChatbotOpen ? 'translate-x-[-0rem]' : ''
+        } ${selectedFormation ? 'bg-white' : 'bg-gray-50'}`} // Ajouter bg-white si selectedFormation est défini
+      >
+        <div
+          className={`transition-all duration-300 px-4 py-8 ${
+            isChatbotOpen ? 'w-[calc(100%-30rem)]' : 'container mx-auto'
+          }`}
+        >
+          {selectedFormation ? (
+            // Afficher uniquement les détails de la formation si une formation est sélectionnée
+            renderDetails()
+          ) : (
+            // Afficher toute la page normale si aucune formation n'est sélectionnée
+            <>
+              {/* Header Section */}
+              <div className="flex justify-between items-center mb-8">
+                <h1 className="text-2xl font-bold">Vue d'Ensemble</h1>
+                <div className="flex gap-4">
+                  <SearchBar onSearch={handleSearch} />
+                  <button 
+                    onClick={handleOpenModal}
+                    className="rounded-none bg-orange-500 text-white px-4 py-2 rounded-md flex items-center space-x-2 hover:bg-orange-600 transition-colors"
+                  >
+                    <Plus size={20} />
+                    <span>Créer une formation</span>
+                  </button>
+                </div>
+              </div>
+  
+              {/* Statistics Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <StatsCard title="Total Bénéficiaires" value={250} />
+                <StatsCard title="Total Formations" 
+                    value={isLoading ? '...' : formationCount} 
+                />
+                <StatsCard title="Prochain événement" value="07" />
+                <StatsCard title="Satisfaction moyenne" value="95%" />
+              </div>
+  
+              {/* Formations and Evaluations Section */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 ">
+                {/* Formations Card */}
+                <Card className="border-[#999999] rounded-none">
+                  <CardContent className="p-6">
+                    <div className="flex justify-between items-center mb-4">
+                      <h2 className="text-xl font-bold font-inter">Mes Formations</h2>
+                      <button 
+                        className="rounded-none bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors"
+                        onClick={() => navigate("/formateur/mesformation")}
+                      >
+                        Découvrir
+                      </button>
+                    </div>
+                    <FormationsTable onAccessClick={handleAccessClick} />
+                  </CardContent>
+                </Card>
+  
+                {/* Evaluations Card */}
+                <Card className="border-[#999999] rounded-none">
+                  <CardContent className="p-6 ">
+                    <div className="flex justify-between items-center mb-4">
+                      <h2 className="text-xl font-bold font-inter">Évaluations</h2>
+                      <button 
+                        className="rounded-none bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors"
+                        onClick={() => navigate("/FormulaireEvaluation")}
+                      >
+                        Découvrir
+                      </button>
+                    </div>
+                    <EvaluationsTable onGenerateLink={generateEvaluationLink} />
+                    <div className="mt-6">
+                      <RapportCard />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+  
+              {/* Kit Formateur Section */}
+              <KitFormateur />
+            </>
+          )}
+        </div>
+      </main>
+      
+      <Footer />
+    </div>
   );
-};
-
+}
 export default DashboardFormateur;
