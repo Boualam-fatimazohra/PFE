@@ -27,6 +27,7 @@ import { toast } from "react-toastify";
 interface FormationItem {
   id: string;
   title: string;
+  description: string | null;
   status: "En Cours" | "Avenir" | "Terminé" | "Replanifier";
   image: string;
 }
@@ -46,6 +47,7 @@ const MesFormations = () => {
       const mappedFormations = contextFormations.map((formation) => ({
         id: formation._id || `temp-${formation.nom}`,
         title: formation.nom,
+        description: formation.description || null,
         status: formation.status as "En Cours" | "Avenir" | "Terminé" | "Replanifier",
         image: formation.image,
       }));
@@ -183,7 +185,7 @@ const MesFormations = () => {
             <>
               <div className="flex justify-between items-center mb-8">
                 <h1 className="text-2xl font-bold">Mes Formations</h1>
-                <Button variant="orange" className="rounded-none" onClick={handleOpenModal}>
+                <Button variant="orange" className="rounded-[4px]" onClick={handleOpenModal}>
                   Créer une formation
                 </Button>
               </div>
@@ -193,7 +195,7 @@ const MesFormations = () => {
                     <Input
                       type="search"
                       placeholder="Recherche une formation"
-                      className="rounded-none shadow-sm border w-full pr-10"
+                      className="rounded-[4px] shadow-sm border w-full pr-10"
                     />
                     <svg className="absolute right-3 top-1/2 transform -translate-y-1/2 " width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <rect width="26" height="26" rx="13" fill="#FF7900"/>
@@ -202,10 +204,10 @@ const MesFormations = () => {
 
                   </div>
                   <Select onValueChange={setSelectedStatus}>
-                      <SelectTrigger className="w-[150px] rounded-none shadow-sm border">
+                      <SelectTrigger className="w-[150px] rounded-[4px] shadow-sm border">
                         <SelectValue placeholder="Tous les statuts" />
                       </SelectTrigger>
-                      <SelectContent className="rounded-none">
+                      <SelectContent className="rounded-[4px]">
                         <SelectItem value="null">Tous les statuts</SelectItem>
                         <SelectItem value="En Cours">En Cours</SelectItem>
                         <SelectItem value="Avenir">A Venir</SelectItem>
@@ -215,10 +217,10 @@ const MesFormations = () => {
                   </Select>
 
                   <Select>
-                    <SelectTrigger className="w-[150px] rounded-none shadow-sm border">
+                    <SelectTrigger className="w-[150px] rounded-[4px] shadow-sm border">
                       <SelectValue placeholder="Trier par date" />
                     </SelectTrigger>
-                    <SelectContent className="rounded-none">
+                    <SelectContent className="rounded-[4px]">
                       <SelectItem value="recent">Plus récent</SelectItem>
                       <SelectItem value="oldest">Plus ancien</SelectItem>
                     </SelectContent>
@@ -236,9 +238,9 @@ const MesFormations = () => {
                 {loading ? (
                   // Loading skeleton
                   <>
-                    <div className="bg-gray-100 animate-pulse h-64 rounded-md"></div>
-                    <div className="bg-gray-100 animate-pulse h-64 rounded-md"></div>
-                    <div className="bg-gray-100 animate-pulse h-64 rounded-md"></div>
+                    <div className="bg-gray-100 animate-pulse h-64 rounded-[4px]"></div>
+                    <div className="bg-gray-100 animate-pulse h-64 rounded-[4px]"></div>
+                    <div className="bg-gray-100 animate-pulse h-64 rounded-[4px]"></div>
                   </>
                 ) : currentFormations.length > 0 ? (
                   // Display only current page formations
@@ -280,7 +282,7 @@ const MesFormations = () => {
 
       {isDeleteModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-8 rounded-none shadow-lg w-[600px] relative">
+          <div className="bg-white p-8 rounded-[4px] shadow-lg w-[600px] relative">
             {/* Bouton Fermer */}
             <Button
               variant="ghost"
@@ -298,7 +300,7 @@ const MesFormations = () => {
             <div className="flex justify-end space-x-4">
               <Button
                 variant="outline"
-                className="rounded-none"
+                className="rounded-[4px]"
                 onClick={() => setIsDeleteModalOpen(false)}
                 disabled={isDeleting}
               >
@@ -306,7 +308,7 @@ const MesFormations = () => {
               </Button>
               <Button
                 variant="destructive"
-                className="rounded-none"
+                className="rounded-[4px]"
                 onClick={confirmDeleteFormation}
                 disabled={isDeleting}
               >
