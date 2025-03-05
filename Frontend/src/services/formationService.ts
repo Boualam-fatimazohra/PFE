@@ -22,6 +22,16 @@ export const getAllFormations = async () => {
     throw error;
   }
 };
+export const getNbrBeneficiairesParFormateur=async ()=>{
+  try {
+    const response = await apiClient.get('/beneficiaires/getNbrBeneficiairesParFormateur');
+    return response.data;
+  }
+  catch(error){
+    console.error('Error fetching formations:', error);
+    throw error;
+
+  }}
 
 export const getFormationById = async (id: string) => {
   try {
