@@ -364,7 +364,7 @@ const CalendarView = () => {
         
         .mini-calendar-wrapper {
           width: 200px;
-          padding-top: 150px;
+          padding-top: 250px;
           margin-left: 300px;  /*50px */
           flex-shrink: 0;
         }
