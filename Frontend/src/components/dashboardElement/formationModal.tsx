@@ -5,7 +5,12 @@ import { Eye, Download, Trash2, PlusCircle, ChevronDown, ChevronLeft, ChevronRig
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import ParticipantsSection from "../Formation/ParticipantsSection";
 import { useFormations } from "../../contexts/FormationContext";
-
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import styled, { createGlobalStyle } from "styled-components";
+import { fr } from "date-fns/locale"; // Assurez-vous d'avoir installé `date-fns`
+import { Loader2 } from "lucide-react";
+import EnhanceListButton from "./EnhanceListButton";
 // Types
 interface Step {
   number: string;
@@ -24,6 +29,11 @@ interface Participant {
   confTel: string;
   confEmail: string;
 }
+interface ProcessingResults {
+  totalBeneficiaries?: number;
+  eligiblePhoneNumbers?: number;
+  totalContacts?: number;
+}
 
 interface FormState {
   title: string;  // Will map to 'nom'
@@ -36,6 +46,12 @@ interface FormState {
   dateDebut: string;
   dateFin: string;
   tags: string;  // Add this field
+}
+interface UploadedFile {
+  name: string;
+  data: string;
+  fullLength?: number;
+  type: 'image' | 'participant-list'; // Added type to differentiate
 }
 
 // Initial form state
@@ -51,9 +67,15 @@ const initialFormState: FormState = {
   dateFin: "",
   tags: "",  // Initialize tags field
 };
+interface Message {
+  sender: 'user' | 'bot';
+  text: string;
+  id?: number;
+}
 
 const FormationModal = () => {
   const { addNewFormation, error: contextError } = useFormations();
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   // State
   const [currentStep, setCurrentStep] = useState(1);
@@ -63,7 +85,156 @@ const FormationModal = () => {
   const [fileList, setFileList] = useState<File[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dateDebut, setDateDebut] = useState<Date | null>(null);
+  const [dateFin, setDateFin] = useState<Date | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const [processingResults, setProcessingResults] = useState<ProcessingResults | null>(null);
+  const participantListInputRef = useRef<HTMLInputElement>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const GlobalStyle = createGlobalStyle`
+  .custom-calendar {
+    font-family: Arial, sans-serif;
+    border: 1px solid #F16E00;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    width: auto; /* Ajustement automatique */
+    display: flex;
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  .react-datepicker__header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start; /* Alignement en haut */
+    position: relative;
+    padding-top: 0;
+}
 
+.react-datepicker__current-month {
+    order: -1; /* Place le mois en premier */
+    margin-top: 5px;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+
+  /* Permet d'afficher calendrier + heures côte à côte */
+  .react-datepicker {
+    display: flex !important;
+    border: none !important;
+    flex-direction: row !important;
+    align-items: flex-start; /* Alignement parfait des headers */
+  }
+
+  /* Fixe une largeur correcte au calendrier pour éviter une seule ligne */
+  .react-datepicker__month-container {
+    width: 280px;
+    border-right: 1px solid #F16E00;
+  }
+
+  /* Conteneur des heures : même hauteur que le calendrier */
+  .react-datepicker__time-container {
+    width: 100px;
+    overflow: hidden; /* Empêche le scroll vertical */
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Correction du conteneur pour empêcher les heures de descendre */
+  .react-datepicker__time-box {
+    height: 100%; /* S'assure que les heures restent dans le même cadre */
+    overflow-y: auto;
+  }
+
+  /* Alignement parfait du trait orange */
+  .react-datepicker__header {
+    background-color: white;
+    border-bottom: 1px solid #F16E00;
+    padding-top: 10px;
+    height: 40px; /* Hauteur fixe pour un alignement parfait */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .react-datepicker_time-container .react-datepicker_header {
+    height: 40px; /* Même hauteur que le header des dates */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid #F16E00;
+    padding: 0;
+  }
+
+  .react-datepicker__current-month {
+    color: black;
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+
+  .react-datepicker__day-names {
+    display: flex;
+    justify-content: space-between;
+    color: black;
+    font-weight: bold;
+  }
+
+  .react-datepicker__week {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .react-datepicker__day {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: black;
+    transition: background-color 0.2s;
+  }
+
+  .react-datepicker__day--selected,
+  .react-datepicker__day--keyboard-selected,
+  .react-datepicker__day:hover {
+    background-color: #F16E00 !important;
+    color: white !important;
+  }
+
+  .react-datepicker__time-list {
+    height: auto !important;
+    max-height: 270px; /* Ajuste la hauteur des heures */
+    overflow-y: auto; /* Ajoute un scroll limité si trop d'heures */
+  }
+
+  .react-datepicker__time-list-item {
+    padding: 8px;
+    transition: background-color 0.2s;
+    text-align: center;
+  }
+
+  .react-datepicker__time-list-item:hover {
+    background-color: #F16E00 !important;
+    color: white !important;
+  }
+
+  .react-datepicker__time-list-item--selected {
+    background-color: #F16E00 !important;
+    color: white !important;
+    font-weight: bold;
+  }
+
+  .react-datepicker__time-caption {
+    font-weight: bold;
+    text-align: center;
+    border-bottom: 1px solid #F16E00;
+    padding: 8px 0;
+  }
+`;
   // Options for select inputs
   const statusOptions = [
     { label: "En Cours", value: "En Cours" },
@@ -157,7 +328,91 @@ const FormationModal = () => {
       }));
     }
   };
- 
+  const handleImageButtonClick = () => {
+    if (imageInputRef.current) {
+      imageInputRef.current.click();
+    }
+  };
+
+  // Handler for participant list upload
+  const handleParticipantListButtonClick = () => {
+    if (participantListInputRef.current) {
+      participantListInputRef.current.click();
+    }
+  };
+
+  // Handler for image file change - modifié pour définir l'URL de prévisualisation
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      const file = event.target.files[0];
+
+      if (file.size > 2 * 1024 * 1024) {
+        alert("Le fichier est trop volumineux. La taille maximum est de 2MB.");
+        event.target.value = "";
+        return;
+      }
+
+      setFormState(prevState => ({ ...prevState, imageFormation: file }));
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target && e.target.result) {
+          const dataUrl = e.target.result as string;
+
+          // Définir l'URL de prévisualisation
+          setImagePreviewUrl(dataUrl);
+
+          setUploadedFiles(prev => [...prev, { 
+            name: file.name, 
+            data: dataUrl,
+            type: 'image'  // Mark this as an image type
+          }]);
+        }
+      };
+
+      reader.readAsDataURL(file); // Use readAsDataURL for images
+      event.target.value = "";
+    }
+  };
+
+  // Handler for participant list file change
+  const handleParticipantListChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      const file = event.target.files[0];
+
+      if (file.size > 100 * 1024 * 1024) {
+        alert("Le fichier est trop volumineux. La taille maximum est de 100MB.");
+        event.target.value = "";
+        return;
+      }
+
+      // Add to fileList for participant files
+      setFileList(prevList => [...prevList, file]);
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target && e.target.result) {
+          setUploadedFiles(prev => [...prev, { 
+            name: file.name, 
+            data: e.target.result as string,
+            type: 'participant-list'  // Mark this as a participant list type
+          }]);
+        }
+      };
+
+      reader.readAsDataURL(file);
+      event.target.value = "";
+    }
+  };
+
+  // Fonction pour supprimer l'image
+  const handleRemoveImage = () => {
+    setImagePreviewUrl(null);
+    setFormState(prevState => ({ ...prevState, imageFormation: null }));
+    // Supprimer du tableau uploadedFiles
+    setUploadedFiles(prev => prev.filter(file => file.type !== 'image'));
+  };
+
   
 
   // Form validation
@@ -180,15 +435,31 @@ const FormationModal = () => {
       if (!formState.level) {
         newErrors.level = "Le niveau est obligatoire";
       }
-      if (!formState.dateDebut) {
-        newErrors.dateDebut = "La date de début est obligatoire";
-      }
-      if (!formState.imageFormation) {
-        newErrors.imageFormation = "L'image est obligatoire";
-      }
-      if (!formState.registrationLink) {
-        newErrors.registrationLink = "Le lein est obligatoire";
-      }
+       // Modification pour les dates
+    if (!dateDebut) {
+      newErrors.dateDebut = "La date de début est obligatoire";
+    } else {
+      // Convertir la date en string au format ISO
+      formState.dateDebut = dateDebut.toISOString();
+    }
+
+    if (!dateFin) {
+      newErrors.dateFin = "La date de Fin est obligatoire";
+    } else {
+      // Convertir la date en string au format ISO
+      formState.dateFin = dateFin.toISOString();
+    }
+
+    // Validation supplémentaire : date de fin doit être après date de début
+    if (dateDebut && dateFin && dateFin <= dateDebut) {
+      newErrors.dateFin = "La date de fin doit être postérieure à la date de début";
+    }
+    if (!formState.imageFormation) {
+      newErrors.imageFormation = "L'image est obligatoire";
+    }
+    if (!formState.registrationLink) {
+      newErrors.registrationLink = "Le lein est obligatoire";
+    }
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -224,8 +495,8 @@ const FormationModal = () => {
         niveau: formState.level,
         image: formState.imageFormation,
         lienInscription: formState.registrationLink,
-        dateDebut: formState.dateDebut,
-        dateFin: formState.dateFin,
+        dateDebut: formState.dateDebut, // Conversion de la date de début
+        dateFin: formState.dateFin,    
         tags: formState.tags
       };
   
@@ -312,30 +583,64 @@ const FormationModal = () => {
         </div>
 
         <div className="grid grid-cols-3 gap-6">
-          <div>
-            <label className="rounded-none block text-sm font-bold text-black mb-1">
-              Date début formation <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="datetime-local"
-              value={formState.dateDebut}
-              onChange={(e) => setFormState({ ...formState, dateDebut: e.target.value })}
-              className={`rounded-none w-full p-2.5 border ${errors.dateDebut ? 'border-red-500' : 'border-gray-300'} rounded-lg`}
-            />
-            {errors.dateDebut && <p className="mt-1 text-sm text-red-500">{errors.dateDebut}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-bold text-black mb-1">
-              Date fin formation
-            </label>
-            <input
-              type="datetime-local"
-              value={formState.dateFin}
-              onChange={(e) => setFormState({ ...formState, dateFin: e.target.value })}
-              className="rounded-none w-full p-2.5 border border-gray-300 rounded-lg"
-            />
-          </div>
-        </div>
+      <div >
+        <label className="rounded-none block text-sm font-bold text-black mb-1">
+          Date début formation <span className="text-red-500">*</span>
+        </label>
+        <div className="relative w-full">
+        <>
+      <GlobalStyle />
+        <DatePicker
+          selected={dateDebut}
+          onChange={(date) => setDateDebut(date)}
+          locale={fr}
+          showTimeSelect
+          dateFormat="MMMM d, yyyy h:mm aa"
+          placeholderText="jj/mm/aaaa"
+          className={`rounded-none w-full p-2.5 border ${dateDebut ? 'border-gray-300' : 'border-gray-300'} rounded-lg`}
+          calendarClassName="custom-calendar"
+          popperClassName="custom-popper"
+          wrapperClassName="w-full"
+          timeCaption="Heure"
+        />
+         <div className="absolute inset-y-0 right-2 flex items-center pointer-events-none">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M14.8306 6.33861C14.8303 5.8435 15.0633 5.37732 15.4594 5.08056V6.33861C15.4594 6.85963 15.882 7.28223 16.4031 7.28223C16.9244 7.28223 17.347 6.85963 17.347 6.33861L17.3467 6.02418H17.347V5.09305C17.7425 5.38464 17.9758 5.84715 17.9758 6.33861C17.9758 7.20728 17.2717 7.91111 16.4031 7.91111C15.535 7.91111 14.8306 7.20728 14.8306 6.33861ZM6.02415 6.33861C6.02385 5.8435 6.25693 5.37732 6.65303 5.08056V6.33861C6.65303 6.85963 7.07563 7.28223 7.59695 7.28223C8.11797 7.28223 8.54026 6.85963 8.54026 6.33861V6.02418H8.54057V5.08086C9.23525 5.60188 9.37602 6.58754 8.8547 7.28254C8.33338 7.97692 7.34741 8.11768 6.65303 7.59636C6.25693 7.29929 6.02415 6.83343 6.02415 6.33861ZM20.4919 20.4919H4.45164C3.93063 20.4919 3.50803 20.0693 3.50803 19.5483V9.79831H19.5483C20.0693 9.79831 20.4919 10.2206 20.4919 10.7419V20.4919ZM19.8631 4.13693H17.347V3.18082C17.347 2.6598 16.9244 2.25 16.403 2.25C15.882 2.25 15.4594 2.6723 15.4594 3.19331V4.13693H8.54058L8.54027 3.19331C8.54027 2.6723 8.11798 2.25 7.59696 2.25C7.07564 2.25 6.65304 2.6723 6.65304 3.19331V4.13693H2.25V19.8628C2.25 20.9051 3.09459 21.75 4.13693 21.75H21.75V6.02416C21.75 4.98183 20.9051 4.13693 19.8631 4.13693Z" fill="#F16E00"/>
+      </svg>
+    </div>
+    </>
+      </div>
+      </div>
+      <div>
+  <label className="block text-sm font-bold text-black mb-1">
+    Date fin formation<span className="text-red-500">*</span>
+  </label>
+  <div className="relative w-full">
+  <>
+      <GlobalStyle />
+    <DatePicker
+      selected={dateFin}
+      onChange={(date) => setDateFin(date)}
+      locale={fr}
+      showTimeSelect
+      dateFormat="d MMMM yyyy - HH:mm"
+      placeholderText="jj/mm/aaaa"
+      className="rounded-none w-full p-2.5 border border-gray-300 rounded-lg pr-10" // Espace à droite pour l'icône
+      calendarClassName="custom-calendar"
+      popperClassName="custom-popper"
+      wrapperClassName="w-full"
+      timeCaption="Heure"
+    />
+    <div className="absolute inset-y-0 right-2 flex items-center pointer-events-none">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M14.8306 6.33861C14.8303 5.8435 15.0633 5.37732 15.4594 5.08056V6.33861C15.4594 6.85963 15.882 7.28223 16.4031 7.28223C16.9244 7.28223 17.347 6.85963 17.347 6.33861L17.3467 6.02418H17.347V5.09305C17.7425 5.38464 17.9758 5.84715 17.9758 6.33861C17.9758 7.20728 17.2717 7.91111 16.4031 7.91111C15.535 7.91111 14.8306 7.20728 14.8306 6.33861ZM6.02415 6.33861C6.02385 5.8435 6.25693 5.37732 6.65303 5.08056V6.33861C6.65303 6.85963 7.07563 7.28223 7.59695 7.28223C8.11797 7.28223 8.54026 6.85963 8.54026 6.33861V6.02418H8.54057V5.08086C9.23525 5.60188 9.37602 6.58754 8.8547 7.28254C8.33338 7.97692 7.34741 8.11768 6.65303 7.59636C6.25693 7.29929 6.02415 6.83343 6.02415 6.33861ZM20.4919 20.4919H4.45164C3.93063 20.4919 3.50803 20.0693 3.50803 19.5483V9.79831H19.5483C20.0693 9.79831 20.4919 10.2206 20.4919 10.7419V20.4919ZM19.8631 4.13693H17.347V3.18082C17.347 2.6598 16.9244 2.25 16.403 2.25C15.882 2.25 15.4594 2.6723 15.4594 3.19331V4.13693H8.54058L8.54027 3.19331C8.54027 2.6723 8.11798 2.25 7.59696 2.25C7.07564 2.25 6.65304 2.6723 6.65304 3.19331V4.13693H2.25V19.8628C2.25 20.9051 3.09459 21.75 4.13693 21.75H21.75V6.02416C21.75 4.98183 20.9051 4.13693 19.8631 4.13693Z" fill="#F16E00"/>
+      </svg>
+    </div>
+    </>
+  </div>
+</div>
+
+    </div>
 
         <div className="grid grid-cols-3 gap-6">
           <div>
@@ -390,37 +695,61 @@ const FormationModal = () => {
           </div>
         </div>
         <div>
-  <label className="block text-sm font-bold text-black mb-1">
-    Image de formation <span className="text-red-500">*</span>
-  </label>
-  <div className="border-4 border-dashed border-gray-300 p-10 relative" style={{ borderSpacing: '10px' }}>
-    <div className="flex flex-col items-center">
-      <input
-        type="file"
-        onChange={handleFileChange}
-        accept=".jpg,.jpeg,.png"
-        className="rounded-none hidden"
-        ref={fileInputRef}
-      />
-      <button
-        onClick={handleFileButtonClick}
-        className="flex flex-col items-center cursor-pointer"
-      >
-        <div className="w-12 h-12 mb-4 text-black">
-          <svg width="68" height="68" viewBox="0 0 68 68" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M29.75 38.25H38.25V21.25H51L34 4.25L17 21.25H29.75V38.25ZM42.5 28.6875V35.241L61.9608 42.5L34 52.9253L6.03925 42.5L25.5 35.241V28.6875L0 38.25V55.25L34 68L68 55.25V38.25L42.5 28.6875Z" fill="black"/>
-          </svg>
+          <label className="block text-sm font-bold text-black mb-1">
+            Image de formation <span className="text-red-500">*</span>
+          </label>
+          <div className="border-4 border-dashed border-gray-300 p-6 relative" style={{ borderSpacing: '10px' }}>
+            {imagePreviewUrl ? (
+              <div className="flex flex-col items-center">
+                <div className="relative mb-4 w-full max-w-sm mx-auto">
+                  <img 
+                    src={imagePreviewUrl} 
+                    alt="Prévisualisation" 
+                    className="w-full h-auto rounded object-cover max-h-60"
+                  />
+                  <div className="flex justify-between items-center mt-2">
+                    <span className="text-sm text-gray-700 truncate flex-1">
+                      {formState.imageFormation?.name}
+                    </span>
+                    <button 
+                      onClick={handleRemoveImage}
+                      className="p-1 text-gray-600 hover:text-red-500"
+                    >
+                      <Trash2 size={20} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center">
+                <input
+                  type="file"
+                  onChange={handleImageChange}
+                  accept=".jpg,.jpeg,.png"
+                  className="rounded-none hidden"
+                  ref={imageInputRef}
+                />
+                <button
+                  onClick={handleImageButtonClick}
+                  className="flex flex-col items-center cursor-pointer"
+                >
+                  <div className="w-12 h-12 mb-4 text-black">
+                    <svg width="68" height="68" viewBox="0 0 68 68" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M29.75 38.25H38.25V21.25H51L34 4.25L17 21.25H29.75V38.25ZM42.5 28.6875V35.241L61.9608 42.5L34 52.9253L6.03925 42.5L25.5 35.241V28.6875L0 38.25V55.25L34 68L68 55.25V38.25L42.5 28.6875Z" fill="black"/>
+                    </svg>
+                  </div>
+                  <p className="mt-2 text-sm text-gray-500">
+                    Maximum file size: <strong>2 MB</strong>. Supported files: jpg, jpeg, png.
+                  </p>
+                  <span className="mt-3 border-2 border-black px-4 py-2 text-black font-bold text-sm">
+                    Select a file
+                  </span>
+                </button>
+              </div>
+            )}
+            {errors.imageFormation && <p className="mt-1 text-sm text-red-500">{errors.imageFormation}</p>}
+          </div>
         </div>
-        <p className="mt-2 text-sm text-gray-500">
-          Maximum file size: <strong>2 MB</strong>. Supported files: jpg, jpeg, png. Several files possible.
-        </p>
-        <span className="mt-3 border-2 border-black px-4 py-2 text-black font-bold text-sm">
-          Select a file
-        </span>
-      </button>
-    </div>
-  </div>
-</div>
 
      
         <div className="rounded-none bg-white rounded-lg border border-gray-200 p-6">
@@ -450,163 +779,118 @@ const FormationModal = () => {
         </div>
      </div>
       );
-   
-  
-
-  // const renderStep2 = () => (
-  //   <div className="bg-white rounded-lg border border-gray-200 p-6">
-  //     <div className="space-y-6">
-  //       <div className="flex justify-between items-center mb-4">
-  //         <h2 className="text-lg font-semibold">Listes des Participants</h2>
-  //         <button className="bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center gap-2">
-  //           <PlusCircle size={20} />
-  //           Enhance List
-  //         </button>
-  //       </div>
-
-  //       <div className="space-y-4">
-  //         {fileList.map((file, index) => (
-  //           <div key={index} className="border rounded-lg p-4">
-  //             <div className="flex items-center justify-between">
-  //               <div className="flex items-center gap-3">
-  //                 <div className="text-gray-600">
-  //                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-  //                     <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
-  //                     <polyline points="13 2 13 9 20 9"></polyline>
-  //                   </svg>
-  //                 </div>
-  //                 <div>
-  //                   <div className="font-medium">{file.name}</div>
-  //                   <div className="text-sm text-gray-500">
-  //                     {new Date().toLocaleDateString()}
-  //                   </div>
-  //                 </div>
-  //               </div>
-  //               <div className="flex items-center gap-2">
-  //                 <button className="p-2 text-gray-600">
-  //                   <Eye size={20} />
-  //                 </button>
-  //                 <button className="p-2 text-gray-600">
-  //                   <Download size={20} />
-  //                 </button>
-  //                 <button 
-  //                   className="p-2 text-gray-600"
-  //                   onClick={() => setFileList(fileList.filter((_, i) => i !== index))}
-  //                 >
-  //                   <Trash2 size={20} />
-  //                 </button>
-  //               </div>
-  //             </div>
-  //           </div>
-  //         ))}
-
-  //         <div className="border-2 border-dashed border-gray-300 rounded-lg p-8">
-  //           <div className="flex flex-col items-center">
-  //             <div className="mb-4">
-                
-  //               <svg width="68" height="68" viewBox="0 0 68 68" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M29.75 38.25H38.25V21.25H51L34 4.25L17 21.25H29.75V38.25ZM42.5 28.6875V35.241L61.9608 42.5L34 52.9253L6.03925 42.5L25.5 35.241V28.6875L0 38.25V55.25L34 68L68 55.25V38.25L42.5 28.6875Z" fill="black"/> </svg>
-  //             </div>
-  //             <p className="text-sm text-gray-500 mb-1">Maximum file size: 100 MB, liste Excel ou fichier CSV</p>
-  //             <button
-  //               onClick={handleFileButtonClick}
-  //               className="mt-4 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-  //             >
-  //               Select a file
-  //             </button>
-  //             <input
-  //               type="file"
-  //               ref={fileInputRef}
-  //               className="hidden"
-  //               onChange={handleFileChange}
-  //               accept=".xlsx,.xls,.csv"
-  //             />
-  //           </div>
-  //         </div>
-  //       </div>
-  //     </div>
-  //   </div>
-  // );
-  const renderStep2 = () => (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <div className="space-y-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">Listes des Participants</h2>
-          <button 
-            className={`${
-              fileList.length > 0 
-                ? "bg-purple-600 hover:bg-purple-700" 
-                : "bg-gray-400 cursor-not-allowed"
-            } text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors duration-200`}
-            disabled={fileList.length === 0}
-          >
-            <PlusCircle size={20} />
-            Enhance List
-          </button>
-        </div>
-  
-        <div className="space-y-4">
-          {fileList.map((file, index) => (
-            <div key={index} className="border rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="text-gray-600">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
-                      <polyline points="13 2 13 9 20 9"></polyline>
-                    </svg>
-                  </div>
-                  <div>
-                    <div className="font-medium">{file.name}</div>
-                    <div className="text-sm text-gray-500">
-                      {new Date().toLocaleDateString()}
+      const renderStep2 = () => {
+        const handleEnhanceComplete = (results) => {
+            setProcessingResults(results);
+        };
+    
+        return (
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <div className="space-y-6">
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-lg font-semibold">Listes des Participants</h2>
+                        <EnhanceListButton 
+                            fileList={uploadedFiles.filter(file => file.type === 'participant-list')}
+                            setMessages={setMessages}
+                            setProcessingResults={setProcessingResults}
+                            setLoading={setLoading}
+                            onEnhanceComplete={handleEnhanceComplete}
+                        />
                     </div>
-                  </div>
+    
+                    <div className="space-y-4">
+                        {fileList.map((file, index) => (
+                            <div key={index} className="border rounded-lg p-4">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="text-gray-600">
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                                                <polyline points="13 2 13 9 20 9"></polyline>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <div className="font-medium">{file.name}</div>
+                                            <div className="text-sm text-gray-500">
+                                                {new Date().toLocaleDateString()}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <button className="p-2 text-gray-600 hover:text-gray-800">
+                                            <Eye size={20} />
+                                        </button>
+                                        <button className="p-2 text-gray-600 hover:text-gray-800">
+                                            <Download size={20} />
+                                        </button>
+                                        <button 
+                                            className="p-2 text-gray-600 hover:text-gray-800"
+                                            onClick={() => setFileList(fileList.filter((_, i) => i !== index))}
+                                        >
+                                            <Trash2 size={20} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+    
+                        {fileList.length === 0 && (
+                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8">
+                                <div className="flex flex-col items-center">
+                                    <div className="mb-4">
+                                        <svg width="68" height="68" viewBox="0 0 68 68" fill="none">
+                                            <path d="M29.75 38.25H38.25V21.25H51L34 4.25L17 21.25H29.75V38.25ZM42.5 28.6875V35.241L61.9608 42.5L34 52.9253L6.03925 42.5L25.5 35.241V28.6875L0 38.25V55.25L34 68L68 55.25V38.25L42.5 28.6875Z" fill="black"/>
+                                        </svg>
+                                    </div>
+                                    <p className="text-sm text-gray-500 mb-1">Maximum file size: 100 MB, liste Excel ou fichier CSV</p>
+                                    <button
+                                        onClick={handleParticipantListButtonClick}
+                                        className="mt-4 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                                    >
+                                        Select a file
+                                    </button>
+                                    <input
+                                        type="file"
+                                        ref={participantListInputRef}
+                                        className="hidden"
+                                        onChange={handleParticipantListChange}
+                                        accept=".xlsx,.xls,.csv,.pdf"
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+    
+                    {loading && (
+                        <div className="flex flex-col items-center justify-center p-8">
+                            <Loader2 size={24} className="text-purple-600 animate-spin mb-2" />
+                            <div className="text-purple-600 font-medium">AI Loading...</div>
+                        </div>
+                    )}
+    
+                    {processingResults && !loading && (
+                        <div className="w-full border border-purple-300 rounded-lg p-4">
+                            <h3 className="text-lg font-medium mb-4">Résultat AI</h3>
+                            <div className="grid grid-cols-5 gap-4">
+                                {[
+                                    { label: "Numéros éligibles", value: processingResults.eligiblePhoneNumbers },
+                                    { label: "Total des inscrits", value: processingResults.totalContacts },
+                                    { label: "Total bénéficiaires", value: processingResults.totalBeneficiaries },
+                                    { label: "Total inscription", value: processingResults.totalBeneficiaries },
+                                ].map((item, index) => (
+                                    <div key={index} className="bg-white shadow-md border rounded-lg p-4 text-center">
+                                        <p className="text-gray-500 text-sm">{item.label}</p>
+                                        <p className="text-lg font-semibold">{item.value}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
-                <div className="flex items-center gap-2">
-                  <button className="p-2 text-gray-600 hover:text-gray-800">
-                    <Eye size={20} />
-                  </button>
-                  <button className="p-2 text-gray-600 hover:text-gray-800">
-                    <Download size={20} />
-                  </button>
-                  <button 
-                    className="p-2 text-gray-600 hover:text-gray-800"
-                    onClick={() => setFileList(fileList.filter((_, i) => i !== index))}
-                  >
-                    <Trash2 size={20} />
-                  </button>
-                </div>
-              </div>
             </div>
-          ))}
-  
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8">
-            <div className="flex flex-col items-center">
-              <div className="mb-4">
-                <svg width="68" height="68" viewBox="0 0 68 68" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M29.75 38.25H38.25V21.25H51L34 4.25L17 21.25H29.75V38.25ZM42.5 28.6875V35.241L61.9608 42.5L34 52.9253L6.03925 42.5L25.5 35.241V28.6875L0 38.25V55.25L34 68L68 55.25V38.25L42.5 28.6875Z" fill="black"/>
-                </svg>
-              </div>
-              <p className="text-sm text-gray-500 mb-1">Maximum file size: 100 MB, liste Excel ou fichier CSV</p>
-              <button
-                onClick={handleFileButtonClick}
-                className="mt-4 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                Select a file
-              </button>
-              <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                onChange={handleFileChange}
-                accept=".xlsx,.xls,.csv"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+        );
+    };
+    
 
   const renderStep3 = () => (
     <div className="bg-white rounded-lg border border-gray-200 p-8 w-full h-auto">

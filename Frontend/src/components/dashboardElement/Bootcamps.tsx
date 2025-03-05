@@ -91,19 +91,19 @@ const BootcampsList = () => {
 
   const handleCreateClass = () => {
     // Navigate to class creation page or open modal
-    navigate(`/bootcamps/${selectedBootcamp.id}/classes/create`);
+    navigate(`/manager/bootcamps/${selectedBootcamp.id}/classes/create`);
   };
 
   const handleAssignProject = () => {
     // Navigate to project assignment page or open modal
-    navigate(`/bootcamps/${selectedBootcamp.id}/projects/assign`);
+    navigate(`/manager/bootcamps/${selectedBootcamp.id}/projects/assign`);
   };
   
   const handleBootcampClick = () => {
-    navigate("/BootcampsList"); // Redirige vers Bootcamps.tsx
+    navigate("/manager/BootcampsList"); // Redirige vers Bootcamps.tsx
   };
   const handleFormationClick = () => {
-    navigate("/FormationDashboard"); // Redirige vers Bootcamps.tsx
+    navigate("/manager/FormationDashboard"); // Redirige vers Bootcamps.tsx
   };
   const handleSearch = (searchValue) => {
     console.log("Searching for:", searchValue);

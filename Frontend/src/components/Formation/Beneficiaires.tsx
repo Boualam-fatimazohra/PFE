@@ -63,7 +63,7 @@ const BeneficiairesList = () => {
       id: "2",
       title: "Développement Frontend avec Tailwind CSS",
       description: "Apprenez à utiliser Tailwind CSS pour des interfaces modernes",
-      status: "A venir",
+      status: "En cours",
       image: "/api/placeholder/400/300",
       duration: "15 heures"
     },
@@ -79,7 +79,7 @@ const BeneficiairesList = () => {
       id: "4",
       title: "Backend avec laravel",
       description: "Développez des API RESTful avec laravel",
-      status: "Terminé", // Correction du statut pour correspondre au type
+      status: "Replanifié", // Correction du statut pour correspondre au type
       image: "/api/placeholder/400/300",
       duration: "18 heures"
     },
@@ -87,7 +87,7 @@ const BeneficiairesList = () => {
       id: "5",
       title: "Décisionnelle avec talend",
       description: "Décisionnelle avec talend",
-      status: "Terminé", // Correction du statut pour correspondre au type
+      status: "A venir", // Correction du statut pour correspondre au type
       image: "/api/placeholder/400/300",
       duration: "25 heures"
     },
@@ -95,7 +95,7 @@ const BeneficiairesList = () => {
       id: "6",
       title: "Backend avec Node.js",
       description: "Développez des API RESTful avec Express et Node.js",
-      status: "Terminé", // Correction du statut pour correspondre au type
+      status: "A venir", // Correction du statut pour correspondre au type
       image: "/api/placeholder/400/300",
       duration: "25 heures"
     }
@@ -154,55 +154,78 @@ interface FormationsListProps {
 const FormationsList = ({ formations, onAccessBeneficiaires }: FormationsListProps) => {
   // Séparer les formations en deux groupes : "En cours" et autres
   const formationsEnCours = formations.filter(formation => formation.status === "En cours");
-  const autresFormations = formations.filter(formation => formation.status !== "En cours");
-
+  const formationsAvenir = formations.filter(formation => formation.status === "A venir");
+  const autresFormations = formations.filter(
+    formation => formation.status !== "En cours" && formation.status !== "A venir"
+  );
+  
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-6">Liste des formations</h2>
-      
-      {/* Afficher d'abord les formations "En cours" */}
-      {formationsEnCours.length > 0 && (
-        <>
-          <div className="flex items-center mb-4">
-      <hr className="flex-grow border-t border-gray-300" />
-      <h3 className="text-xl font-semibold mx-4 whitespace-nowrap">Formations en cours</h3>
-      <hr className="flex-grow border-t border-gray-300" />
-    </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {formationsEnCours.map((formation) => (
-              <FormationCard 
-                key={formation.id} 
-                formation={formation} 
-                onAccess={() => onAccessBeneficiaires(formation.id)}
-              />
-            ))}
-          </div>
-        </>
-      )}
-
-      {/* Séparateur visuel */}
-      {formationsEnCours.length > 0 && autresFormations.length > 0 }
-
-      {/* Afficher ensuite les autres formations */}
-      {autresFormations.length > 0 && (
-        <>
-          <div className="flex items-center mb-4">
-            <hr className="flex-grow border-t border-gray-300" />
-            <h3 className="text-xl font-semibold mx-4 whitespace-nowrap">Autres formations</h3>
-            <hr className="flex-grow border-t border-gray-300" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {autresFormations.map((formation) => (
-              <FormationCard 
-                key={formation.id} 
-                formation={formation} 
-                onAccess={() => onAccessBeneficiaires(formation.id)}
-              />
-            ))}
-          </div>
-        </>
-      )}
-    </div>
+    <h2 className="text-2xl font-bold mb-6">Liste des formations</h2>
+  
+    {/* Afficher d'abord les formations "En cours" */}
+    {formationsEnCours.length > 0 && (
+      <>
+        <div className="flex items-center mb-4">
+          <hr className="flex-grow border-t-2 border-gray-300" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          {formationsEnCours.map((formation) => (
+            <FormationCard 
+              key={formation.id} 
+              formation={formation} 
+              onAccess={() => onAccessBeneficiaires(formation.id)}
+            />
+          ))}
+        </div>
+      </>
+    )}
+  
+    {/* Ajouter un trait SEULEMENT si une section suivante existe */}
+    {formationsEnCours.length > 0 && (formationsAvenir.length > 0 || autresFormations.length > 0) && (
+      <div className="flex items-center mb-4">
+        <hr className="flex-grow border-t-2 border-gray-400" />
+      </div>
+    )}
+  
+    {/* Afficher les formations "À venir" */}
+    {formationsAvenir.length > 0 && (
+      <>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          {formationsAvenir.map((formation) => (
+            <FormationCard 
+              key={formation.id} 
+              formation={formation} 
+              onAccess={() => onAccessBeneficiaires(formation.id)}
+            />
+          ))}
+        </div>
+      </>
+    )}
+  
+    {/* Ajouter un trait SEULEMENT si "Autres formations" suit */}
+    {formationsAvenir.length > 0 && autresFormations.length > 0 && (
+      <div className="flex items-center mb-4">
+        <hr className="flex-grow border-t-2 border-gray-400" />
+      </div>
+    )}
+  
+    {/* Afficher les autres formations */}
+    {autresFormations.length > 0 && (
+      <>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {autresFormations.map((formation) => (
+            <FormationCard 
+              key={formation.id} 
+              formation={formation} 
+              onAccess={() => onAccessBeneficiaires(formation.id)}
+            />
+          ))}
+        </div>
+      </>
+    )}
+  </div>
+  
   );
 };
 
