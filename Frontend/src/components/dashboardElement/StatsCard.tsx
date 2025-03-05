@@ -7,7 +7,7 @@ interface StatsCardProps {
 }
 
 export const StatsCard = ({ title, value, icon }: StatsCardProps) => (
-  <Card className="rounded-none border border-[#999999]"> {/* Supprime l'arrondi des cartes */}
+  <Card className="rounded-[4px] border border-[#999999]"> {/* Supprime l'arrondi des cartes */}
     <CardContent className="flex items-center space-x-4 p-6">
       <div className="w-12 h-12 bg-[#CCCCCC] rounded-full">{icon}</div> {/* Garde le cercle */}
       <div>
