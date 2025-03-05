@@ -7,7 +7,7 @@ import DocumentsSection from "../Formation/DocumentsSection";
 import StatsSection from "../Formation/StatsSection";
 import ParticipantsSection from "../Formation/ParticipantsSection";
 import { CustomPagination } from "../layout/CustomPagination";
-import { FormationItem, Participant, Document, StatMetric } from "@/pages/types"; // Import standardized types
+import { FormationItem, Participant, Document, StatMetric } from "@/pages/types"; 
 
 interface DetailsFormationProps {
   formation: FormationItem;
@@ -15,7 +15,7 @@ interface DetailsFormationProps {
 }
 
 const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetourClick }) => {
-  // État pour la pagination des participants
+
   const [participantsPage, setParticipantsPage] = useState(1);
   const PARTICIPANTS_PER_PAGE = 11;
 
@@ -25,7 +25,6 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
     { title: "Exercices Pratiques", date: "25/02/2025" },
   ];
 
-  // Données de test avec plus de 11 participants
   const participants: Participant[] = [
     {
       date: "26/05/2024",
@@ -169,7 +168,7 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
     },
   ];
 
-  // Calcul du nombre total de pages pour les participants
+  
   const totalParticipantsPages = Math.ceil(participants.length / PARTICIPANTS_PER_PAGE);
 
   const statsMetrics: StatMetric[] = [

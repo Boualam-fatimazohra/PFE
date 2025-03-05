@@ -1,17 +1,19 @@
-// types.ts - Create this file to centralize your types
-
-// Common FormationStatus type to use across all components
+// types.ts
 export type FormationStatus = "En Cours" | "Avenir" | "Terminé" | "Replanifier";
 
-// Common FormationItem interface to use across all components
 export interface FormationItem {
-  id: string;
-  title: string;
-  status: FormationStatus;
-  image: string;
+    _id?: string; 
+    id?: string;
+    title?: string; 
+    nom?: string;
+    description?: string | null;
+    status: FormationStatus; 
+    image?: string;
+    dateDebut: string;
+    dateFin?: string;
 }
 
-// Participant interface for reuse
+
 export interface Participant {
   date: string;
   time: string;
@@ -23,13 +25,11 @@ export interface Participant {
   status: "present" | "absent";
 }
 
-// Document interface for reuse
 export interface Document {
   title: string;
   date: string;
 }
 
-// Stat metric interface for reuse
 export interface StatMetric {
   label: string;
   value: string | number | null;

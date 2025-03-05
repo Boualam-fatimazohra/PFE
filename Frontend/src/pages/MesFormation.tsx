@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Card } from "@/components/ui/card";
-import { Search, Edit, Trash2 } from "lucide-react";
+import { Search, Edit, Trash2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { StatsCard } from "@/components/dashboardElement/StatsCard";
 import { Plus } from "lucide-react";
@@ -11,6 +11,7 @@ import { CustomPagination } from "@/components/layout/CustomPagination";
 import ModalEditFormation from "@/components/dashboardElement/ModalEditFormation";
 import FormationCard from "@/components/Formation/FormationCards";
 import { useFormations } from "../contexts/FormationContext";
+
 import {
   Select,
   SelectContent,
@@ -28,14 +29,20 @@ interface FormationItem {
   id: string;
   title: string;
   description: string | null;
+  dateDebut: string;
+  dateFin?: string;
   status: "En Cours" | "Avenir" | "Terminé" | "Replanifier";
   image: string;
 }
 
 const MesFormations = () => {
   const navigate = useNavigate();
-  const { formations: contextFormations, loading, deleteFormation, error } = useFormations();
+  const { formations: contextFormations, loading, deleteFormation, error, searchFormations } = useFormations();
+  
   const [formations, setFormations] = useState<FormationItem[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<FormationItem[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleOpenModal = () => {
@@ -52,6 +59,11 @@ const MesFormations = () => {
         image: formation.image,
       }));
       setFormations(mappedFormations);
+      
+      // Apply any active search
+      if (searchTerm) {
+        handleSearch(searchTerm);
+      }
     }
   }, [contextFormations]);
 
@@ -71,10 +83,36 @@ const MesFormations = () => {
     setSelectedFormation(formation);
     setIsModalOpen(true);
   };
-
-  // Pagination settings
-  const ITEMS_PER_PAGE = 9;
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(9);
+
+  // Handle search functionality
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    
+    searchFormations(value);
+    
+    if (value.trim() === "") {
+      setIsSearching(false);
+      setSearchResults([]);
+    } else {
+      setIsSearching(true);
+      const results = formations.filter(formation => 
+        formation.title.toLowerCase().includes(value.toLowerCase()) ||
+        formation.status.toLowerCase().includes(value.toLowerCase())
+      );
+      setSearchResults(results);
+      setCurrentPage(1);
+    }
+  };
+
+  const clearSearch = () => {
+    setSearchTerm("");
+    setIsSearching(false);
+    setSearchResults([]);
+  };
+
+  const ITEMS_PER_PAGE = 9;
   
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -155,21 +193,29 @@ const MesFormations = () => {
   const filteredFormations = selectedStatus && selectedStatus !== "null"
     ? formations.filter((formation) => formation.status === selectedStatus)
     : formations;
-
-  // Calculate total pages
+  
+  // Apply both search and status filtering
+  const getFilteredFormations = () => {
+    let result = isSearching ? searchResults : formations;
+    
+    // Then apply status filtering if needed
+    if (selectedStatus && selectedStatus !== 'null') {
+      result = result.filter(formation => formation.status === selectedStatus);
+    }
+    
+    return result;
+  };
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredFormations.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredFormations.length / ITEMS_PER_PAGE);
 
-  // Get current page items
   const getCurrentPageItems = () => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     const endIndex = startIndex + ITEMS_PER_PAGE;
     return filteredFormations.slice(startIndex, endIndex);
   };
-
-  // Current page formations
   const currentFormations = getCurrentPageItems();
-
-  // Reset to page 1 when filter changes
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedStatus]);
@@ -196,12 +242,23 @@ const MesFormations = () => {
                       type="search"
                       placeholder="Recherche une formation"
                       className="rounded-[4px] shadow-sm border w-full pr-10"
+                      value={searchTerm}
+                      onChange={(e) => handleSearch(e.target.value)}
                     />
-                    <svg className="absolute right-3 top-1/2 transform -translate-y-1/2 " width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    {isSearching ? (
+                      <button
+                        onClick={clearSearch}
+                        className="absolute right-12 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        <X size={16} />
+                      </button>
+                    ) : null}
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <rect width="26" height="26" rx="13" fill="#FF7900"/>
                         <path fillRule="evenodd" clipRule="evenodd" d="M19.2765 18.1101L15.6661 14.4996C16.2718 13.6533 16.5966 12.6382 16.5949 11.5974C16.5949 8.83742 14.3574 6.59998 11.5974 6.59998C8.83738 6.59998 6.59998 8.83738 6.59998 11.5974C6.59998 14.3574 8.83738 16.5949 11.5974 16.5949C12.6382 16.5965 13.6533 16.2717 14.4998 15.6661L18.1101 19.2764C18.2665 19.432 18.5192 19.432 18.6756 19.2764L19.2765 18.6756C19.432 18.5191 19.432 18.2665 19.2765 18.1101ZM11.5974 14.9957C9.72062 14.9957 8.19916 13.4742 8.19916 11.5974C8.19916 9.72062 9.72062 8.19916 11.5974 8.19916C13.4742 8.19916 14.9957 9.72062 14.9957 11.5974C14.9957 13.4742 13.4742 14.9957 11.5974 14.9957Z" fill="white"/>
-                    </svg>
-
+                      </svg>
+                    </div>
                   </div>
                   <Select onValueChange={setSelectedStatus}>
                       <SelectTrigger className="w-[150px] rounded-[4px] shadow-sm border">
@@ -228,10 +285,29 @@ const MesFormations = () => {
                 </div>
               </div>
 
+              {/* Search Results Indicator */}
+              {isSearching && (
+                <div className="bg-blue-50 p-3 mb-6 rounded-md flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Search size={18} className="text-blue-600 mr-2" />
+                    <span className="text-blue-700">
+                      {filteredFormations.length} résultat(s) pour "{searchTerm}"
+                    </span>
+                  </div>
+                  <button 
+                    onClick={clearSearch}
+                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                  >
+                    Effacer la recherche
+                  </button>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 <StatsCard title="Total Formations" value={loading ? "..." : formations.length} />
                 <StatsCard title="Formations en cours" value={loading ? "..." : filteredFormations.filter(f => f.status === "En Cours").length} />
                 <StatsCard title="Formations à venir" value={loading ? "..." : filteredFormations.filter(f => f.status === "Avenir").length} />
+
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
@@ -256,7 +332,9 @@ const MesFormations = () => {
                 ) : (
                   // No formations found
                   <div className="col-span-3 text-center py-12 text-gray-500">
-                    Aucune formation trouvée
+                    {isSearching 
+                      ? `Aucune formation ne correspond à votre recherche "${searchTerm}"` 
+                      : "Aucune formation trouvée"}
                   </div>
                 )}
               </div>
