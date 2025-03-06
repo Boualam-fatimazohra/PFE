@@ -4,10 +4,12 @@ import { Footer } from "@/components/layout/Footer";
 import { Card } from "@/components/ui/card";
 import { Search, Edit, Trash2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
+
 import { StatsCard } from "@/components/dashboardElement/StatsCard";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { CustomPagination } from "@/components/layout/CustomPagination";
+
 import ModalEditFormation from "@/components/dashboardElement/ModalEditFormation";
 import FormationCard from "@/components/Formation/FormationCards";
 import { useFormations } from "../contexts/FormationContext";
@@ -28,22 +30,47 @@ import { toast } from "react-toastify";
 interface FormationItem {
   id: string;
   title: string;
-  description: string | null;
+  status: "En Cours" | "Terminé" | "Avenir" | "Replanifier";
+  image: string;
   dateDebut: string;
   dateFin?: string;
-  status: "En Cours" | "Avenir" | "Terminé" | "Replanifier";
-  image: string;
+  dateCreated?: string;
 }
+
+const sortFormationsByStatus = (formations) => {
+  const statusPriority = {
+    "En Cours": 1,
+    "Terminé": 2,
+    "Avenir": 3,
+    "Replanifier": 4
+  };
+  
+  return [...formations].sort((a, b) => {
+    return statusPriority[a.status] - statusPriority[b.status];
+  });
+};
 
 const MesFormations = () => {
   const navigate = useNavigate();
   const { formations: contextFormations, loading, deleteFormation, error, searchFormations } = useFormations();
-  
+  const [sortOrder, setSortOrder] = useState<'recent' | 'oldest'>('recent');
   const [formations, setFormations] = useState<FormationItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<FormationItem[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedFormation, setSelectedFormation] = useState<FormationItem | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [formationToDelete, setFormationToDelete] = useState<string | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(9);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [sortOrder, selectedStatus]);
 
   const handleOpenModal = () => {
     navigate("/formateur/formationModal");
@@ -54,18 +81,20 @@ const MesFormations = () => {
       const mappedFormations = contextFormations.map((formation) => ({
         id: formation._id || `temp-${formation.nom}`,
         title: formation.nom,
-        description: formation.description || null,
-        status: formation.status as "En Cours" | "Avenir" | "Terminé" | "Replanifier",
-        image: formation.image,
+        status: formation.status,
+        image: formation.image as string,
+        dateDebut: formation.dateDebut,
+        dateCreated: formation.createdAt ? new Date(formation.createdAt).toISOString() : new Date().toISOString()
       }));
-      setFormations(mappedFormations);
       
-      // Apply any active search
+      const sortedFormations = sortFormationsByStatus(mappedFormations);
+      setFormations(sortedFormations);
+      
       if (searchTerm) {
         handleSearch(searchTerm);
       }
     }
-  }, [contextFormations]);
+  }, [contextFormations, searchTerm, sortOrder]);
 
   useEffect(() => {
     if (error) {
@@ -73,23 +102,13 @@ const MesFormations = () => {
     }
   }, [error]);
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedFormation, setSelectedFormation] = useState<FormationItem | null>(null);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [formationToDelete, setFormationToDelete] = useState<string | null>(null);
-  const [showDetails, setShowDetails] = useState(false);
-
   const handleEditClick = (formation: FormationItem) => {
     setSelectedFormation(formation);
     setIsModalOpen(true);
   };
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(9);
 
-  // Handle search functionality
   const handleSearch = (value: string) => {
     setSearchTerm(value);
-    
     searchFormations(value);
     
     if (value.trim() === "") {
@@ -101,7 +120,9 @@ const MesFormations = () => {
         formation.title.toLowerCase().includes(value.toLowerCase()) ||
         formation.status.toLowerCase().includes(value.toLowerCase())
       );
-      setSearchResults(results);
+      
+      const sortedResults = sortFormationsByStatus(results);
+      setSearchResults(sortedResults);
       setCurrentPage(1);
     }
   };
@@ -112,15 +133,13 @@ const MesFormations = () => {
     setSearchResults([]);
   };
 
-  const ITEMS_PER_PAGE = 9;
-  
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedFormation(null);
   };
 
   const handleDeleteClick = (id: string) => {
-    const formation = formations.find((f) => f.id === id);
+    const formation = formations.find(f => f.id === id);
     if (formation) {
       setFormationToDelete(id);
       setIsDeleteModalOpen(true);
@@ -163,7 +182,7 @@ const MesFormations = () => {
       }
     }
   };
-
+  
   const handleAccessClick = (formation: FormationItem) => {
     setSelectedFormation(formation);
     setShowDetails(true);
@@ -176,7 +195,7 @@ const MesFormations = () => {
 
   const renderDetails = () => {
     if (!selectedFormation) return null;
-
+  
     switch (selectedFormation.status) {
       case "En Cours":
         return <DetailsFormation formation={selectedFormation} onRetourClick={handleRetourClick} />;
@@ -184,41 +203,40 @@ const MesFormations = () => {
         return <FormationAvenir formation={selectedFormation} onRetourClick={handleRetourClick} />;
       case "Terminé":
         return <FormationTerminer formation={selectedFormation} onRetourClick={handleRetourClick} />;
+      case "Replanifier":
+        return <FormationAvenir formation={selectedFormation} onRetourClick={handleRetourClick} />;
       default:
-        return <div>Statut inconnu</div>;
+        return <div>Statut inconnu: {selectedFormation.status}</div>;
     }
   };
 
-  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
-  const filteredFormations = selectedStatus && selectedStatus !== "null"
-    ? formations.filter((formation) => formation.status === selectedStatus)
-    : formations;
-  
-  // Apply both search and status filtering
+  const getSortedFormations = (formationsToSort: FormationItem[]) => {
+    const sortedFormations = [...formationsToSort];
+    return sortedFormations.sort((a, b) => {
+      const dateA = new Date(a.dateCreated || a.dateDebut || 0).getTime();
+      const dateB = new Date(b.dateCreated || b.dateDebut || 0).getTime();
+      return sortOrder === 'recent' ? dateB - dateA : dateA - dateB;
+    });
+  };
+
   const getFilteredFormations = () => {
     let result = isSearching ? searchResults : formations;
-    
-    // Then apply status filtering if needed
     if (selectedStatus && selectedStatus !== 'null') {
       result = result.filter(formation => formation.status === selectedStatus);
     }
-    
-    return result;
+    return getSortedFormations(result);
   };
+
+  const handleSortChange = (value: 'recent' | 'oldest') => {
+    setSortOrder(value);
+    setCurrentPage(1); 
+  };
+  
+  const filteredFormations = getFilteredFormations();
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredFormations.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredFormations.length / ITEMS_PER_PAGE);
-
-  const getCurrentPageItems = () => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const endIndex = startIndex + ITEMS_PER_PAGE;
-    return filteredFormations.slice(startIndex, endIndex);
-  };
-  const currentFormations = getCurrentPageItems();
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [selectedStatus]);
+  const totalPages = Math.ceil(filteredFormations.length / itemsPerPage);
 
   return (
     <div className="bg-white min-h-screen p-4">
@@ -226,12 +244,14 @@ const MesFormations = () => {
       <main className="flex-grow py-8">
         <div className="container mx-auto px-4">
           {showDetails && selectedFormation ? (
-            renderDetails()
+            <>
+              {renderDetails()}
+            </>
           ) : (
             <>
               <div className="flex justify-between items-center mb-8">
                 <h1 className="text-2xl font-bold">Mes Formations</h1>
-                <Button variant="orange" className="rounded-[4px]" onClick={handleOpenModal}>
+                <Button variant="orange" className="rounded-none" onClick={handleOpenModal}>
                   Créer une formation
                 </Button>
               </div>
@@ -241,7 +261,7 @@ const MesFormations = () => {
                     <Input
                       type="search"
                       placeholder="Recherche une formation"
-                      className="rounded-[4px] shadow-sm border w-full pr-10"
+                      className="rounded-none shadow-sm border w-full pr-10"
                       value={searchTerm}
                       onChange={(e) => handleSearch(e.target.value)}
                     />
@@ -261,31 +281,31 @@ const MesFormations = () => {
                     </div>
                   </div>
                   <Select onValueChange={setSelectedStatus}>
-                      <SelectTrigger className="w-[150px] rounded-[4px] shadow-sm border">
+                      <SelectTrigger className="w-[150px] rounded-none shadow-sm border">
                         <SelectValue placeholder="Tous les statuts" />
                       </SelectTrigger>
-                      <SelectContent className="rounded-[4px]">
+                      <SelectContent className="rounded-none">
                         <SelectItem value="null">Tous les statuts</SelectItem>
                         <SelectItem value="En Cours">En Cours</SelectItem>
-                        <SelectItem value="Avenir">A Venir</SelectItem>
+                        <SelectItem value="Avenir">À venir</SelectItem>
+                        <SelectItem value="Terminé">Terminé</SelectItem>
                         <SelectItem value="Replanifier">Replanifier</SelectItem>
-                        <SelectItem value="Terminé">Terminer</SelectItem>
                       </SelectContent>
                   </Select>
-
-                  <Select>
-                    <SelectTrigger className="w-[150px] rounded-[4px] shadow-sm border">
+                  <Select 
+                    onValueChange={(value) => handleSortChange(value as 'recent' | 'oldest')} 
+                    defaultValue="recent"
+                  >
+                    <SelectTrigger className="w-[150px] rounded-none shadow-sm border">
                       <SelectValue placeholder="Trier par date" />
                     </SelectTrigger>
-                    <SelectContent className="rounded-[4px]">
+                    <SelectContent className="rounded-none">
                       <SelectItem value="recent">Plus récent</SelectItem>
                       <SelectItem value="oldest">Plus ancien</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
-
-              {/* Search Results Indicator */}
               {isSearching && (
                 <div className="bg-blue-50 p-3 mb-6 rounded-md flex items-center justify-between">
                   <div className="flex items-center">
@@ -302,25 +322,20 @@ const MesFormations = () => {
                   </button>
                 </div>
               )}
-
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 <StatsCard title="Total Formations" value={loading ? "..." : formations.length} />
-                <StatsCard title="Formations en cours" value={loading ? "..." : filteredFormations.filter(f => f.status === "En Cours").length} />
-                <StatsCard title="Formations à venir" value={loading ? "..." : filteredFormations.filter(f => f.status === "Avenir").length} />
-
+                <StatsCard title="Formations en cours" value={loading ? "..." : formations.filter(f => f.status === "En Cours").length} />
+                <StatsCard title="Formations à venir" value={loading ? "..." : formations.filter(f => f.status === "Avenir").length} />
               </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 {loading ? (
-                  // Loading skeleton
                   <>
-                    <div className="bg-gray-100 animate-pulse h-64 rounded-[4px]"></div>
-                    <div className="bg-gray-100 animate-pulse h-64 rounded-[4px]"></div>
-                    <div className="bg-gray-100 animate-pulse h-64 rounded-[4px]"></div>
+                    <div className="bg-gray-100 animate-pulse h-64 rounded-md"></div>
+                    <div className="bg-gray-100 animate-pulse h-64 rounded-md"></div>
+                    <div className="bg-gray-100 animate-pulse h-64 rounded-md"></div>
                   </>
-                ) : currentFormations.length > 0 ? (
-                  // Display only current page formations
-                  currentFormations.map((formation) => (
+                ) : currentItems.length > 0 ? (
+                  currentItems.map((formation) => (
                     <FormationCard
                       key={formation.id}
                       formation={formation}
@@ -330,7 +345,6 @@ const MesFormations = () => {
                     />
                   ))
                 ) : (
-                  // No formations found
                   <div className="col-span-3 text-center py-12 text-gray-500">
                     {isSearching 
                       ? `Aucune formation ne correspond à votre recherche "${searchTerm}"` 
@@ -338,7 +352,6 @@ const MesFormations = () => {
                   </div>
                 )}
               </div>
-
               {filteredFormations.length > 0 && (
                 <CustomPagination 
                   currentPage={currentPage} 
@@ -357,11 +370,9 @@ const MesFormations = () => {
           onClose={handleCloseModal}
         />
       )}
-
       {isDeleteModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-8 rounded-[4px] shadow-lg w-[600px] relative">
-            {/* Bouton Fermer */}
+          <div className="bg-white p-8 rounded-none shadow-lg w-[600px] relative">
             <Button
               variant="ghost"
               className="absolute top-4 right-4 text-black hover:text-gray-700 h-auto p-0"
@@ -369,16 +380,14 @@ const MesFormations = () => {
             >
               ✖
             </Button>
-
             <h2 className="text-2xl font-bold mb-2">Supprimer une formation</h2>
             <p className="text-gray-600 mb-6">
               Êtes-vous sûr de vouloir supprimer cette formation ?
             </p>
-
             <div className="flex justify-end space-x-4">
               <Button
                 variant="outline"
-                className="rounded-[4px]"
+                className="rounded-none"
                 onClick={() => setIsDeleteModalOpen(false)}
                 disabled={isDeleting}
               >
@@ -386,7 +395,7 @@ const MesFormations = () => {
               </Button>
               <Button
                 variant="destructive"
-                className="rounded-[4px]"
+                className="rounded-none"
                 onClick={confirmDeleteFormation}
                 disabled={isDeleting}
               >
