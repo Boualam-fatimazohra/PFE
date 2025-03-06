@@ -34,7 +34,7 @@ import EvaluationPages from "@/pages/EvaluationPages";
 import FormationDashboard from "@/components/dashboardElement/FormationManager";
 import FormateurManager from "@/components/dashboardElement/FormateurManager";
 import BootcampsList from "./components/dashboardElement/Bootcamps";
-
+import CalendrierManager from "./components/dashboardElement/CalendrierManager";
 const queryClient = new QueryClient();
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
@@ -89,7 +89,7 @@ const App = () => (
                 <Route path="/addformation" element={<AddFormation />} /> 
                 <Route path="/formations" element={<FormateurFormations />} /> 
 
-
+                <Route path="/CalendrierManager" element={<CalendrierManager/>}/>
 
                 {/* Page 404 */}
                 <Route path="*" element={<NotFound />} />

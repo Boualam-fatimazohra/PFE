@@ -1,4 +1,5 @@
 import BootcampsList from "@/components/dashboardElement/Bootcamps";
+import CalendrierManager from "@/components/dashboardElement/CalendrierManager";
 import FormateurManager from "@/components/dashboardElement/FormateurManager";
 import FormationDashboard from "@/components/dashboardElement/FormationManager";
 import { FormationProvider } from "@/contexts/FormationContext";
@@ -16,6 +17,8 @@ const ManagerRoutes = () => {
           <Route path="/FormationDashboard" element={<FormationDashboard />} /> 
           <Route path="/FormateurManager" element={<FormateurManager />} /> 
           <Route path="/BootcampsList" element={<BootcampsList />} />
+          <Route path="/CalendrierManager" element={<CalendrierManager />} />
+
     </Routes>
     </FormationProvider>
 
