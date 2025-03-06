@@ -6,16 +6,19 @@ import MesFormations from "@/pages/MesFormation";
 import { FormationProvider } from "@/contexts/FormationContext";
 import FormationModal from "@/components/dashboardElement/formationModal";
 import { EvenementsAssociesProvider } from '../contexts/FormateurContext';
+import { NotificationProvider } from "@/contexts/NotificationContext";
 const FormateurRoutes = () => {
   return (
     <FormationProvider>
-      <EvenementsAssociesProvider>
+    <EvenementsAssociesProvider>
+    <NotificationProvider>
     <Routes>
       <Route path="dashboardFormateur" element={<DashboardFormateur />} />
       <Route path="mesformation" element={<MesFormations />} />
       <Route path="formationModal" element={< FormationModal/>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
+    </NotificationProvider>
     </EvenementsAssociesProvider>
     </FormationProvider>
   );
