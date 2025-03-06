@@ -116,7 +116,7 @@ export const FormationsTable: React.FC<FormationsTableProps> = ({
         <TableBody>
           {formationsToDisplay
             .filter((formation: FormationTableItem) =>
-              ["En Cours", "Terminer", "Terminé", "Replanifier", "Avenir"].includes(formation.status)
+              ["En Cours", "Terminé", "Replanifier", "Avenir"].includes(formation.status)
             )
             .slice(-8) 
             .map((formation: FormationTableItem) => (
@@ -128,7 +128,7 @@ export const FormationsTable: React.FC<FormationsTableProps> = ({
                 </TableCell>
                 <TableCell>
                   <button
-                    className="bg-black text-white px-3 py-1 rounded-none text-sm"
+                    className="bg-black text-white px-3 py-1 rounded-[4px] text-sm"
                     onClick={() => handleAccessClick(formation)}
                   >
                     Accéder
