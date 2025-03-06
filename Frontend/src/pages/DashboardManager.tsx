@@ -1,17 +1,22 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { io } from 'socket.io-client';
 
 import { 
   Calendar, 
   Users,  
   AlertTriangle,
   Icon,
+  Bell,
 } from "lucide-react";
 import { DatePicker } from "@/components/ui/DatePicker";
 import KPIStats from "@/components/dashboardElement/KPIStats";
 import AbsenceManager from "./AbsenceManager";
 import BenificairesManager from "@/components/dashboardElement/BenificairesManager";
 import { parseClassNames } from "@fullcalendar/core/internal";
+import axios from "axios";
+import { toast } from "react-toastify";
+import NotificationBell from "@/components/notification/NotificationBell";
 
 // Define proper type for DatePicker props
 interface CustomDatePickerProps {
@@ -34,6 +39,44 @@ const DashboardManager = () => {
   const [timePeriod, setTimePeriod] = useState("janvier-2023");
   const [selectedTab, setSelectedTab] = useState("overview");
   const [year, setYear] = useState("2023");
+  const [notifications, setNotifications] = useState([]);
+
+useEffect(() => {
+  // Fetch notifications
+  const fetchNotifications = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/notifications', {
+        withCredentials: true
+      });
+      setNotifications(response.data);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  };
+  
+  fetchNotifications();
+  
+  // Set up socket connection
+  const socket = io('http://localhost:5000', { withCredentials: true });
+  
+  socket.on('connect', () => {
+    console.log('Connected to socket server');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    socket.emit('join', { userId: user.userId, role: user.role });
+  });
+  
+  socket.on('notification', () => {
+    // Refresh notifications when new one arrives
+    fetchNotifications();
+    // Show a browser notification
+    toast.info("Nouvelle notification reçue");
+  });
+  
+  return () => {
+    socket.disconnect();
+  };
+}, []);
+
   
   // Sample data for statistics
   const stats = [
@@ -83,14 +126,16 @@ const DashboardManager = () => {
         {/* Header */}
         <div className="mb-6 flex justify-between items-center">
           <h1 className="text-2xl font-bold">Vue Manager</h1>
-          <Link 
-            to="/CalendrierManager" 
-            className="bg-orange-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-orange-600"
-          >
-            Mon Calendrier
-          </Link>
+          <div className="flex items-center space-x-4">
+            <NotificationBell />
+            <Link 
+              to="/CalendrierManager" 
+              className="bg-orange-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-orange-600"
+            >
+              Mon Calendrier
+            </Link>
+          </div>
         </div>
-
 
 
         {/* Stats Cards */}
@@ -101,16 +146,16 @@ const DashboardManager = () => {
                 {stat.icon}
               </div>
               <div>
-  <p className="text-xl text-gray-500">{stat.title}</p>
-  <p className="text-2xl font-bold">{stat.value}</p>
-  <p
-    className={`text-sm font-inter ${
-      index < 2 ? "text-[#10B981]" : index === 2 ? "text-gray-500" : "text-red-500"
-    }`}
-  >
-    {stat.subtitle}
-  </p>
-</div>
+                <p className="text-xl text-gray-500">{stat.title}</p>
+                <p className="text-2xl font-bold">{stat.value}</p>
+                <p
+                  className={`text-sm font-inter ${
+                    index < 2 ? "text-[#10B981]" : index === 2 ? "text-gray-500" : "text-red-500"
+                  }`}
+                >
+                  {stat.subtitle}
+                </p>
+              </div>
 
             </div>
           ))}
