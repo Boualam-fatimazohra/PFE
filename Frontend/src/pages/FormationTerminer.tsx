@@ -1,34 +1,29 @@
 import * as React from "react";
-import { ArrowLeft, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import CourseHeader from "../components/Formation/CoursHeader";
 import { StatsCard } from "@/components/dashboardElement/StatsCard";
 import DocumentsSection from "../components/Formation/DocumentsSection";
 import StatsSection from "../components/Formation/StatsSection";
 import ParticipantsSection from "../components/Formation/ParticipantsSection";
-import {CustomPagination } from "../components/layout/CustomPagination";
+import { CustomPagination } from "../components/layout/CustomPagination";
+import { FormationItem, Participant, Document, StatMetric } from "./types"; // Import standardized types
 
 interface FormationTerminerProps {
+  formation: FormationItem;
   onRetourClick: () => void;
 }
 
-const FormationTerminer: React.FC<FormationTerminerProps> = ({ onRetourClick }) => {
+const FormationTerminer: React.FC<FormationTerminerProps> = ({ formation, onRetourClick }) => {
   const [currentPage, setCurrentPage] = React.useState(1);
   const ITEMS_PER_PAGE = 11;
 
-  const statsCards = [
-    { label: "Total Bénéficiaires", value: "250" },
-    { label: "Total Formations", value: "64" },
-    { label: "Prochain event", value: "07" },
-    { label: "Satisfaction moyenne", value: "95%" },
-  ];
-
-  const documents = [
+  const documents: Document[] = [
     { title: "Programme du formation", date: "25/02/2025" },
     { title: "Présentation Jour 01", date: "25/02/2025" },
     { title: "Exercices Pratiques", date: "25/02/2025" },
   ];
 
-  const participants = [
+  const participants: Participant[] = [
     {
       date: "26/05/2024",
       time: "14h00-16h00",
@@ -41,10 +36,10 @@ const FormationTerminer: React.FC<FormationTerminerProps> = ({ onRetourClick }) 
     },
   ];
 
-  const statsMetrics = [
-    { label: "Taux de completion", value: "85%" },  
-    { label: "Taux Satisfaction", value: "85%" }, 
-    { label: "Heures", value: "75%" }  
+  const statsMetrics: StatMetric[] = [
+    { label: "Taux de completion", value: "85%" },
+    { label: "Taux Satisfaction", value: "85%" },
+    { label: "Heures", value: "75%" },
   ];
 
   const totalPages = Math.ceil(participants.length / ITEMS_PER_PAGE);
@@ -56,15 +51,16 @@ const FormationTerminer: React.FC<FormationTerminerProps> = ({ onRetourClick }) 
   return (
     <div className="bg-white min-h-screen p-4">
       <main>
+        {/* Top Bar */}
         <div className="flex justify-between items-center mb-8">
-        <button 
+          <button
             className="flex items-center gap-1 text-xl font-medium text-orange-600 hover:text-orange-800 transition"
             onClick={onRetourClick}
-          > 
+          >
             <svg width="18" height="19" viewBox="0 0 18 19" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M10.6665 4.65625L5.21143 10L10.6665 15.3437L12.2251 13.8177L8.32784 10L12.2251 6.1838L10.6665 4.65625Z" fill="#F16E00"/>
             </svg>
-            <span className="text-lg font-bold text-[#000000] "> Retour</span> 
+            <span className="text-lg font-bold text-[#000000]"> Retour</span>
           </button>
           <div className="flex items-center gap-4">
             <span className="text-sm text-[#595959]">
@@ -76,18 +72,17 @@ const FormationTerminer: React.FC<FormationTerminerProps> = ({ onRetourClick }) 
             </button>
           </div>
         </div>
-
         <CourseHeader 
           title="Formation" 
-          subtitle="AWS : Développement, déploiement et gestion" 
-          status="Terminer" 
+          subtitle={formation.title} 
+          status="Terminé"
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <StatsCard title="Total Bénéficiaires" value={250} />
-                <StatsCard title="Total Formations" value={64} />
-                <StatsCard title="Prochain événement" value="07" />
-                <StatsCard title="Satisfaction moyenne" value="95%" />
+          <StatsCard title="Total Bénéficiaires" value={250} />
+          <StatsCard title="Total Formations" value={64} />
+          <StatsCard title="Prochain événement" value="07" />
+          <StatsCard title="Satisfaction moyenne" value="95%" />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
