@@ -1,9 +1,9 @@
 // src/contexts/NotificationContext.tsx
 import * as React from 'react';
 import { createContext, useState, useEffect, useContext, ReactNode } from 'react';
-import axios from 'axios';
 import { io, Socket } from 'socket.io-client';
 import { toast } from 'react-toastify';
+import NotificationService from '../services/NotificationService';
 
 // Define interfaces
 export interface NotificationItem {
@@ -38,11 +38,12 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
-  const API_URL = 'http://localhost:5000';
+  // Use the base URL but connect to the root for socket
+  const SOCKET_URL = import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://localhost:5000';
 
   useEffect(() => {
     // Initialize socket connection
-    const newSocket = io(API_URL, { withCredentials: true });
+    const newSocket = io(SOCKET_URL, { withCredentials: true });
     setSocket(newSocket);
 
     // Get user info from localStorage
@@ -81,10 +82,8 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   const fetchNotifications = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${API_URL}/api/notifications`, {
-        withCredentials: true
-      });
-      setNotifications(response.data);
+      const notificationsData = await NotificationService.getNotifications();
+      setNotifications(notificationsData);
       setError(null);
     } catch (err) {
       console.error('Error fetching notifications:', err);
@@ -96,12 +95,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
 
   const sendNotification = async (message: string, type: string = 'message'): Promise<boolean> => {
     try {
-      await axios.post(`${API_URL}/api/notifications/send-to-manager`, {
-        message,
-        type
-      }, {
-        withCredentials: true
-      });
+      await NotificationService.sendToManager(message, type);
       return true;
     } catch (err) {
       console.error('Error sending notification:', err);
@@ -112,9 +106,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
 
   const markAsRead = async (id: string) => {
     try {
-      await axios.put(`${API_URL}/api/notifications/${id}/read`, {}, {
-        withCredentials: true
-      });
+      await NotificationService.markAsRead(id);
       
       // Update local state
       setNotifications(prevNotifications => 
