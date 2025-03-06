@@ -1,5 +1,5 @@
 // src/services/NotificationService.ts
-import apiClient from '../services/apiClient';
+import apiClient from './apiClient';
 import { NotificationItem } from '../contexts/NotificationContext';
 
 class NotificationService {
@@ -33,6 +33,26 @@ class NotificationService {
       receiverId, 
       message, 
       type 
+    });
+  }
+    
+  /**
+   * Accept a notification with optional response
+   */
+  async acceptNotification(id: string, response: string = ""): Promise<void> {
+    await apiClient.put(`/notifications/${id}/process`, { 
+      status: "accepted", 
+      response 
+    });
+  }
+    
+  /**
+   * Decline a notification with optional reason
+   */
+  async declineNotification(id: string, response: string = ""): Promise<void> {
+    await apiClient.put(`/notifications/${id}/process`, { 
+      status: "declined", 
+      response 
     });
   }
 }
