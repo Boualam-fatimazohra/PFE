@@ -9,8 +9,9 @@ interface Formation {
   dateFin: string;
   lienInscription: string;
   tags: string;
-  status?: "En Cours" | "Terminer" | "Replanifier";
+  status?: "En Cours" | "Terminé" | "Avenir" | "Replanifier";
   image?: File | string; // include image url
+  createdAt?: string; // ✅ Add this field
 }
 
 interface FormationContextType {
