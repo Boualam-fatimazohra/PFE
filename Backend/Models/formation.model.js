@@ -7,7 +7,7 @@ const formationSchema = new mongoose.Schema({
   dateFin: { type: Date, required: false },
   description :{type:String,required:false,default:"Aucun description"},
   lienInscription: { type: String },
-  status: { type: String, default: "Avenir", enum: ["En Cours", "Terminer", "Avenir", "Replanifier"] }, // Fixed enum values spelling
+  status: { type: String, default: "Avenir", enum: ["En Cours", "Terminé", "Avenir", "Replanifier"] }, 
   tags: { type: String, required: false },
   tauxSatisfaction: { type: Number, min: 0, max: 100, required: false },
   formateur: { type: mongoose.Schema.Types.ObjectId, ref: "Formateur", required: true },
