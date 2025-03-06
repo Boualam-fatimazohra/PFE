@@ -150,9 +150,75 @@ const markNotificationAsRead = async (req, res) => {
   }
 };
 
+// Add to notification.controller.js
+const processNotification = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, response } = req.body;
+    const userId = req.user.userId;
+
+    if (!['accepted', 'declined'].includes(status)) {
+      return res.status(400).json({ message: "Status must be 'accepted' or 'declined'" });
+    }
+
+    // Find notification and check if user is the receiver
+    const notification = await Notification.findOne({ 
+      _id: id, 
+      receiver: userId
+    }).populate("sender");
+
+    if (!notification) {
+      return res.status(404).json({ message: "Notification not found or not authorized" });
+    }
+
+    // Update notification status
+    notification.status = status;
+    notification.response = response || "";
+    notification.isRead = true;
+    await notification.save();
+
+    // Create response notification for the sender
+    const responseMessage = status === 'accepted' 
+      ? `Votre demande a été acceptée: ${response || ''}`
+      : `Votre demande a été refusée: ${response || ''}`;
+
+    const responseNotification = new Notification({
+      sender: userId,
+      receiver: notification.sender._id,
+      message: responseMessage,
+      type: status === 'accepted' ? 'info' : 'alert',
+      status: 'pending', // No need for the sender to respond to this
+      relatedTo: {
+        id: notification._id // No need to specify `model`, as it defaults to "Notification"
+      }    });
+
+    await responseNotification.save();
+
+    // Send real-time notification via Socket.io
+    const io = req.app.get('io');
+    io.to(notification.sender._id.toString()).emit('notification', {
+      _id: responseNotification._id,
+      sender: userId,
+      message: responseMessage,
+      type: responseNotification.type,
+      createdAt: responseNotification.createdAt
+    });
+
+    res.status(200).json({
+      message: `Notification ${status}`,
+      notification
+    });
+  } catch (error) {
+    console.error("Error processing notification:", error);
+    res.status(500).json({ message: "Error processing notification", error: error.message });
+  }
+};
+
+
 module.exports = {
   createNotification,
   sendNotificationToManager,
   getUserNotifications,
-  markNotificationAsRead
+  markNotificationAsRead,
+  processNotification
 };

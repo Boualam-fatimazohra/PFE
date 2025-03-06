@@ -4,7 +4,8 @@ const {
   createNotification,
   sendNotificationToManager,
   getUserNotifications,
-  markNotificationAsRead
+  markNotificationAsRead,
+  processNotification
 } = require("../Controllers/notification.controller");
 const authenticated = require("../Middlewares/Authmiddleware");
 const authorizeRoles = require("../Middlewares/RoleMiddleware");
@@ -37,6 +38,14 @@ router.put(
   "/:id/read",
   authenticated,
   markNotificationAsRead
+);
+
+// Process notification (accept/decline)
+router.put(
+  "/:id/process",
+  authenticated,
+  authorizeRoles("Manager", "Admin"),
+  processNotification
 );
 
 module.exports = router;

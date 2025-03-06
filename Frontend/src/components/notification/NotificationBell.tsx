@@ -4,10 +4,20 @@ import { Bell, MessageSquare, AlertTriangle, Info, Check } from 'lucide-react';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { toast } from 'react-toastify';
+import * as React from 'react';
 
 const NotificationBell: React.FC = () => {
-  const { notifications, unreadCount, markAsRead } = useNotifications();
+  const { 
+    notifications, 
+    unreadCount, 
+    markAsRead, 
+    acceptNotification, 
+    declineNotification 
+  } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
+  const [activeNotification, setActiveNotification] = useState<string | null>(null);
+  const [responseText, setResponseText] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -33,6 +43,27 @@ const NotificationBell: React.FC = () => {
         return <Info size={16} className="text-green-500" />;
       default:
         return <MessageSquare size={16} className="text-blue-500" />;
+    }
+  };
+
+  const handleAccept = async (id: string) => {
+    await acceptNotification(id, responseText);
+    setActiveNotification(null);
+    setResponseText("");
+    toast.success("Notification acceptée");
+  };
+
+  const handleDecline = async (id: string) => {
+    await declineNotification(id, responseText);
+    setActiveNotification(null);
+    setResponseText("");
+    toast.info("Notification refusée");
+  };
+
+  // Handle marking a notification as read
+  const handleMarkAsRead = async (id: string) => {
+    if (!notifications.find(n => n._id === id)?.isRead) {
+      await markAsRead(id);
     }
   };
 
@@ -67,32 +98,111 @@ const NotificationBell: React.FC = () => {
             {notifications.length === 0 ? (
               <div className="p-4 text-center text-gray-500">Pas de notifications</div>
             ) : (
-              notifications.slice(0, 5).map((notification) => (
-                <div 
-                  key={notification._id} 
-                  className={`p-3 border-b hover:bg-gray-50 ${!notification.isRead ? 'bg-blue-50' : ''}`}
-                >
-                  <div className="flex items-start">
-                    <div className="mr-3 mt-0.5">{getNotificationIcon(notification.type)}</div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">
-                        {notification.sender.prenom} {notification.sender.nom}
-                      </p>
-                      <p className="text-sm text-gray-600">{notification.message}</p>
-                      <div className="flex justify-between items-center mt-1">
-                        <span className="text-xs text-gray-500">{formatDate(notification.createdAt)}</span>
-                        {!notification.isRead && (
-                          <button
-                            onClick={() => markAsRead(notification._id)}
-                            className="text-xs text-blue-500 hover:text-blue-700 flex items-center"
-                          >
-                            <Check size={12} className="mr-1" /> Marquer comme lu
-                          </button>
+              notifications.map((notification) => (
+                <React.Fragment key={notification._id}>
+                  <div 
+                    className={`p-3 border-b hover:bg-gray-50 ${
+                      !notification.isRead ? 'bg-blue-50' : ''
+                    }`}
+                    onClick={() => handleMarkAsRead(notification._id)}
+                  >
+                    <div className="flex items-start">
+                      <div className="mr-3 mt-0.5">
+                        {getNotificationIcon(notification.type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900">
+                          {notification.sender.prenom} {notification.sender.nom}
+                        </p>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {notification.message}
+                        </p>
+                        <div className="flex justify-between items-center mt-1">
+                          <span className="text-xs text-gray-500">
+                            {formatDate(notification.createdAt)}
+                          </span>
+                          
+                          {/* Status indicator */}
+                          {notification.status !== 'pending' && (
+                            <span className={`text-xs font-medium ${
+                              notification.status === 'accepted' 
+                                ? 'text-green-500' 
+                                : 'text-red-500'
+                            }`}>
+                              {notification.status === 'accepted' ? 'Acceptée' : 'Refusée'}
+                            </span>
+                          )}
+                        </div>
+                        
+                        {/* Response display if there's any */}
+                        {notification.response && (
+                          <div className="mt-1 p-1.5 bg-gray-50 rounded-sm text-xs text-gray-700">
+                            <span className="font-medium">Réponse:</span> {notification.response}
+                          </div>
+                        )}
+                        
+                        {/* Action buttons for Manager */}
+                        {notification.status === 'pending' && (
+                          <div className="mt-2 flex justify-end">
+                            {activeNotification !== notification._id ? (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveNotification(notification._id);
+                                }}
+                                className="text-xs bg-blue-500 text-white px-2 py-1 rounded"
+                              >
+                                Répondre
+                              </button>
+                            ) : null}
+                          </div>
                         )}
                       </div>
                     </div>
                   </div>
-                </div>
+                  
+                  {/* Response form when a notification is active */}
+                  {activeNotification === notification._id && (
+                    <div className="p-3 bg-gray-50 border-b">
+                      <textarea
+                        value={responseText}
+                        onChange={(e) => setResponseText(e.target.value)}
+                        placeholder="Votre réponse..."
+                        className="w-full p-2 border rounded text-sm mb-2"
+                        rows={2}
+                      />
+                      <div className="flex justify-end space-x-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveNotification(null);
+                          }}
+                          className="text-xs bg-gray-300 text-gray-700 px-2 py-1 rounded"
+                        >
+                          Annuler
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAccept(notification._id);
+                          }}
+                          className="text-xs bg-green-500 text-white px-2 py-1 rounded"
+                        >
+                          Accepter
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDecline(notification._id);
+                          }}
+                          className="text-xs bg-red-500 text-white px-2 py-1 rounded"
+                        >
+                          Refuser
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </React.Fragment>
               ))
             )}
           </div>
