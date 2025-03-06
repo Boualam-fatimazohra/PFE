@@ -4,10 +4,12 @@ import { Footer } from "@/components/layout/Footer";
 import { Card } from "@/components/ui/card";
 import { Search, Edit, Trash2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
+
 import { StatsCard } from "@/components/dashboardElement/StatsCard";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { CustomPagination } from "@/components/layout/CustomPagination";
+
 import ModalEditFormation from "@/components/dashboardElement/ModalEditFormation";
 import FormationCard from "@/components/Formation/FormationCards";
 import { useFormations } from "../contexts/FormationContext";
@@ -28,35 +30,45 @@ import { toast } from "react-toastify";
 interface FormationItem {
   id: string;
   title: string;
-  description: string | null;
-  dateDebut: string;
-  dateFin?: string;
-  status: "En Cours" | "Avenir" | "Terminé" | "Replanifier";
+  status: "En Cours" | "Terminé" | "Avenir" | "Replanifier";
   image: string;
+  dateDebut?: string; // Add date field
+  dateCreated?: string; // Add creation date if available
 }
 
 const MesFormations = () => {
   const navigate = useNavigate();
+  // Use the FormationContext hook
   const { formations: contextFormations, loading, deleteFormation, error, searchFormations } = useFormations();
-  
+  const [sortOrder, setSortOrder] = useState<'recent' | 'oldest'>('recent');
+  // State for formations and search
   const [formations, setFormations] = useState<FormationItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<FormationItem[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+
+  // This effect resets pagination when sorting or filtering changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [sortOrder, selectedStatus]);
 
   const handleOpenModal = () => {
     navigate("/formateur/formationModal");
   };
 
+  // Add a useEffect to map the context formations to your local state format
   useEffect(() => {
     if (contextFormations && contextFormations.length > 0) {
       const mappedFormations = contextFormations.map((formation) => ({
         id: formation._id || `temp-${formation.nom}`,
         title: formation.nom,
-        description: formation.description || null,
-        status: formation.status as "En Cours" | "Avenir" | "Terminé" | "Replanifier",
-        image: formation.image,
+        status: formation.status,
+        image: formation.image as string,
+        dateDebut: formation.dateDebut,
+        dateCreated: formation.createdAt ? new Date(formation.createdAt).toISOString() : new Date().toISOString() // Use real creation date
       }));
       setFormations(mappedFormations);
       
@@ -65,8 +77,9 @@ const MesFormations = () => {
         handleSearch(searchTerm);
       }
     }
-  }, [contextFormations]);
+  }, [contextFormations, searchTerm, sortOrder]);
 
+  // Show error toast if there's an error in the context
   useEffect(() => {
     if (error) {
       toast.error(error);
@@ -83,15 +96,18 @@ const MesFormations = () => {
     setSelectedFormation(formation);
     setIsModalOpen(true);
   };
+  
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(9);
+  const [itemsPerPage] = useState(9); // Number of formations per page
 
   // Handle search functionality
   const handleSearch = (value: string) => {
     setSearchTerm(value);
     
+    // Call context search function to update filtered formations (if needed)
     searchFormations(value);
     
+    // Local filtering for the MesFormations view
     if (value.trim() === "") {
       setIsSearching(false);
       setSearchResults([]);
@@ -102,6 +118,8 @@ const MesFormations = () => {
         formation.status.toLowerCase().includes(value.toLowerCase())
       );
       setSearchResults(results);
+      
+      // Reset pagination to page 1 when searching
       setCurrentPage(1);
     }
   };
@@ -112,15 +130,14 @@ const MesFormations = () => {
     setSearchResults([]);
   };
 
-  const ITEMS_PER_PAGE = 9;
-  
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedFormation(null);
   };
 
   const handleDeleteClick = (id: string) => {
-    const formation = formations.find((f) => f.id === id);
+    // Find the formation to delete
+    const formation = formations.find(f => f.id === id);
     if (formation) {
       setFormationToDelete(id);
       setIsDeleteModalOpen(true);
@@ -130,17 +147,32 @@ const MesFormations = () => {
   const confirmDeleteFormation = async () => {
     if (formationToDelete !== null) {
       try {
+        // Close the modal first for better UX
         setIsDeleteModalOpen(false);
+        // Show a loading state
         setIsDeleting(true);
+        
+        // Call the context's delete function
         await deleteFormation(formationToDelete);
+        
+        // Reset state
         setFormationToDelete(null);
+        
+        // Show success message
         toast.success("Formation supprimée avec succès");
       } catch (err) {
+        // More robust error handling
         console.error("Delete error:", err);
+        
         let errorMessage = "Erreur lors de la suppression. Veuillez réessayer.";
+        
+        // Handle axios error structure
         if (err.response) {
+          // The request was made and the server responded with a status code
+          // that falls out of the range of 2xx
           const status = err.response.status;
           const responseMessage = err.response.data?.message;
+          
           switch (status) {
             case 401:
               errorMessage = "Session expirée. Veuillez vous reconnecter.";
@@ -155,15 +187,17 @@ const MesFormations = () => {
               errorMessage = responseMessage || `Erreur serveur (${status}).`;
           }
         } else if (err.request) {
+          // The request was made but no response was received
           errorMessage = "Aucune réponse du serveur. Vérifiez votre connexion.";
         }
+        
         toast.error(errorMessage);
       } finally {
         setIsDeleting(false);
       }
     }
   };
-
+  
   const handleAccessClick = (formation: FormationItem) => {
     setSelectedFormation(formation);
     setShowDetails(true);
@@ -176,23 +210,38 @@ const MesFormations = () => {
 
   const renderDetails = () => {
     if (!selectedFormation) return null;
-
+  
     switch (selectedFormation.status) {
       case "En Cours":
-        return <DetailsFormation formation={selectedFormation} onRetourClick={handleRetourClick} />;
+        return <DetailsFormation onRetourClick={handleRetourClick} />;
       case "Avenir":
-        return <FormationAvenir formation={selectedFormation} onRetourClick={handleRetourClick} />;
+        return <FormationAvenir onRetourClick={handleRetourClick} />;
       case "Terminé":
-        return <FormationTerminer formation={selectedFormation} onRetourClick={handleRetourClick} />;
+        return <FormationTerminer onRetourClick={handleRetourClick} />;
+      case "Replanifier":
+        return <FormationAvenir onRetourClick={handleRetourClick} />;
       default:
-        return <div>Statut inconnu</div>;
+        return <div>Statut inconnu: {selectedFormation.status}</div>;
     }
   };
 
-  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
-  const filteredFormations = selectedStatus && selectedStatus !== "null"
-    ? formations.filter((formation) => formation.status === selectedStatus)
-    : formations;
+
+  // Get sorted formations based on date
+  const getSortedFormations = (formationsToSort: FormationItem[]) => {
+    // First, make a copy to avoid modifying the original array
+    const sortedFormations = [...formationsToSort];
+    
+    // Sort by date (assuming there's a date field in your formations)
+    return sortedFormations.sort((a, b) => {
+      // For this example, I'm assuming you have a formation.dateDebut field
+      // If not, you may need to extract the date from another field
+      const dateA = new Date(a.dateCreated || a.dateDebut || 0).getTime();
+      const dateB = new Date(b.dateCreated || b.dateDebut || 0).getTime();
+      
+      // Sort by descending date (newest first) or ascending (oldest first)
+      return sortOrder === 'recent' ? dateB - dateA : dateA - dateB;
+    });
+  };
   
   // Apply both search and status filtering
   const getFilteredFormations = () => {
@@ -203,45 +252,50 @@ const MesFormations = () => {
       result = result.filter(formation => formation.status === selectedStatus);
     }
     
-    return result;
+    // Apply sorting
+    return getSortedFormations(result);
   };
+
+  const handleSortChange = (value: 'recent' | 'oldest') => {
+    setSortOrder(value);
+    setCurrentPage(1); // Reset to first page when sorting changes
+  };
+  
+  const filteredFormations = getFilteredFormations();
+  
+  // Calculate pagination
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredFormations.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredFormations.length / ITEMS_PER_PAGE);
-
-  const getCurrentPageItems = () => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const endIndex = startIndex + ITEMS_PER_PAGE;
-    return filteredFormations.slice(startIndex, endIndex);
-  };
-  const currentFormations = getCurrentPageItems();
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [selectedStatus]);
+  const totalPages = Math.ceil(filteredFormations.length / itemsPerPage);
 
   return (
     <div className="bg-white min-h-screen p-4">
       <DashboardHeader />
+
       <main className="flex-grow py-8">
         <div className="container mx-auto px-4">
           {showDetails && selectedFormation ? (
-            renderDetails()
+            <>
+              {renderDetails()}
+            </>
           ) : (
             <>
               <div className="flex justify-between items-center mb-8">
                 <h1 className="text-2xl font-bold">Mes Formations</h1>
-                <Button variant="orange" className="rounded-[4px]" onClick={handleOpenModal}>
+                <Button variant="orange" className="rounded-none"
+                onClick={handleOpenModal}>
                   Créer une formation
                 </Button>
               </div>
+
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center space-x-4 w-full">
                   <div className="relative w-3/4">
                     <Input
                       type="search"
                       placeholder="Recherche une formation"
-                      className="rounded-[4px] shadow-sm border w-full pr-10"
+                      className="rounded-none shadow-sm border w-full pr-10"
                       value={searchTerm}
                       onChange={(e) => handleSearch(e.target.value)}
                     />
@@ -261,23 +315,26 @@ const MesFormations = () => {
                     </div>
                   </div>
                   <Select onValueChange={setSelectedStatus}>
-                      <SelectTrigger className="w-[150px] rounded-[4px] shadow-sm border">
+                      <SelectTrigger className="w-[150px] rounded-none shadow-sm border">
                         <SelectValue placeholder="Tous les statuts" />
                       </SelectTrigger>
-                      <SelectContent className="rounded-[4px]">
+                      <SelectContent className="rounded-none">
                         <SelectItem value="null">Tous les statuts</SelectItem>
                         <SelectItem value="En Cours">En Cours</SelectItem>
-                        <SelectItem value="Avenir">A Venir</SelectItem>
+                        <SelectItem value="Avenir">À venir</SelectItem>
+                        <SelectItem value="Terminé">Terminé</SelectItem>
                         <SelectItem value="Replanifier">Replanifier</SelectItem>
-                        <SelectItem value="Terminé">Terminer</SelectItem>
                       </SelectContent>
                   </Select>
 
-                  <Select>
-                    <SelectTrigger className="w-[150px] rounded-[4px] shadow-sm border">
+                  <Select 
+                    onValueChange={(value) => handleSortChange(value as 'recent' | 'oldest')} 
+                    defaultValue="recent"
+                  >
+                    <SelectTrigger className="w-[150px] rounded-none shadow-sm border">
                       <SelectValue placeholder="Trier par date" />
                     </SelectTrigger>
-                    <SelectContent className="rounded-[4px]">
+                    <SelectContent className="rounded-none">
                       <SelectItem value="recent">Plus récent</SelectItem>
                       <SelectItem value="oldest">Plus ancien</SelectItem>
                     </SelectContent>
@@ -305,22 +362,21 @@ const MesFormations = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 <StatsCard title="Total Formations" value={loading ? "..." : formations.length} />
-                <StatsCard title="Formations en cours" value={loading ? "..." : filteredFormations.filter(f => f.status === "En Cours").length} />
-                <StatsCard title="Formations à venir" value={loading ? "..." : filteredFormations.filter(f => f.status === "Avenir").length} />
-
+                <StatsCard title="Formations en cours" value={loading ? "..." : formations.filter(f => f.status === "En Cours").length} />
+                <StatsCard title="Formations à venir" value={loading ? "..." : formations.filter(f => f.status === "Avenir").length} />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 {loading ? (
                   // Loading skeleton
                   <>
-                    <div className="bg-gray-100 animate-pulse h-64 rounded-[4px]"></div>
-                    <div className="bg-gray-100 animate-pulse h-64 rounded-[4px]"></div>
-                    <div className="bg-gray-100 animate-pulse h-64 rounded-[4px]"></div>
+                    <div className="bg-gray-100 animate-pulse h-64 rounded-md"></div>
+                    <div className="bg-gray-100 animate-pulse h-64 rounded-md"></div>
+                    <div className="bg-gray-100 animate-pulse h-64 rounded-md"></div>
                   </>
-                ) : currentFormations.length > 0 ? (
-                  // Display only current page formations
-                  currentFormations.map((formation) => (
+                ) : currentItems.length > 0 ? (
+                  // Display formations when available
+                  currentItems.map((formation) => (
                     <FormationCard
                       key={formation.id}
                       formation={formation}
@@ -350,7 +406,9 @@ const MesFormations = () => {
           )}
         </div>
       </main>
+
       <Footer />
+
       {isModalOpen && (
         <ModalEditFormation
           formation={selectedFormation}
@@ -360,7 +418,7 @@ const MesFormations = () => {
 
       {isDeleteModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-8 rounded-[4px] shadow-lg w-[600px] relative">
+          <div className="bg-white p-8 rounded-none shadow-lg w-[600px] relative">
             {/* Bouton Fermer */}
             <Button
               variant="ghost"
@@ -378,7 +436,7 @@ const MesFormations = () => {
             <div className="flex justify-end space-x-4">
               <Button
                 variant="outline"
-                className="rounded-[4px]"
+                className="rounded-none"
                 onClick={() => setIsDeleteModalOpen(false)}
                 disabled={isDeleting}
               >
@@ -386,7 +444,7 @@ const MesFormations = () => {
               </Button>
               <Button
                 variant="destructive"
-                className="rounded-[4px]"
+                className="rounded-none"
                 onClick={confirmDeleteFormation}
                 disabled={isDeleting}
               >

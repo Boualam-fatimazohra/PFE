@@ -7,7 +7,7 @@ import test from '@/assets/images/test.jpg';
 interface FormationItem {
     id: string;
     title: string;
-    status: "En Cours" | "Avenir" | "Terminé" | "Replanifier";
+    status: "En Cours" | "Terminé" | "Avenir" | "Replanifier";
     image?: string; 
 }
 

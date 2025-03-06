@@ -38,7 +38,7 @@ interface ProcessingResults {
 interface FormState {
   title: string;  // Will map to 'nom'
   description: string;
-  status: "En Cours" | "Terminer" | "Replanifier"; // Specific string literals
+  status: "En Cours" | "Terminé" | "Avenir" | "Replanifier";  
   category: string;  // Will map to 'categorie'
   level: string;  // Will map to 'niveau'
   imageFormation: File | null;  // Will map to 'image'
@@ -239,7 +239,8 @@ const FormationModal = () => {
   const statusOptions = [
     { label: "En Cours", value: "En Cours" },
     { label: "Terminé", value: "Terminé" },
-    { label: "Avenir", value: "Avenir" }
+    { label: "Avenir", value: "Avenir" },
+    { label: "Replanifier", value: "Replanifier" }
   ];
 
   const categoryOptions = [
@@ -490,7 +491,7 @@ const FormationModal = () => {
       const formationData = {
         nom: formState.title,
         description: formState.description,
-        status: formState.status as "En Cours" | "Terminer" | "Replanifier", // Add type assertion here
+        status: formState.status as "En Cours" | "Terminé" | "Avenir" | "Replanifier", // Add type assertion here
         categorie: formState.category,
         niveau: formState.level,
         image: formState.imageFormation,
@@ -649,7 +650,7 @@ const FormationModal = () => {
             </label>
             <select
               value={formState.status}
-              onChange={(e) => setFormState({ ...formState, status: e.target.value as "En Cours" | "Terminer" | "Replanifier"})}
+              onChange={(e) => setFormState({ ...formState, status: e.target.value as "En Cours" | "Terminé" | "Avenir" | "Replanifier"})}
               className={`rounded-none w-full p-2.5 border ${errors.status ? 'border-red-500' : 'border-gray-300'} rounded-lg`}
             >
               <option value="">Sélectionnez un status</option>
