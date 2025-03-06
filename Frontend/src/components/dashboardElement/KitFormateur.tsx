@@ -21,7 +21,7 @@ export default function KitFormateur() {
                       <Search size={20} className="text-gray-400" />
                     </div>
                     <p className="text-sm text-gray-500 mb-4">Get help with a specific reservation</p>
-                    <button className="rounded-none bg-black text-white px-3 py-1 rounded-md text-sm">
+                    <button className="rounded-[4px] bg-black text-white px-3 py-1 rounded-md text-sm">
                       Accéder
                     </button>
                   </div>

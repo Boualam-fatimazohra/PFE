@@ -35,6 +35,20 @@ interface FormationItem {
   image: string;
 }
 
+// Fonction pour trier les formations par priorité de statut
+const sortFormationsByStatus = (formations) => {
+  const statusPriority = {
+    "En Cours": 1,
+    "Terminé": 2,
+    "Avenir": 3,
+    "Replanifier": 4
+  };
+  
+  return [...formations].sort((a, b) => {
+    return statusPriority[a.status] - statusPriority[b.status];
+  });
+};
+
 const MesFormations = () => {
   const navigate = useNavigate();
   const { formations: contextFormations, loading, deleteFormation, error, searchFormations } = useFormations();
@@ -58,7 +72,10 @@ const MesFormations = () => {
         status: formation.status as "En Cours" | "Avenir" | "Terminé" | "Replanifier",
         image: formation.image,
       }));
-      setFormations(mappedFormations);
+      
+      // Trier les formations par statut
+      const sortedFormations = sortFormationsByStatus(mappedFormations);
+      setFormations(sortedFormations);
       
       // Apply any active search
       if (searchTerm) {
@@ -97,11 +114,14 @@ const MesFormations = () => {
       setSearchResults([]);
     } else {
       setIsSearching(true);
+      // Filtrer et trier les résultats de recherche
       const results = formations.filter(formation => 
         formation.title.toLowerCase().includes(value.toLowerCase()) ||
         formation.status.toLowerCase().includes(value.toLowerCase())
       );
-      setSearchResults(results);
+      
+      const sortedResults = sortFormationsByStatus(results);
+      setSearchResults(sortedResults);
       setCurrentPage(1);
     }
   };
@@ -190,6 +210,8 @@ const MesFormations = () => {
   };
 
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  
+  // Appliquer le filtre de statut aux formations déjà triées
   const filteredFormations = selectedStatus && selectedStatus !== "null"
     ? formations.filter((formation) => formation.status === selectedStatus)
     : formations;
@@ -305,9 +327,8 @@ const MesFormations = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 <StatsCard title="Total Formations" value={loading ? "..." : formations.length} />
-                <StatsCard title="Formations en cours" value={loading ? "..." : filteredFormations.filter(f => f.status === "En Cours").length} />
-                <StatsCard title="Formations à venir" value={loading ? "..." : filteredFormations.filter(f => f.status === "Avenir").length} />
-
+                <StatsCard title="Formations en cours" value={loading ? "..." : formations.filter(f => f.status === "En Cours").length} />
+                <StatsCard title="Formations à venir" value={loading ? "..." : formations.filter(f => f.status === "Avenir").length} />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
