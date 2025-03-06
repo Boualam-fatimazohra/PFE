@@ -35,7 +35,7 @@ const FormationCard = ({ formation, onEdit, onDelete, onAccess }: FormationCardP
   };
 
   return (
-    <Card className="overflow-hidden shadow-md border rounded-none bg-white">
+    <Card className="overflow-hidden shadow-md border rounded-[4px] bg-white">
       <div className="relative">
         <div className="h-48 bg-gray-100 flex items-center justify-center">
           {/* Use formation image if available, otherwise fallback to test image */}
@@ -75,7 +75,7 @@ const FormationCard = ({ formation, onEdit, onDelete, onAccess }: FormationCardP
           <Button
             variant="orange"
             size="sm"
-            className="rounded-none"
+            className="rounded-[4px]"
             onClick={() => onAccess(formation)}
           >
             Accéder →

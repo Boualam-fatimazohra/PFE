@@ -196,6 +196,8 @@ const CalendarView = () => {
       event.setExtendedProp("description", selectedEvent.description);
       event.setExtendedProp("type", selectedEvent.type);
       event.setProp("backgroundColor", eventColor);
+      event.setExtendedProp("backgroundColor", eventColor);
+
     } else {
       // Add new event
       calendarApi.addEvent({
@@ -203,11 +205,8 @@ const CalendarView = () => {
         title: selectedEvent.title,
         start: selectedEvent.start,
         end: selectedEvent.end,
-        guests: selectedEvent.guests,
-        location: selectedEvent.location,
-        description: selectedEvent.description,
-        type: selectedEvent.type,
-        backgroundColor: eventColor,
+        backgroundColor: eventColor, // Appliquer directement la couleur à l'événement
+        borderColor: eventColor,     // Ajouter aussi la couleur de bordure
         extendedProps: {
           type: selectedEvent.type,
           guests: selectedEvent.guests,
@@ -365,7 +364,7 @@ const CalendarView = () => {
         
         .mini-calendar-wrapper {
           width: 200px;
-          padding-top: 150px;
+          padding-top: 250px;
           margin-left: 300px;  /*50px */
           flex-shrink: 0;
         }
