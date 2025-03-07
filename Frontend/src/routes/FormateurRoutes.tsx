@@ -17,6 +17,7 @@ const FormateurRoutes = () => {
       <Route path="mesformation" element={<MesFormations />} />
       <Route path="formationModal" element={< FormationModal/>} />
       <Route path="*" element={<NotFound />} />
+      <Route path="BeneficiairesList"element={<BeneficiairesList/>}/>
     </Routes>
     </EvenementsAssociesProvider>
     </FormationProvider>
