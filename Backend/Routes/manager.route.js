@@ -11,7 +11,7 @@ const {
     getManagerById,
     updateManager,
     deleteManager,
-    getManagerStatistique
+    // getManagerStatistique
 } = require("../Controllers/manager.controller");
 
 // Create a new Manager
@@ -43,9 +43,9 @@ router.delete("/:id",
     authoriezeRoles('Admin'), 
     deleteManager
 );
-router.post("/getManagerStatistique",
-    authenticated,
-    authoriezeRoles("Manager"),
-    getManagerStatistique);
+// router.post("/getManagerStatistique",
+//     authenticated,
+//     authoriezeRoles("Manager"),
+//     getManagerStatistique);
 
 module.exports = router;
