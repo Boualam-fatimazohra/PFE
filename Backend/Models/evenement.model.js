@@ -20,9 +20,7 @@ const evenementSchema = new Schema({
   },
   isValidate:{type:Boolean,default: false },
   categorie:{type: String,required:false},
-
 }, { 
   timestamps: true // Activation des champs createdAt et updatedAt
 });
-
 module.exports = mongoose.model('Evenement', evenementSchema);
