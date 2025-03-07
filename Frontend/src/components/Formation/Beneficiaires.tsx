@@ -8,6 +8,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 // Suppression de l'import motion qui n'est pas utilisé
 import test from '@/assets/images/test.jpg';
+// import {useFormations} from '../../contexts/FormationContext';
 
 // Types
 interface Beneficiaire {
@@ -43,8 +44,6 @@ interface FormationCardProps {
   onEdit?: (formation: Formation) => void; // rendu optionnel
   onDelete?: (id: string) => void; // rendu optionnel et type corrigé
 }
-
-// App Component
 const BeneficiairesList = () => {
   const [showBeneficiaires, setShowBeneficiaires] = React.useState(false);
   const [selectedFormation, setSelectedFormation] = React.useState<string | null>(null);
@@ -90,14 +89,6 @@ const BeneficiairesList = () => {
       status: "A venir", // Correction du statut pour correspondre au type
       image: "/api/placeholder/400/300",
       duration: "25 heures"
-    },
-    {
-      id: "6",
-      title: "Backend avec Node.js",
-      description: "Développez des API RESTful avec Express et Node.js",
-      status: "A venir", // Correction du statut pour correspondre au type
-      image: "/api/placeholder/400/300",
-      duration: "25 heures"
     }
   ];
   
@@ -110,7 +101,7 @@ const BeneficiairesList = () => {
     setShowBeneficiaires(false);
     setSelectedFormation(null);
   };
-  
+
   return (
     <div className="container mx-auto p-6">
       {!showBeneficiaires ? (
@@ -317,7 +308,6 @@ const BeneficiairesListe = () => {
         isSaturate: false
       }
     ];
-    
     // Essayez d'abord d'obtenir les données de l'API
     axios.get("http://localhost:5000/api/beneficiaires")
       .then(response => {
