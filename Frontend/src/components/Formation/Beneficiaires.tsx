@@ -8,7 +8,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 // Suppression de l'import motion qui n'est pas utilisé
 import test from '@/assets/images/test.jpg';
-// import {useFormations} from '../../contexts/FormationContext';
+ import {useFormations} from '../../contexts/FormationContext';
 
 // Types
 interface Beneficiaire {
@@ -26,12 +26,15 @@ interface Beneficiaire {
 
 // Définition correcte de l'interface Formation
 interface Formation {
-  id: string;
-  title: string;
-  description: string;
-  status: "En cours" | "A venir" | "Terminé" | "Replanifié";
-  image: string;
-  duration: string;
+  _id?: string;
+  nom: string;
+  dateDebut: string;
+  dateFin: string;
+  lienInscription: string;
+  tags: string;
+  status?: "En Cours" | "Terminé" | "Avenir" | "Replanifier";
+  image?: File | string; // include image url
+  createdAt?: string; //  Add this field
 }
 
 // Cohérence des interfaces - suppression de FormationItem redondante
@@ -47,51 +50,9 @@ interface FormationCardProps {
 const BeneficiairesList = () => {
   const [showBeneficiaires, setShowBeneficiaires] = React.useState(false);
   const [selectedFormation, setSelectedFormation] = React.useState<string | null>(null);
-  
+  const {formations}=useFormations();
+
   // Simulated formations data
-  const formationsData: Formation[] = [
-    {
-      id: "1",
-      title: "Formation React Avancé",
-      description: "Maîtrisez les concepts avancés de React et ses hooks",
-      status: "En cours",
-      image: "/api/placeholder/400/300",
-      duration: "20 heures"
-    },
-    {
-      id: "2",
-      title: "Développement Frontend avec Tailwind CSS",
-      description: "Apprenez à utiliser Tailwind CSS pour des interfaces modernes",
-      status: "En cours",
-      image: "/api/placeholder/400/300",
-      duration: "15 heures"
-    },
-    {
-      id: "3",
-      title: "Backend avec Node.js",
-      description: "Développez des API RESTful avec Express et Node.js",
-      status: "Terminé", // Correction du statut pour correspondre au type
-      image: "/api/placeholder/400/300",
-      duration: "25 heures"
-    },
-    {
-      id: "4",
-      title: "Backend avec laravel",
-      description: "Développez des API RESTful avec laravel",
-      status: "Replanifié", // Correction du statut pour correspondre au type
-      image: "/api/placeholder/400/300",
-      duration: "18 heures"
-    },
-    {
-      id: "5",
-      title: "Décisionnelle avec talend",
-      description: "Décisionnelle avec talend",
-      status: "A venir", // Correction du statut pour correspondre au type
-      image: "/api/placeholder/400/300",
-      duration: "25 heures"
-    }
-  ];
-  
   const handleAccessBeneficiaires = (formationId: string) => {
     setSelectedFormation(formationId);
     setShowBeneficiaires(true);
@@ -106,7 +67,7 @@ const BeneficiairesList = () => {
     <div className="container mx-auto p-6">
       {!showBeneficiaires ? (
         <FormationsList 
-          formations={formationsData} 
+          formations={formations} 
           onAccessBeneficiaires={handleAccessBeneficiaires}
         />
       ) : (
@@ -144,10 +105,10 @@ interface FormationsListProps {
 
 const FormationsList = ({ formations, onAccessBeneficiaires }: FormationsListProps) => {
   // Séparer les formations en deux groupes : "En cours" et autres
-  const formationsEnCours = formations.filter(formation => formation.status === "En cours");
-  const formationsAvenir = formations.filter(formation => formation.status === "A venir");
+  const formationsEnCours = formations.filter(formation => formation.status === "En Cours");
+  const formationsAvenir = formations.filter(formation => formation.status === "Avenir");
   const autresFormations = formations.filter(
-    formation => formation.status !== "En cours" && formation.status !== "A venir"
+    formation => formation.status !== "En Cours" && formation.status !== "Avenir"
   );
   
   return (
@@ -163,9 +124,9 @@ const FormationsList = ({ formations, onAccessBeneficiaires }: FormationsListPro
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {formationsEnCours.map((formation) => (
             <FormationCard 
-              key={formation.id} 
+              key={formation._id} 
               formation={formation} 
-              onAccess={() => onAccessBeneficiaires(formation.id)}
+              onAccess={() => onAccessBeneficiaires(formation._id)}
             />
           ))}
         </div>
@@ -185,9 +146,9 @@ const FormationsList = ({ formations, onAccessBeneficiaires }: FormationsListPro
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {formationsAvenir.map((formation) => (
             <FormationCard 
-              key={formation.id} 
+              key={formation._id} 
               formation={formation} 
-              onAccess={() => onAccessBeneficiaires(formation.id)}
+              onAccess={() => onAccessBeneficiaires(formation._id)}
             />
           ))}
         </div>
@@ -207,9 +168,9 @@ const FormationsList = ({ formations, onAccessBeneficiaires }: FormationsListPro
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {autresFormations.map((formation) => (
             <FormationCard 
-              key={formation.id} 
+              key={formation._id} 
               formation={formation} 
-              onAccess={() => onAccessBeneficiaires(formation.id)}
+              onAccess={() => onAccessBeneficiaires(formation._id)}
             />
           ))}
         </div>
@@ -224,13 +185,13 @@ const FormationsList = ({ formations, onAccessBeneficiaires }: FormationsListPro
 const FormationCard = ({ formation, onAccess, onEdit, onDelete }: FormationCardProps) => {
   const getStatusClass = () => {
     switch (formation.status) {
-      case "En cours":
+      case "En Cours":
         return "bg-[#FFF4EB] text-[#FF7900]";
-      case "A venir":
+      case "Avenir":
         return "bg-[#F2E7FF] text-[#9C00C3]";
       case "Terminé": // Correction pour correspondre à l'interface Formation
         return "bg-[#E6F7EA] text-[#00C31F]";
-      case "Replanifié": // Correction pour correspondre à l'interface Formation
+      case "Replanifier": // Correction pour correspondre à l'interface Formation
         return "bg-[#F5F5F5] text-[#4D4D4D]"; 
       default:
         return "";
@@ -241,7 +202,7 @@ const FormationCard = ({ formation, onAccess, onEdit, onDelete }: FormationCardP
     <Card className="overflow-hidden shadow-md border rounded-none bg-white">
       <div className="relative">
         <div className="h-48 bg-gray-100 flex items-center justify-center">
-          <img src={test} alt="Formation" className="w-full h-full object-cover" />
+          <img src={formation.image as string} alt="Formation" className="w-full h-full object-cover" />
         </div>
       </div>
       <div className="p-6">
@@ -250,9 +211,9 @@ const FormationCard = ({ formation, onAccess, onEdit, onDelete }: FormationCardP
             {formation.status}
           </div>
         </div>
-        <h3 className="font-semibold text-base mb-2">{formation.title}</h3>
+        <h3 className="font-semibold text-base mb-2">{formation.nom}</h3>
         <p className="text-sm text-gray-500 mb-5">
-          {formation.description.substring(0, 50)}...
+          {/* {formation.description.substring(0, 50)}... */}
         </p>
         <div className="flex justify-between items-center">
           <Button
