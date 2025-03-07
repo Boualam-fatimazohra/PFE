@@ -6,19 +6,21 @@ const evenementSchema = new Schema({
   dateFin: { type: Date, required: true },
   heureDebut: { type: String, required: true },
   heureFin: { type: String, required: true },
-  sujet: { type: String, required: true },
-  
-  // Référence polymorphe (XOR)
-  organisateurType: {
-    type: String,
+  titre: { type: String, required: true },
+  description :{type:String,required:false},
+  createdBy: {
+    type: Schema.Types.ObjectId,
     required: true,
-    enum: ['Formateur', 'Coordinateur']
+    ref: "Utilisateur"
   },
   organisateur: {
     type: Schema.Types.ObjectId,
-    required: true,
-    refPath: 'organisateurType'
-  }
+    required:false,
+    ref: "Utilisateur" 
+  },
+  isValidate:{type:Boolean,default: false },
+  categorie:{type: String,required:false},
+
 }, { 
   timestamps: true // Activation des champs createdAt et updatedAt
 });
