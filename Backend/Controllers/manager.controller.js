@@ -136,29 +136,30 @@ const deleteManager = async (req, res) => {
         res.status(500).json({ message: "Error deleting manager", error: error.message });
     }
 };
-const getManagerStatistique = async (req, res) => {
-    try {
-      const { month } = req.body;
-      // Récupération des stats d'événements
-      const eventStats = await getEvenementByMonth(month);
-      // Structure de réponse extensible
-      const stats = {
-        evenements: eventStats,
-        // d'autres statistiques ici plus tard
-      };
-      res.status(200).json({
-        success: true,
-        stats
-      });
-    } catch (error) {
-        console.log("erreur from getManagerStatistique");
+//todo : la fct getManagerStatistique n'est pas encore fonctionnel 
+// const getManagerStatistique = async (req, res) => {
+//     try {
+//       const { month } = req.body;
+//       // Récupération des stats d'événements
+//       const eventStats = await getEvenementByMonth(month);
+//       // Structure de réponse extensible
+//       const stats = {
+//         evenements: eventStats,
+//         // d'autres statistiques ici plus tard
+//       };
+//       res.status(200).json({
+//         success: true,
+//         stats
+//       });
+//     } catch (error) {
+//         console.log("erreur from getManagerStatistique");
 
-      res.status(500).json({
-        success: false,
-        message: error.message || "Erreur lors de la collecte des statistiques"
-      });
-    }
-  };
+//       res.status(500).json({
+//         success: false,
+//         message: error.message || "Erreur lors de la collecte des statistiques"
+//       });
+//     }
+//   };
 
 module.exports = {
     createManager,
@@ -166,5 +167,5 @@ module.exports = {
     getManagerById,
     updateManager,
     deleteManager,
-    getManagerStatistique
+    // getManagerStatistique
 };
