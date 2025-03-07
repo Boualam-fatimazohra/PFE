@@ -55,7 +55,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <FormationProvider>
+      
         <TooltipProvider>
           <BrowserRouter>
             <Layout>
@@ -98,7 +98,7 @@ const App = () => (
             </Layout>
           </BrowserRouter>
         </TooltipProvider>
-        </FormationProvider>
+       
     </AuthProvider>
   </QueryClientProvider>
 );
