@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import apiClient from './apiClient';
 
 interface Formation {
@@ -13,6 +14,15 @@ interface Formation {
   image?: File | string; // Allow both File (for uploads) and string (for URLs)
 }
 
+export const getBeneficiaireFormation = async (id: string) => {
+  try {
+    const response = await apiClient.get(`/beneficiaires/getBeneficiaireByFormation/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching Beneficiaire Formation", error);
+    throw error;
+  }
+};
 export const getAllFormations = async () => {
   try {
     const response = await apiClient.get('/formation/getFormations');

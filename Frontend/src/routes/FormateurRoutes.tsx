@@ -8,6 +8,8 @@ import FormationModal from "@/components/dashboardElement/formationModal";
 import { EvenementsAssociesProvider } from '../contexts/FormateurContext';
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import NotificationsHistory from "@/components/notification/NotificationsHistory";
+import EvaluationPages from "@/pages/EvaluationPages";
+import BeneficiairesList from "@/components/Formation/Beneficiaires";
 const FormateurRoutes = () => {
   return (
     <FormationProvider>
