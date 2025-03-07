@@ -8,6 +8,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 // Suppression de l'import motion qui n'est pas utilisé
 import test from '@/assets/images/test.jpg';
+import {useFormations} from '../../contexts/FormationContext';
 
 // Types
 interface Beneficiaire {
@@ -44,11 +45,10 @@ interface FormationCardProps {
   onDelete?: (id: string) => void; // rendu optionnel et type corrigé
 }
 
-// App Component
 const BeneficiairesList = () => {
   const [showBeneficiaires, setShowBeneficiaires] = React.useState(false);
   const [selectedFormation, setSelectedFormation] = React.useState<string | null>(null);
-  
+
   // Simulated formations data
   const formationsData: Formation[] = [
     {
@@ -90,14 +90,6 @@ const BeneficiairesList = () => {
       status: "A venir", // Correction du statut pour correspondre au type
       image: "/api/placeholder/400/300",
       duration: "25 heures"
-    },
-    {
-      id: "6",
-      title: "Backend avec Node.js",
-      description: "Développez des API RESTful avec Express et Node.js",
-      status: "A venir", // Correction du statut pour correspondre au type
-      image: "/api/placeholder/400/300",
-      duration: "25 heures"
     }
   ];
   
@@ -110,7 +102,7 @@ const BeneficiairesList = () => {
     setShowBeneficiaires(false);
     setSelectedFormation(null);
   };
-  
+
   return (
     <div className="container mx-auto p-6">
       {!showBeneficiaires ? (
@@ -138,8 +130,8 @@ const BeneficiairesList = () => {
           subtitle="AWS : Développement, déploiement et gestion" 
           status="En Cours" 
         />
-          <BeneficiairesListe />
-        </div>
+            <BeneficiairesListe selectedFormation={selectedFormation} />
+</div>
       )}
     </div>
   );
@@ -158,11 +150,9 @@ const FormationsList = ({ formations, onAccessBeneficiaires }: FormationsListPro
   const autresFormations = formations.filter(
     formation => formation.status !== "En cours" && formation.status !== "A venir"
   );
-  
   return (
     <div>
     <h2 className="text-2xl font-bold mb-6">Liste des formations</h2>
-  
     {/* Afficher d'abord les formations "En cours" */}
     {formationsEnCours.length > 0 && (
       <>
@@ -279,7 +269,7 @@ const FormationCard = ({ formation, onAccess, onEdit, onDelete }: FormationCardP
 };
 
 // Beneficiaires List Component
-const BeneficiairesListe = () => {
+const BeneficiairesListe = ({ selectedFormation }: { selectedFormation: string | null }) => {
   const [beneficiaires, setBeneficiaires] = React.useState<Beneficiaire[]>([]);
   const [search, setSearch] = React.useState("");
   const [selectAll, setSelectAll] = React.useState(false);
@@ -288,47 +278,16 @@ const BeneficiairesListe = () => {
   // Ajout des états pour la pagination
   const [currentPage, setCurrentPage] = React.useState(1);
   const itemsPerPage = 11;
+  const { getBeneficiaireFormation } = useFormations(); // App Component
 
   React.useEffect(() => {
     // Simulons des données au cas où l'API n'est pas disponible
-    const mockData: Beneficiaire[] = [
-      {
-        nom: "Dupont", 
-        prenom: "Jean", 
-        email: "jean.dupont@example.com", 
-        genre: "Homme", 
-        pays: "France", 
-        specialite: "Développement web", 
-        etablissement: "Université Paris-Saclay", 
-        profession: "Étudiant",
-        isBlack: false,
-        isSaturate: false
-      },
-      {
-        nom: "Martin", 
-        prenom: "Sophie", 
-        email: "sophie.martin@example.com", 
-        genre: "Femme", 
-        pays: "France", 
-        specialite: "UX/UI Design", 
-        etablissement: "École de design", 
-        profession: "Designer",
-        isBlack: true,
-        isSaturate: false
-      }
-    ];
-    
-    // Essayez d'abord d'obtenir les données de l'API
-    axios.get("http://localhost:5000/api/beneficiaires")
-      .then(response => {
-        setBeneficiaires(response.data);
-      })
-      .catch(error => {
-        console.error("Erreur lors de la récupération des bénéficiaires", error);
-        // Utilisez des données fictives en cas d'échec de l'API
-        setBeneficiaires(mockData);
-      });
-  }, []);
+    const loadData = async () => {
+      const data = await getBeneficiaireFormation(selectedFormation);
+      setBeneficiaires(data);
+           }
+       loadData();
+   }, []);
 
   const filteredBeneficiaires = beneficiaires.filter(b =>
     b.nom.toLowerCase().includes(search.toLowerCase())
