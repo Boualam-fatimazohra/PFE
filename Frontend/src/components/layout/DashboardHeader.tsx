@@ -64,8 +64,8 @@ export function DashboardHeader() {
       { name: "Dashboard", path: "/formateur/dashboardFormateur" },
       { name: "Mes Formations", path: "/formateur/mesformation" },
       { name: "Calendrier", path: "/CalendarView" },
-      { name: "Mes Bénéficiaires", path: "/BeneficiairesList" },
-      { name: "Evaluation", path: "/EvaluationPages" },
+      { name: "Mes Bénéficiaires", path: "/formateur/BeneficiairesList" },
+      { name: "Evaluation", path: "/EvaluationPages"},
     ];
   } else if (user?.role === "Manager") {
     navigationLinks = [

@@ -80,7 +80,7 @@ const App = () => (
                 <Route path="/generate-link" element={<GenerateLink />} />
                 <Route path="/formulaire-evaluation" element={<FormulaireEvaluation />} />
                 <Route path="/EvaluationForm" element={<EvaluationForm />} />
-                <Route path="/BeneficiairesList" element={<BeneficiairesList/>} />
+                {/* <Route path="/BeneficiairesList" element={<BeneficiairesList/>} /> */}
                 <Route path="/CalendarView" element={<CalendarView/>}/>
                 <Route path="/beneficiaires" element={<BeneficiairesList/>}/>
                 <Route path="/DetailsFormation" element={<DetailsFormation />} />
