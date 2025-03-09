@@ -7,9 +7,9 @@ import { Card } from "@/components/ui/card"; // Ajout de l'import manquant pour 
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 // Suppression de l'import motion qui n'est pas utilisé
-import test from '@/assets/images/test.jpg';
  import {useFormations} from '../../contexts/FormationContext';
-
+import FormationCard from "@/components/Formation/FormationCards";
+import { useState, useEffect } from "react";
 // Types
 interface Beneficiaire {
   nom: string;
@@ -23,45 +23,49 @@ interface Beneficiaire {
   isBlack: boolean;
   isSaturate: boolean;
 }
-
-// Définition correcte de l'interface Formation
-interface Formation {
-  _id?: string;
-  nom: string;
+interface FormationItem {
+  id: string;
+  title: string;
+  status: "En Cours" | "Terminé" | "Avenir" | "Replanifier";
+  image: string|File;
   dateDebut: string;
-  dateFin: string;
-  lienInscription: string;
-  tags: string;
-  status?: "En Cours" | "Terminé" | "Avenir" | "Replanifier";
-  image?: File | string; // include image url
-  createdAt?: string; //  Add this field
-}
-
-// Cohérence des interfaces - suppression de FormationItem redondante
-// et correction des statuts pour qu'ils correspondent au reste du code
-
-// Correction de l'interface FormationCardProps
-interface FormationCardProps {
-  formation: Formation;
-  onAccess: () => void;
-  onEdit?: (formation: Formation) => void; // rendu optionnel
-  onDelete?: (id: string) => void; // rendu optionnel et type corrigé
+  dateFin?: string;
+  dateCreated?: string;
 }
 const BeneficiairesList = () => {
-  const [showBeneficiaires, setShowBeneficiaires] = React.useState(false);
-  const [selectedFormation, setSelectedFormation] = React.useState<string | null>(null);
-  const {formations}=useFormations();
+  const [showBeneficiaires, setShowBeneficiaires] = useState(false);
+  const [selectedFormation, setSelectedFormation] = useState<FormationItem | null>(null);
+  const { formations: contextFormations, loading, error } = useFormations();
+  const [formations, setFormations] = useState<FormationItem[]>([]);
 
-  // Simulated formations data
-  const handleAccessBeneficiaires = (formationId: string) => {
-    setSelectedFormation(formationId);
+  // Mappage des formations du contexte vers l'interface locale
+  useEffect(() => {
+    if (contextFormations?.length) {
+      const mapped = contextFormations.map(f => ({
+        id: f._id,
+        title: f.nom,
+        status: f.status,
+        image: f.image,
+        dateDebut: f.dateDebut,
+        dateFin: f.dateFin,
+        dateCreated: f.createdAt
+      }));
+      setFormations(mapped);
+    }
+  }, [contextFormations]);
+
+  const handleAccessBeneficiaires = (formation: FormationItem) => {
+    setSelectedFormation(formation);
     setShowBeneficiaires(true);
   };
-  
+
   const handleBackToFormations = () => {
     setShowBeneficiaires(false);
     setSelectedFormation(null);
   };
+
+  if (loading) return <div>Chargement en cours...</div>;
+  if (error) return <div>Erreur : {error}</div>;
 
   return (
     <div className="container mx-auto p-6">
@@ -72,163 +76,87 @@ const BeneficiairesList = () => {
         />
       ) : (
         <div>
-           <div className="flex justify-between items-center mb-4  ">
+          <div className="flex justify-between items-center mb-4">
             <Button 
               variant="outline" 
               className="flex items-center gap-1 text-xl font-medium text-orange-600 hover:text-orange-800 transition"
               onClick={handleBackToFormations}
             >
-               <svg width="18" height="19" viewBox="0 0 18 19" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M10.6665 4.65625L5.21143 10L10.6665 15.3437L12.2251 13.8177L8.32784 10L12.2251 6.1838L10.6665 4.65625Z" fill="#F16E00"/>
-            </svg>
-            <span className="text-lg font-bold text-[#000000] "> Retour</span> 
+              {/* Icône SVG */}
+              <span className="text-lg font-bold text-[#000000]">Retour</span> 
             </Button>
           </div>
           
-           <CourseHeader 
-          title="Formation" 
-          subtitle="AWS : Développement, déploiement et gestion" 
-          status="En Cours" 
-        />
-          <BeneficiairesListe />
-        </div>
+          {selectedFormation && (
+            <CourseHeader 
+              title={selectedFormation.title}
+              subtitle="Détails de la formation"
+              status={selectedFormation.status}
+            />
+          )}
+          
+          <BeneficiairesListe/>        
+          </div>
       )}
     </div>
   );
 };
 
-// Formations List Component
-interface FormationsListProps {
-  formations: Formation[];
-  onAccessBeneficiaires: (formationId: string) => void;
-}
-
+// Composant FormationsList avec typage amélioré
 const FormationsList = ({ formations, onAccessBeneficiaires }: FormationsListProps) => {
-  // Séparer les formations en deux groupes : "En cours" et autres
-  const formationsEnCours = formations.filter(formation => formation.status === "En Cours");
-  const formationsAvenir = formations.filter(formation => formation.status === "Avenir");
-  const autresFormations = formations.filter(
-    formation => formation.status !== "En Cours" && formation.status !== "Avenir"
-  );
-  
-  return (
-    <div>
-    <h2 className="text-2xl font-bold mb-6">Liste des formations</h2>
-  
-    {/* Afficher d'abord les formations "En cours" */}
-    {formationsEnCours.length > 0 && (
-      <>
-        <div className="flex items-center mb-4">
-          <hr className="flex-grow border-t-2 border-gray-300" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {formationsEnCours.map((formation) => (
-            <FormationCard 
-              key={formation._id} 
-              formation={formation} 
-              onAccess={() => onAccessBeneficiaires(formation._id)}
-            />
-          ))}
-        </div>
-      </>
-    )}
-  
-    {/* Ajouter un trait SEULEMENT si une section suivante existe */}
-    {formationsEnCours.length > 0 && (formationsAvenir.length > 0 || autresFormations.length > 0) && (
-      <div className="flex items-center mb-4">
-        <hr className="flex-grow border-t-2 border-gray-400" />
-      </div>
-    )}
-  
-    {/* Afficher les formations "À venir" */}
-    {formationsAvenir.length > 0 && (
-      <>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {formationsAvenir.map((formation) => (
-            <FormationCard 
-              key={formation._id} 
-              formation={formation} 
-              onAccess={() => onAccessBeneficiaires(formation._id)}
-            />
-          ))}
-        </div>
-      </>
-    )}
-  
-    {/* Ajouter un trait SEULEMENT si "Autres formations" suit */}
-    {formationsAvenir.length > 0 && autresFormations.length > 0 && (
-      <div className="flex items-center mb-4">
-        <hr className="flex-grow border-t-2 border-gray-400" />
-      </div>
-    )}
-  
-    {/* Afficher les autres formations */}
-    {autresFormations.length > 0 && (
-      <>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {autresFormations.map((formation) => (
-            <FormationCard 
-              key={formation._id} 
-              formation={formation} 
-              onAccess={() => onAccessBeneficiaires(formation._id)}
-            />
-          ))}
-        </div>
-      </>
-    )}
-  </div>
-  
-  );
-};
+  const filterAndGroupFormations = () => {
+    const groupes = {
+      enCours: [] as FormationItem[],
+      aVenir: [] as FormationItem[],
+      autres: [] as FormationItem[]
+    };
 
-// Formation Card Component corrigé
-const FormationCard = ({ formation, onAccess, onEdit, onDelete }: FormationCardProps) => {
-  const getStatusClass = () => {
-    switch (formation.status) {
-      case "En Cours":
-        return "bg-[#FFF4EB] text-[#FF7900]";
-      case "Avenir":
-        return "bg-[#F2E7FF] text-[#9C00C3]";
-      case "Terminé": // Correction pour correspondre à l'interface Formation
-        return "bg-[#E6F7EA] text-[#00C31F]";
-      case "Replanifier": // Correction pour correspondre à l'interface Formation
-        return "bg-[#F5F5F5] text-[#4D4D4D]"; 
-      default:
-        return "";
-    }
+    formations.forEach(formation => {
+      if (formation.status === "En Cours") {
+        groupes.enCours.push(formation);
+      } else if (formation.status === "Avenir") {
+        groupes.aVenir.push(formation);
+      } else {
+        groupes.autres.push(formation);
+      }
+    });
+
+    return groupes;
   };
 
+  const { enCours, aVenir, autres } = filterAndGroupFormations();
+
+  const renderSection = (title: string, formations: FormationItem[]) => (
+    <>
+      <div className="flex items-center mb-4">
+        <hr className="flex-grow border-t-2 border-gray-300" />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        {formations.map(formation => (
+          <FormationCard
+            key={formation.id}
+            formation={formation}
+            onAccess={() => onAccessBeneficiaires(formation)}
+            onEdit={() => console.log("edit", formation)}
+            onDelete={() => console.log("delete", formation.id)}
+          />
+        ))}
+      </div>
+    </>
+  );
   return (
-    <Card className="overflow-hidden shadow-md border rounded-none bg-white">
-      <div className="relative">
-        <div className="h-48 bg-gray-100 flex items-center justify-center">
-          <img src={formation.image as string} alt="Formation" className="w-full h-full object-cover" />
-        </div>
-      </div>
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-3">
-          <div className={`px-3 py-1 rounded-full ${getStatusClass()}`}>
-            {formation.status}
-          </div>
-        </div>
-        <h3 className="font-semibold text-base mb-2">{formation.nom}</h3>
-        <p className="text-sm text-gray-500 mb-5">
-          {/* {formation.description.substring(0, 50)}... */}
-        </p>
-        <div className="flex justify-between items-center">
-          <Button
-            variant="orange"
-            size="sm"
-            className="rounded-none"
-            onClick={() => onAccess()}
-          >
-            Accéder →
-          </Button>
-        </div>
-      </div>
-    </Card>
+    <div>
+      <h2 className="text-2xl font-bold mb-6">Liste des formations</h2>
+      {enCours.length > 0 && renderSection("Formations en cours", enCours)}
+      {aVenir.length > 0 && renderSection("Formations à venir", aVenir)}
+      {autres.length > 0 && renderSection("Autres formations", autres)}
+    </div>
   );
 };
+interface FormationsListProps {
+  formations: FormationItem[];
+  onAccessBeneficiaires: (formation: FormationItem) => void;
+}
 
 // Beneficiaires List Component
 const BeneficiairesListe = () => {
@@ -521,5 +449,6 @@ const BeneficiairesListe = () => {
     </div>
   );
 };
+
 
 export default BeneficiairesList;
