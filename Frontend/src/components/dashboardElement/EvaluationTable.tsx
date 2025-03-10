@@ -139,7 +139,7 @@ export const EvaluationsTable = ({ onGenerateLink }: EvaluationsTableProps) => {
                     <button
                       onClick={() => generateEvaluationLink(formation._id)}
                       disabled={generating[formation._id]}
-                      className="bg-black hover:bg-orange-600 text-white px-3 py-1 text-sm font-medium transition duration-150 ease-in-out flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed w-auto min-w-[80px] h-[30px]"
+                      className="bg-black rouded-[4px] hover:bg-orange-600 text-white px-3 py-1 text-sm font-medium transition duration-150 ease-in-out flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed w-auto min-w-[80px] h-[30px]"
                     >
                       {generating[formation._id] ? (
                         <>
