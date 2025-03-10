@@ -114,7 +114,7 @@ const getFormateurs = async (req, res) => {
         const formateurs = await Formateur.find({ manager: managerId })
             .populate("utilisateur", "nom prenom email numeroTelephone role")
             .populate("manager") // Exemple de champs à afficher
-            .populate("coordinateur");
+            //.populate("coordinateur");
 
         //  Gestion du cas "Aucun résultat"
         if (formateurs.length === 0) {
