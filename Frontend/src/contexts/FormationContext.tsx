@@ -39,6 +39,8 @@ interface FormationContextType {
   searchFormations: (query: string) => void;
   nombreBeneficiaires: number | null; 
   getBeneficiaireFormation: (formationId: string) => Promise<Beneficiaire[]>;
+  sendEvaluationFormation: (beneficiaryIds: string[], formationId: string) => Promise<any>;
+
 }
 
 interface FormationProviderProps {
@@ -199,8 +201,22 @@ const addNewFormation = async (formationData: Formation) => {
       throw error;
     }
   };
+  const sendEvaluationFormation = async (beneficiaryIds: string[], formationId: string) => {
+    try {
+      setError(null);
+      const response = await sendEvaluationFormation(beneficiaryIds, formationId);
+      return response;
+    } catch (error) {
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "Erreur lors de l'envoi des liens d'évaluation";
+      console.error(errorMessage);
+      setError(errorMessage);
+      throw error;
+    }
+  };
   return (
-    <FormationContext.Provider value={{ formations, loading, error, addNewFormation, deleteFormation, updateFormation, refreshFormations, filteredFormations,searchFormations, nombreBeneficiaires,getBeneficiaireFormation }}>
+    <FormationContext.Provider value={{ formations, loading, error, addNewFormation, deleteFormation, updateFormation, refreshFormations, filteredFormations,searchFormations, nombreBeneficiaires,getBeneficiaireFormation,sendEvaluationFormation  }}>
       {children}
     </FormationContext.Provider>
   );

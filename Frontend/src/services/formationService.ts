@@ -23,6 +23,19 @@ export const getBeneficiaireFormation = async (id: string) => {
     throw error;
   }
 };
+export const sendEvaluationFormation = async (beneficiaryIds: string[], formationId: string) => {
+  try {
+    const response = await apiClient.post('/beneficiaires/sendLinkToBeneficiare', {
+      beneficiaryIds,
+      formationId
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error d'envoi de lien d'évaluation:", error);
+    throw error;
+  }
+};
+
 export const getAllFormations = async () => {
   try {
     const response = await apiClient.get('/formation/getFormations');
