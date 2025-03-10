@@ -1,5 +1,6 @@
 const Notification = require("../Models/notification.model");
 const Formateur = require("../Models/formateur.model");
+const Evenement = require('../Models/evenement.model');
 const { Utilisateur } = require("../Models/utilisateur.model");
 
 // Create a new notification
@@ -150,8 +151,8 @@ const markNotificationAsRead = async (req, res) => {
   }
 };
 
-// Add to notification.controller.js
-const processNotification = async (req, res) => {
+// Process event notification (accept/decline)
+const processEventNotification = async (req, res) => {
   try {
     const { id } = req.params;
     const { status, response } = req.body;
@@ -164,52 +165,72 @@ const processNotification = async (req, res) => {
     // Find notification and check if user is the receiver
     const notification = await Notification.findOne({ 
       _id: id, 
-      receiver: userId
+      receiver: userId,
+      type: 'evenement'
     }).populate("sender");
 
     if (!notification) {
       return res.status(404).json({ message: "Notification not found or not authorized" });
     }
 
+    if (notification.status !== 'pending') {
+      return res.status(400).json({ message: "This notification has already been processed" });
+    }
+
     // Update notification status
     notification.status = status;
-    notification.response = response || "";
-    notification.isRead = true;
     await notification.save();
+
+    // Get the event that's waiting for approval
+    const event = await Evenement.findById(notification.entityId);
+    
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    let updatedEvent = null;
+    
+    if (status === 'accepted') {
+      // Update the event to be validated
+      event.isValidate = true;
+      updatedEvent = await event.save();
+    } else {
+      // If declined, delete the event
+      await Evenement.findByIdAndDelete(notification.entityId);
+    }
 
     // Create response notification for the sender
     const responseMessage = status === 'accepted' 
-      ? `Votre demande a été acceptée: ${response || ''}`
-      : `Votre demande a été refusée: ${response || ''}`;
+      ? `Votre événement "${event.titre}" a été approuvé.`
+      : `Votre événement "${event.titre}" a été refusé.${response ? ' Raison: ' + response : ''}`;
 
     const responseNotification = new Notification({
       sender: userId,
-      receiver: notification.sender._id,
-      message: responseMessage,
-      type: status === 'accepted' ? 'info' : 'alert',
-      status: 'pending', // No need for the sender to respond to this
-      relatedTo: {
-        id: notification._id // No need to specify `model`, as it defaults to "Notification"
-      }    });
+      receiver: notification.sender,
+      type: 'evenement',
+      status: notification.status, // Not requiring response
+      entityId: status === 'accepted' ? notification.entityId : null
+    });
 
     await responseNotification.save();
 
     // Send real-time notification via Socket.io
     const io = req.app.get('io');
-    io.to(notification.sender._id.toString()).emit('notification', {
-      _id: responseNotification._id,
-      sender: userId,
-      message: responseMessage,
-      type: responseNotification.type,
-      createdAt: responseNotification.createdAt
-    });
+    if (io) {
+      io.to(notification.sender.toString()).emit('notification', {
+        _id: responseNotification._id,
+        type: responseNotification.type,
+        createdAt: responseNotification.createdAt
+      });
+    }
 
     res.status(200).json({
-      message: `Notification ${status}`,
-      notification
+      message: `Event ${status === 'accepted' ? 'approved' : 'declined'} successfully`,
+      event: updatedEvent,
+      notification: responseNotification
     });
   } catch (error) {
-    console.error("Error processing notification:", error);
+    console.error("Error processing event notification:", error);
     res.status(500).json({ message: "Error processing notification", error: error.message });
   }
 };
@@ -220,5 +241,5 @@ module.exports = {
   sendNotificationToManager,
   getUserNotifications,
   markNotificationAsRead,
-  processNotification
+  processEventNotification
 };

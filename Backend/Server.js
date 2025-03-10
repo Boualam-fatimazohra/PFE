@@ -261,7 +261,6 @@ app.use("/api/coordinateurs", coordinateurRoutes);
 app.use("/api/managers", managerRoutes);
 app.use("/api/formateur", formateurRoutes);
 app.use("/api/evaluation", evaluationRoutes);
-app.use("/api/formation/Addformation", formationRoutes);
 app.use("/api/evenement", evenementRoutes);
 app.use("/api/notifications", notificationRoutes); 
 
