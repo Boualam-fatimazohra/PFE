@@ -1,4 +1,3 @@
-// Update your notification.model.js
 const mongoose = require('mongoose');
 
 const notificationSchema = new mongoose.Schema({
@@ -12,39 +11,23 @@ const notificationSchema = new mongoose.Schema({
     ref: "Utilisateur", 
     required: true 
   },
-  message: { 
-    type: String, 
-    required: true 
-  },
   isRead: { 
     type: Boolean, 
     default: false 
   },
   type: { 
     type: String, 
-    enum: ["message", "alert", "info"],
-    default: "message"
+    enum: ["formation", "evenement"],
+    required: true
   },
   status: {
     type: String,
     enum: ["pending", "accepted", "declined"],
     default: "pending"
   },
-  response: {
-    type: String,
-    default: ""
-  },
-  relatedTo: {
-    model: {
-      type: String,
-      enum: ["Formation", "Beneficiaire", "Formateur", "Notification"],
-      required: false,
-      default: "Notification" 
-    },
-    id: {
-      type: mongoose.Schema.Types.ObjectId,
-      required: false
-    }
+  entityId: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true
   }
 }, { timestamps: true });
 

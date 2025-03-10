@@ -263,7 +263,7 @@ app.use("/api/formateur", formateurRoutes);
 app.use("/api/evaluation", evaluationRoutes);
 app.use("/api/formation/Addformation", formationRoutes);
 app.use("/api/evenement", evenementRoutes);
-app.use("/api/notifications", notificationRoutes); // Added notification routes
+app.use("/api/notifications", notificationRoutes); 
 
 // Route pour télécharger des fichiers
 app.post("/upload-csv", upload.single("csvFile"), (req, res) => {
