@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getAllFormations as fetchFormations, createFormation as addFormation } from '../services/formationService';
 import { deleteFormation as apiDeleteFormation, updateFormation as ipUpdateFormation } from '../services/formationService';
-import {getNbrBeneficiairesParFormateur} from "../services/formationService";
+import {getNbrBeneficiairesParFormateur, getBeneficiaireFormation as fetchBeneficiaires} from "../services/formationService";
 interface Formation {
   _id?: string;
   nom: string;
@@ -11,7 +11,20 @@ interface Formation {
   tags: string;
   status?: "En Cours" | "Terminé" | "Avenir" | "Replanifier";
   image?: File | string; // include image url
-  createdAt?: string; // ✅ Add this field
+  createdAt?: string; //  Add this field
+}
+interface Beneficiaire {
+  _id?: string;
+  nom: string;
+  prenom: string;
+  email: string;
+  genre: string;
+  pays: string;
+  specialite: string;
+  etablissement: string;
+  profession: string;
+  isBlack: boolean;
+  isSaturate: boolean;
 }
 
 interface FormationContextType {
@@ -25,6 +38,7 @@ interface FormationContextType {
   refreshFormations: () => Promise<void>;
   searchFormations: (query: string) => void;
   nombreBeneficiaires: number | null; 
+  getBeneficiaireFormation: (formationId: string) => Promise<Beneficiaire[]>;
 }
 
 interface FormationProviderProps {
@@ -174,8 +188,19 @@ const addNewFormation = async (formationData: Formation) => {
     setFilteredFormations(results);
   };
 
+  const getBeneficiaireFormation = async (id: string): Promise<Beneficiaire[]> => {
+    try {
+      return await fetchBeneficiaires(id);
+    } catch (error) {
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "Erreur lors de la récupération des bénéficiaires";
+      setError(errorMessage);
+      throw error;
+    }
+  };
   return (
-    <FormationContext.Provider value={{ formations, loading, error, addNewFormation, deleteFormation, updateFormation, refreshFormations, filteredFormations,searchFormations, nombreBeneficiaires }}>
+    <FormationContext.Provider value={{ formations, loading, error, addNewFormation, deleteFormation, updateFormation, refreshFormations, filteredFormations,searchFormations, nombreBeneficiaires,getBeneficiaireFormation }}>
       {children}
     </FormationContext.Provider>
   );
