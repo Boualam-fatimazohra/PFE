@@ -70,9 +70,12 @@ export function DashboardHeader() {
   } else if (user?.role === "Manager") {
     navigationLinks = [
       { name: "Dashboard", path: "/manager/dashboardManager" },
-      { name: "Formations", path: "/manager/FormationDashboard" },
-      { name: "Formateurs", path: "/manager/FormateurManager" },
-      { name: "Page Link", path: "/page-link-3" },
+      { name: "Ecole du code", path: "/Ecolcode" },
+      { name: "Fablab Solidaire", path: "/manager/FormateurManager" },
+      { name: "Orange Fab", path: "/page-link-3" },
+      { name: "Coordination", path: "/page-link-3" },
+      { name: "Événements", path: "/page-link-3" },
+
     ];
   } else if (user?.role === "Coordinateur") {
     navigationLinks = [
