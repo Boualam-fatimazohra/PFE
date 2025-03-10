@@ -190,6 +190,7 @@ const addNewFormation = async (formationData: Formation) => {
 
   const getBeneficiaireFormation = async (id: string): Promise<Beneficiaire[]> => {
     try {
+      console.log("appel de la fct getBeneficiaireFormation de contexte");
       return await fetchBeneficiaires(id);
     } catch (error) {
       const errorMessage = error instanceof Error 
