@@ -8,142 +8,145 @@ const Formateur=require("../Models/formateur.model");
 const createBeneficiaire = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
+  
   try {
-      // Extraction des données du body
-      const {
-  nom,
-  prenom,
-  dateNaissance,
-  email,
-  genre,
-  telephone,
-  pays,
-  niveau,
-  specialite,
-  etablissement,
-  profession,
-  situationProfessionnel,
-  isBlack,
-  isSaturate,
-  nationalite,
-  region,
-  categorieAge,
-  idFormation
-      } = req.body;
-      // Validation de l'idFormation
-      if (!idFormation || !mongoose.Types.ObjectId.isValid(idFormation)) {
-          return res.status(400).json({
-              success: false,
-              message: "ID de formation invalide ou manquant"
-          });
-      }
-      // Validation des champs requis
-      if (!nom || !email || !genre || !pays) {
-          return res.status(400).json({
-              success: false,
-              message: "Les champs nom, email, genre et pays sont obligatoires"
-          });
-      }
-      // Validation du format email
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-          return res.status(400).json({
-              success: false,
-              message: "Format d'email invalide"
-          });
-      }
-      // Vérification si l'email existe déjà
-      const existingBeneficiaire = await Beneficiaire.findOne({ email }).session(session);
-      if (existingBeneficiaire) {
-          await session.abortTransaction();
-          return res.status(409).json({
-              success: false,
-              message: "Un bénéficiaire avec cet email existe déjà"
-          });
-      }
-      // Création du nouveau bénéficiaire
-      const newBeneficiaire = new Beneficiaire({
-        nom,
-        prenom,
-        dateNaissance,
-        email,
-        genre,
-        telephone,
-        pays,
-        niveau,
-        specialite,
-        etablissement,
-        profession,
-        situationProfessionnel,
-        isBlack,
-        isSaturate,
-        nationalite,
-        region,
-        categorieAge,
+    const { idFormation, ...beneficiaireData } = req.body;
+    const requiredFields = ['nom', 'email', 'genre', 'pays'];
+
+    // 1. Validation de base
+    const missingFields = requiredFields.filter(field => !beneficiaireData[field]);
+    if (missingFields.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Champs manquants: ${missingFields.join(', ')}`
       });
-
-      // Sauvegarde du bénéficiaire
-      const savedBeneficiaire = await newBeneficiaire.save({ session });
-
-      try {
-        // Après la sauvegarde du bénéficiaire
-        console.log('Bénéficiaire sauvegardé avec succès');
-        
-        // Vérification de l'existence de la formation
-        const formationExists = await Formation.findById(idFormation).session(session);
-        if (!formationExists) {
-            throw new Error('Formation non trouvée');
-        }
-    
-        // Création de l'instance BeneficiareFormation avec try/catch spécifique
-        try {
-            const newBeneficiareFormation = new BeneficiareFormation({
-                formation: idFormation,
-                beneficiaire: savedBeneficiaire._id,
-                confirmationAppel: false,
-                confirmationEmail: false,
-                horodateur: new Date(),
-                isSubmited: false
-            });
-    
-            console.log('Instance BeneficiareFormation créée:', newBeneficiareFormation);
-            
-            const savedBeneficiareFormation = await newBeneficiareFormation.save({ session });
-            console.log('BeneficiareFormation sauvegardé avec succès');
-    
-            await session.commitTransaction();
-            
-            res.status(201).json({
-                success: true,
-                message: "Bénéficiaire et association à la formation créés avec succès",
-                data: {
-                    beneficiaire: savedBeneficiaire,
-                    beneficiareFormation: savedBeneficiareFormation
-                }
-            });
-        } catch (formationError) {
-            console.error('Erreur lors de la création de BeneficiareFormation:', formationError);
-            throw formationError;
-        }
-    } catch (error) {
-        await session.abortTransaction();
-        console.error('Erreur détaillée:', {
-            message: error.message,
-            stack: error.stack,
-            name: error.name
-        });
-        
-        res.status(500).json({
-            success: false,
-            message: "Erreur lors de la création",
-            error: error.message,
-            details: error.stack
-        });
-    } finally {
-        session.endSession();
-    }} catch (error) {
-        res.status(500).json({ message: "Error creating beneficiaire", error: error.message });
     }
+
+    // 2. Validation ID Formation
+    if (!idFormation || !mongoose.Types.ObjectId.isValid(idFormation)) {
+      return res.status(400).json({
+        success: false,
+        message: "ID de formation invalide"
+      });
+    }
+
+    // 3. Validation email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(beneficiaireData.email)) {
+      return res.status(400).json({
+        success: false,
+        message: "Format d'email invalide"
+      });
+    }
+
+    // 4. Vérification email unique
+    const existingBeneficiaire = await Beneficiaire.findOne({ email: beneficiaireData.email }).session(session);
+    if (existingBeneficiaire) {
+      await session.abortTransaction();
+      return res.status(409).json({
+        success: false,
+        message: "Email déjà utilisé"
+      });
+    }
+
+    // 5. Validation des enums
+    const validateEnum = (field, value) => {
+      const enumValues = Beneficiaire.schema.path(field).enumValues;
+      return enumValues.includes(value);
+    };
+
+    const enumValidations = {
+      niveau: beneficiaireData.niveau,
+      situationProfessionnel: beneficiaireData.situationProfessionnel,
+      region: beneficiaireData.region,
+      categorieAge: beneficiaireData.categorieAge
+    };
+
+    for (const [field, value] of Object.entries(enumValidations)) {
+      if (value && !validateEnum(field, value)) {
+        return res.status(400).json({
+          success: false,
+          message: `Valeur invalide pour ${field}: ${value}`
+        });
+      }
+    }
+
+    // 6. Validation type téléphone
+    if (beneficiaireData.telephone && isNaN(beneficiaireData.telephone)) {
+      return res.status(400).json({
+        success: false,
+        message: "Le téléphone doit être un nombre"
+      });
+    }
+
+    // 7. Création du bénéficiaire
+    const newBeneficiaire = new Beneficiaire({
+      ...beneficiaireData,
+      telephone: beneficiaireData.telephone ? Number(beneficiaireData.telephone) : undefined
+    });
+
+    const savedBeneficiaire = await newBeneficiaire.save({ session });
+
+    // 8. Validation existence formation
+    const formation = await Formation.findById(idFormation).session(session);
+    if (!formation) {
+      await session.abortTransaction();
+      return res.status(404).json({
+        success: false,
+        message: "Formation introuvable"
+      });
+    }
+
+    // 9. Création de la relation
+    const newRelation = new BeneficiareFormation({
+      formation: idFormation,
+      beneficiaire: savedBeneficiaire._id,
+      confirmationAppel: false,
+      confirmationEmail: false,
+      horodateur: new Date(),
+      isSubmited: false
+    });
+
+    const savedRelation = await newRelation.save({ session });
+
+    await session.commitTransaction();
+    
+    return res.status(201).json({
+      success: true,
+      data: {
+        beneficiaire: savedBeneficiaire,
+        relation: savedRelation
+      }
+    });
+
+  } catch (error) {
+    await session.abortTransaction();
+    
+    // Gestion spécifique des erreurs Mongoose
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => ({
+        field: err.path,
+        message: err.message
+      }));
+      
+      return res.status(400).json({
+        success: false,
+        message: "Erreur de validation",
+        errors
+      });
+    }
+
+    console.error(`[${new Date().toISOString()}] Erreur critique:`, error);
+    
+    return res.status(500).json({
+      success: false,
+      message: "Erreur interne du serveur",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+    
+  } finally {
+    session.endSession();
+  }
 };
 
 // Get all Beneficiaires (with optional formation details)
@@ -299,6 +302,7 @@ const uploadBeneficiairesFromExcel = async (req, res) => {
 };
 // Simple read data from excel testing
 const getBeneficiaireFormation = async (req, res) => {
+  console.log('Requête reçue sur:', req.originalUrl); //  Debug
   const idFormation = req.params.id || req.body.idFormation;
 
   console.log("ID Formation reçu :", idFormation); // Debug
@@ -316,7 +320,7 @@ const getBeneficiaireFormation = async (req, res) => {
     const beneficiaires = await BeneficiareFormation.find({ formation: formationId })
       .populate({
         path: "beneficiaire",
-        model: "Beneficiaire", // S'assurer que c'est bien le bon modèle
+        model: "Beneficiaire", 
       });
 
     // Vérifier si on a trouvé des bénéficiaires

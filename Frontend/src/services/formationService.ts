@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import axios from 'axios';
 import apiClient from './apiClient';
 
 interface Formation {
@@ -16,11 +17,22 @@ interface Formation {
 
 export const getBeneficiaireFormation = async (id: string) => {
   try {
-    const response = await apiClient.get(`/beneficiaires/getBeneficiaireByFormation/${id}`);
+    const response = await apiClient.get(`beneficiaires/getBeneficiaireByFormation/${id}`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching Beneficiaire Formation", error);
-    throw error;
+    // Gestion spécifique du cas "Aucun bénéficiaire"
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
+      if (error.response.data.message.includes("Aucun bénéficiaire trouvé")) {
+        return []; // Retourne un tableau vide
+      }
+    }
+    
+    // Gestion des autres erreurs
+    console.error("Erreur critique :", error);
+    throw new Error(
+      error.response?.data?.message || 
+      "Erreur lors de la récupération des bénéficiaires"
+    );
   }
 };
 export const getAllFormations = async () => {
