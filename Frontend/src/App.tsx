@@ -35,6 +35,8 @@ import FormationDashboard from "@/components/dashboardElement/FormationManager";
 import FormateurManager from "@/components/dashboardElement/FormateurManager";
 import BootcampsList from "./components/dashboardElement/Bootcamps";
 import CalendrierManager from "./components/dashboardElement/CalendrierManager";
+import CreatEvent from "./components/dashboardElement/CreatEvent";
+import Ecolecode from "./components/dashboardElement/Ecolcode";
 const queryClient = new QueryClient();
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
@@ -85,12 +87,13 @@ const App = () => (
                 <Route path="/DetailsFormation" element={<DetailsFormation />} />
                 <Route path="/FormationTerminer" element={<FormationTerminer />} />
                 <Route path="/FormationAvenir" element={<FormationAvenir />} />
+                <Route path="/FormationModal" element={<FormationModal/>}/>
                 <Route path="/EvaluationPages" element={<EvaluationPages />} />
                 <Route path="/addformation" element={<AddFormation />} /> 
                 <Route path="/formations" element={<FormateurFormations />} /> 
-
+                <Route path="/Ecolcode" element={<Ecolecode/>}/>
                 <Route path="/CalendrierManager" element={<CalendrierManager/>}/>
-
+                <Route path="/CreatEvent" element={<CreatEvent/>}/>
                 {/* Page 404 */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

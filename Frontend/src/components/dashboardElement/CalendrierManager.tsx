@@ -5,6 +5,8 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import multiMonthPlugin from '@fullcalendar/multimonth';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from "react-router-dom";
+import { maxHeaderSize } from 'http';
 
 // Styles personnalisés directement dans le composant
 const calendarStyles = `
@@ -13,6 +15,34 @@ const calendarStyles = `
     background-color: #f1f1f1; /* Fond gris clair pour les en-têtes de jour */
     padding: 10px 0;
   }
+  /* Personnalisation de l'en-tête du calendrier */
+.fc .fc-toolbar-title {
+    color: #333; /* Couleur du titre (Mois, Année) */
+    font-weight: bold;
+}
+
+/* Personnalisation de l'arrière-plan de l'en-tête */
+.fc .fc-toolbar {
+    background-color: #f4f4f4; /* Fond clair pour l'en-tête */
+    padding: 10px 20px;
+}
+
+/* Personnalisation des flèches de navigation */
+.fc .fc-button {
+    background-color: #EEE; /* Fond des boutons de navigation */
+    color: #333333; /* Couleur des flèches */
+}
+
+.fc .fc-button:hover {
+    background-color: #ccc; /* Effet hover sur les boutons de navigation */
+}
+
+/* Personnalisation du bouton de vue (Jour, Semaine, Mois, Année) */
+.fc .fc-button-active {
+    background-color: #FF7900; /* Couleur du bouton actif */
+    color: white;
+}
+
 
   .fc .fc-col-header-cell-cushion {
     font-weight: 500;
@@ -49,6 +79,7 @@ const calendarStyles = `
   h2.calendar-title {
     font-weight: 700 !important;
     font-size: 1.25rem !important;
+    
   }
 
   /* Adaptation pour les mobiles */
@@ -133,11 +164,15 @@ const CalendrierManager = () => {
   
   // Function to format month and year
   const formatMonthYear = (date) => {
-    return new Intl.DateTimeFormat('fr-FR', {
+    const monthYear = new Intl.DateTimeFormat('fr-FR', {
       month: 'long',
       year: 'numeric'
     }).format(date);
+    
+    // Capitalise uniquement la première lettre
+    return monthYear.charAt(0).toUpperCase() + monthYear.slice(1).toLowerCase();
   };
+  
   
   const navigateMonth = (direction) => {
     const newDate = new Date(currentMonth);
@@ -213,21 +248,26 @@ const CalendrierManager = () => {
     }
     return formatMonthYear(currentMonth);
   };
-  
+  const navigate = useNavigate();
+
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6">
+    <div className="max-w-7xl mx-auto px-4 py-6 "style={{ maxWidth: '83rem' }}>
       {/* Intégration des styles CSS directement dans le composant */}
       <style>{calendarStyles}</style>
       
       {/* En-tête */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-left">Mon Calendrier</h1>
-        <Button className="bg-orange-500 text-white hover:bg-orange-600">+ Créer un événement</Button>
-      </div>
+        <Button 
+          className="bg-black text-white hover:bg-orange-600 rounded-[4px]"
+          onClick={() => navigate("/CreatEvent")}  >
+          + Créer un événement
+        </Button>      
+    </div>
       
       <div className="flex">
         {/* Sidebar des catégories */}
-        <div className="w-48 h-48 border-r border-gray-200 p-4 rounded-l-lg shadow-md" style={{ backgroundColor: "#FF79000D" }}>
+        <div className="w-48 h-48 border-r border-gray-200 p-4  rounded-[4px] shadow-md" style={{ backgroundColor: "#FF79000D" }}>
           <h3 className="font-medium font-bold text-gray-700 mb-4">Catégories</h3>
           <ul className="space-y-2">
             <li className="flex items-center">
@@ -254,7 +294,7 @@ const CalendrierManager = () => {
         </div>
 
         {/* Zone principale du calendrier */}
-        <div className="flex-grow p-6 bg-white shadow-md rounded-r-lg">
+        <div className="flex-grow p-6 bg-white  rounded-[4px]">
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center">
               {/* Titre du calendrier à gauche */}
@@ -262,45 +302,62 @@ const CalendrierManager = () => {
               
               {/* Flèches de navigation à droite */}
               <div className="ml-4 flex items-center">
-                <button onClick={() => navigateDate('prev')} className="p-2 hover:bg-gray-100 rounded-full">&lt;</button>
-                <button onClick={() => navigateDate('next')} className="p-2 hover:bg-gray-100 rounded-full">&gt;</button>
-              </div>
+  <button onClick={() => navigateDate('prev')} className="p-2 hover:bg-white rounded-[4px] font-bold" style={{ color: "#6B7280" }}>&lt;</button>
+  <button onClick={() => navigateDate('next')} className="p-2 hover:bg-white rounded-[4px] font-bold" style={{ color: "#6B7280" }}>&gt;</button>
+</div>
             </div>
+           
+            <div className="flex space-x-2 bg-white">
+  <Button 
+    variant="ghost" 
+    className="text-[#333] flex items-center gap-1 font-bold py-1 px-4 text-xs rounded-[4px] border border-gray-300 p-4"
+    style={{ height: '28px', backgroundColor: '#EEE' }}
+  >
+    <svg width="12" height="12" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0 3C0 2.44772 0.447715 2 1 2H19C19.5523 2 20 2.44772 20 3V5C20 5.26522 19.8946 5.51957 19.7071 5.70711L13 12.4142V19C13 19.5523 12.5523 20 12 20H8C7.44772 20 7 19.5523 7 19V12.4142L0.292893 5.70711C0.105357 5.51957 0 5.26522 0 5V3Z" fill="#000"/>
+    </svg>
+    Filtres
+  </Button>
 
-            <div className="flex space-x-2">
-              <Button 
-                variant="secondary" 
-                className={currentView === 'timeGridDay' ? 'bg-orange-500 text-white' : ''} 
-                size="sm" 
-                onClick={() => changeView('timeGridDay')}
-              >
-                Jour
-              </Button>
-              <Button 
-                variant="secondary" 
-                className={currentView === 'timeGridWeek' ? 'bg-orange-500 text-white' : ''} 
-                size="sm" 
-                onClick={() => changeView('timeGridWeek')}
-              >
-                Semaine
-              </Button>
-              <Button 
-                variant="secondary" 
-                className={currentView === 'dayGridMonth' ? 'bg-orange-500 text-white' : ''} 
-                size="sm" 
-                onClick={() => changeView('dayGridMonth')}
-              >
-                Mois
-              </Button>
-              <Button 
-                variant="secondary" 
-                className={currentView === 'multiMonthYear' ? 'bg-orange-500 text-white' : ''} 
-                size="sm" 
-                onClick={() => changeView('multiMonthYear')}
-              >
-                Année
-              </Button>
-            </div>
+  <div className="flex space-x-1 bg-white p-0 border border-gray-300 rounded-[4px]">
+    <Button 
+      variant="secondary" 
+      className={`bg-white  hover:bg-gray-100 ${currentView === 'timeGridDay' ? 'bg-orange-500 text-white' : 'text-[#333]'} rounded-[4px] py-1 px-4 text-xs`}
+      style={{ height: '28px' }}
+      onClick={() => changeView('timeGridDay')}
+    >
+      Jour
+    </Button>
+
+    <Button 
+      variant="secondary" 
+      className={`bg-white  hover:bg-gray-100 ${currentView === 'timeGridWeek' ? 'bg-orange-500 text-white' : 'text-[#333]'} rounded-[4px] py-1 px-4 text-xs`}
+      style={{ height: '28px' }}
+      onClick={() => changeView('timeGridWeek')}
+    >
+      Semaine
+    </Button>
+
+    <Button 
+      variant="secondary" 
+      className={`bg-white  hover:bg-gray-100 ${currentView === 'dayGridMonth' ? 'bg-orange-500 text-white' : 'text-[#333]'} rounded-[4px] py-1 px-4 text-xs`}
+      style={{ height: '28px' }}
+      onClick={() => changeView('dayGridMonth')}
+    >
+      Mois
+    </Button>
+
+    <Button 
+      variant="secondary" 
+      className={`bg-white  hover:bg-gray-100 ${currentView === 'multiMonthYear' ? 'bg-orange-500 text-white' : 'text-[#333]'} rounded-[4px] py-1 px-4 text-xs`}
+      style={{ height: '28px' }}
+      onClick={() => changeView('multiMonthYear')}
+    >
+      Année
+    </Button>
+  </div>
+</div>
+
           </div>
 
           <FullCalendar
