@@ -7,15 +7,31 @@ const mongoose = require('mongoose');
 exports.getAllEvenements = async (req, res) => {
   try {
     const evenements = await Evenement.find()
-      .populate('organisateur');
+      .populate('organisateur')
+      .sort({ dateDebut: -1 }); // Tri par date de début (plus récent d'abord)
     
-    res.status(200).json(evenements);
+    // Gestion du cas où aucun événement n'est trouvé
+    if (evenements.length === 0) {
+      return res.status(200).json({
+        message: 'Aucun événement n\'est disponible actuellement',
+        evenements: []
+      });
+    }
+    
+    // Réponse avec message de succès et compteur
+    res.status(200).json({
+      message: 'Événements récupérés avec succès',
+      count: evenements.length,
+      evenements: evenements
+    });
   } catch (error) {
     console.error('Erreur lors de la récupération des événements:', error);
-    res.status(500).json({ message: 'Erreur serveur', error: error.message });
+    res.status(500).json({ 
+      message: 'Erreur lors de la récupération des événements', 
+      error: error.message 
+    });
   }
 };
-
 // Récupérer un événement par ID
 exports.getEvenementById = async (req, res) => {
   try {
@@ -39,160 +55,77 @@ exports.getEvenementById = async (req, res) => {
   }
 };
 
-// Ajouter un nouvel événement
-exports.addEvenement = async (req, res) => {
+// Ajouter un nouvel événement : s'il s'agit d'un formateur : createdBy=orgnisedBy si un Coordinateur je cherche est ce qu'il a spécifier l'orginsateur si non donc c'est lui meme
+exports.createEvenement = async (req, res) => {
   try {
-    const { 
-      dateDebut, 
-      dateFin, 
-      heureDebut, 
-      heureFin, 
-      sujet
-    } = req.body;
-    
-    const  utilisateurId = req.user.userId;
-    const role =req.user.role;  
-    
-    // Vérifier si l'ID utilisateur est valide
-    if (!mongoose.Types.ObjectId.isValid(utilisateurId)) {
-      return res.status(400).json({ message: 'ID utilisateur invalide' });
+    const user = req.user;
+    const { organisateur, ...eventData } = req.body;
+    // Initialisation des variables
+    let organisateurId;
+    let isValidate = false;
+    if (user.role === 'Manager') {
+      // Si c'est un manager
+      // Utiliser l'organisateur du body s'il existe, sinon utiliser le manager lui-même
+      organisateurId = organisateur || user.userId;
+      isValidate = true; // Un manager peut valider directement
+    } else if (user.role === 'Coordinateur' || user.role === 'Formateur') {
+      // Si c'est un coordinateur ou formateur
+      organisateurId = user.userId; // L'organisateur est toujours l'utilisateur lui-même
+      isValidate = false; // Nécessite validation par un manager
+    } else {
+      // Pour les autres rôles non spécifiés
+      organisateurId = user.userId;
+      isValidate = false;
     }
-    
-    // Déterminer le type d'organisateur et récupérer son ID en fonction du rôle
-    let organisateurType, organisateur;
-    
-    if (role === 'Formateur') {
-      organisateurType = 'Formateur';
-      const formateurDoc = await Formateur.findOne({ utilisateur: utilisateurId });
-      
-      if (!formateurDoc) {
-        return res.status(404).json({ message: 'Formateur non trouvé pour cet utilisateur' });
-      }
-      
-      organisateur = formateurDoc._id;
-    } 
-    else if (role === 'Coordinateur') {
-      organisateurType = 'Coordinateur';
-      const coordinateurDoc = await Coordinateur.findOne({ utilisateur: utilisateurId });
-      
-      if (!coordinateurDoc) {
-        return res.status(404).json({ message: 'Coordinateur non trouvé pour cet utilisateur' });
-      }
-      
-      organisateur = coordinateurDoc._id;
-    }
-    else {
-      return res.status(403).json({ message: 'Rôle non autorisé pour créer un événement' });
-    }
-    
-    // Créer le nouvel événement
+    // Création de l'événement
     const nouvelEvenement = new Evenement({
-      dateDebut,
-      dateFin,
-      heureDebut,
-      heureFin,
-      sujet,
-      organisateurType,
-      organisateur
+      ...eventData,
+      createdBy: user.userId,
+      organisateur: organisateurId,
+      isValidate: isValidate
     });
     
-    // Sauvegarder l'événement
     await nouvelEvenement.save();
-    
-    // Récupérer l'événement complet avec les références peuplées
-    const evenementSauvegarde = await Evenement.findById(nouvelEvenement._id)
-      .populate('organisateur');
-    
-    res.status(201).json({ 
-      message: 'Événement créé avec succès', 
-      evenement: evenementSauvegarde 
-    });
-  } catch (error) {
-    console.error('Erreur lors de la création de l\'événement:', error);
-    
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({ 
-        message: 'Données d\'événement invalides', 
-        error: error.message 
-      });
+    // Logique d'envoi de notification 
+    if (!isValidate) {
+      // Envoyer notification au manager
     }
-    
-    res.status(500).json({ message: 'Erreur serveur', error: error.message });
+    res.status(201).json(nouvelEvenement);
+  } catch (error) {
+    res.status(400).json({
+      message: error.message,
+      details: error.errors
+    });
   }
 };
-
-// Mettre à jour un événement
+// Mettre à jour un événement réuissi en passant par le middleware
 exports.updateEvenement = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { 
-      dateDebut, 
-      dateFin, 
-      heureDebut, 
-      heureFin, 
-      sujet 
-    } = req.body;
-    
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: 'ID d\'événement invalide' });
-    }
-    
-    // Vérifier si l'événement existe
-    const evenementExistant = await Evenement.findById(id);
-    if (!evenementExistant) {
-      return res.status(404).json({ message: 'Événement non trouvé' });
-    }
-    
-    // Vérifier si l'utilisateur est autorisé à modifier cet événement
-    const utilisateurId = req.user.userId;
-    const role=req.user.role;
-    if (role === 'Formateur') {
-      const formateur = await Formateur.findOne({ utilisateur: utilisateurId });
-      utilisateurOrganisateur = formateur?._id;
-    } else if (role === 'Coordinateur') {
-      const coordinateur = await Coordinateur.findOne({ utilisateur: utilisateurId });
-      utilisateurOrganisateur = coordinateur?._id;
-    }
-    // Mettre à jour l'événement
+    const {id}=req.params;
+    const updateData = { ...req.body };
     const evenementMisAJour = await Evenement.findByIdAndUpdate(
       id,
-      {
-        dateDebut,
-        dateFin,
-        heureDebut,
-        heureFin,
-        sujet
-      },
+      updateData,
       { new: true, runValidators: true }
     ).populate('organisateur');
-    
-    res.status(200).json({ 
-      message: 'Événement mis à jour avec succès', 
-      evenement: evenementMisAJour 
+    res.status(200).json({
+      message: 'Événement mis à jour avec succès',
+      evenement: evenementMisAJour
     });
   } catch (error) {
-    console.error('Erreur lors de la mise à jour de l\'événement:', error);
-    
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({ 
-        message: 'Données d\'événement invalides', 
-        error: error.message 
-      });
-    }
-    
-    res.status(500).json({ message: 'Erreur serveur', error: error.message });
-  }
+    res.status(400).json({
+      message: error.message,
+      details: error.errors
+    });
+   }
 };
-
 // Supprimer un événement
 exports.deleteEvenement = async (req, res) => {
   try {
     const { id } = req.params;
-    
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: 'ID d\'événement invalide' });
     }
-    
     // Vérifier si l'événement existe
     const evenementExistant = await Evenement.findById(id);
     if (!evenementExistant) {
@@ -213,50 +146,82 @@ exports.deleteEvenement = async (req, res) => {
 // Récupérer les événements d'un utilisateur spécifique (formateur ou coordinateur)
 exports.getMesEvenements = async (req, res) => {
   try {
-    const { userId, role } = req.user;
-    
-    // Vérifier si l'ID utilisateur est valide
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({ message: 'ID utilisateur invalide' });
-    }
-    
-    let organisateurId;
-    let organisateurType;
-    
-    // Déterminer le type d'organisateur et son ID
-    if (role === 'Formateur') {
-      organisateurType = 'Formateur';
-      const formateur = await Formateur.findOne({ utilisateur: userId });
-      
-      if (!formateur) {
-        return res.status(404).json({ message: 'Formateur non trouvé' });
-      }
-      
-      organisateurId = formateur._id;
-    } 
-    else if (role === 'Coordinateur') {
-      organisateurType = 'Coordinateur';
-      const coordinateur = await Coordinateur.findOne({ utilisateur: userId });
-      
-      if (!coordinateur) {
-        return res.status(404).json({ message: 'Coordinateur non trouvé' });
-      }
-      
-      organisateurId = coordinateur._id;
-    }
-    else {
-      return res.status(403).json({ message: 'Rôle non autorisé' });
-    }
-    
-    // Rechercher les événements où l'utilisateur est l'organisateur
+    const userId = req.user.userId;
+    // Recherche des événements où l'utilisateur est le créateur ou l'organisateur
     const evenements = await Evenement.find({
-      organisateurType: organisateurType,
-      organisateur: organisateurId
-    }).populate('organisateur');
+      $or: [
+        { createdBy: userId },
+        { organisateur: userId }
+      ]
+    }).populate('organisateur')
+      .sort({ dateDebut: -1 }); // Tri par date de début, du plus récent au plus ancien
     
-    res.status(200).json(evenements);
+    // Si aucun événement n'est trouvé, renvoyer un tableau vide avec un message
+    if (evenements.length === 0) {
+      return res.status(200).json({
+        message: 'Aucun événement trouvé pour cet utilisateur',
+        evenements: []
+      });
+    }
+    
+    res.status(200).json({
+      count: evenements.length,
+      evenements: evenements
+    });
   } catch (error) {
     console.error('Erreur lors de la récupération des événements:', error);
-    res.status(500).json({ message: 'Erreur serveur', error: error.message });
+    res.status(500).json({
+      message: 'Erreur lors de la récupération des événements',
+      error: error.message
+    });
+  }
+};
+exports.getEvenementByMonth = async (req, res) => {
+  try {
+    const { month } = req.body;
+    
+    if (!month) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Le mois est requis dans le corps de la requête" 
+      });
+    }
+
+    // Conversion du mois en date de début et fin
+    const [year, monthNum] = month.split('-').map(Number);
+    
+    if (isNaN(year) || isNaN(monthNum) || monthNum < 1 || monthNum > 12) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Format de mois invalide. Utilisez YYYY-MM" 
+      });
+    }
+
+    const startOfMonth = new Date(year, monthNum - 1, 1);
+    const endOfMonth = new Date(year, monthNum, 1);
+
+    // Recherche des événements qui chevauchent le mois
+    const countInMonth = await Evenement.countDocuments({
+      $and: [
+        { dateDebut: { $lt: endOfMonth } },
+        { dateFin: { $gte: startOfMonth } }
+      ]
+    });
+
+    // Calcul du total de tous les événements
+    const totalCount = await Evenement.countDocuments({});
+
+    res.status(200).json({
+      success: true,
+      countInMonth,
+      totalCount
+    });
+
+  } catch (error) {
+    console.log("erreur a partir de getEvenemntByMonth");
+    res.status(500).json({
+      success: false,
+      message: error.message || "Une erreur est survenue"
+    });
   }
 };
