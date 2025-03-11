@@ -39,43 +39,7 @@ const DashboardManager = () => {
   const [timePeriod, setTimePeriod] = useState("janvier-2023");
   const [selectedTab, setSelectedTab] = useState("overview");
   const [year, setYear] = useState("2023");
-  const [notifications, setNotifications] = useState([]);
 
-useEffect(() => {
-  // Fetch notifications
-  const fetchNotifications = async () => {
-    try {
-      const response = await axios.get('http://localhost:5000/api/notifications', {
-        withCredentials: true
-      });
-      setNotifications(response.data);
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    }
-  };
-  
-  fetchNotifications();
-  
-  // Set up socket connection
-  const socket = io('http://localhost:5000', { withCredentials: true });
-  
-  socket.on('connect', () => {
-    console.log('Connected to socket server');
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    socket.emit('join', { userId: user.userId, role: user.role });
-  });
-  
-  socket.on('notification', () => {
-    // Refresh notifications when new one arrives
-    fetchNotifications();
-    // Show a browser notification
-    toast.info("Nouvelle notification reçue");
-  });
-  
-  return () => {
-    socket.disconnect();
-  };
-}, []);
 
   
   // Sample data for statistics
@@ -127,7 +91,6 @@ useEffect(() => {
         <div className="mb-6 flex justify-between items-center">
           <h1 className="text-2xl font-bold">Vue Manager</h1>
           <div className="flex items-center space-x-4">
-            <NotificationBell />
             <Link 
               to="/CalendrierManager" 
               className="bg-orange-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-orange-600"

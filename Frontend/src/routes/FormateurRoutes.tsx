@@ -14,7 +14,6 @@ const FormateurRoutes = () => {
   return (
     <FormationProvider>
     <EvenementsAssociesProvider>
-    <NotificationProvider>
     <Routes>
       <Route path="dashboardFormateur" element={<DashboardFormateur />} />
       <Route path="mesformation" element={<MesFormations />} />
@@ -22,7 +21,6 @@ const FormateurRoutes = () => {
       <Route path="notifications" element={<NotificationsHistory />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
-    </NotificationProvider>
     </EvenementsAssociesProvider>
     </FormationProvider>
   );

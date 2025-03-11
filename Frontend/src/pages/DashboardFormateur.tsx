@@ -118,8 +118,7 @@ const DashboardFormateur: React.FC = () => {
                       </button>
                     )}
                   </div>
-                    {/* Add this notification button */}
-                    <NotificationButton />
+
                   <button 
                     onClick={() => navigate("/formateur/formationModal")}
                     className="rounded-none bg-orange-500 text-white px-4 py-2 rounded-md flex items-center space-x-2 hover:bg-orange-600 transition-colors"
