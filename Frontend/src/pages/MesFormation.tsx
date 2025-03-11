@@ -62,7 +62,6 @@ const MesFormations = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [formationToDelete, setFormationToDelete] = useState<string | null>(null);
   const [showDetails, setShowDetails] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(9);
 
   useEffect(() => {
@@ -240,9 +239,6 @@ const MesFormations = () => {
   const currentItems = filteredFormations.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredFormations.length / itemsPerPage);
 
-
-  // Calculate total pages
-  const totalPages = Math.ceil(filteredFormations.length / ITEMS_PER_PAGE);
 
   // Get current page items
   const getCurrentPageItems = () => {
