@@ -8,9 +8,12 @@ import { useNavigate } from "react-router-dom";
 import { useFormations } from '@/contexts/FormationContext';
 import FormationCard from "@/components/Formation/FormationCards";
 import { useState, useEffect } from "react";
+import { sendEvaluationFormation } from "@/services/formationService";
+
 
 // Types
 interface Beneficiaire {
+  _id: any;
   nom: string;
   prenom: string;
   email: string;
@@ -21,6 +24,19 @@ interface Beneficiaire {
   profession: string;
   isBlack: boolean;
   isSaturate: boolean;
+}
+
+interface BeneficiairesListeProps {
+  formationId: string;
+}
+
+interface BeneficiaireInscription {
+  _id: string;
+  confirmationAppel: boolean;
+  confirmationEmail: boolean;
+  horodateur: string;
+  formation: string;
+  beneficiaire: Beneficiaire;
 }
 
 interface FormationItem {
@@ -91,23 +107,26 @@ const FormationsList = ({ formations, onAccessBeneficiaires }: FormationsListPro
 };
 
 // Composant de la liste des bénéficiaires
-const BeneficiairesTable = ({ formationId }) => {
+const BeneficiairesTable: React.FC<BeneficiairesListeProps> = ({ formationId }) => {
   const [beneficiaires, setBeneficiaires] = React.useState<Beneficiaire[]>([]);
   const [search, setSearch] = React.useState("");
   const [selectAll, setSelectAll] = React.useState(false);
   const [selectedBeneficiaires, setSelectedBeneficiaires] = React.useState<number[]>([]);
   const [expandedRow, setExpandedRow] = React.useState<number | null>(null);
-  
-  const { sendEvaluationFormation } = useFormations();
+  const { getBeneficiaireFormation, sendEvaluationFormation: sendEvalLink } = useFormations();  
+  const [error, setError] = React.useState<string | null>(null);
+  const [inscriptions, setInscriptions] = React.useState<BeneficiaireInscription[]>([]);
   const [loading, setLoading] = React.useState(false);
 
   // Ajout des états pour la pagination
-
   const [currentPage, setCurrentPage] = React.useState(1);
   const itemsPerPage = 11;
+  
   const handleSendLinks = async () => {
     if (selectedBeneficiaires.length === 0) {
       alert("Veuillez sélectionner au moins un bénéficiaire");
+      console.log("API Base URL:", import.meta.env.VITE_API_BASE_URL);
+
       return;
     }
     
@@ -119,7 +138,7 @@ const BeneficiairesTable = ({ formationId }) => {
     try {
       setLoading(true);
       // Appeler la fonction sendEvaluationFormation avec les IDs et l'ID de formation
-      await sendEvaluationFormation(beneficiaryIds, formationId);
+      const response = await sendEvaluationFormation(beneficiaryIds, formationId);
       
       // Afficher un message de succès
       alert(`Liens d'évaluation envoyés avec succès à ${beneficiaryIds.length} bénéficiaires`);
@@ -129,62 +148,62 @@ const BeneficiairesTable = ({ formationId }) => {
       setSelectAll(false);
     } catch (error) {
       console.error("Erreur lors de l'envoi des liens d'évaluation:", error);
-      alert("Une erreur est survenue lors de l'envoi des liens d'évaluation");
+      
+      // Message d'erreur plus spécifique basé sur le type d'erreur
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 404) {
+          alert("Erreur: Le point d'accès API pour l'envoi des liens d'évaluation n'existe pas. Veuillez contacter l'administrateur.");
+        } else if (error.response?.status === 401 || error.response?.status === 403) {
+          alert("Erreur: Vous n'êtes pas autorisé à effectuer cette action.");
+        } else if (error.response?.data?.message) {
+          alert(`Erreur: ${error.response.data.message}`);
+        } else {
+          alert(`Erreur lors de l'envoi des liens d'évaluation: ${error.message}`);
+        }
+      } else {
+        alert("Une erreur inattendue est survenue lors de l'envoi des liens d'évaluation");
+      }
     } finally {
       setLoading(false);
     }
   };
 
-
-
   React.useEffect(() => {
-    // Simulons des données au cas où l'API n'est pas disponible
-    const mockData: Beneficiaire[] = [
-      {
-        nom: "Dupont", 
-        prenom: "Jean", 
-        email: "jean.dupont@example.com", 
-        genre: "Homme", 
-        pays: "France", 
-        specialite: "Développement web", 
-        etablissement: "Université Paris-Saclay", 
-        profession: "Étudiant",
-        isBlack: false,
-        isSaturate: false
-      },
-      {
-        nom: "Martin", 
-        prenom: "Sophie", 
-        email: "sophie.martin@example.com", 
-        genre: "Femme", 
-        pays: "France", 
-        specialite: "UX/UI Design", 
-        etablissement: "École de design", 
-        profession: "Designer",
-        isBlack: true,
-        isSaturate: false
+    const fetchBeneficiaires = async () => {
+      try {
+        setLoading(true);
+        console.log("ID Formation envoyé:", formationId);
+        
+        // Utiliser type assertion pour correspondre aux types attendus
+        const data = await getBeneficiaireFormation(formationId) as unknown as BeneficiaireInscription[];
+        console.log("Réponse API:", data);
+        
+        // Adapter pour gérer un tableau ou un objet unique
+        const formattedData: BeneficiaireInscription[] = Array.isArray(data) ? data : [data];
+        setInscriptions(formattedData);
+        
+        // Extraire les bénéficiaires des inscriptions
+        const extractedBeneficiaires = formattedData.map(item => item.beneficiaire);
+        setBeneficiaires(extractedBeneficiaires);
+        
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erreur de chargement");
+        console.error("Erreur complète:", err); 
+      } finally {
+        setLoading(false);
       }
-    ];
-    
-    // Si vous avez un ID de formation, vous pouvez l'utiliser pour filtrer les bénéficiaires
-    const apiUrl = formationId 
-      ? `http://localhost:5000/api/beneficiaires?formationId=${formationId}`
-      : "http://localhost:5000/api/beneficiaires";
-    
-    // Essayez d'abord d'obtenir les données de l'API
-    axios.get(apiUrl)
-      .then(response => {
-        setBeneficiaires(response.data);
-      })
-      .catch(error => {
-        console.error("Erreur lors de la récupération des bénéficiaires", error);
-        // Utilisez des données fictives en cas d'échec de l'API
-        setBeneficiaires(mockData);
-      });
-  }, [formationId]);
+    };
+
+    if (formationId) {
+      fetchBeneficiaires();
+    }
+  }, [formationId, getBeneficiaireFormation]);
 
   const filteredBeneficiaires = beneficiaires.filter(b =>
-    b.nom.toLowerCase().includes(search.toLowerCase())
+    b.nom.toLowerCase().includes(search.toLowerCase()) ||
+    b.prenom.toLowerCase().includes(search.toLowerCase()) ||
+    b.email.toLowerCase().includes(search.toLowerCase())
   );
 
   // Calcul pour la pagination
@@ -242,29 +261,29 @@ const BeneficiairesTable = ({ formationId }) => {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Liste des bénéficiaires</h2>
         
-        {/* Nouveau bouton d'envoi de lien */}
+        {/* Bouton d'envoi de lien */}
         <Button 
-  onClick={handleSendLinks}
-  disabled={loading || selectedBeneficiaires.length === 0}
-  className="bg-[#FF7900] hover:bg-[#E56A00] text-white flex items-center gap-2"
->
-  {loading ? (
-    <>
-      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-      </svg>
-      Envoi en cours...
-    </>
-  ) : (
-    <>
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M20 4H4C2.9 4 2.01 4.9 2.01 6L2 18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4ZM20 8L12 13L4 8V6L12 11L20 6V8Z" fill="white"/>
-      </svg>
-      Envoyer le lien
-    </>
-  )}
-</Button>
+          onClick={handleSendLinks}
+          disabled={loading || selectedBeneficiaires.length === 0}
+          className="bg-[#FF7900] hover:bg-[#E56A00] text-white flex items-center gap-2"
+        >
+          {loading ? (
+            <>
+              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Envoi en cours...
+            </>
+          ) : (
+            <>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 4H4C2.9 4 2.01 4.9 2.01 6L2 18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4ZM20 8L12 13L4 8V6L12 11L20 6V8Z" fill="white"/>
+              </svg>
+              Envoyer le lien
+            </>
+          )}
+        </Button>
       </div>
       <div className="flex items-center mb-6 gap-3">
         <div className="relative flex-grow mr-4">
@@ -305,145 +324,164 @@ const BeneficiairesTable = ({ formationId }) => {
         </Button> 
       </div>
 
-      <table className="w-full border-collapse">
-        <thead>
-          <tr className="bg-[#F5F5F5]">
-            <th className="p-3 text-left">
-              <input 
-                type="checkbox" 
-                className="border border-[#DDD] w-4 h-4" 
-                checked={selectAll} 
-                onChange={handleSelectAll} 
-              />
-            </th>
-            <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Nom</th>
-            <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Prénom</th>
-            <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Email</th>
-            <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Genre</th>
-            <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">isBlack</th>
-            <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">isSaturate</th>
-            <th className="p-3 font-bold"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {displayedBeneficiaires.map((beneficiaire, index) => (
-            <React.Fragment key={index}>
-              <tr className="border-t border-[#DDD] hover:bg-[#F5F5F5]">
-                <td className="p-3">
+      {loading ? (
+        <div className="flex justify-center py-8">
+          <svg className="animate-spin h-8 w-8 text-[#FF7900]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </div>
+      ) : error ? (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <p>{error}</p>
+        </div>
+      ) : beneficiaires.length === 0 ? (
+        <div className="text-center py-8 text-gray-500">
+          Aucun bénéficiaire trouvé pour cette formation
+        </div>
+      ) : (
+        <>
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-[#F5F5F5]">
+                <th className="p-3 text-left">
                   <input 
                     type="checkbox" 
-                    className="border border-[#DDD] w-4 h-4"
-                    checked={selectedBeneficiaires.includes(index)}
-                    onChange={() => handleSelectOne(index)}
+                    className="border border-[#DDD] w-4 h-4" 
+                    checked={selectAll} 
+                    onChange={handleSelectAll} 
                   />
-                </td>
-                <td className="p-3 text-[#333] text-sm">{beneficiaire.nom}</td>
-                <td className="p-3 text-[#333] text-sm">{beneficiaire.prenom}</td>
-                <td className="p-3 text-[#333] text-sm">{beneficiaire.email}</td>
-                <td className="p-3 text-[#333] text-sm">{beneficiaire.genre}</td>
-                <td className={`p-3 text-sm ${beneficiaire.isBlack ? "text-red-500" : "text-green-500"}`}>
-                  {beneficiaire.isBlack ? "Oui" : "Non"}
-                </td>
-                <td className={`p-3 text-sm ${beneficiaire.isSaturate ? "text-red-500" : "text-green-500"}`}>
-                  {beneficiaire.isSaturate ? "Oui" : "Non"}
-                </td>
-                <td className="p-3">
-                  <button 
-                    className="flex items-center gap-2 text-sm text-[#333] font-bold"
-                    onClick={() => toggleRowExpansion(index)}
-                  >
-                    {expandedRow === index ? "Voir moins" : "Voir plus"}
-                    <svg 
-                      width="8" 
-                      height="12" 
-                      viewBox="0 0 8 12" 
-                      fill="none" 
-                      xmlns="http://www.w3.org/2000/svg"
-                      className={`transform transition-transform ${expandedRow === index ? "rotate-90" : ""}`}
-                    >
-                      <path fillRule="evenodd" clipRule="evenodd" d="M1.77778 12L8 6L1.77778 0L0 1.71343L4.44533 6L0 10.2849L1.77778 12Z" fill="black"/>
-                      <mask id="mask0_717_3240" maskUnits="userSpaceOnUse" x="0" y="0" width="8" height="12">
-                        <path fillRule="evenodd" clipRule="evenodd" d="M1.77778 12L8 6L1.77778 0L0 1.71343L4.44533 6L0 10.2849L1.77778 12Z" fill="white"/>
-                      </mask>
-                      <g mask="url(#mask0_717_3240)"></g>
-                    </svg>
-                  </button>
-                </td>
+                </th>
+                <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Nom</th>
+                <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Prénom</th>
+                <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Email</th>
+                <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Genre</th>
+                <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">isBlack</th>
+                <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">isSaturate</th>
+                <th className="p-3 font-bold"></th>
               </tr>
-              {expandedRow === index && (
-                <tr className="border-t border-[#DDD] bg-[#F9F9F9]">
-                  <td colSpan={8} className="p-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="font-bold text-sm mb-2">Pays</p>
-                        <p className="text-sm text-[#333]">{beneficiaire.pays}</p>
-                      </div>
-                      <div>
-                        <p className="font-bold text-sm mb-2">Spécialité</p>
-                        <p className="text-sm text-[#333]">{beneficiaire.specialite}</p>
-                      </div>
-                      <div>
-                        <p className="font-bold text-sm mb-2">Établissement</p>
-                        <p className="text-sm text-[#333]">{beneficiaire.etablissement}</p>
-                      </div>
-                      <div>
-                        <p className="font-bold text-sm mb-2">Profession</p>
-                        <p className="text-sm text-[#333]">{beneficiaire.profession}</p>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </React.Fragment>
-          ))}
-        </tbody>
-      </table>
-      
-      {/* Pagination - Centrée */}
-      {totalPages > 1 && (
-        <div className="flex flex-col items-center mt-6">
-          <div className="text-sm text-[#666] mb-2">
-            Affichage de {startIndex + 1} à {Math.min(endIndex, filteredBeneficiaires.length)} sur {filteredBeneficiaires.length} bénéficiaires
-          </div>
-          <div className="flex items-center gap-2">
-            {/* Bouton précédent */}
-            <button 
-              onClick={goToPreviousPage}
-              disabled={currentPage === 1}
-              className={`flex items-center justify-center w-8 h-8 rounded ${currentPage === 1 ? 'text-[#999] cursor-not-allowed' : 'text-[#333] hover:bg-[#F5F5F5]'}`}
-            >
-              <svg width="8" height="12" viewBox="0 0 8 12" fill="none" xmlns="http://www.w3.org/2000/svg" className="transform rotate-180">
-                <path fillRule="evenodd" clipRule="evenodd" d="M1.77778 12L8 6L1.77778 0L0 1.71343L4.44533 6L0 10.2849L1.77778 12Z" fill="currentColor"/>
-              </svg>
-            </button>
-            
-            {/* Numéros de page */}
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-              <button
-                key={page}
-                onClick={() => goToPage(page)}
-                className={`flex items-center justify-center w-8 h-8 rounded ${
-                  currentPage === page 
-                    ? 'bg-[#FF7900] text-white' 
-                    : 'text-[#333] hover:bg-[#F5F5F5]'
-                }`}
-              >
-                {page}
-              </button>
-            ))}
-            
-            {/* Bouton suivant */}
-            <button 
-              onClick={goToNextPage}
-              disabled={currentPage === totalPages}
-              className={`flex items-center justify-center w-8 h-8 rounded ${currentPage === totalPages ? 'text-[#999] cursor-not-allowed' : 'text-[#333] hover:bg-[#F5F5F5]'}`}
-            >
-              <svg width="8" height="12" viewBox="0 0 8 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path fillRule="evenodd" clipRule="evenodd" d="M1.77778 12L8 6L1.77778 0L0 1.71343L4.44533 6L0 10.2849L1.77778 12Z" fill="currentColor"/>
-              </svg>
-            </button>
-          </div>
-        </div>
+            </thead>
+            <tbody>
+              {displayedBeneficiaires.map((beneficiaire, index) => (
+                <React.Fragment key={index}>
+                  <tr className="border-t border-[#DDD] hover:bg-[#F5F5F5]">
+                    <td className="p-3">
+                      <input 
+                        type="checkbox" 
+                        className="border border-[#DDD] w-4 h-4"
+                        checked={selectedBeneficiaires.includes(index)}
+                        onChange={() => handleSelectOne(index)}
+                      />
+                    </td>
+                    <td className="p-3 text-[#333] text-sm">{beneficiaire.nom}</td>
+                    <td className="p-3 text-[#333] text-sm">{beneficiaire.prenom}</td>
+                    <td className="p-3 text-[#333] text-sm">{beneficiaire.email}</td>
+                    <td className="p-3 text-[#333] text-sm">{beneficiaire.genre}</td>
+                    <td className={`p-3 text-sm ${beneficiaire.isBlack ? "text-red-500" : "text-green-500"}`}>
+                      {beneficiaire.isBlack ? "Oui" : "Non"}
+                    </td>
+                    <td className={`p-3 text-sm ${beneficiaire.isSaturate ? "text-red-500" : "text-green-500"}`}>
+                      {beneficiaire.isSaturate ? "Oui" : "Non"}
+                    </td>
+                    <td className="p-3">
+                      <button 
+                        className="flex items-center gap-2 text-sm text-[#333] font-bold"
+                        onClick={() => toggleRowExpansion(index)}
+                      >
+                        {expandedRow === index ? "Voir moins" : "Voir plus"}
+                        <svg 
+                          width="8" 
+                          height="12" 
+                          viewBox="0 0 8 12" 
+                          fill="none" 
+                          xmlns="http://www.w3.org/2000/svg"
+                          className={`transform transition-transform ${expandedRow === index ? "rotate-90" : ""}`}
+                        >
+                          <path fillRule="evenodd" clipRule="evenodd" d="M1.77778 12L8 6L1.77778 0L0 1.71343L4.44533 6L0 10.2849L1.77778 12Z" fill="black"/>
+                          <mask id="mask0_717_3240" maskUnits="userSpaceOnUse" x="0" y="0" width="8" height="12">
+                            <path fillRule="evenodd" clipRule="evenodd" d="M1.77778 12L8 6L1.77778 0L0 1.71343L4.44533 6L0 10.2849L1.77778 12Z" fill="white"/>
+                          </mask>
+                          <g mask="url(#mask0_717_3240)"></g>
+                        </svg>
+                      </button>
+                    </td>
+                  </tr>
+                  {expandedRow === index && (
+                    <tr className="border-t border-[#DDD] bg-[#F9F9F9]">
+                      <td colSpan={8} className="p-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p className="font-bold text-sm mb-2">Pays</p>
+                            <p className="text-sm text-[#333]">{beneficiaire.pays}</p>
+                          </div>
+                          <div>
+                            <p className="font-bold text-sm mb-2">Spécialité</p>
+                            <p className="text-sm text-[#333]">{beneficiaire.specialite}</p>
+                          </div>
+                          <div>
+                            <p className="font-bold text-sm mb-2">Établissement</p>
+                            <p className="text-sm text-[#333]">{beneficiaire.etablissement}</p>
+                          </div>
+                          <div>
+                            <p className="font-bold text-sm mb-2">Profession</p>
+                            <p className="text-sm text-[#333]">{beneficiaire.profession}</p>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
+          
+          {/* Pagination - Centrée */}
+          {totalPages > 1 && (
+            <div className="flex flex-col items-center mt-6">
+              <div className="text-sm text-[#666] mb-2">
+                Affichage de {startIndex + 1} à {Math.min(endIndex, filteredBeneficiaires.length)} sur {filteredBeneficiaires.length} bénéficiaires
+              </div>
+              <div className="flex items-center gap-2">
+                {/* Bouton précédent */}
+                <button 
+                  onClick={goToPreviousPage}
+                  disabled={currentPage === 1}
+                  className={`flex items-center justify-center w-8 h-8 rounded ${currentPage === 1 ? 'text-[#999] cursor-not-allowed' : 'text-[#333] hover:bg-[#F5F5F5]'}`}
+                >
+                  <svg width="8" height="12" viewBox="0 0 8 12" fill="none" xmlns="http://www.w3.org/2000/svg" className="transform rotate-180">
+                    <path fillRule="evenodd" clipRule="evenodd" d="M1.77778 12L8 6L1.77778 0L0 1.71343L4.44533 6L0 10.2849L1.77778 12Z" fill="currentColor"/>
+                  </svg>
+                </button>
+                
+                {/* Numéros de page */}
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button
+                    key={page}
+                    onClick={() => goToPage(page)}
+                    className={`flex items-center justify-center w-8 h-8 rounded ${
+                      currentPage === page 
+                        ? 'bg-[#FF7900] text-white' 
+                        : 'text-[#333] hover:bg-[#F5F5F5]'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+                
+                {/* Bouton suivant */}
+                <button 
+                  onClick={goToNextPage}
+                  disabled={currentPage === totalPages}
+                  className={`flex items-center justify-center w-8 h-8 rounded ${currentPage === totalPages ? 'text-[#999] cursor-not-allowed' : 'text-[#333] hover:bg-[#F5F5F5]'}`}
+                >
+                  <svg width="8" height="12" viewBox="0 0 8 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path fillRule="evenodd" clipRule="evenodd" d="M1.77778 12L8 6L1.77778 0L0 1.71343L4.44533 6L0 10.2849L1.77778 12Z" fill="currentColor"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
@@ -466,7 +504,6 @@ const EvaluationPages = () => {
         image: f.image,
         dateDebut: f.dateDebut,
         dateFin: f.dateFin,
-        dateCreated: f.createdAt
       }));
       setFormations(mapped);
     }
@@ -513,7 +550,7 @@ const EvaluationPages = () => {
           )}
           
           {/* Passer l'ID de la formation sélectionnée au composant BeneficiairesTable */}
-          <BeneficiairesTable formationId={selectedFormation?.id} />
+          <BeneficiairesTable formationId={selectedFormation?.id || ''} />
         </div>
       )}
     </div>
