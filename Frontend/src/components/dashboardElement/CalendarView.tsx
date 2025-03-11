@@ -304,6 +304,31 @@ return (
               <button onClick={() => navigateDate('next')} className="p-2 hover:bg-gray-100 rounded-[4px]">&gt;</button>
             </div>
           </div>
+          <style>{`
+        .fc-header-toolbar .fc-toolbar-chunk:first-child {
+          gap: 8px !important;
+        }
+        
+        .calendar-content {
+          display: flex;
+          width: 100%;
+        }
+        
+        .mini-calendar-wrapper {
+          width: 200px;
+          padding-top: 250px;
+          margin-left: 300px;  /*50px */
+          flex-shrink: 0;
+        }
+        
+        .main-calendar-wrapper {
+          flex-grow: 1;
+          max-width: 1200px; /* Ajuste la largeur max selon ton besoin */
+          margin-left: 0px; /*70px */
+          margin-right: 0px; /* Centrage horizontal */
+          padding: 0 80px; /* 0 10 Ajoute du padding si besoin */
+        }
+      `}</style>
 
           <div className="flex space-x-2">
             <Button 
