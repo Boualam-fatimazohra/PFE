@@ -97,7 +97,6 @@ const DashboardFormateur: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <DashboardHeader />
       <ToastContainer />
       
       <main className={`flex-grow ${selectedFormation ? 'bg-white' : 'bg-gray-50'}`}>
