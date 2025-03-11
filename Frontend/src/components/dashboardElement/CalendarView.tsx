@@ -304,6 +304,7 @@ return (
               <button onClick={() => navigateDate('next')} className="p-2 hover:bg-gray-100 rounded-[4px]">&gt;</button>
             </div>
           </div>
+          <style>{`
         .fc-header-toolbar .fc-toolbar-chunk:first-child {
           gap: 8px !important;
         }
