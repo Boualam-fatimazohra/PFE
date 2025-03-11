@@ -56,6 +56,7 @@ export const FormationAvenir: React.FC<FormationAvenirProps> = ({
             className="flex items-center gap-1 text-black font-medium text-sm ml-1"
             onClick={handleRefresh}
           >
+
             <RefreshCw className="h-4 w-4" />
             Actualiser
           </button>
@@ -63,6 +64,7 @@ export const FormationAvenir: React.FC<FormationAvenirProps> = ({
       </div>
       
       {/* Course Header */}
+
       <CourseHeader
         title="Formation"
         subtitle={formation.title}
@@ -124,7 +126,6 @@ export const FormationAvenir: React.FC<FormationAvenirProps> = ({
           </clipPath>
           </defs>
           </svg> 
-
         </div>
         <p className="mb-6 text-center text-gray-700 text-lg">
           Vous n'avez aucune base de données pour cette formation
