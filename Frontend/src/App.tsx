@@ -34,7 +34,9 @@ import EvaluationPages from "@/pages/EvaluationPages";
 import FormationDashboard from "@/components/dashboardElement/FormationManager";
 import FormateurManager from "@/components/dashboardElement/FormateurManager";
 import BootcampsList from "./components/dashboardElement/Bootcamps";
-
+import CalendrierManager from "./components/dashboardElement/CalendrierManager";
+import CreatEvent from "./components/dashboardElement/CreatEvent";
+import Ecolecode from "./components/dashboardElement/Ecolcode";
 const queryClient = new QueryClient();
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
@@ -55,6 +57,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
+      
         <TooltipProvider>
           <BrowserRouter>
             <Layout>
@@ -79,24 +82,26 @@ const App = () => (
                 <Route path="/generate-link" element={<GenerateLink />} />
                 <Route path="/formulaire-evaluation" element={<FormulaireEvaluation />} />
                 <Route path="/EvaluationForm" element={<EvaluationForm />} />
-                <Route path="/BeneficiairesList" element={<BeneficiairesList />} />
+                {/* <Route path="/BeneficiairesList" element={<BeneficiairesList/>} /> */}
                 <Route path="/CalendarView" element={<CalendarView/>}/>
                 <Route path="/beneficiaires" element={<BeneficiairesList/>}/>
                 <Route path="/DetailsFormation" element={<DetailsFormation />} />
                 <Route path="/FormationTerminer" element={<FormationTerminer />} />
                 <Route path="/FormationAvenir" element={<FormationAvenir />} />
+                <Route path="/FormationModal" element={<FormationModal/>}/>
                 <Route path="/EvaluationPages" element={<EvaluationPages />} />
                 <Route path="/addformation" element={<AddFormation />} /> 
                 <Route path="/formations" element={<FormateurFormations />} /> 
-
-
-
+                <Route path="/Ecolcode" element={<Ecolecode/>}/>
+                <Route path="/CalendrierManager" element={<CalendrierManager/>}/>
+                <Route path="/CreatEvent" element={<CreatEvent/>}/>
                 {/* Page 404 */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Layout>
           </BrowserRouter>
         </TooltipProvider>
+       
     </AuthProvider>
   </QueryClientProvider>
 );

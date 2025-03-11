@@ -1,21 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { LineChart, Line, Tooltip, ResponsiveContainer,CartesianGrid, AreaChart, Area } from "recharts";
-import { XAxis } from "recharts";
-import { YAxis } from "recharts";
-import { 
-  Calendar, 
-  Users,  
-  AlertTriangle,
-  Icon,
-} from "lucide-react";
+
 import { DatePicker } from "@/components/ui/DatePicker";
-import KPIStats from "@/components/dashboardElement/KPIStats";
-import AbsenceManager from "./AbsenceManager";
-import BenificairesManager from "@/components/dashboardElement/BenificairesManager";
-import { parseClassNames } from "@fullcalendar/core/internal";
-import EventAvenir from "@/components/dashboardElement/EventAvenir";
-import PerformanceOdc from "@/components/dashboardElement/PerformanceOdc";
+
 import { Button } from "@/components/ui/button";
 
 // Define proper type for DatePicker props
@@ -35,7 +22,7 @@ const CustomDatePicker = ({ date, onDateChange, placeholder }: CustomDatePickerP
   );
 };
 
-const DashboardManager = () => {
+const Ecolecode = () => {
   const [timePeriod, setTimePeriod] = useState("janvier-2023");
   const [selectedTab, setSelectedTab] = useState("overview");
   const [year, setYear] = useState("2025");
@@ -57,7 +44,7 @@ const DashboardManager = () => {
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="mb-6 flex justify-between items-center">
-  <h1 className="text-3xl font-bold">Vue Manager</h1>
+  <h1 className="text-3xl font-bold">Ecole du code</h1>
 
   {/* Conteneur pour aligner les éléments à droite */}
   <div className="flex items-center gap-x-4">
@@ -76,34 +63,7 @@ const DashboardManager = () => {
       </svg>
       Filtres
     </Button>
-    {/* Select Box */}
-    <div className="relative inline-flex items-center border border-gray-300 rounded px-2 py-1">
-      
-      <select
-        className="appearance-none bg-gray-30 text-sm pr-6 outline-none  px-4 py-1 rounded-[4px] 
-        "
-        value={timePeriod}
-        onChange={(e) => setTimePeriod(e.target.value)}
-      >
-        <option value="ce-mois-ci">Ce mois-ci</option>
-        <option value="mois-dernier">Mois dernier</option>
-      </select>
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        className="absolute right-2 pointer-events-none"
-      >
-        <path
-          fillRule="evenodd"
-          clipRule="evenodd"
-          d="M14.8306 6.33861C14.8303 5.8435 15.0633 5.37732 15.4594 5.08056V6.33861C15.4594 6.85963 15.882 7.28223 16.4031 7.28223C16.9244 7.28223 17.347 6.85963 17.347 6.33861L17.3467 6.02418H17.347V5.09305C17.7425 5.38464 17.9758 5.84715 17.9758 6.33861C17.9758 7.20728 17.2717 7.91111 16.4031 7.91111C15.535 7.91111 14.8306 7.20728 14.8306 6.33861ZM6.02415 6.33861C6.02385 5.8435 6.25693 5.37732 6.65303 5.08056V6.33861C6.65303 6.85963 7.07563 7.28223 7.59695 7.28223C8.11797 7.28223 8.54026 6.85963 8.54026 6.33861V6.02418H8.54057V5.08086C9.23525 5.60188 9.37602 6.58754 8.8547 7.28254C8.33338 7.97692 7.34741 8.11768 6.65303 7.59636C6.25693 7.29929 6.02415 6.83343 6.02415 6.33861ZM20.4919 20.4919H4.45164C3.93063 20.4919 3.50803 20.0693 3.50803 19.5483V9.79831H19.5483C20.0693 9.79831 20.4919 10.2206 20.4919 10.7419V20.4919ZM19.8631 4.13693H17.347V3.18082C17.347 2.6598 16.9244 2.25 16.403 2.25C15.882 2.25 15.4594 2.6723 15.4594 3.19331V4.13693H8.54058L8.54027 3.19331C8.54027 2.6723 8.11798 2.25 7.59696 2.25C7.07564 2.25 6.65304 2.6723 6.65304 3.19331V4.13693H2.25V19.8628C2.25 20.9051 3.09459 21.75 4.13693 21.75H21.75V6.02416C21.75 4.98183 20.9051 4.13693 19.8631 4.13693Z"
-          fill="#999999"
-        />
-      </svg>
-    </div>
+   
 
     {/* Bouton Filtres */}
     
@@ -115,75 +75,10 @@ const DashboardManager = () => {
     </Link>
   </div>
 </div>
-
-          
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            {stats.map((stat, index) => (
-              <div key={index} className="bg-white p-4  rounded-[4px] border border-gray-200 flex items-start">
-                <div className="bg-[#FF79001A] p-3 rounded-full flex items-center justify-center mr-3">
-                {stat.icon}
-              </div>
-                <div>
-                  <p className="text-xl text-gray-500">{stat.title}</p>
-                  <p className="text-2xl font-bold">{stat.value}</p>
-                  <p
-                    className={`text-sm font-inter ${
-                      index < 2 ? "text-[#10B981]" : index === 2 ? "text-gray-500" : "text-red-500"
-                    }`}
-                  >
-                    {stat.subtitle}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-    
-          {/* First Row: Performance ODC (left) and FabLabs (right) */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-  {/* Performance ODC - Left (2/3 width) */}
-  <div className="lg:col-span-2">
-    <PerformanceOdc />
-  </div>
-
-  {/* FabLabs - Right (1/3 width) */}
-  <div className="lg:col-span-1 flex flex-col items-end ">
-  {fabLabs.map((lab, index) => (
-    <div key={index} className={`${lab.color} p-2 mb-4 w-[310px] h-[120px] ml-4 border border-gray-200`}>
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="text-xl font-bold">{lab.name}</h3>
-          <p className="text-3xl font-bold mt-1">{lab.value}</p>
-          <p className="text-sm text-gray-600">{lab.subtitle}</p>
-        </div>
-        <button className="bg-orange-500 text-white text-xs px-3 py-1 rounded-[4px]">
-          Accéder
-        </button>
-      </div>
-    </div>
-  ))}
-</div>
-
-
-</div>
-
-    
-          {/* Second Row: EventAvenir (left) and KPIStats (right) */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-1">
-            {/* EventAvenir - Left (2/3 width) */}
-            <div className="lg:col-span-2">
-              <EventAvenir />
-            </div>
-            
-            {/* KPIStats - Right (1/3 width) */}
-            <div className="lg:col-span-1 ml-[-140px]">
-              <KPIStats />
-            </div>
-          </div>
         </div>
       </div>
   );
 }
 
 
-  export default DashboardManager;
+  export default Ecolecode;
