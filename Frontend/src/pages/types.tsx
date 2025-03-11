@@ -1,3 +1,4 @@
+
 // types.ts
 export type FormationStatus = "En Cours" | "Avenir" | "Terminé" | "Replanifier";
 
@@ -12,8 +13,6 @@ export interface FormationItem {
     dateDebut: string;
     dateFin?: string;
 }
-
-
 export interface Participant {
   date: string;
   time: string;

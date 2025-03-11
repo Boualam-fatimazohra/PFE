@@ -47,6 +47,7 @@ const CourseHeader: React.FC<CourseHeaderProps> = ({ title, subtitle, status }) 
 
   return (
     <div className="bg-[#F4F4F4] py-3 px-4 mb-4 relative font-inter rounded-[4px]">
+
       <div className="absolute left-0 top-0 bottom-0 w-2 bg-orange-500" />
       <div className="ml-6">
         <div className="flex items-center gap-2 mb-1">

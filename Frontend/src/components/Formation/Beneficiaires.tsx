@@ -10,7 +10,9 @@ import { useNavigate } from "react-router-dom";
  import {useFormations} from '../../contexts/FormationContext';
 import FormationCard from "@/components/Formation/FormationCards";
 import { useState, useEffect } from "react";
+import { CustomPagination } from "../layout/CustomPagination";
 import BeneficiairesListe from "./ListeBeneficiaire";
+
 // Types
 
 interface FormationItem {
@@ -94,6 +96,9 @@ const BeneficiairesList = () => {
 
 // Composant FormationsList avec typage amélioré
 const FormationsList = ({ formations, onAccessBeneficiaires }: FormationsListProps) => {
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const formationsPerPage = 9;
+  
   const filterAndGroupFormations = () => {
     const groupes = {
       enCours: [] as FormationItem[],
@@ -114,32 +119,68 @@ const FormationsList = ({ formations, onAccessBeneficiaires }: FormationsListPro
     return groupes;
   };
 
+  // Calculer le nombre total de formations
+  const totalFormations = formations.length;
+  const totalPages = Math.ceil(totalFormations / formationsPerPage);
+  
+  // Calculer l'index de début et de fin pour la pagination
+  const startIndex = (currentPage - 1) * formationsPerPage;
+  const endIndex = Math.min(startIndex + formationsPerPage, totalFormations);
+  
+  // Préparer les formations à afficher pour la page actuelle
   const { enCours, aVenir, autres } = filterAndGroupFormations();
+  const allFormationsInOrder = [...enCours, ...aVenir, ...autres];
+  const currentFormations = allFormationsInOrder.slice(startIndex, endIndex);
+  
+  // Regrouper les formations de la page actuelle par statut
+  const currentEnCours = currentFormations.filter(f => f.status === "En Cours");
+  const currentAVenir = currentFormations.filter(f => f.status === "Avenir");
+  const currentAutres = currentFormations.filter(f => f.status !== "En Cours" && f.status !== "Avenir");
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo(0, 0);
+  };
 
   const renderSection = (title: string, formations: FormationItem[]) => (
-    <>
-      <div className="flex items-center mb-4">
-        <hr className="flex-grow border-t-2 border-gray-300" />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        {formations.map(formation => (
-          <FormationCard
-            key={formation.id}
-            formation={formation}
-            onAccess={() => onAccessBeneficiaires(formation)}
-            onEdit={() => console.log("edit", formation)}
-            onDelete={() => console.log("delete", formation.id)}
-          />
-        ))}
-      </div>
-    </>
+    formations.length > 0 ? (
+      <>
+        <div className="flex items-center mb-4">
+          <hr className="flex-grow border-t-2 border-gray-300" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          {formations.map(formation => (
+            <FormationCard
+              key={formation.id}
+              formation={formation}
+              onAccess={() => onAccessBeneficiaires(formation)}
+              onEdit={() => console.log("edit", formation)}
+              onDelete={() => console.log("delete", formation.id)}
+            />
+          ))}
+        </div>
+      </>
+    ) : null
   );
+
   return (
     <div>
       <h2 className="text-2xl font-bold mb-6">Liste des formations</h2>
-      {enCours.length > 0 && renderSection("Formations en cours", enCours)}
-      {aVenir.length > 0 && renderSection("Formations à venir", aVenir)}
-      {autres.length > 0 && renderSection("Autres formations", autres)}
+      
+      {renderSection("Formations en cours", currentEnCours)}
+      {renderSection("Formations à venir", currentAVenir)}
+      {renderSection("Autres formations", currentAutres)}
+      
+      {/* Utilisation du composant CustomPagination */}
+      {totalPages > 1 && (
+        <div className="flex flex-col items-center">
+          <CustomPagination 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        </div>
+      )}
     </div>
   );
 };
