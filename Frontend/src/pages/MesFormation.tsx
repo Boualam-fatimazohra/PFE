@@ -240,7 +240,6 @@ const MesFormations = () => {
 
   return (
     <div className="bg-white min-h-screen p-4">
-      <DashboardHeader />
       <main className="flex-grow py-8">
         <div className="container mx-auto px-4">
           {showDetails && selectedFormation ? (

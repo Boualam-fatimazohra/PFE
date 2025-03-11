@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useState, useEffect } from "react";
 import { RefreshCw } from "lucide-react";
 import CourseHeader from "../components/Formation/CoursHeader";
 import { StatsCard } from "@/components/dashboardElement/StatsCard";
@@ -16,38 +17,105 @@ interface FormationTerminerProps {
 const FormationTerminer: React.FC<FormationTerminerProps> = ({ formation, onRetourClick }) => {
   const [currentPage, setCurrentPage] = React.useState(1);
   const ITEMS_PER_PAGE = 11;
+  
+  const [lastUpdated, setLastUpdated] = useState(() => {
+    const savedDate = localStorage.getItem(`formation_${formation.id}_lastUpdate_termine`);
+    return savedDate || formatDateTime(new Date());
+  });
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [statsMetrics, setStatsMetrics] = useState<StatMetric[]>([]);
+  const [statsCards, setStatsCards] = useState({
+    totalBeneficiaires: 0,
+    totalFormations: 0,
+    prochainEvenement: "0",
+    satisfactionMoyenne: "0%"
+  });
 
-  const documents: Document[] = [
-    { title: "Programme du formation", date: "25/02/2025" },
-    { title: "Présentation Jour 01", date: "25/02/2025" },
-    { title: "Exercices Pratiques", date: "25/02/2025" },
-  ];
+  // Format date and time for display
+  function formatDateTime(date: Date) {
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    
+    return `${day}/${month}/${year} à ${hours}H${minutes}`;
+  }
 
-  const participants: Participant[] = [
-    {
-      date: "26/05/2024",
-      time: "14h00-16h00",
-      lastName: "Bikarrane",
-      firstName: "Mohamed",
-      email: "mohamed.bika@gmail.com",
-      gender: "Homme",
-      phone: "06445454512",
-      status: "present",
-    },
-  ];
+  // Initial data load
+  useEffect(() => {
+    loadFormationData();
+  }, [formation.id]);
 
-  const statsMetrics: StatMetric[] = [
-    { label: "Taux de completion", value: "85%" },
-    { label: "Taux Satisfaction", value: "85%" },
-    { label: "Heures", value: "75%" },
-  ];
+  const loadFormationData = async () => {
+    // Simulate API call or data fetch delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    // Mock data that would come from your API
+    setDocuments([
+      { title: "Programme du formation", date: "25/02/2025" },
+      { title: "Présentation Jour 01", date: "25/02/2025" },
+      { title: "Exercices Pratiques", date: "25/02/2025" },
+    ]);
+    
+    setParticipants([
+      {
+        date: "26/05/2024",
+        time: "14h00-16h00",
+        lastName: "Bikarrane",
+        firstName: "Mohamed",
+        email: "mohamed.bika@gmail.com",
+        gender: "Homme",
+        phone: "06445454512",
+        status: "present",
+      },
+      // In real implementation, you'd get all participants from API
+    ]);
+    
+    setStatsMetrics([
+      { label: "Taux de completion", value: "85%" },
+      { label: "Taux Satisfaction", value: "85%" },
+      { label: "Heures", value: "75%" },
+    ]);
+    
+    setStatsCards({
+      totalBeneficiaires: 250,
+      totalFormations: 64,
+      prochainEvenement: "07",
+      satisfactionMoyenne: "95%"
+    });
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    
+    try {
+      // Reload all data
+      await loadFormationData();
+      
+      // Update timestamp
+      const now = new Date();
+      const formattedDate = formatDateTime(now);
+      setLastUpdated(formattedDate);
+      
+      // Store in localStorage for persistence
+      localStorage.setItem(`formation_${formation.id}_lastUpdate_termine`, formattedDate);
+    } catch (error) {
+      console.error("Erreur lors de l'actualisation des données:", error);
+      // Add error handling/notification here if needed
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const totalPages = Math.ceil(participants.length / ITEMS_PER_PAGE);
-
+  
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
-
+  
   return (
     <div className="bg-white min-h-screen p-4">
       <main>
@@ -64,43 +132,47 @@ const FormationTerminer: React.FC<FormationTerminerProps> = ({ formation, onReto
           </button>
           <div className="flex items-center gap-4">
             <span className="text-sm text-[#595959]">
-              Données actualisées le 20/10/2025 à 8H02
+              Données actualisées le {lastUpdated}
             </span>
-            <button className="flex items-center gap-1 text-black font-medium text-sm ml-1">
-              <RefreshCw className="h-4 w-4" />
-              Actualiser
+            <button 
+              className="flex items-center gap-1 text-black font-medium text-sm ml-1"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+            >
+              <RefreshCw 
+                className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} 
+              />
+              {isRefreshing ? "Actualisation..." : "Actualiser"}
             </button>
           </div>
         </div>
-        <CourseHeader 
-          title="Formation" 
-          subtitle={formation.title} 
+        <CourseHeader
+          title="Formation"
+          subtitle={formation.title}
           status="Terminé"
         />
-
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatsCard title="Total Bénéficiaires" value={250} />
-          <StatsCard title="Total Formations" value={64} />
-          <StatsCard title="Prochain événement" value="07" />
-          <StatsCard title="Satisfaction moyenne" value="95%" />
+          <StatsCard title="Total Bénéficiaires" value={isRefreshing ? "..." : statsCards.totalBeneficiaires} />
+          <StatsCard title="Total Formations" value={isRefreshing ? "..." : statsCards.totalFormations} />
+          <StatsCard title="Prochain événement" value={isRefreshing ? "..." : statsCards.prochainEvenement} />
+          <StatsCard title="Satisfaction moyenne" value={isRefreshing ? "..." : statsCards.satisfactionMoyenne} />
         </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <DocumentsSection documents={documents} />
           <StatsSection metrics={statsMetrics} />
         </div>
-
-        <ParticipantsSection 
+        <ParticipantsSection
           participants={participants}
           currentPage={currentPage}
           itemsPerPage={ITEMS_PER_PAGE}
         />
-
-        <CustomPagination 
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-        />
+        {totalPages > 1 && (
+          <CustomPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        )}
       </main>
     </div>
   );
