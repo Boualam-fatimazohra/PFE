@@ -1,12 +1,9 @@
 // src/contexts/NotificationContext.tsx
 import * as React from 'react';
-import { createContext, useState, useEffect, useContext, ReactNode, useCallback } from 'react';
-import { io, Socket } from 'socket.io-client';
-import { toast } from 'react-toastify';
-import NotificationService from '../services/NotificationService';
+import { createContext, useContext, useState, useEffect } from 'react';
+import apiClient from '../services/apiClient';
 
-// Define interfaces
-export interface NotificationItem {
+interface Notification {
   _id: string;
   sender: {
     _id: string;
@@ -14,179 +11,146 @@ export interface NotificationItem {
     prenom: string;
   };
   receiver: string;
-  message: string;
-  type: 'message' | 'alert' | 'info';
   isRead: boolean;
-  status: 'pending' | 'accepted' | 'declined';
-  response?: string;
+  type: "formation" | "evenement";
+  status: "pending" | "accepted" | "declined";
+  entityId: string;
   createdAt: string;
 }
 
 interface NotificationContextType {
-  notifications: NotificationItem[];
+  notifications: Notification[];
   unreadCount: number;
   fetchNotifications: () => Promise<void>;
-  sendNotification: (message: string, type: string) => Promise<boolean>;
   markAsRead: (id: string) => Promise<void>;
-  acceptNotification: (id: string, response: string) => Promise<void>;
-  declineNotification: (id: string, response: string) => Promise<void>;
-  loading: boolean;
-  error: string | null;
+  processNotification: (id: string, status: "accepted" | "declined", response?: string) => Promise<void>;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
-// Provider component
-export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [socket, setSocket] = useState<Socket | null>(null);
-  
-  // Use the base URL but connect to the root for socket
-  const SOCKET_URL = import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://localhost:5000';
+export const NotificationProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  // Use useCallback to memoize the fetchNotifications function
-  const fetchNotifications = useCallback(async () => {
-    setLoading(true);
+  const fetchNotifications = async () => {
     try {
-      const notificationsData = await NotificationService.getNotifications();
-      setNotifications(notificationsData);
-      setError(null);
-    } catch (err) {
-      console.error('Error fetching notifications:', err);
-      setError('Erreur lors du chargement des notifications');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    // Initialize socket connection
-    const newSocket = io(SOCKET_URL, { withCredentials: true });
-    setSocket(newSocket);
-
-    // Get user info from localStorage
-    const userString = localStorage.getItem('user');
-    if (userString) {
-      try {
-        const user = JSON.parse(userString);
-        newSocket.on('connect', () => {
-          console.log('Connected to notification socket');
-          newSocket.emit('join', {
-            userId: user.userId,
-            role: user.role
-          });
-        });
-
-        newSocket.on('notification', (data) => {
-          // Update notifications when a new one arrives
-          fetchNotifications();
-          // Show toast notification
-          toast.info(`Nouvelle notification: ${data.message}`);
-        });
-      } catch (err) {
-        console.error('Error parsing user data:', err);
+      console.log('Fetching notifications...');
+      
+      // Use your apiClient instead of axios directly
+      const response = await apiClient.get('/notifications');
+      
+      console.log('API response status:', response.status);
+      console.log('API response data type:', typeof response.data);
+      
+      // Check if response data is actually an array
+      if (Array.isArray(response.data)) {
+        console.log('Received notifications array with length:', response.data.length);
+        setNotifications(response.data);
+        setUnreadCount(response.data.filter(n => !n.isRead).length);
+      } else {
+        console.error('Expected array but got:', response.data);
+        console.error('Response data snippet:', JSON.stringify(response.data).substring(0, 200));
+        setNotifications([]);
+        setUnreadCount(0);
       }
-    }
-
-    // Initial fetch
-    fetchNotifications();
-
-    // Cleanup on unmount
-    return () => {
-      if (newSocket) newSocket.disconnect();
-    };
-  }, [fetchNotifications]); // Add fetchNotifications to dependency array
-
-  const sendNotification = async (message: string, type: string = 'message'): Promise<boolean> => {
-    try {
-      await NotificationService.sendToManager(message, type);
-      // Refresh notifications after sending
-      await fetchNotifications();
-      return true;
-    } catch (err) {
-      console.error('Error sending notification:', err);
-      setError('Erreur lors de l\'envoi de la notification');
-      return false;
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      
+      if (error.response) {
+        console.error('Response status:', error.response.status);
+        console.error('Response data type:', typeof error.response.data);
+        console.error('Response data snippet:', 
+          typeof error.response.data === 'string' 
+            ? error.response.data.substring(0, 200) 
+            : JSON.stringify(error.response.data).substring(0, 200)
+        );
+      }
+      
+      setNotifications([]);
+      setUnreadCount(0);
     }
   };
 
   const markAsRead = async (id: string) => {
     try {
-      await NotificationService.markAsRead(id);
+      await apiClient.put(`/notifications/${id}/read`);
       
-      // Update local state
-      setNotifications(prevNotifications => 
-        prevNotifications.map(notification => 
-          notification._id === id ? { ...notification, isRead: true } : notification
-        )
+      // Update state to reflect the change
+      setNotifications(prev => 
+        prev.map(n => n._id === id ? { ...n, isRead: true } : n)
       );
-    } catch (err) {
-      console.error('Error marking notification as read:', err);
-      setError('Erreur lors du marquage de la notification');
+      
+      // Update unread count
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
     }
   };
 
-  const acceptNotification = async (id: string, response: string = "") => {
+  const processNotification = async (id: string, status: "accepted" | "declined", response?: string) => {
     try {
-      await NotificationService.acceptNotification(id, response);
+      await apiClient.put(`/notifications/${id}/process`, {
+        status,
+        response
+      });
       
-      // Update local state
-      setNotifications(prevNotifications => 
-        prevNotifications.map(notification => 
-          notification._id === id 
-            ? { ...notification, isRead: true, status: "accepted", response } 
-            : notification
-        )
+      // Update state to reflect the change
+      setNotifications(prev => 
+        prev.map(n => n._id === id ? { ...n, status, isRead: true } : n)
       );
-    } catch (err) {
-      console.error('Error accepting notification:', err);
-      setError("Erreur lors de l'acceptation de la notification");
+      
+      // Update unread count if it was previously unread
+      const wasUnread = notifications.find(n => n._id === id)?.isRead === false;
+      if (wasUnread) {
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      }
+      
+      // Refresh notifications to get any updated data
+      fetchNotifications();
+    } catch (error) {
+      console.error('Error processing notification:', error);
+      throw error;
     }
   };
 
-  const declineNotification = async (id: string, response: string = "") => {
-    try {
-      await NotificationService.declineNotification(id, response);
-      
-      // Update local state
-      setNotifications(prevNotifications => 
-        prevNotifications.map(notification => 
-          notification._id === id 
-            ? { ...notification, isRead: true, status: "declined", response } 
-            : notification
-        )
-      );
-    } catch (err) {
-      console.error('Error declining notification:', err);
-      setError("Erreur lors du refus de la notification");
+  // Set up websocket connection to receive real-time notifications
+  useEffect(() => {
+    fetchNotifications();
+    
+    // Set up socket.io listener for new notifications
+    const socket = (window as any).socket;
+    
+    if (socket) {
+      socket.on('notification', (data: any) => {
+        // Refresh all notifications when we get a new one
+        fetchNotifications();
+      });
     }
-  };
-
-  // Calculate unread count
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+    
+    // Set up polling for notifications every minute as a fallback
+    const interval = setInterval(fetchNotifications, 60000);
+    
+    return () => {
+      clearInterval(interval);
+      if (socket) {
+        socket.off('notification');
+      }
+    };
+  }, []);
 
   return (
-    <NotificationContext.Provider
-      value={{
-        notifications,
-        unreadCount,
-        fetchNotifications,
-        sendNotification,
-        markAsRead,
-        acceptNotification,
-        declineNotification,
-        loading,
-        error
-      }}
-    >
+    <NotificationContext.Provider value={{
+      notifications,
+      unreadCount,
+      fetchNotifications,
+      markAsRead,
+      processNotification
+    }}>
       {children}
     </NotificationContext.Provider>
   );
 };
 
-// Custom hook to use the notification context
 export const useNotifications = () => {
   const context = useContext(NotificationContext);
   if (context === undefined) {

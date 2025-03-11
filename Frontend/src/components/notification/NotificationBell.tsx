@@ -1,25 +1,82 @@
-// src/components/notification/NotificationBell.tsx
 import { useState, useRef, useEffect } from 'react';
-import { Bell, MessageSquare, AlertTriangle, Info, Check } from 'lucide-react';
+import { Bell, Calendar, BookOpen } from 'lucide-react';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from 'react-toastify';
 import * as React from 'react';
+import NotificationStatusBadge from './NotificationStatusBadge';
+import { io } from 'socket.io-client';
+import axios from 'axios';
 
 const NotificationBell: React.FC = () => {
-  const { 
-    notifications, 
+  const {  
     unreadCount, 
     markAsRead, 
-    acceptNotification, 
-    declineNotification 
+    processNotification,
   } = useNotifications();
+  const [notifications, setNotifications] = useState([]);
+
+  useEffect(() => {
+    // Fetch notifications
+    const fetchNotifications = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/notifications', {
+          withCredentials: true
+        });
+        setNotifications(response.data);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      }
+    };
+    
+    fetchNotifications();
+    
+    // Set up socket connection
+    const socket = io('http://localhost:5000', { withCredentials: true });
+    
+    socket.on('connect', () => {
+      console.log('Connected to socket server');
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      socket.emit('join', { userId: user.userId, role: user.role });
+    });
+    
+    socket.on('notification', () => {
+      // Refresh notifications when new one arrives
+      fetchNotifications();
+      // Show a browser notification
+      toast.info("Nouvelle notification reçue");
+    });
+    
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+  
+  // Safety check - ensure notifications is always an array
+  const safeNotifications = Array.isArray(notifications) ? notifications : [];
+  
   const [isOpen, setIsOpen] = useState(false);
   const [activeNotification, setActiveNotification] = useState<string | null>(null);
   const [responseText, setResponseText] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Get current user role from localStorage
+  const getUserRole = (): string => {
+    try {
+      const userString = localStorage.getItem('user');
+      if (userString) {
+        const user = JSON.parse(userString);
+        return user.role || '';
+      }
+    } catch (error) {
+      console.error('Error getting user role:', error);
+    }
+    return '';
+  };
+
+  const userRole = getUserRole();
+  
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -35,35 +92,50 @@ const NotificationBell: React.FC = () => {
   // Get notification icon based on type
   const getNotificationIcon = (type: string) => {
     switch (type) {
-      case 'message':
-        return <MessageSquare size={16} className="text-blue-500" />;
-      case 'alert':
-        return <AlertTriangle size={16} className="text-red-500" />;
-      case 'info':
-        return <Info size={16} className="text-green-500" />;
+      case 'formation':
+        return <BookOpen size={16} className="text-blue-500" />;
+      case 'evenement':
+        return <Calendar size={16} className="text-green-500" />;
       default:
-        return <MessageSquare size={16} className="text-blue-500" />;
+        return <Calendar size={16} className="text-blue-500" />;
+    }
+  };
+  
+  // Handle accepting a notification
+  const handleAccept = async (id: string) => {
+    try {
+      await processNotification(id, 'accepted', responseText);
+      setActiveNotification(null);
+      setResponseText("");
+      toast.success("Action acceptée avec succès");
+    } catch (error) {
+      toast.error("Erreur lors de l'acceptation");
+      console.error(error);
     }
   };
 
-  const handleAccept = async (id: string) => {
-    await acceptNotification(id, responseText);
-    setActiveNotification(null);
-    setResponseText("");
-    toast.success("Notification acceptée");
-  };
-
+  // Handle declining a notification
   const handleDecline = async (id: string) => {
-    await declineNotification(id, responseText);
-    setActiveNotification(null);
-    setResponseText("");
-    toast.info("Notification refusée");
+    try {
+      await processNotification(id, 'declined', responseText);
+      setActiveNotification(null);
+      setResponseText("");
+      toast.info("Action refusée");
+    } catch (error) {
+      toast.error("Erreur lors du refus");
+      console.error(error);
+    }
   };
 
   // Handle marking a notification as read
   const handleMarkAsRead = async (id: string) => {
-    if (!notifications.find(n => n._id === id)?.isRead) {
-      await markAsRead(id);
+    try {
+      const notification = safeNotifications.find(n => n._id === id);
+      if (notification && !notification.isRead) {
+        await markAsRead(id);
+      }
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
     }
   };
 
@@ -76,10 +148,32 @@ const NotificationBell: React.FC = () => {
     }
   };
 
+  // Get notification type label
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case 'formation':
+        return 'Formation';
+      case 'evenement':
+        return 'Événement';
+      default:
+        return 'Notification';
+    }
+  };
+
+  // Function to determine if action buttons should be shown
+  const shouldShowActionButtons = (notification: any) => {
+    // Only show action buttons for managers on pending event notifications
+    return (
+      userRole === 'Manager' && 
+      notification.status === 'pending' && 
+      notification.type === 'evenement'
+    );
+  };
+
   return (
     <div className="relative" ref={dropdownRef}>
       <button
-        className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-full"
+        className="relative p-2 text-gray-100 hover:text-white hover:bg-gray-800 rounded-full"
         onClick={() => setIsOpen(!isOpen)}
       >
         <Bell size={20} />
@@ -95,11 +189,11 @@ const NotificationBell: React.FC = () => {
           <div className="px-4 py-2 bg-gray-50 font-medium border-b">Notifications</div>
           
           <div className="max-h-96 overflow-y-auto">
-            {notifications.length === 0 ? (
+            {safeNotifications.length === 0 ? (
               <div className="p-4 text-center text-gray-500">Pas de notifications</div>
             ) : (
-              notifications.map((notification) => (
-                <React.Fragment key={notification._id}>
+              safeNotifications.map((notification) => (
+                <React.Fragment key={notification._id || `notification-${Math.random()}`}>
                   <div 
                     className={`p-3 border-b hover:bg-gray-50 ${
                       !notification.isRead ? 'bg-blue-50' : ''
@@ -111,38 +205,30 @@ const NotificationBell: React.FC = () => {
                         {getNotificationIcon(notification.type)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900">
-                          {notification.sender.prenom} {notification.sender.nom}
-                        </p>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {notification.message}
-                        </p>
-                        <div className="flex justify-between items-center mt-1">
-                          <span className="text-xs text-gray-500">
-                            {formatDate(notification.createdAt)}
-                          </span>
-                          
-                          {/* Status indicator */}
-                          {notification.status !== 'pending' && (
-                            <span className={`text-xs font-medium ${
-                              notification.status === 'accepted' 
-                                ? 'text-green-500' 
-                                : 'text-red-500'
-                            }`}>
-                              {notification.status === 'accepted' ? 'Acceptée' : 'Refusée'}
-                            </span>
-                          )}
+                        <div className="flex justify-between items-center">
+                          <p className="text-sm font-medium text-gray-900">
+                            {notification.sender?.prenom || ''} {notification.sender?.nom || ''}
+                          </p>
+                          <NotificationStatusBadge status={notification.status} />
                         </div>
                         
-                        {/* Response display if there's any */}
-                        {notification.response && (
-                          <div className="mt-1 p-1.5 bg-gray-50 rounded-sm text-xs text-gray-700">
-                            <span className="font-medium">Réponse:</span> {notification.response}
-                          </div>
-                        )}
+                        <p className="text-sm text-gray-600 mt-1">
+                          {userRole === 'Formateur' ? (
+                            `Statut ${getTypeLabel(notification.type)}: ${
+                              notification.status === 'accepted' ? 'Accepté' : 
+                              notification.status === 'declined' ? 'Refusé' : 'En attente'
+                            }`
+                          ) : (
+                            `Demande d'approbation: ${getTypeLabel(notification.type)}`
+                          )}
+                        </p>
                         
-                        {/* Action buttons for Manager */}
-                        {notification.status === 'pending' && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          {formatDate(notification.createdAt)}
+                        </p>
+                        
+                        {/* Action buttons - only show for Managers on pending event notifications */}
+                        {shouldShowActionButtons(notification) && (
                           <div className="mt-2 flex justify-end">
                             {activeNotification !== notification._id ? (
                               <button
@@ -161,16 +247,19 @@ const NotificationBell: React.FC = () => {
                     </div>
                   </div>
                   
-                  {/* Response form when a notification is active */}
-                  {activeNotification === notification._id && (
+                  {/* Response form - only show for active notification that requires action */}
+                  {activeNotification === notification._id && shouldShowActionButtons(notification) && (
                     <div className="p-3 bg-gray-50 border-b">
-                      <textarea
-                        value={responseText}
-                        onChange={(e) => setResponseText(e.target.value)}
-                        placeholder="Votre réponse..."
-                        className="w-full p-2 border rounded text-sm mb-2"
-                        rows={2}
-                      />
+                      {/* No textarea for Formateurs */}
+                      {userRole === 'Manager' && (
+                        <textarea
+                          value={responseText}
+                          onChange={(e) => setResponseText(e.target.value)}
+                          placeholder="Commentaire (optionnel)..."
+                          className="w-full p-2 border rounded text-sm mb-2"
+                          rows={2}
+                        />
+                      )}
                       <div className="flex justify-end space-x-2">
                         <button
                           onClick={(e) => {
@@ -207,10 +296,10 @@ const NotificationBell: React.FC = () => {
             )}
           </div>
           
-          {notifications.length > 5 && (
+          {safeNotifications.length > 5 && (
             <div className="p-2 bg-gray-50 text-center">
               <button className="text-sm text-blue-500 hover:text-blue-700">
-                Voir toutes les notifications ({notifications.length})
+                Voir toutes les notifications ({safeNotifications.length})
               </button>
             </div>
           )}

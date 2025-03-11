@@ -7,6 +7,7 @@ const { cloudinary } = require('../Config/cloudinaryConfig.js');
 
 //  debut : creation d'un formation par un formateur bien précis :
 const createFormation = async (req, res) => {
+  console.log("Create Formation")
   try {
     // 1. Get user ID from authentication
     const userId = req.user?.userId;
@@ -72,11 +73,12 @@ const createFormation = async (req, res) => {
             sender: userId,
             receiver: managerDoc.utilisateur,
             type: "formation",
+            status: "accepted",
             entityId: formationEnregistree._id
           });
           
           await notification.save();
-
+          console.log("Notification saved: ", notification);
           // 10. Send real-time notification if socket.io is available
           const io = req.app.get('io');
           if (io) {
