@@ -1,5 +1,6 @@
 import * as React from "react";
 import { useState, useEffect } from "react";
+
 import { RefreshCw } from "lucide-react";
 import CourseHeader from "../components/Formation/CoursHeader";
 import { StatsCard } from "@/components/dashboardElement/StatsCard";
@@ -32,7 +33,6 @@ const FormationTerminer: React.FC<FormationTerminerProps> = ({ formation, onReto
     prochainEvenement: "0",
     satisfactionMoyenne: "0%"
   });
-
   // Format date and time for display
   function formatDateTime(date: Date) {
     const day = date.getDate().toString().padStart(2, '0');
@@ -109,7 +109,6 @@ const FormationTerminer: React.FC<FormationTerminerProps> = ({ formation, onReto
       setIsRefreshing(false);
     }
   };
-
   const totalPages = Math.ceil(participants.length / ITEMS_PER_PAGE);
   
   const handlePageChange = (page: number) => {
