@@ -62,7 +62,7 @@ export function DashboardHeader() {
   if (user?.role === "Formateur") {
     navigationLinks = [
       { name: "Dashboard", path: "/formateur/dashboardFormateur" },
-      { name: "Mes Formations", path: "/formateur/mesformation" },
+      { name: "Mes Formations", path: "/formateur/mesformation", additionalPaths: ["/formateur/formationModal"] },
       { name: "Calendrier", path: "/formateur/CalendarView" },
       { name: "Mes Bénéficiaires", path: "/formateur/BeneficiairesList" },
       { name: "Evaluation", path: "/formateur/EvaluationPages"},
@@ -92,6 +92,21 @@ export function DashboardHeader() {
       { name: "Page Link", path: "/page-link-3" },
     ];
   }
+
+  // Function to check if a link should be highlighted
+  const isLinkActive = (link) => {
+    // Exact match
+    if (location.pathname === link.path) {
+      return true;
+    }
+    
+    // Check additional paths if defined
+    if (link.additionalPaths && link.additionalPaths.includes(location.pathname)) {
+      return true;
+    }
+
+    return false;
+  };
 
   // Fonction pour vérifier si l'utilisateur est sur une page Dashboard
   const isOnDashboard = () => {
@@ -124,7 +139,7 @@ export function DashboardHeader() {
                     key={index}
                     to={link.path}
                     className={`relative text-sm transition-colors font-medium ${
-                      location.pathname === link.path
+                      isLinkActive(link)
                         ? "text-orange-500 after:absolute after:bottom-[-22px] after:left-0 after:w-full after:h-[3px] after:bg-orange-500"
                         : "text-gray-300 hover:text-orange-500"
                     }`}>

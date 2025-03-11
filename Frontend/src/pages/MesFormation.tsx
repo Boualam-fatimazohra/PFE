@@ -4,16 +4,13 @@ import { Footer } from "@/components/layout/Footer";
 import { Card } from "@/components/ui/card";
 import { Search, Edit, Trash2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
-
 import { StatsCard } from "@/components/dashboardElement/StatsCard";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { CustomPagination } from "@/components/layout/CustomPagination";
-
 import ModalEditFormation from "@/components/dashboardElement/ModalEditFormation";
 import FormationCard from "@/components/Formation/FormationCards";
 import { useFormations } from "../contexts/FormationContext";
-
 import {
   Select,
   SelectContent,
@@ -30,7 +27,7 @@ import { toast } from "react-toastify";
 interface FormationItem {
   id: string;
   title: string;
-  status: "En Cours" | "Terminé" | "Avenir" | "Replanifier";
+  status: "En Cours" | "Avenir" | "Terminé" | "Replanifier";
   image: string;
   dateDebut: string;
   dateFin?: string;
@@ -85,6 +82,7 @@ const MesFormations = () => {
         image: formation.image as string,
         dateDebut: formation.dateDebut,
         dateCreated: formation.createdAt ? new Date(formation.createdAt).toISOString() : new Date().toISOString()
+
       }));
       
       const sortedFormations = sortFormationsByStatus(mappedFormations);
@@ -133,6 +131,10 @@ const MesFormations = () => {
     setSearchResults([]);
   };
 
+  // Pagination settings
+  const ITEMS_PER_PAGE = 9;
+  const [currentPage, setCurrentPage] = useState(1);
+  
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedFormation(null);
@@ -182,7 +184,7 @@ const MesFormations = () => {
       }
     }
   };
-  
+
   const handleAccessClick = (formation: FormationItem) => {
     setSelectedFormation(formation);
     setShowDetails(true);
@@ -238,15 +240,31 @@ const MesFormations = () => {
   const currentItems = filteredFormations.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredFormations.length / itemsPerPage);
 
+
+  // Calculate total pages
+  const totalPages = Math.ceil(filteredFormations.length / ITEMS_PER_PAGE);
+
+  // Get current page items
+  const getCurrentPageItems = () => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return filteredFormations.slice(startIndex, endIndex);
+  };
+
+  // Current page formations
+  const currentFormations = getCurrentPageItems();
+
+  // Reset to page 1 when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedStatus]);
+
   return (
     <div className="bg-white min-h-screen p-4">
-      <DashboardHeader />
       <main className="flex-grow py-8">
         <div className="container mx-auto px-4">
           {showDetails && selectedFormation ? (
-            <>
-              {renderDetails()}
-            </>
+            renderDetails()
           ) : (
             <>
               <div className="flex justify-between items-center mb-8">
@@ -290,6 +308,7 @@ const MesFormations = () => {
                         <SelectItem value="Avenir">À venir</SelectItem>
                         <SelectItem value="Terminé">Terminé</SelectItem>
                         <SelectItem value="Replanifier">Replanifier</SelectItem>
+
                       </SelectContent>
                   </Select>
                   <Select 
@@ -326,6 +345,7 @@ const MesFormations = () => {
                 <StatsCard title="Total Formations" value={loading ? "..." : formations.length} />
                 <StatsCard title="Formations en cours" value={loading ? "..." : formations.filter(f => f.status === "En Cours").length} />
                 <StatsCard title="Formations à venir" value={loading ? "..." : formations.filter(f => f.status === "Avenir").length} />
+
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 {loading ? (
@@ -336,6 +356,7 @@ const MesFormations = () => {
                   </>
                 ) : currentItems.length > 0 ? (
                   currentItems.map((formation) => (
+
                     <FormationCard
                       key={formation.id}
                       formation={formation}
