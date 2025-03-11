@@ -2,7 +2,7 @@ import * as React from "react";
 import { RefreshCw } from "lucide-react";
 import CourseHeader from "../components/Formation/CoursHeader";
 import { StatsCard } from "@/components/dashboardElement/StatsCard";
-import { FormationItem } from "./types"; // Import the standardized type
+import { FormationItem } from "./types";
 
 interface FormationAvenirProps {
   formation: FormationItem;
@@ -13,6 +13,28 @@ export const FormationAvenir: React.FC<FormationAvenirProps> = ({
   formation, 
   onRetourClick 
 }) => {
+  // Récupérer la date stockée dans localStorage ou utiliser une date par défaut
+  const [lastUpdated, setLastUpdated] = React.useState(
+    localStorage.getItem("lastUpdated") || "20/10/2025 à 8H02"
+  );
+
+  // Fonction pour mettre à jour la date d'actualisation
+  const handleRefresh = () => {
+    const now = new Date();
+    const formattedDate = now.toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    const newDate = `Données actualisées le ${formattedDate}`;
+    
+    // Mettre à jour l'état et sauvegarder dans localStorage
+    setLastUpdated(newDate);
+    localStorage.setItem("lastUpdated", newDate);
+  };
+
   return (
     <div className="bg-white min-h-screen p-4">
       {/* Top Bar */}
@@ -28,16 +50,21 @@ export const FormationAvenir: React.FC<FormationAvenirProps> = ({
         </button>
         <div className="flex items-center gap-4">
           <span className="text-sm text-[#595959]">
-            Données actualisées le 20/10/2025 à 8H02
+            {lastUpdated}
           </span>
-          <button className="flex items-center gap-1 text-black font-medium text-sm ml-1">
+          <button 
+            className="flex items-center gap-1 text-black font-medium text-sm ml-1"
+            onClick={handleRefresh}
+          >
+
             <RefreshCw className="h-4 w-4" />
             Actualiser
           </button>
         </div>
       </div>
       
-      {/* Course Header - Use "A venir" instead of "Avenir" for consistency */}
+      {/* Course Header */}
+
       <CourseHeader
         title="Formation"
         subtitle={formation.title}
@@ -98,8 +125,7 @@ export const FormationAvenir: React.FC<FormationAvenirProps> = ({
           <rect width="175.738" height="171.784" fill="white" transform="translate(117.708 50.9707)"/>
           </clipPath>
           </defs>
-          </svg>
-
+          </svg> 
         </div>
         <p className="mb-6 text-center text-gray-700 text-lg">
           Vous n'avez aucune base de données pour cette formation

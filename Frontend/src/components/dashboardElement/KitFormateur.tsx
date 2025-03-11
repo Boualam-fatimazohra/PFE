@@ -5,7 +5,7 @@ import { Search} from "lucide-react";
 export default function KitFormateur() {
   return (
     <div>
-      <Card className="border-[#999999] rounded-none">
+      <Card className="border-[#999999] rounded-[4px]">
             <CardContent className="p-6">
               <h2 className="text-xl font-bold font-inter mb-6">Kit Formateur</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -21,7 +21,7 @@ export default function KitFormateur() {
                       <Search size={20} className="text-gray-400" />
                     </div>
                     <p className="text-sm text-gray-500 mb-4">Get help with a specific reservation</p>
-                    <button className="rounded-none bg-black text-white px-3 py-1 rounded-md text-sm">
+                    <button className="rounded-[4px] bg-black text-white px-3 py-1 rounded-md text-sm">
                       Accéder
                     </button>
                   </div>

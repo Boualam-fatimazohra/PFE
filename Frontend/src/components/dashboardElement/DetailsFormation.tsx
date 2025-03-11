@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { RefreshCw } from "lucide-react";
 import CourseHeader from "../Formation/CoursHeader";
 import { StatsCard } from "@/components/dashboardElement/StatsCard";
@@ -7,176 +7,218 @@ import DocumentsSection from "../Formation/DocumentsSection";
 import StatsSection from "../Formation/StatsSection";
 import ParticipantsSection from "../Formation/ParticipantsSection";
 import { CustomPagination } from "../layout/CustomPagination";
-import { FormationItem, Participant, Document, StatMetric } from "@/pages/types"; // Import standardized types
+import { FormationItem, Participant, Document, StatMetric } from "@/pages/types"; 
 
 interface DetailsFormationProps {
   formation: FormationItem;
-  onRetourClick: () => void;
+  onRetourClick: () => void; 
 }
 
 const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetourClick }) => {
-  // État pour la pagination des participants
+
   const [participantsPage, setParticipantsPage] = useState(1);
   const PARTICIPANTS_PER_PAGE = 11;
+  const [lastUpdated, setLastUpdated] = useState(() => {
+    const savedDate = localStorage.getItem(`formation_${formation.id}_lastUpdate`);
+    return savedDate || formatDateTime(new Date());
+  });
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [statsMetrics, setStatsMetrics] = useState<StatMetric[]>([]);
 
-  const documents: Document[] = [
-    { title: "Programme du formation", date: "25/02/2025" },
-    { title: "Présentation Jour 01", date: "25/02/2025" },
-    { title: "Exercices Pratiques", date: "25/02/2025" },
-  ];
+  // Format date and time for display
+  function formatDateTime(date: Date) {
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    
+    return `${day}/${month}/${year} à ${hours}H${minutes}`;
+  }
 
-  // Données de test avec plus de 11 participants
-  const participants: Participant[] = [
-    {
-      date: "26/05/2024",
-      time: "14h00-16h00",
-      lastName: "Bikarrane",
-      firstName: "Mohamed",
-      email: "mohamed.bika@gmail.com",
-      gender: "Homme",
-      phone: "06445454512",
-      status: "present",
-    },
-    {
-      date: "26/05/2024",
-      time: "14h00-16h00",
-      lastName: "Dupont",
-      firstName: "Jean",
-      email: "jean.dupont@gmail.com",
-      gender: "Homme",
-      phone: "06445454513",
-      status: "absent",
-    },
-    {
-      date: "26/05/2024",
-      time: "14h00-16h00",
-      lastName: "Bikarrane",
-      firstName: "Mohamed",
-      email: "mohamed.bika@gmail.com",
-      gender: "Homme",
-      phone: "06445454512",
-      status: "present",
-    },
-    {
-      date: "26/05/2024",
-      time: "14h00-16h00",
-      lastName: "Bikarrane",
-      firstName: "Mohamed",
-      email: "mohamed.bika@gmail.com",
-      gender: "Homme",
-      phone: "06445454512",
-      status: "present",
-    },
-    {
-      date: "26/05/2024",
-      time: "14h00-16h00",
-      lastName: "Bikarrane",
-      firstName: "Mohamed",
-      email: "mohamed.bika@gmail.com",
-      gender: "Homme",
-      phone: "06445454512",
-      status: "present",
-    },
-    {
-      date: "26/05/2024",
-      time: "14h00-16h00",
-      lastName: "Bikarrane",
-      firstName: "Mohamed",
-      email: "mohamed.bika@gmail.com",
-      gender: "Homme",
-      phone: "06445454512",
-      status: "present",
-    },
-    {
-      date: "26/05/2024",
-      time: "14h00-16h00",
-      lastName: "Bikarrane",
-      firstName: "Mohamed",
-      email: "mohamed.bika@gmail.com",
-      gender: "Homme",
-      phone: "06445454512",
-      status: "present",
-    },
-    {
-      date: "26/05/2024",
-      time: "14h00-16h00",
-      lastName: "Bikarrane",
-      firstName: "Mohamed",
-      email: "mohamed.bika@gmail.com",
-      gender: "Homme",
-      phone: "06445454512",
-      status: "present",
-    },
-    {
-      date: "26/05/2024",
-      time: "14h00-16h00",
-      lastName: "Bikarrane",
-      firstName: "Mohamed",
-      email: "mohamed.bika@gmail.com",
-      gender: "Homme",
-      phone: "06445454512",
-      status: "present",
-    },
-    {
-      date: "26/05/2024",
-      time: "14h00-16h00",
-      lastName: "Bikarrane",
-      firstName: "Mohamed",
-      email: "mohamed.bika@gmail.com",
-      gender: "Homme",
-      phone: "06445454512",
-      status: "present",
-    },
-    {
-      date: "26/05/2024",
-      time: "14h00-16h00",
-      lastName: "Bikarrane",
-      firstName: "Mohamed",
-      email: "mohamed.bika@gmail.com",
-      gender: "Homme",
-      phone: "06445454512",
-      status: "present",
-    },
-    {
-      date: "26/05/2024",
-      time: "14h00-16h00",
-      lastName: "Bikarrane",
-      firstName: "Mohamed",
-      email: "mohamed.bika@gmail.com",
-      gender: "Homme",
-      phone: "06445454512",
-      status: "present",
-    },
-    {
-      date: "26/05/2024",
-      time: "14h00-16h00",
-      lastName: "Bikarrane",
-      firstName: "Mohamed",
-      email: "mohamed.bika@gmail.com",
-      gender: "Homme",
-      phone: "06445454512",
-      status: "present",
-    },
-    {
-      date: "26/05/2024",
-      time: "14h00-16h00",
-      lastName: "Bikarrane",
-      firstName: "Mohamed",
-      email: "mohamed.bika@gmail.com",
-      gender: "Homme",
-      phone: "06445454512",
-      status: "present",
-    },
-  ];
+  // Initial data load
+  useEffect(() => {
+    loadFormationData();
+  }, [formation.id]);
 
-  // Calcul du nombre total de pages pour les participants
+  const loadFormationData = async () => {
+    // Simulate API call or data fetch
+    // In a real app, you would fetch from your API
+    
+    // For demo purposes, using mock data
+    setDocuments([
+      { title: "Programme du formation", date: "25/02/2025" },
+      { title: "Présentation Jour 01", date: "25/02/2025" },
+      { title: "Exercices Pratiques", date: "25/02/2025" },
+    ]);
+    
+    setParticipants([
+      {
+        date: "26/05/2024",
+        time: "14h00-16h00",
+        lastName: "Bikarrane",
+        firstName: "Mohamed",
+        email: "mohamed.bika@gmail.com",
+        gender: "Homme",
+        phone: "06445454512",
+        status: "present",
+      },
+      {
+        date: "26/05/2024",
+        time: "14h00-16h00",
+        lastName: "Dupont",
+        firstName: "Jean",
+        email: "jean.dupont@gmail.com",
+        gender: "Homme",
+        phone: "06445454513",
+        status: "absent",
+      },
+      // ...more participants (kept the same as your original data)
+      {
+        date: "26/05/2024",
+        time: "14h00-16h00",
+        lastName: "Bikarrane",
+        firstName: "Mohamed",
+        email: "mohamed.bika@gmail.com",
+        gender: "Homme",
+        phone: "06445454512",
+        status: "present",
+      },
+      {
+        date: "26/05/2024",
+        time: "14h00-16h00",
+        lastName: "Bikarrane",
+        firstName: "Mohamed",
+        email: "mohamed.bika@gmail.com",
+        gender: "Homme",
+        phone: "06445454512",
+        status: "present",
+      },
+      {
+        date: "26/05/2024",
+        time: "14h00-16h00",
+        lastName: "Bikarrane",
+        firstName: "Mohamed",
+        email: "mohamed.bika@gmail.com",
+        gender: "Homme",
+        phone: "06445454512",
+        status: "present",
+      },
+      {
+        date: "26/05/2024",
+        time: "14h00-16h00",
+        lastName: "Bikarrane",
+        firstName: "Mohamed",
+        email: "mohamed.bika@gmail.com",
+        gender: "Homme",
+        phone: "06445454512",
+        status: "present",
+      },
+      {
+        date: "26/05/2024",
+        time: "14h00-16h00",
+        lastName: "Bikarrane",
+        firstName: "Mohamed",
+        email: "mohamed.bika@gmail.com",
+        gender: "Homme",
+        phone: "06445454512",
+        status: "present",
+      },
+      {
+        date: "26/05/2024",
+        time: "14h00-16h00",
+        lastName: "Bikarrane",
+        firstName: "Mohamed",
+        email: "mohamed.bika@gmail.com",
+        gender: "Homme",
+        phone: "06445454512",
+        status: "present",
+      },
+      {
+        date: "26/05/2024",
+        time: "14h00-16h00",
+        lastName: "Bikarrane",
+        firstName: "Mohamed",
+        email: "mohamed.bika@gmail.com",
+        gender: "Homme",
+        phone: "06445454512",
+        status: "present",
+      },
+      {
+        date: "26/05/2024",
+        time: "14h00-16h00",
+        lastName: "Bikarrane",
+        firstName: "Mohamed",
+        email: "mohamed.bika@gmail.com",
+        gender: "Homme",
+        phone: "06445454512",
+        status: "present",
+      },
+      {
+        date: "26/05/2024",
+        time: "14h00-16h00",
+        lastName: "Bikarrane",
+        firstName: "Mohamed",
+        email: "mohamed.bika@gmail.com",
+        gender: "Homme",
+        phone: "06445454512",
+        status: "present",
+      },
+      {
+        date: "26/05/2024",
+        time: "14h00-16h00",
+        lastName: "Bikarrane",
+        firstName: "Mohamed",
+        email: "mohamed.bika@gmail.com",
+        gender: "Homme",
+        phone: "06445454512",
+        status: "present",
+      },
+      {
+        date: "26/05/2024",
+        time: "14h00-16h00",
+        lastName: "Bikarrane",
+        firstName: "Mohamed",
+        email: "mohamed.bika@gmail.com",
+        gender: "Homme",
+        phone: "06445454512",
+        status: "present",
+      },
+    ]);
+    
+    setStatsMetrics([
+      { label: "Taux de completion", value: null },
+      { label: "Taux Satisfaction", value: null },
+      { label: "Heures", value: null },
+    ]);
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    
+    try {
+      // Reload data
+      await loadFormationData();
+      
+      // Update timestamp
+      const now = new Date();
+      const formattedDate = formatDateTime(now);
+      setLastUpdated(formattedDate);
+      
+      // Store in localStorage for persistence
+      localStorage.setItem(`formation_${formation.id}_lastUpdate`, formattedDate);
+    } catch (error) {
+      console.error("Erreur lors de l'actualisation des données:", error);
+      // You could add error handling/notification here
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   const totalParticipantsPages = Math.ceil(participants.length / PARTICIPANTS_PER_PAGE);
 
-  const statsMetrics: StatMetric[] = [
-    { label: "Taux de completion", value: null },
-    { label: "Taux Satisfaction", value: null },
-    { label: "Heures", value: null },
-  ];
 
   return (
     <div className="bg-white min-h-screen p-1 font-inter">
@@ -196,9 +238,19 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
 
           <div className="flex items-center gap-4">
             <span className="text-sm text-[#595959]">
-              Données actualisées le 20/10/2025 à 8H02
+              Données actualisées le {lastUpdated}
             </span>
-            <button className="flex items-center gap-1 text-black font-medium text-sm ml-1">
+            <button 
+              className="flex items-center gap-1 text-black font-medium text-sm ml-1"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+            >
+              <RefreshCw 
+                size={16} 
+                className={isRefreshing ? "animate-spin" : ""} 
+              />
+              {isRefreshing ? "Actualisation..." : "Actualiser"}
+
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4C7.58 4 4 7.58 4 12C4 16.42 7.58 20 12 20C15.73 20 18.84 17.45 19.73 14H17.65C16.83 16.33 14.61 18 12 18C8.69 18 6 15.31 6 12C6 8.69 8.69 6 12 6C13.66 6 15.14 6.69 16.22 7.78L13 11H20V4L17.65 6.35Z" fill="currentColor"/>
               </svg>
@@ -213,7 +265,6 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
           subtitle={formation.title}
           status={formation.status}
         />
-
 
         {/* Documents and Stats Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">

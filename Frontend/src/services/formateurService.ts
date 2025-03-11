@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import apiClient from './apiClient';
 
 interface Formateur {
@@ -82,3 +83,15 @@ export const deleteFormateur = async (id: string) => {
     throw error;
   }
 };
+// debut :
+export const getNbrEvenementsAssocies= async ()=>{
+  try {
+    console.log("debut de getNbrEvents.............")
+    const response=await apiClient.get('/formateur/getNbrEvenementsAssocies');
+    return response.data;
+  } catch (error) {
+    console.log("erreuuuuuuur dans getNbrEvenementsAssocies ",error);
+    throw error;
+  }
+}
+// fin : 

@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getAllFormations as fetchFormations, createFormation as addFormation } from '../services/formationService';
 import { deleteFormation as apiDeleteFormation, updateFormation as ipUpdateFormation } from '../services/formationService';
-import {getNbrBeneficiairesParFormateur} from "../services/formationService";
+import {getNbrBeneficiairesParFormateur, getBeneficiaireFormation as fetchBeneficiaires} from "../services/formationService";
 interface Formation {
   _id?: string;
   nom: string;
@@ -9,19 +9,36 @@ interface Formation {
   dateFin: string;
   lienInscription: string;
   tags: string;
-  status?: "En Cours" | "Terminer" | "Replanifier";
+  status?: "En Cours" | "Terminé" | "Avenir" | "Replanifier";
   image?: File | string; // include image url
+  createdAt?: string; //  Add this field
+}
+interface Beneficiaire {
+  _id?: string;
+  nom: string;
+  prenom: string;
+  email: string;
+  genre: string;
+  pays: string;
+  specialite: string;
+  etablissement: string;
+  profession: string;
+  isBlack: boolean;
+  isSaturate: boolean;
 }
 
 interface FormationContextType {
   formations: Formation[];
+  filteredFormations: Formation[];
   loading: boolean;
   error: string | null;
   addNewFormation: (formationData: Formation) => Promise<void>;
   deleteFormation: (id: string) => Promise<void>;
   updateFormation: (id: string, formationData: Partial<Formation>) => Promise<void>;
   refreshFormations: () => Promise<void>;
-  nombreBeneficiaires: number | null; // Ajoutez par saloua
+  searchFormations: (query: string) => void;
+  nombreBeneficiaires: number | null; 
+  getBeneficiaireFormation: (formationId: string) => Promise<Beneficiaire[]>;
 }
 
 interface FormationProviderProps {
@@ -32,6 +49,7 @@ const FormationContext = createContext<FormationContextType | undefined>(undefin
 
 export const FormationProvider: React.FC<FormationProviderProps> = ({ children }) => {
   const [formations, setFormations] = useState<Formation[]>([]);
+  const [filteredFormations, setFilteredFormations] = useState<Formation[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [nombreBeneficiaires, setNombreBeneficiaires] = useState<number | null>(null); // Nouvel état
@@ -63,6 +81,7 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
         
         setFormations(formationsData);
         setNombreBeneficiaires(beneficiairesData.nombreBeneficiaires);
+        setFilteredFormations(formationsData); // Initially, filtered is same as all
         setError(null);
       } catch (error) {
         console.error('Erreur lors du chargement des données', error);
@@ -75,10 +94,6 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
     getFormations();
     fetchNombreBeneficiaires();
   }, []);
-
-  // debut : 
- 
-  // fin : 
   const refreshFormations = async () => {
     setLoading(true);
     try {
@@ -156,13 +171,40 @@ const addNewFormation = async (formationData: Formation) => {
     }
   };
 
+  const searchFormations = (query: string) => {
+    if (!query.trim()) {
+      // If query is empty, show all formations
+      setFilteredFormations(formations);
+      return;
+    }
+
+    // Filter formations based on query (case-insensitive)
+    const results = formations.filter(formation => 
+      formation.nom.toLowerCase().includes(query.toLowerCase()) ||
+      formation.status.toLowerCase().includes(query.toLowerCase()) ||
+      (formation.tags && formation.tags.toLowerCase().includes(query.toLowerCase()))
+    );
+    
+    setFilteredFormations(results);
+  };
+
+  const getBeneficiaireFormation = async (id: string): Promise<Beneficiaire[]> => {
+    try {
+      console.log("appel de la fct getBeneficiaireFormation de contexte");
+      return await fetchBeneficiaires(id);
+    } catch (error) {
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "Erreur lors de la récupération des bénéficiaires";
+      setError(errorMessage);
+      throw error;
+    }
+  };
   return (
-    <FormationContext.Provider value={{ formations, loading, error, addNewFormation, deleteFormation, updateFormation, refreshFormations ,nombreBeneficiaires,}}>
+    <FormationContext.Provider value={{ formations, loading, error, addNewFormation, deleteFormation, updateFormation, refreshFormations, filteredFormations,searchFormations, nombreBeneficiaires,getBeneficiaireFormation }}>
       {children}
     </FormationContext.Provider>
   );
-
-
 };
 
 export const useFormations = (): FormationContextType => {
