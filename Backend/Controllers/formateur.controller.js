@@ -259,51 +259,34 @@ const getNbrEvenementsAssocies = async (req, res) => {
     if (role !== 'Formateur') {
       return res.status(403).json({ message: 'Accès réservé aux formateurs' });
     }
-
-    //  Récupération du formateur et vérification
-    const formateur = await Formateur.findOne({ utilisateur: userId })
-      .populate('manager');
-    if (!formateur?.manager?._id) {
-      return res.status(404).json({ message: 'Formateur ou manager non trouvé' });
+    
+    // 1. Récupération du formateur et vérification
+    const formateur = await Formateur.findOne({ utilisateur: userId });
+    
+    if (!formateur) {
+      return res.status(404).json({ message: ' non trouvé pour  formateur' });
     }
-    //  Recherche du coordinateur associé 
-    const coordinateurAssocie = await Coordinateur.findOne({ 
-      manager: formateur.manager._id 
-    });
-    //  Construction dynamique des conditions de recherche
-    const organisateursConditions = [
-      { 
-        organisateurType: 'Formateur', 
-        organisateur: formateur._id 
-      }
-    ];
-
-    if (coordinateurAssocie?._id) {
-      organisateursConditions.push({
-        organisateurType: 'Coordinateur',
-        organisateur: coordinateurAssocie._id
-      });
-    }
-
-    //  Requête des événements
+    // 3. Construction de la liste des IDs utilisateurs autorisés
+    const organisateursIds = [userId]; // ID utilisateur du formateur
+    // 4. Requête des événements avec le nouveau schéma
     const evenements = await Evenement.find({
-      $or: organisateursConditions,
-      dateDebut: { $gte: currentDate }
+      organisateur: { $in: organisateursIds },
+      dateDebut: { $gte: currentDate },
+      // isValidate: true 
     })
-    .populate('organisateur')
     .sort({ dateDebut: 1 });
 
-    // 5. Calcul des stats
-    const stats = {
-      total: evenements.length,
-      parType: {
-        formateur: evenements.filter(e => e.organisateurType === 'Formateur').length,
-        coordinateur: evenements.filter(e => e.organisateurType === 'Coordinateur').length
-      },
-      prochainEvenement: evenements[0] || null
+    // 5. Formatage de la réponse
+    const response = {
+      count: evenements.length,
+      prochainEvenement: evenements[0] ? {
+        titre: evenements[0].titre,
+        date: evenements[0].dateDebut,
+        heure: evenements[0].heureDebut
+      } : null
     };
 
-    res.status(200).json(stats);
+    res.status(200).json(response);
 
   } catch (error) {
     console.error('Erreur lors de la récupération des événements:', error);

@@ -1,17 +1,17 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2,FileText } from "lucide-react";
 
 import test from '@/assets/images/test.jpg';
 
 interface FormationItem {
-  id: string;
-  title: string;
-  status: "En Cours" | "Terminé" | "Avenir" | "Replanifier";
-  image: string|File;
-  dateDebut: string;
-  dateFin?: string;
-  dateCreated?: string;
+    id: string;
+    title: string;
+    status: "En Cours" | "Terminé" | "Avenir" | "Replanifier";
+    image?: string; 
+    isDraft?:boolean;
+    currentStep?:number;
+
 }
 
 interface FormationCardProps {
@@ -22,6 +22,7 @@ interface FormationCardProps {
 }
   
 const FormationCard = ({ formation, onEdit, onDelete, onAccess }: FormationCardProps) => {
+  console.log("la froamtion recueille :",formation);
   const getStatusClass = () => {
     switch (formation.status) {
       case "En Cours":
@@ -58,6 +59,12 @@ const FormationCard = ({ formation, onEdit, onDelete, onAccess }: FormationCardP
           <div className={`px-3 py-1 rounded-full ${getStatusClass()}`}>
             {formation.status}
           </div>
+          {formation.isDraft && (
+              <div className="px-3 py-1 rounded-full bg-gray-100 text-gray-600 flex items-center">
+                <FileText className="w-4 h-4 mr-1" />
+                <span>Brouillon</span>
+              </div>
+            )}
           <div className="flex space-x-3">
             <Trash2
               className="w-5 h-5 text-red-500 hover:text-red-700 cursor-pointer transition"
