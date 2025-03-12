@@ -543,11 +543,12 @@ const FormationModal = () => {
   console.log("nuemro de step : ",currentStep);
       await createFormationDraft(formationData);
       
-      setFormState(initialFormState);
-      setFileList([]);
       alert('Formation créée avec succès!');
-      navigate("formateur/dashboardFormateur");
       setFormState(initialFormState);
+      
+      setFileList([]);
+      navigate("/formateur/mesformation");
+
     } catch (error) {
       console.error('Error submitting formation:', error);
       alert('Erreur lors de la création de la formation. Veuillez réessayer.');
