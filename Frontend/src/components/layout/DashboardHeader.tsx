@@ -193,9 +193,8 @@ export function DashboardHeader() {
 
               {/* Notifications Icon */}
               <NotificationProvider>
-                  <NotificationButton />
-                              <NotificationBell />
-                  </NotificationProvider>
+                <NotificationBell />
+              </NotificationProvider>
 
 
               {/* User Info */}

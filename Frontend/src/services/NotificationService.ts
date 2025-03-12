@@ -14,8 +14,8 @@ class NotificationService {
   /**
    * Sends a notification to the user's manager
    */
-  async sendToManager(message: string, type: string = 'message'): Promise<void> {
-    await apiClient.post('/notifications/send-to-manager', { message, type });
+  async sendToManager(type: string, entityId: string): Promise<void> {
+    await apiClient.post('/notifications/send-to-manager', { type, entityId });
   }
 
   /**
@@ -28,31 +28,29 @@ class NotificationService {
   /**
    * Creates a general notification (admin only)
    */
-  async createNotification(receiverId: string, message: string, type: string = 'message'): Promise<void> {
-    await apiClient.post('/notifications/create', { 
-      receiverId, 
-      message, 
-      type 
+  async createNotification(receiverId: string, type: string, entityId: string): Promise<void> {
+    await apiClient.post('/notifications/create', {
+      receiverId,
+      type,
+      entityId
     });
   }
     
   /**
-   * Accept a notification with optional response
+   * Accept a notification
    */
-  async acceptNotification(id: string, response: string = ""): Promise<void> {
-    await apiClient.put(`/notifications/${id}/process`, { 
-      status: "accepted", 
-      response 
+  async acceptNotification(id: string): Promise<void> {
+    await apiClient.put(`/notifications/${id}/process`, {
+      status: "accepted"
     });
   }
     
   /**
-   * Decline a notification with optional reason
+   * Decline a notification
    */
-  async declineNotification(id: string, response: string = ""): Promise<void> {
-    await apiClient.put(`/notifications/${id}/process`, { 
-      status: "declined", 
-      response 
+  async declineNotification(id: string): Promise<void> {
+    await apiClient.put(`/notifications/${id}/process`, {
+      status: "declined"
     });
   }
 }

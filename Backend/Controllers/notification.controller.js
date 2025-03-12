@@ -5,12 +5,17 @@ const { Utilisateur } = require("../Models/utilisateur.model");
 // Create a new notification
 const createNotification = async (req, res) => {
   try {
-    const { message, receiverId, type, relatedTo } = req.body;
+    const { type, entityId, receiverId } = req.body;
     const senderId = req.user.userId;
 
     // Validate required fields
-    if (!message || !receiverId) {
-      return res.status(400).json({ message: "Message and receiver are required" });
+    if (!type || !entityId || !receiverId) {
+      return res.status(400).json({ message: "Type, entityId and receiver are required" });
+    }
+
+    // Validate type enum
+    if (!["formation", "evenement"].includes(type)) {
+      return res.status(400).json({ message: "Type must be 'formation' or 'evenement'" });
     }
 
     // Check if receiver exists
@@ -23,9 +28,9 @@ const createNotification = async (req, res) => {
     const notification = new Notification({
       sender: senderId,
       receiver: receiverId,
-      message,
-      type: type || "message",
-      relatedTo: relatedTo || null
+      type,
+      entityId,
+      status: "pending"
     });
 
     // Save notification
@@ -36,8 +41,8 @@ const createNotification = async (req, res) => {
     io.to(receiverId).emit('notification', {
       _id: notification._id,
       sender: senderId,
-      message,
       type: notification.type,
+      entityId: notification.entityId,
       createdAt: notification.createdAt
     });
 
@@ -55,7 +60,17 @@ const createNotification = async (req, res) => {
 const sendNotificationToManager = async (req, res) => {
   try {
     const formateurId = req.user.userId;
-    const { message, type, relatedTo } = req.body;
+    const { type, entityId } = req.body;
+
+    // Validate required fields
+    if (!type || !entityId) {
+      return res.status(400).json({ message: "Type and entityId are required" });
+    }
+
+    // Validate type enum
+    if (!["formation", "evenement"].includes(type)) {
+      return res.status(400).json({ message: "Type must be 'formation' or 'evenement'" });
+    }
 
     // Find formateur to get manager
     const formateur = await Formateur.findOne({ utilisateur: formateurId }).populate("manager");
@@ -78,9 +93,9 @@ const sendNotificationToManager = async (req, res) => {
     const notification = new Notification({
       sender: formateurId,
       receiver: managerUser._id,
-      message,
-      type: type || "message",
-      relatedTo: relatedTo || null
+      type,
+      entityId,
+      status: "pending"
     });
 
     // Save notification
@@ -91,8 +106,8 @@ const sendNotificationToManager = async (req, res) => {
     io.to(managerUser._id.toString()).emit('notification', {
       _id: notification._id,
       sender: formateurId,
-      message,
       type: notification.type,
+      entityId: notification.entityId,
       createdAt: notification.createdAt
     });
 
@@ -150,11 +165,11 @@ const markNotificationAsRead = async (req, res) => {
   }
 };
 
-// Add to notification.controller.js
+// Process notification (accept or decline)
 const processNotification = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, response } = req.body;
+    const { status } = req.body;
     const userId = req.user.userId;
 
     if (!['accepted', 'declined'].includes(status)) {
@@ -173,24 +188,17 @@ const processNotification = async (req, res) => {
 
     // Update notification status
     notification.status = status;
-    notification.response = response || "";
     notification.isRead = true;
     await notification.save();
 
     // Create response notification for the sender
-    const responseMessage = status === 'accepted' 
-      ? `Votre demande a été acceptée: ${response || ''}`
-      : `Votre demande a été refusée: ${response || ''}`;
-
     const responseNotification = new Notification({
       sender: userId,
       receiver: notification.sender._id,
-      message: responseMessage,
-      type: status === 'accepted' ? 'info' : 'alert',
-      status: 'pending', // No need for the sender to respond to this
-      relatedTo: {
-        id: notification._id // No need to specify `model`, as it defaults to "Notification"
-      }    });
+      type: notification.type,
+      entityId: notification.entityId,
+      status: "pending"
+    });
 
     await responseNotification.save();
 
@@ -199,8 +207,9 @@ const processNotification = async (req, res) => {
     io.to(notification.sender._id.toString()).emit('notification', {
       _id: responseNotification._id,
       sender: userId,
-      message: responseMessage,
       type: responseNotification.type,
+      entityId: responseNotification.entityId,
+      status: status,
       createdAt: responseNotification.createdAt
     });
 
@@ -213,7 +222,6 @@ const processNotification = async (req, res) => {
     res.status(500).json({ message: "Error processing notification", error: error.message });
   }
 };
-
 
 module.exports = {
   createNotification,

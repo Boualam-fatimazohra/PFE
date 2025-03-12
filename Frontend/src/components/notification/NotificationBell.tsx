@@ -1,6 +1,6 @@
 // src/components/notification/NotificationBell.tsx
 import { useState, useRef, useEffect } from 'react';
-import { Bell, MessageSquare, AlertTriangle, Info, Check } from 'lucide-react';
+import { Bell, Calendar, BookOpen, Check, X } from 'lucide-react';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -17,7 +17,6 @@ const NotificationBell: React.FC = () => {
   } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
   const [activeNotification, setActiveNotification] = useState<string | null>(null);
-  const [responseText, setResponseText] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -35,29 +34,37 @@ const NotificationBell: React.FC = () => {
   // Get notification icon based on type
   const getNotificationIcon = (type: string) => {
     switch (type) {
-      case 'message':
-        return <MessageSquare size={16} className="text-blue-500" />;
-      case 'alert':
-        return <AlertTriangle size={16} className="text-red-500" />;
-      case 'info':
-        return <Info size={16} className="text-green-500" />;
+      case 'formation':
+        return <BookOpen size={16} className="text-blue-500" />;
+      case 'evenement':
+        return <Calendar size={16} className="text-green-500" />;
       default:
-        return <MessageSquare size={16} className="text-blue-500" />;
+        return <Bell size={16} className="text-gray-500" />;
+    }
+  };
+
+  // Get notification title based on type
+  const getNotificationTitle = (type: string) => {
+    switch (type) {
+      case 'formation':
+        return 'Nouvelle formation créée';
+      case 'evenement':
+        return 'Nouvel événement à approuver';
+      default:
+        return 'Notification';
     }
   };
 
   const handleAccept = async (id: string) => {
-    await acceptNotification(id, responseText);
+    await acceptNotification(id);
     setActiveNotification(null);
-    setResponseText("");
-    toast.success("Notification acceptée");
+    toast.success("Approuvé avec succès");
   };
 
   const handleDecline = async (id: string) => {
-    await declineNotification(id, responseText);
+    await declineNotification(id);
     setActiveNotification(null);
-    setResponseText("");
-    toast.info("Notification refusée");
+    toast.info("Refusé");
   };
 
   // Handle marking a notification as read
@@ -79,7 +86,7 @@ const NotificationBell: React.FC = () => {
   return (
     <div className="relative" ref={dropdownRef}>
       <button
-        className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-full"
+        className="relative p-2 text-white hover:bg-gray-700 rounded-full"
         onClick={() => setIsOpen(!isOpen)}
       >
         <Bell size={20} />
@@ -115,7 +122,7 @@ const NotificationBell: React.FC = () => {
                           {notification.sender.prenom} {notification.sender.nom}
                         </p>
                         <p className="text-sm text-gray-600 mt-1">
-                          {notification.message}
+                          {getNotificationTitle(notification.type)}
                         </p>
                         <div className="flex justify-between items-center mt-1">
                           <span className="text-xs text-gray-500">
@@ -129,79 +136,44 @@ const NotificationBell: React.FC = () => {
                                 ? 'text-green-500' 
                                 : 'text-red-500'
                             }`}>
-                              {notification.status === 'accepted' ? 'Acceptée' : 'Refusée'}
+                              {notification.status === 'accepted' ? 'Approuvé' : 'Refusé'}
                             </span>
                           )}
                         </div>
                         
-                        {/* Response display if there's any */}
-                        {notification.response && (
-                          <div className="mt-1 p-1.5 bg-gray-50 rounded-sm text-xs text-gray-700">
-                            <span className="font-medium">Réponse:</span> {notification.response}
-                          </div>
-                        )}
+                        {/* Reference to entityId - could be enhanced to show actual entity details */}
+                        <div className="mt-1 text-xs text-gray-500">
+  ID: {notification.entityId ? notification.entityId.substring(0, 8) + '...' : 'N/A'}
+</div>for
                         
                         {/* Action buttons for Manager */}
                         {notification.status === 'pending' && (
-                          <div className="mt-2 flex justify-end">
-                            {activeNotification !== notification._id ? (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setActiveNotification(notification._id);
-                                }}
-                                className="text-xs bg-blue-500 text-white px-2 py-1 rounded"
-                              >
-                                Répondre
-                              </button>
-                            ) : null}
+                          <div className="mt-2 flex justify-end space-x-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAccept(notification._id);
+                              }}
+                              className="text-xs bg-green-500 text-white px-2 py-1 rounded flex items-center"
+                            >
+                              <Check size={12} className="mr-1" />
+                              Approuver
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDecline(notification._id);
+                              }}
+                              className="text-xs bg-red-500 text-white px-2 py-1 rounded flex items-center"
+                            >
+                              <X size={12} className="mr-1" />
+                              Refuser
+                            </button>
                           </div>
                         )}
                       </div>
                     </div>
                   </div>
-                  
-                  {/* Response form when a notification is active */}
-                  {activeNotification === notification._id && (
-                    <div className="p-3 bg-gray-50 border-b">
-                      <textarea
-                        value={responseText}
-                        onChange={(e) => setResponseText(e.target.value)}
-                        placeholder="Votre réponse..."
-                        className="w-full p-2 border rounded text-sm mb-2"
-                        rows={2}
-                      />
-                      <div className="flex justify-end space-x-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveNotification(null);
-                          }}
-                          className="text-xs bg-gray-300 text-gray-700 px-2 py-1 rounded"
-                        >
-                          Annuler
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAccept(notification._id);
-                          }}
-                          className="text-xs bg-green-500 text-white px-2 py-1 rounded"
-                        >
-                          Accepter
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDecline(notification._id);
-                          }}
-                          className="text-xs bg-red-500 text-white px-2 py-1 rounded"
-                        >
-                          Refuser
-                        </button>
-                      </div>
-                    </div>
-                  )}
                 </React.Fragment>
               ))
             )}

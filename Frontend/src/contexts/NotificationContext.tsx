@@ -14,11 +14,10 @@ export interface NotificationItem {
     prenom: string;
   };
   receiver: string;
-  message: string;
-  type: 'message' | 'alert' | 'info';
+  type: 'formation' | 'evenement';
   isRead: boolean;
   status: 'pending' | 'accepted' | 'declined';
-  response?: string;
+  entityId: string;
   createdAt: string;
 }
 
@@ -26,10 +25,10 @@ interface NotificationContextType {
   notifications: NotificationItem[];
   unreadCount: number;
   fetchNotifications: () => Promise<void>;
-  sendNotification: (message: string, type: string) => Promise<boolean>;
+  sendNotification: (type: string, entityId: string) => Promise<boolean>;
   markAsRead: (id: string) => Promise<void>;
-  acceptNotification: (id: string, response: string) => Promise<void>;
-  declineNotification: (id: string, response: string) => Promise<void>;
+  acceptNotification: (id: string) => Promise<void>;
+  declineNotification: (id: string) => Promise<void>;
   loading: boolean;
   error: string | null;
 }
@@ -82,8 +81,9 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         newSocket.on('notification', (data) => {
           // Update notifications when a new one arrives
           fetchNotifications();
-          // Show toast notification
-          toast.info(`Nouvelle notification: ${data.message}`);
+          // Show toast notification based on notification type
+          const notificationType = data.type === 'formation' ? 'Nouvelle formation' : 'Nouvel événement';
+          toast.info(`${notificationType} à examiner`);
         });
       } catch (err) {
         console.error('Error parsing user data:', err);
@@ -99,9 +99,9 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     };
   }, [fetchNotifications]); // Add fetchNotifications to dependency array
 
-  const sendNotification = async (message: string, type: string = 'message'): Promise<boolean> => {
+  const sendNotification = async (type: string, entityId: string): Promise<boolean> => {
     try {
-      await NotificationService.sendToManager(message, type);
+      await NotificationService.sendToManager(type, entityId);
       // Refresh notifications after sending
       await fetchNotifications();
       return true;
@@ -128,15 +128,15 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     }
   };
 
-  const acceptNotification = async (id: string, response: string = "") => {
+  const acceptNotification = async (id: string) => {
     try {
-      await NotificationService.acceptNotification(id, response);
+      await NotificationService.acceptNotification(id);
       
       // Update local state
       setNotifications(prevNotifications => 
         prevNotifications.map(notification => 
           notification._id === id 
-            ? { ...notification, isRead: true, status: "accepted", response } 
+            ? { ...notification, isRead: true, status: "accepted" } 
             : notification
         )
       );
@@ -146,15 +146,15 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     }
   };
 
-  const declineNotification = async (id: string, response: string = "") => {
+  const declineNotification = async (id: string) => {
     try {
-      await NotificationService.declineNotification(id, response);
+      await NotificationService.declineNotification(id);
       
       // Update local state
       setNotifications(prevNotifications => 
         prevNotifications.map(notification => 
           notification._id === id 
-            ? { ...notification, isRead: true, status: "declined", response } 
+            ? { ...notification, isRead: true, status: "declined" } 
             : notification
         )
       );
