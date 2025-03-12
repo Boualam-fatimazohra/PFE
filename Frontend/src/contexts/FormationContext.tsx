@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getAllFormations as fetchFormations, createFormation as addFormation } from '../services/formationService';
 import { deleteFormation as apiDeleteFormation, updateFormation as ipUpdateFormation } from '../services/formationService';
-import {getNbrBeneficiairesParFormateur, getBeneficiaireFormation as fetchBeneficiaires} from "../services/formationService";
+import {getNbrBeneficiairesParFormateur, getBeneficiaireFormation as fetchBeneficiaires ,  createFormationDraft as createFormationDraftService } from "../services/formationService";
 interface Formation {
   _id?: string;
   nom: string;
@@ -39,6 +39,7 @@ interface FormationContextType {
   searchFormations: (query: string) => void;
   nombreBeneficiaires: number | null; 
   getBeneficiaireFormation: (formationId: string) => Promise<Beneficiaire[]>;
+  createFormationDraft: (formationData: any) => Promise<void>; // Ajoutez cette ligne
 }
 
 interface FormationProviderProps {
@@ -200,8 +201,23 @@ const addNewFormation = async (formationData: Formation) => {
       throw error;
     }
   };
+  const createFormationDraft = async (formationData:any) => {
+    try {
+      setError(null);
+      const newDraft = await createFormationDraftService(formationData);
+      setFormations(prev => [...prev, newDraft]);
+      return newDraft;
+    } catch (error) {
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "Erreur lors de la création du brouillon";
+      console.error(errorMessage);
+      setError(errorMessage);
+      throw error;
+    }
+  };
   return (
-    <FormationContext.Provider value={{ formations, loading, error, addNewFormation, deleteFormation, updateFormation, refreshFormations, filteredFormations,searchFormations, nombreBeneficiaires,getBeneficiaireFormation }}>
+    <FormationContext.Provider value={{ formations, loading, error, addNewFormation, deleteFormation, updateFormation, refreshFormations, filteredFormations,searchFormations, nombreBeneficiaires,getBeneficiaireFormation  ,  createFormationDraft}}>
       {children}
     </FormationContext.Provider>
   );

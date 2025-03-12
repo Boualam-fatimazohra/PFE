@@ -11,6 +11,11 @@ const {
 const authorizeRoles = require('../Middlewares/RoleMiddleware.js');
 const { upload } = require('../Config/cloudinaryConfig.js');
 const authorizeFormationAccess = require('../Middlewares/FormationAccess.js');
+const { 
+  getFormationStep, 
+  updateFormationStep ,
+  createFormationDraft
+} = require('../Controllers/formationDraft.controller'); // Ajustez le chemin selon votre structure
 
 const router = express.Router();
 // Route to add a new formation (Protected route: Only authenticated users can access)
@@ -20,6 +25,11 @@ router.post('/Addformation',
     upload.single("image"),
     createFormation
 );
+router.post('/createFormationDraft',
+    authenticated,
+    authorizeRoles('Formateur'),
+    upload.single("image"),
+    createFormationDraft);
 
 // Route to get all formations
 router.get('/getAllFormations', 
@@ -58,6 +68,8 @@ router.get('/getFormations',
     authorizeRoles('Formateur'),
     getFormations
 );
+router.get('/formation-draft/:formationId', authenticated, getFormationStep);
 
-
+// Route pour incrémenter le currentStep d'une FormationDraft
+router.put('/formation-draft/:formationId', authenticated, updateFormationStep);
 module.exports = router;

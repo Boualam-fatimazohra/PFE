@@ -1,17 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // contexts/EvenementsContext.tsx
 import  { createContext, useContext, useEffect, useState } from 'react';
-import { getNbrEvenementsAssocies } from '../services/formateurService.js';
+import {getNbrEvenementsAssocies} from '../services/formateurService.js';
 
 interface EvenementsStats {
-  total: number;
-  parType: {
-    formateur: number;
-    coordinateur: number;
-  };
-  prochainEvenement: any | null; // Remplacez "any" par votre interface d'événement si disponible
+  count: number;
+  prochainEvenement: {
+    titre: string;
+    date: string; // Format ISO 8601
+    heure: string; // Format HH:mm
+  } | null;
 }
-
 interface EvenementsContextType {
   stats: EvenementsStats | null;
   isLoadingEvenements: boolean;
