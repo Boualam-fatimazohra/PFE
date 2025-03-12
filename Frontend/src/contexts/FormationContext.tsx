@@ -2,7 +2,7 @@ import axios from 'axios';
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getAllFormations as fetchFormations, createFormation as addFormation } from '../services/formationService';
 import { deleteFormation as apiDeleteFormation, updateFormation as ipUpdateFormation } from '../services/formationService';
-import {getNbrBeneficiairesParFormateur, getBeneficiaireFormation as fetchBeneficiaires ,  createFormationDraft as createFormationDraftService ,getAllFormationsDraftOrNot } from "../services/formationService";
+import {getNbrBeneficiairesParFormateur, getBeneficiaireFormation as fetchBeneficiaires ,  createFormationDraft as createFormationDraftService} from "../services/formationService";
 
 interface Formation {
   _id?: string;
@@ -246,7 +246,7 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
         ? error.message 
         : "Erreur lors de la création du brouillon";
 
-
+    }}
   const sendEvaluationFormation = async (beneficiaryIds: string[], formationId: string) => {
     try {
       setError(null);
@@ -276,7 +276,7 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
       nombreBeneficiaires,
       getBeneficiaireFormation,
       sendEvaluationFormation,
-        createFormationDraft
+      createFormationDraft
     }}>
 
       {children}
