@@ -3,6 +3,12 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { logout } from "../../services/authServices";
 import Chatbot from "@/pages/Chatbot"; // Import the Chatbot component
+import NotificationButton from "../notification/NotificationButton";
+import { NotificationProvider } from "@/contexts/NotificationContext";
+import NotificationBell from "../notification/NotificationBell";
+import { io } from "socket.io-client";
+import { toast } from "react-toastify";
+import axios from "axios";
 
 export function DashboardHeader() {
   const [user, setUser] = useState(null);
@@ -10,6 +16,43 @@ export function DashboardHeader() {
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const [notifications, setNotifications] = useState([]);
+
+  useEffect(() => {
+    // Fetch notifications
+    const fetchNotifications = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/notifications', {
+          withCredentials: true
+        });
+        setNotifications(response.data);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      }
+    };
+    
+    fetchNotifications();
+    
+    // Set up socket connection
+    const socket = io('http://localhost:5000', { withCredentials: true });
+    
+    socket.on('connect', () => {
+      console.log('Connected to socket server');
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      socket.emit('join', { userId: user.userId, role: user.role });
+    });
+    
+    socket.on('notification', () => {
+      // Refresh notifications when new one arrives
+      fetchNotifications();
+      // Show a browser notification
+      toast.info("Nouvelle notification reçue");
+    });
+    
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     const userString = localStorage.getItem("user"); // Récupère la donnée sous forme de string
@@ -62,7 +105,7 @@ export function DashboardHeader() {
   if (user?.role === "Formateur") {
     navigationLinks = [
       { name: "Dashboard", path: "/formateur/dashboardFormateur" },
-      { name: "Mes Formations", path: "/formateur/mesformation" },
+      { name: "Mes Formations", path: "/formateur/mesformation", additionalPaths: ["/formateur/formationModal"] },
       { name: "Calendrier", path: "/formateur/CalendarView" },
       { name: "Mes Bénéficiaires", path: "/formateur/BeneficiairesList" },
       { name: "Evaluation", path: "/formateur/EvaluationPages"},
@@ -92,6 +135,21 @@ export function DashboardHeader() {
       { name: "Page Link", path: "/page-link-3" },
     ];
   }
+
+  // Function to check if a link should be highlighted
+  const isLinkActive = (link) => {
+    // Exact match
+    if (location.pathname === link.path) {
+      return true;
+    }
+    
+    // Check additional paths if defined
+    if (link.additionalPaths && link.additionalPaths.includes(location.pathname)) {
+      return true;
+    }
+
+    return false;
+  };
 
   // Fonction pour vérifier si l'utilisateur est sur une page Dashboard
   const isOnDashboard = () => {
@@ -124,7 +182,7 @@ export function DashboardHeader() {
                     key={index}
                     to={link.path}
                     className={`relative text-sm transition-colors font-medium ${
-                      location.pathname === link.path
+                      isLinkActive(link)
                         ? "text-orange-500 after:absolute after:bottom-[-22px] after:left-0 after:w-full after:h-[3px] after:bg-orange-500"
                         : "text-gray-300 hover:text-orange-500"
                     }`}>
@@ -152,12 +210,10 @@ export function DashboardHeader() {
              )}
 
               {/* Notifications Icon */}
-              <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M27.2 24.2L28.4576 26.2913C28.5688 26.4767 28.5717 26.7076 28.4652 26.8957C28.3587 27.0838 28.1592 27.2001 27.943 27.2H12.057C11.8408 27.2001 11.6413 27.0838 11.5348 26.8957C11.4283 26.7076 11.4312 26.4767 11.5424 26.2913L12.8 24.2V18.2C12.8 14.8451 15.093 12.0265 18.1994 11.2272V11C18.203 10.0081 19.0081 9.20596 20 9.20596C20.9919 9.20596 21.797 10.0081 21.8006 11V11.232C24.9004 12.0447 27.2 14.9 27.2 18.248V24.2Z" fill="white"/>
-                <path d="M21.6975 29.4972C21.2473 29.9473 20.6367 30.2001 20.0001 30.2C19.3634 30.2001 18.7528 29.9473 18.3026 29.4972C17.8524 29.0472 17.5994 28.4366 17.5992 27.8H22.4009C22.4008 28.4366 22.1478 29.0472 21.6975 29.4972Z" fill="white"/>
-                <rect x="21" y="1" width="19" height="19" rx="9.5" fill="#4170D8"/>
-                <path d="M29.9884 5.004C31.5564 5.004 33.2784 5.97 33.2784 7.72C33.2784 8.686 32.7884 9.47 31.9064 9.722V9.75C32.9984 9.988 33.6424 10.884 33.6424 11.976C33.6424 14.006 31.9344 15.196 30.0024 15.196C27.7764 15.196 26.3624 13.852 26.3624 11.738V11.626H28.2524C28.3084 12.858 28.9524 13.558 29.9744 13.558C30.8984 13.558 31.5704 12.928 31.5704 12.018C31.5704 10.884 30.8424 10.562 29.6104 10.562H29.3024V9.162H29.6664C30.7864 9.162 31.3884 8.714 31.3884 7.944C31.3884 7.118 30.7444 6.642 30.0024 6.642C29.2604 6.642 28.4904 7.076 28.4904 8.392H26.6004C26.6704 6.334 28.0004 5.004 29.9884 5.004Z" fill="white"/>
-              </svg>
+              <NotificationProvider>
+                <NotificationBell />
+              </NotificationProvider>
+
 
               {/* User Info */}
               <div className="flex items-center space-x-2">
