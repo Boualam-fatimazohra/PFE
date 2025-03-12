@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getAllFormations as fetchFormations, createFormation as addFormation } from '../services/formationService';
 import { deleteFormation as apiDeleteFormation, updateFormation as ipUpdateFormation } from '../services/formationService';
-import {getNbrBeneficiairesParFormateur, getBeneficiaireFormation as fetchBeneficiaires ,  createFormationDraft as createFormationDraftService } from "../services/formationService";
+import {getNbrBeneficiairesParFormateur, getBeneficiaireFormation as fetchBeneficiaires ,  createFormationDraft as createFormationDraftService ,getAllFormationsDraftOrNot } from "../services/formationService";
 interface Formation {
   _id?: string;
   nom: string;
@@ -12,6 +12,9 @@ interface Formation {
   status?: "En Cours" | "Terminé" | "Avenir" | "Replanifier";
   image?: File | string; // include image url
   createdAt?: string; //  Add this field
+  // Champs optionnels pour le draft
+  isDraft?: boolean;
+  currentStep?: number;
 }
 interface Beneficiaire {
   _id?: string;
@@ -39,7 +42,7 @@ interface FormationContextType {
   searchFormations: (query: string) => void;
   nombreBeneficiaires: number | null; 
   getBeneficiaireFormation: (formationId: string) => Promise<Beneficiaire[]>;
-  createFormationDraft: (formationData: any) => Promise<void>; // Ajoutez cette ligne
+  createFormationDraft: (formationData: any) => Promise<void>; // Ajoutez cette ligne,
 }
 
 interface FormationProviderProps {
@@ -81,6 +84,7 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
         ]);
         
         setFormations(formationsData);
+        console.log("formation de contexte",formationsData);
         setNombreBeneficiaires(beneficiairesData.nombreBeneficiaires);
         setFilteredFormations(formationsData); // Initially, filtered is same as all
         setError(null);
@@ -217,7 +221,7 @@ const addNewFormation = async (formationData: Formation) => {
     }
   };
   return (
-    <FormationContext.Provider value={{ formations, loading, error, addNewFormation, deleteFormation, updateFormation, refreshFormations, filteredFormations,searchFormations, nombreBeneficiaires,getBeneficiaireFormation  ,  createFormationDraft}}>
+    <FormationContext.Provider value={{ formations, loading, error, addNewFormation, deleteFormation, updateFormation, refreshFormations, filteredFormations,searchFormations, nombreBeneficiaires,getBeneficiaireFormation  ,  createFormationDraft }}>
       {children}
     </FormationContext.Provider>
   );

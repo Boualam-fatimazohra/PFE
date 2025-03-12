@@ -13,6 +13,8 @@ interface Formation {
   categorie?: string;
   niveau?: string;
   image?: File | string; // Allow both File (for uploads) and string (for URLs)
+   
+
 }
 
 export const getBeneficiaireFormation = async (id: string) => {
@@ -37,13 +39,22 @@ export const getBeneficiaireFormation = async (id: string) => {
 };
 export const getAllFormations = async () => {
   try {
-    const response = await apiClient.get('/formation/getFormations');
+    const response = await apiClient.get('/formation/getAllFormationsWithDraft');
     return response.data;
   } catch (error) {
     console.error('Error fetching formations:', error);
     throw error;
   }
 };
+// export const getAllFormationsDraftOrNot = async () => {
+//   try {
+//     const response = await apiClient.get('/formation/getAllFormations');
+//     return response.data;
+//   } catch (error) {
+//     console.error('Error fetching formations:', error);
+//     throw error;
+//   }
+// };
 export const getNbrBeneficiairesParFormateur=async ()=>{
   try {
     const response = await apiClient.get('/beneficiaires/getNbrBeneficiairesParFormateur');

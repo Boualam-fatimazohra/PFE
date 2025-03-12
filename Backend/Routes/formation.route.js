@@ -14,7 +14,8 @@ const authorizeFormationAccess = require('../Middlewares/FormationAccess.js');
 const { 
   getFormationStep, 
   updateFormationStep ,
-  createFormationDraft
+  createFormationDraft,
+  getAllFormationsWithDraftStatus
 } = require('../Controllers/formationDraft.controller'); // Ajustez le chemin selon votre structure
 
 const router = express.Router();
@@ -31,11 +32,19 @@ router.post('/createFormationDraft',
     upload.single("image"),
     createFormationDraft);
 
-// Route to get all formations
-router.get('/getAllFormations', 
+// Route to get all formations d'un formateur soit ce qui sont draft ou non
+router.get('/getAllFormationsWithDraft', 
     authenticated, 
+    authorizeRoles('Formateur'),
+    getAllFormationsWithDraftStatus
+);
+router.get('/getAllFormations', 
+    authenticated,
+    authorizeRoles('Manager'),
+    upload.single("image"),
     getAllFormations
 );
+
 
 // Route to delete a formation by ID
 router.delete('/DeleteFormation/:id', 

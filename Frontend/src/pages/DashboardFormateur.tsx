@@ -35,7 +35,7 @@ const DashboardFormateur: React.FC = () => {
       setIsLoading(false);
     }
   }, [formations]);
-  console.log("stats",stats);
+
   // Écoutez l'événement personnalisé depuis DashboardHeader
   useEffect(() => {
     const handleChatbotToggle = (event: CustomEvent) => {
@@ -97,7 +97,6 @@ const DashboardFormateur: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <DashboardHeader />
       <ToastContainer />
       
       <main className={`flex-grow ${selectedFormation ? 'bg-white' : 'bg-gray-50'}`}>
