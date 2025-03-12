@@ -18,6 +18,23 @@ const NotificationBell: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeNotification, setActiveNotification] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  // Get user role from localStorage properly
+  const getUserRole = () => {
+    try {
+      const userString = localStorage.getItem('user');
+      if (userString) {
+        const userData = JSON.parse(userString);
+        return userData.role;
+      }
+    } catch (err) {
+      console.error('Error parsing user data:', err);
+    }
+    return null;
+  };
+  
+  const userRole = getUserRole();
+  const isManager = userRole === 'Manager';
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -129,12 +146,12 @@ const NotificationBell: React.FC = () => {
                             {formatDate(notification.createdAt)}
                           </span>
                           
-                          {/* Status indicator */}
+                          {/* Status indicator for non-pending notifications */}
                           {notification.status !== 'pending' && (
-                            <span className={`text-xs font-medium ${
+                            <span className={`text-xs font-medium px-2 py-1 rounded-full ${
                               notification.status === 'accepted' 
-                                ? 'text-green-500' 
-                                : 'text-red-500'
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-red-100 text-red-800'
                             }`}>
                               {notification.status === 'accepted' ? 'Approuvé' : 'Refusé'}
                             </span>
@@ -143,11 +160,11 @@ const NotificationBell: React.FC = () => {
                         
                         {/* Reference to entityId - could be enhanced to show actual entity details */}
                         <div className="mt-1 text-xs text-gray-500">
-  ID: {notification.entityId ? notification.entityId.substring(0, 8) + '...' : 'N/A'}
-</div>for
+                          ID: {notification.entityId ? notification.entityId.substring(0, 8) + '...' : 'N/A'}
+                        </div>
                         
-                        {/* Action buttons for Manager */}
-                        {notification.status === 'pending' && (
+                        {/* Action buttons - ONLY for Manager role & pending notifications */}
+                        {notification.status === 'pending' && isManager && (
                           <div className="mt-2 flex justify-end space-x-2">
                             <button
                               onClick={(e) => {
@@ -169,6 +186,15 @@ const NotificationBell: React.FC = () => {
                               <X size={12} className="mr-1" />
                               Refuser
                             </button>
+                          </div>
+                        )}
+                        
+                        {/* For Formateur, show "En attente" for pending notifications */}
+                        {notification.status === 'pending' && !isManager && (
+                          <div className="mt-2 text-right">
+                            <span className="text-xs font-medium px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">
+                              En attente
+                            </span>
                           </div>
                         )}
                       </div>

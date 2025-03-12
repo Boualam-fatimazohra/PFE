@@ -168,6 +168,8 @@ const markNotificationAsRead = async (req, res) => {
 // Process notification (accept or decline)
 const processNotification = async (req, res) => {
   try {
+    console.log("Notification Updated Status");
+    console.log("Notification Status:", req.body.status);
     const { id } = req.params;
     const { status } = req.body;
     const userId = req.user.userId;
@@ -190,7 +192,7 @@ const processNotification = async (req, res) => {
     notification.status = status;
     notification.isRead = true;
     await notification.save();
-
+    console.log("Updated Status: ", notification.status);
     // Create response notification for the sender
     const responseNotification = new Notification({
       sender: userId,
