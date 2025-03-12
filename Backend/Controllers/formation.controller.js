@@ -1,11 +1,14 @@
 
 const Formation = require('../Models/formation.model.js');
 const Formateur  = require('../Models/formateur.model.js');
+const Manager = require('../Models/manager.model.js');
+const Notification = require('../Models/notification.model.js');
 const { cloudinary } = require('../Config/cloudinaryConfig.js');
 const FormationDraft = require('../Models/formationDraft.model'); // Assurez-vous d'importer le modèle
 
 //  debut : creation d'un formation par un formateur bien précis :
 const createFormation = async (req, res) => {
+  console.log("Create Formation")
   try {
     // 1. Get user ID from authentication
     const userId = req.user?.userId;
@@ -60,6 +63,38 @@ const createFormation = async (req, res) => {
 
     // 7. Save the formation
     const formationEnregistree = await nouvelleFormation.save();
+
+    // 8. Find manager to notify
+    if (formateur.manager) {
+      try {
+        const managerDoc = await Manager.findById(formateur.manager);
+        if (managerDoc && managerDoc.utilisateur) {
+          // 9. Create notification for manager
+          const notification = new Notification({
+            sender: userId,
+            receiver: managerDoc.utilisateur,
+            type: "formation",
+            status: "accepted",
+            entityId: formationEnregistree._id
+          });
+          
+          await notification.save();
+          console.log("Notification saved: ", notification);
+          // 10. Send real-time notification if socket.io is available
+          const io = req.app.get('io');
+          if (io) {
+            io.to(managerDoc.utilisateur.toString()).emit('notification', {
+              _id: notification._id,
+              type: notification.type,
+              createdAt: notification.createdAt
+            });
+          }
+        }
+      } catch (notifError) {
+        console.error("Error creating notification:", notifError);
+        // Continue even if notification fails
+      }
+    }
 
     // 8. Return the saved formation
     res.status(201).json({

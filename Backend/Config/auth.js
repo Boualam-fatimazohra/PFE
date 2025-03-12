@@ -79,7 +79,7 @@ async function sendMail(destinataire, contenu) {
                 accessToken: accessToken,
             },
         });
-
+        console.log("Contenu de l'email :", contenu);
         const mailOptions = {
             from: "Ouissa Saloua <salouaouissa2002@gmail.com>",
             to: destinataire,

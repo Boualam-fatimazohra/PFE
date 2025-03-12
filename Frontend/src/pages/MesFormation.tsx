@@ -83,6 +83,7 @@ const MesFormations = () => {
         dateCreated: formation.createdAt ? new Date(formation.createdAt).toISOString() : new Date().toISOString(),
         isDraft:formation.isDraft,
         currentStep:formation.currentStep
+
       }));
       
       const sortedFormations = sortFormationsByStatus(mappedFormations);

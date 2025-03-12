@@ -11,6 +11,7 @@ interface FormationItem {
     image?: string; 
     isDraft?:boolean;
     currentStep?:number;
+
 }
 
 interface FormationCardProps {
@@ -43,7 +44,7 @@ const FormationCard = ({ formation, onEdit, onDelete, onAccess }: FormationCardP
         <div className="h-48 bg-gray-100 flex items-center justify-center">
           {/* Use formation image if available, otherwise fallback to test image */}
           <img 
-            src={formation.image || test} 
+            src={formation.image instanceof File ? URL.createObjectURL(formation.image) : formation.image || test} 
             alt={formation.title}
             className="w-full h-full object-cover" 
             onError={(e) => {
