@@ -1,6 +1,7 @@
 const Evenement = require('../Models/evenement.model');
 const Formateur = require('../Models/formateur.model');
 const Coordinateur = require('../Models/coordinateur.model');
+const Notification = require('../Models/notification.model');
 const mongoose = require('mongoose');
 
 // Récupérer tous les événements
@@ -58,46 +59,98 @@ exports.getEvenementById = async (req, res) => {
 // Ajouter un nouvel événement : s'il s'agit d'un formateur : createdBy=orgnisedBy si un Coordinateur je cherche est ce qu'il a spécifier l'orginsateur si non donc c'est lui meme
 exports.createEvenement = async (req, res) => {
   try {
-    const user = req.user;
-    const { organisateur, ...eventData } = req.body;
-    // Initialisation des variables
-    let organisateurId;
-    let isValidate = false;
-    if (user.role === 'Manager') {
-      // Si c'est un manager
-      // Utiliser l'organisateur du body s'il existe, sinon utiliser le manager lui-même
-      organisateurId = organisateur || user.userId;
-      isValidate = true; // Un manager peut valider directement
-    } else if (user.role === 'Coordinateur' || user.role === 'Formateur') {
-      // Si c'est un coordinateur ou formateur
-      organisateurId = user.userId; // L'organisateur est toujours l'utilisateur lui-même
-      isValidate = false; // Nécessite validation par un manager
-    } else {
-      // Pour les autres rôles non spécifiés
-      organisateurId = user.userId;
-      isValidate = false;
+    const userId = req.user.userId;
+    const userRole = req.user.role;
+    const eventData = req.body;
+    
+    // If user is a Manager, create event directly with isValidate=true
+    if (userRole === 'Manager') {
+      const nouvelEvenement = new Evenement({
+        ...eventData,
+        createdBy: userId,
+        organisateur: eventData.organisateur || userId,
+        isValidate: true // Managers can create pre-validated events
+      });
+      
+      const savedEvent = await nouvelEvenement.save();
+      
+      return res.status(201).json({
+        message: 'Événement créé avec succès',
+        evenement: savedEvent
+      });
     }
-    // Création de l'événement
+    
+    // For Formateur or Coordinateur, create event with isValidate=false
+    // Find the manager of the formateur/coordinateur
+    let managerId;
+    
+    if (userRole === 'Formateur') {
+      const formateur = await Formateur.findOne({ utilisateur: userId }).populate('manager');
+      if (!formateur || !formateur.manager) {
+        return res.status(404).json({ message: 'Manager not found for this formateur' });
+      }
+      managerId = formateur.manager.utilisateur;
+    } else if (userRole === 'Coordinateur') {
+      const coordinateur = await Coordinateur.findOne({ utilisateur: userId }).populate('manager');
+      if (!coordinateur || !coordinateur.manager) {
+        return res.status(404).json({ message: 'Manager not found for this coordinateur' });
+      }
+      managerId = coordinateur.manager.utilisateur;
+    } else {
+      return res.status(403).json({ message: 'Seuls les formateurs, coordinateurs et managers peuvent créer des événements' });
+    }
+    
+    // Create the event with isValidate=false
     const nouvelEvenement = new Evenement({
-      ...eventData,
-      createdBy: user.userId,
-      organisateur: organisateurId,
-      isValidate: isValidate
+      dateDebut: eventData.dateDebut,
+      dateFin: eventData.dateFin,
+      heureDebut: eventData.heureDebut,
+      heureFin: eventData.heureFin,
+      titre: eventData.titre,
+      description: eventData.description,
+      categorie: eventData.categorie,
+      createdBy: userId,
+      organisateur: userId,
+      isValidate: false // Requires manager approval
     });
     
-    await nouvelEvenement.save();
-    // Logique d'envoi de notification 
-    if (!isValidate) {
-      // Envoyer notification au manager
+    const savedEvent = await nouvelEvenement.save();
+    
+    // Create notification referencing the created event
+    const notification = new Notification({
+      sender: userId,
+      receiver: managerId,
+      type: 'evenement',
+      status: 'pending',
+      entityId: savedEvent._id
+    });
+    
+    await notification.save();
+    console.log('Event created and notification sent:', notification);
+    
+    // Send real-time notification via Socket.io if available
+    const io = req.app.get('io');
+    if (io) {
+      io.to(managerId.toString()).emit('notification', {
+        _id: notification._id,
+        type: notification.type,
+        createdAt: notification.createdAt
+      });
     }
-    res.status(201).json(nouvelEvenement);
+    
+    res.status(201).json({
+      message: 'Événement créé et en attente d\'approbation par le manager',
+      evenement: savedEvent
+    });
+    
   } catch (error) {
-    res.status(400).json({
-      message: error.message,
-      details: error.errors
+    console.error('Error in event creation:', error);
+    res.status(500).json({
+      message: 'Erreur lors de la création de l\'événement',
+      error: error.message
     });
   }
-};
+};  
 // Mettre à jour un événement réuissi en passant par le middleware
 exports.updateEvenement = async (req, res) => {
   try {

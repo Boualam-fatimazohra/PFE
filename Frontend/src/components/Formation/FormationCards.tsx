@@ -5,10 +5,13 @@ import { Edit, Trash2 } from "lucide-react";
 import test from '@/assets/images/test.jpg';
 
 interface FormationItem {
-    id: string;
-    title: string;
-    status: "En Cours" | "Terminé" | "Avenir" | "Replanifier";
-    image?: string; 
+  id: string;
+  title: string;
+  status: "En Cours" | "Terminé" | "Avenir" | "Replanifier";
+  image: string|File;
+  dateDebut: string;
+  dateFin?: string;
+  dateCreated?: string;
 }
 
 interface FormationCardProps {
@@ -40,7 +43,7 @@ const FormationCard = ({ formation, onEdit, onDelete, onAccess }: FormationCardP
         <div className="h-48 bg-gray-100 flex items-center justify-center">
           {/* Use formation image if available, otherwise fallback to test image */}
           <img 
-            src={formation.image || test} 
+            src={formation.image instanceof File ? URL.createObjectURL(formation.image) : formation.image || test} 
             alt={formation.title}
             className="w-full h-full object-cover" 
             onError={(e) => {

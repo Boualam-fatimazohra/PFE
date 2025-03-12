@@ -95,6 +95,12 @@ const App = () => (
                 <Route path="/Ecolcode" element={<Ecolecode/>}/>
                 <Route path="/CalendrierManager" element={<CalendrierManager/>}/>
                 <Route path="/CreatEvent" element={<CreatEvent/>}/>
+                <Route path="/formulaire-evaluation" element={<EvaluationForm />} />
+
+                <Route path="/formulaire-evaluation/:id/:token" element={<EvaluationForm />} />
+
+
+
                 {/* Page 404 */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
