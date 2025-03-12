@@ -101,7 +101,7 @@ const createFormationDraft = async (req, res) => {
   
       // 4. Gestion de currentStep avec valeur par défaut
       const safeCurrentStep = typeof currentStep === 'number' 
-        ? Math.max(1, Math.min(currentStep, 3)) // Exemple de validation de plage 1-3
+        ? Math.max(1, Math.min(currentStep, 4))
         : 2; // Valeur par défaut
   
       // 5. Création de la formation
@@ -153,9 +153,75 @@ const createFormationDraft = async (req, res) => {
       });
     }
   };
+
+  const getAllFormationsWithDraftStatus = async (req, res) => {
+    try {
+      // 1. Get user ID from authentication
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Utilisateur non authentifié" });
+      }
+      
+      // 2. Find the formateur associated with this user
+      const formateur = await Formateur.findOne({ utilisateur: userId });
+      if (!formateur) {
+        return res.status(404).json({ message: "Formateur non trouvé" });
+      }
+      
+      // 3. Fetch all formations of this formateur
+      const formations = await Formation.find({ formateur: formateur._id });
+      
+      // 4. Fetch all draft information for these formations
+      const formationIds = formations.map(formation => formation._id);
+      const formationDrafts = await FormationDraft.find({ 
+        formation: { $in: formationIds } 
+      });
+      
+      // 5. Create a map of draft information by formation ID
+      const draftsMap = {};
+      formationDrafts.forEach(draft => {
+        draftsMap[draft.formation.toString()] = {
+          isDraft: draft.isDraft,
+          currentStep: draft.currentStep
+        };
+      });
+      
+      // 6. Merge formation data with draft information
+      const formationsCompletes = formations.map(formation => {
+        const formationObj = formation.toObject();
+        
+        // Add image conversion if necessary
+        if (formation.image && formation.imageType) {
+          formationObj.image = `data:${formation.imageType};base64,${formation.image.toString("base64")}`;
+        }
+        
+        // Add draft information if it exists
+        const draftInfo = draftsMap[formation._id.toString()];
+        if (draftInfo) {
+          formationObj.isDraft = draftInfo.isDraft;
+          formationObj.currentStep = draftInfo.currentStep;
+        } else {
+          // Default values if no draft exists
+          formationObj.isDraft = false;
+          formationObj.currentStep = null;
+        }
+        
+        return formationObj;
+      });
+      
+      // 7. Return complete formations
+      res.status(200).json(formationsCompletes);
+    } catch (error) {
+      res.status(500).json({
+        message: "Erreur lors de la récupération des formations",
+        error: error.message
+      });
+    }
+  };
 module.exports = {
   getFormationStep,
   updateFormationStep,
-  createFormationDraft
+  createFormationDraft,
+  getAllFormationsWithDraftStatus
 
 };

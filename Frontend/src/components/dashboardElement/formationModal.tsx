@@ -523,6 +523,7 @@ const FormationModal = () => {
       return;
     }
     setIsSubmitting(true);
+    console.log("currentstep",currentStep);
   
     try {
       // Map formState to the structure needed by the API
@@ -542,13 +543,11 @@ const FormationModal = () => {
   console.log("nuemro de step : ",currentStep);
       await createFormationDraft(formationData);
       
-      alert('Formation créée avec succès format draft!');
       setFormState(initialFormState);
-      navigate("/formateur/mesformation");
       setFileList([]);
-      
-      // Optionally redirect after creation
-      // window.location.href = '/formateur/mesformation';
+      alert('Formation créée avec succès!');
+      navigate("formateur/dashboardFormateur");
+      setFormState(initialFormState);
     } catch (error) {
       console.error('Error submitting formation:', error);
       alert('Erreur lors de la création de la formation. Veuillez réessayer.');
