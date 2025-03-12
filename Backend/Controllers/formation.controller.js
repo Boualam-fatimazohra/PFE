@@ -2,6 +2,7 @@
 const Formation = require('../Models/formation.model.js');
 const Formateur  = require('../Models/formateur.model.js');
 const { cloudinary } = require('../Config/cloudinaryConfig.js');
+const FormationDraft = require('../Models/formationDraft.model'); // Assurez-vous d'importer le modèle
 
 //  debut : creation d'un formation par un formateur bien précis :
 const createFormation = async (req, res) => {
@@ -222,3 +223,73 @@ const DeleteFormation = async (req, res) => {
 };
 
 module.exports = { createFormation, getAllFormations, GetOneFormation, UpdateFormation,DeleteFormation, getFormations };
+// const createFormation = async (req, res) => {
+//   try {
+//     // 1. Get user ID from authentication
+//     const userId = req.user?.userId;
+//     if (!userId) {
+//       return res.status(401).json({ message: "Utilisateur non authentifié" });
+//     }
+
+//     // 2. Find the formateur associated with this user
+//     const formateur = await Formateur.findOne({ utilisateur: userId });
+//     if (!formateur) {
+//       return res.status(401).json({ message: "Formateur non trouvé" });
+//     }
+
+//     // 3. Extract data from request body
+//     const { 
+//       nom, 
+//       dateDebut, 
+//       dateFin,
+//       description,
+//       lienInscription,
+//       status,
+//       tags,
+//       categorie,
+//       niveau
+//     } = req.body;
+
+//     // 4. Validate required fields
+//     if (!nom) {
+//       return res.status(400).json({ 
+//         message: "Le nom de la formation est obligatoire" 
+//       });
+//     }
+
+//     // 4. Récupérer l'image si elle est fournie
+//     // 5. Get image URL from Cloudinary (req.file is populated by multer)
+//     const imageUrl = req.file ? req.file.path : null;
+
+//     // 6. Create new formation
+//     const nouvelleFormation = new Formation({
+//       nom,
+//       dateDebut: dateDebut || null,
+//       dateFin: dateFin || null,
+//       description: description || "Aucun description",
+//       lienInscription,
+//       status: status || "Avenir",
+//       tags: tags || "",
+//       categorie: categorie || "type1",
+//       niveau: niveau || "type1",
+//       formateur: formateur._id,  
+//       image: imageUrl // This is now the Cloudinary URL
+//     });
+
+//     // 7. Save the formation
+//     const formationEnregistree = await nouvelleFormation.save();
+
+//     // 8. Return the saved formation
+//     res.status(201).json({
+//       message: "Formation créée avec succès",
+//       formation: formationEnregistree
+//     });
+
+//   } catch (error) {
+//     console.error("Erreur création formation:", error);
+//     res.status(500).json({ 
+//       message: "Erreur lors de la création de la formation", 
+//       error: error.message 
+//     });
+//   }
+// };
