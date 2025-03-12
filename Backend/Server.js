@@ -5,13 +5,12 @@ const connectDB = require("./Config/config.js");
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 const path = require("path");
-const fs = require("fs");
 const http = require("http");
 const socketIo = require("socket.io");
-const multer = require("multer");
 
 // Import services
 const { configureSocketIO } = require("./services/socketService");
+const { initializeUploadsDirectory } = require("./services/upload/uploadService");
 
 // Import routes
 const Auth = require("./Routes/auth.route.js");
@@ -24,6 +23,7 @@ const evaluationRoutes = require("./Routes/evaluation.route.js");
 const evenementRoutes = require("./Routes/evenement.route.js");
 const notificationRoutes = require("./Routes/notification.route.js");
 const chatRoutes = require("./Routes/chat.route.js");
+const uploadRoutes = require("./Routes/upload/upload.route.js");
 
 dotenv.config();
 
@@ -66,19 +66,9 @@ app.use(
 // Connect to database
 connectDB();
 
-// Setup uploads directory
-const uploadsDir = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadsDir)){
-    fs.mkdirSync(uploadsDir, { recursive: true });
-}
+// Setup uploads directory and static route
+const uploadsDir = initializeUploadsDirectory();
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
-// Configure multer storage
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, "uploads/"),
-    filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
-});
-const upload = multer({ storage: storage });
 
 // API Routes
 app.use("/api/auth", Auth);
@@ -91,18 +81,7 @@ app.use("/api/evaluation", evaluationRoutes);
 app.use("/api/evenement", evenementRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/chat", chatRoutes);
-
-// File upload route
-app.post("/upload-csv", upload.single("csvFile"), (req, res) => {
-    if (!req.file) return res.status(400).json({ success: false, error: "Aucun fichier envoyé" });
-
-    const filePath = req.file.path;
-    fs.readFile(filePath, "utf8", (err, data) => {
-        if (err) return res.status(500).json({ success: false, error: "Erreur lecture fichier" });
-        
-        res.json({ success: true, data: data.substring(0, 1000), name: req.file.originalname });
-    });
-});
+app.use("/api/upload", uploadRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
