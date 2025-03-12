@@ -2,7 +2,7 @@ const Manager = require("../Models/manager.model");
 const bcrypt = require('bcryptjs');
 const { Utilisateur } = require("../Models/utilisateur.model");
 const generateRandomPassword = require("../utils/generateRandomPassword.js");
-
+const {getEvenementByMonth} =require("../Controllers/evenement.controller.js")
 // Create a new Manager
 const createManager = async (req, res) => {
     try {
@@ -136,11 +136,36 @@ const deleteManager = async (req, res) => {
         res.status(500).json({ message: "Error deleting manager", error: error.message });
     }
 };
+//todo : la fct getManagerStatistique n'est pas encore fonctionnel 
+// const getManagerStatistique = async (req, res) => {
+//     try {
+//       const { month } = req.body;
+//       // Récupération des stats d'événements
+//       const eventStats = await getEvenementByMonth(month);
+//       // Structure de réponse extensible
+//       const stats = {
+//         evenements: eventStats,
+//         // d'autres statistiques ici plus tard
+//       };
+//       res.status(200).json({
+//         success: true,
+//         stats
+//       });
+//     } catch (error) {
+//         console.log("erreur from getManagerStatistique");
+
+//       res.status(500).json({
+//         success: false,
+//         message: error.message || "Erreur lors de la collecte des statistiques"
+//       });
+//     }
+//   };
 
 module.exports = {
     createManager,
     getManagers,
     getManagerById,
     updateManager,
-    deleteManager
+    deleteManager,
+    // getManagerStatistique
 };

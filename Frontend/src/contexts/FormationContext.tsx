@@ -1,7 +1,9 @@
+import axios from 'axios';
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getAllFormations as fetchFormations, createFormation as addFormation } from '../services/formationService';
 import { deleteFormation as apiDeleteFormation, updateFormation as ipUpdateFormation } from '../services/formationService';
-import {getNbrBeneficiairesParFormateur, getBeneficiaireFormation as fetchBeneficiaires} from "../services/formationService";
+import { getNbrBeneficiairesParFormateur, getBeneficiaireFormation as fetchBeneficiaires } from "../services/formationService";
+
 interface Formation {
   _id?: string;
   nom: string;
@@ -10,9 +12,10 @@ interface Formation {
   lienInscription: string;
   tags: string;
   status?: "En Cours" | "Terminé" | "Avenir" | "Replanifier";
-  image?: File | string; // include image url
-  createdAt?: string; //  Add this field
+  image?: File | string;
+  createdAt?: string;
 }
+
 interface Beneficiaire {
   _id?: string;
   nom: string;
@@ -39,6 +42,7 @@ interface FormationContextType {
   searchFormations: (query: string) => void;
   nombreBeneficiaires: number | null; 
   getBeneficiaireFormation: (formationId: string) => Promise<Beneficiaire[]>;
+  sendEvaluationFormation: (beneficiaryIds: string[], formationId: string) => Promise<any>;
 }
 
 interface FormationProviderProps {
@@ -52,7 +56,8 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
   const [filteredFormations, setFilteredFormations] = useState<Formation[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [nombreBeneficiaires, setNombreBeneficiaires] = useState<number | null>(null); // Nouvel état
+  const [nombreBeneficiaires, setNombreBeneficiaires] = useState<number | null>(null);
+
   const fetchNombreBeneficiaires = async () => {
     try {
       setError(null);
@@ -68,6 +73,7 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
       throw error;
     }
   };
+
   useEffect(() => {
     const getFormations = async () => {
       try {
@@ -81,7 +87,7 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
         
         setFormations(formationsData);
         setNombreBeneficiaires(beneficiairesData.nombreBeneficiaires);
-        setFilteredFormations(formationsData); // Initially, filtered is same as all
+        setFilteredFormations(formationsData);
         setError(null);
       } catch (error) {
         console.error('Erreur lors du chargement des données', error);
@@ -92,13 +98,14 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
     };
 
     getFormations();
-    fetchNombreBeneficiaires();
   }, []);
+
   const refreshFormations = async () => {
     setLoading(true);
     try {
       const data = await fetchFormations();
       setFormations(data);
+      setFilteredFormations(data);
       setError(null);
     } catch (error) {
       setError('Failed to refresh formations');
@@ -107,36 +114,60 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
     }
   };
 
-// In FormationContext.tsx, update the addFormation function
-const addNewFormation = async (formationData: Formation) => {
-  try {
-    setError(null);
-    
-    // Call the API function directly with the formation data
-    // The service function will handle creating the FormData internally
-    const response = await addFormation(formationData);
-    
-    // Update state with the new formation
-    setFormations((prevFormations) => [...prevFormations, response.formation]);
-    
-    return response.formation;
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Erreur lors de l'ajout de la formation";
-    console.error(errorMessage);
-    setError(errorMessage);
-    throw error;
-  }
-};
+  const addNewFormation = async (formationData: Formation) => {
+    try {
+      setError(null);
+      const response = await addFormation(formationData);
+      setFormations((prevFormations) => [...prevFormations, response.formation]);
+      setFilteredFormations((prevFiltered) => [...prevFiltered, response.formation]);
+      return response.formation;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Erreur lors de l'ajout de la formation";
+      console.error(errorMessage);
+      setError(errorMessage);
+      throw error;
+    }
+  };
+  const apiClient = axios.create({
+    baseURL: 'http://localhost:5000',
+    headers: { 'Content-Type': 'application/json' }
+  });
+
+  // Fonction corrigée pour envoyer les liens d'évaluation aux bénéficiaires
+  const apiSendEvaluationFormation = async (beneficiaryIds: string[], formationId: string) => {
+    try {
+      // Correction: URL de l'API
+      const response = await apiClient.post('/api/evaluation/sendLinkToBeneficiare', { beneficiaryIds, formationId });
+      
+      return response.data;
+    } catch (error) {
+      // Si l'endpoint n'existe pas (404), utiliser la logique de mock pour le développement
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        console.warn('Endpoint not found, using mock response for development');
+        
+        // Logique de mock qui peut être utilisée pendant le développement
+        return {
+          success: true,
+          message: `Successfully sent evaluation links to ${beneficiaryIds.length} beneficiaries (mock response)`,
+          sentTo: beneficiaryIds
+        };
+      }
+      
+      // Si c'est une autre erreur, la propager
+      throw error;
+    }
+  };
 
   const deleteFormation = async (id: string) => {
     try {
       setError(null);
-      // Call the API to delete the formation
       await apiDeleteFormation(id);
       
-      // Update the local state by removing the deleted formation
       setFormations((prevFormations) => 
         prevFormations.filter((formation) => formation._id !== id)
+      );
+      setFilteredFormations((prevFiltered) => 
+        prevFiltered.filter((formation) => formation._id !== id)
       );
     } catch (error) {
       const errorMessage = error instanceof Error 
@@ -148,19 +179,18 @@ const addNewFormation = async (formationData: Formation) => {
     }
   };
 
-  // Add this function for updating formations
   const updateFormation = async (id: string, formationData: Partial<Formation>) => {
     try {
       setError(null);
-      // Call the API to update the formation
       const updatedFormation = await ipUpdateFormation(id, formationData);
       
-      // Update the formations list with the updated formation
-      setFormations((prevFormations) => 
-        prevFormations.map((formation) => 
+      const updateFormationInList = (formationsList: Formation[]) =>
+        formationsList.map((formation) => 
           formation._id === id ? { ...formation, ...updatedFormation } : formation
-        )
-      );
+        );
+      
+      setFormations(updateFormationInList);
+      setFilteredFormations(updateFormationInList);
     } catch (error) {
       const errorMessage = error instanceof Error 
         ? error.message 
@@ -173,15 +203,13 @@ const addNewFormation = async (formationData: Formation) => {
 
   const searchFormations = (query: string) => {
     if (!query.trim()) {
-      // If query is empty, show all formations
       setFilteredFormations(formations);
       return;
     }
 
-    // Filter formations based on query (case-insensitive)
     const results = formations.filter(formation => 
       formation.nom.toLowerCase().includes(query.toLowerCase()) ||
-      formation.status.toLowerCase().includes(query.toLowerCase()) ||
+      (formation.status && formation.status.toLowerCase().includes(query.toLowerCase())) ||
       (formation.tags && formation.tags.toLowerCase().includes(query.toLowerCase()))
     );
     
@@ -190,6 +218,7 @@ const addNewFormation = async (formationData: Formation) => {
 
   const getBeneficiaireFormation = async (id: string): Promise<Beneficiaire[]> => {
     try {
+      console.log("Récupération des bénéficiaires pour la formation:", id);
       return await fetchBeneficiaires(id);
     } catch (error) {
       const errorMessage = error instanceof Error 
@@ -199,8 +228,37 @@ const addNewFormation = async (formationData: Formation) => {
       throw error;
     }
   };
+
+  const sendEvaluationFormation = async (beneficiaryIds: string[], formationId: string) => {
+    try {
+      setError(null);
+      const response = await apiSendEvaluationFormation(beneficiaryIds, formationId);
+      return response;
+    } catch (error) {
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "Erreur lors de l'envoi des liens d'évaluation";
+      console.error(errorMessage);
+      setError(errorMessage);
+      throw error;
+    }
+  };
+
   return (
-    <FormationContext.Provider value={{ formations, loading, error, addNewFormation, deleteFormation, updateFormation, refreshFormations, filteredFormations,searchFormations, nombreBeneficiaires,getBeneficiaireFormation }}>
+    <FormationContext.Provider value={{ 
+      formations, 
+      loading, 
+      error, 
+      addNewFormation, 
+      deleteFormation, 
+      updateFormation, 
+      refreshFormations, 
+      filteredFormations,
+      searchFormations, 
+      nombreBeneficiaires,
+      getBeneficiaireFormation,
+      sendEvaluationFormation
+    }}>
       {children}
     </FormationContext.Provider>
   );

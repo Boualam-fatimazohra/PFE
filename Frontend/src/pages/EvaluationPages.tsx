@@ -1,15 +1,19 @@
 import * as React from "react";
-import { Clock, ArrowRight, Printer, Search, FileDown, Send } from 'lucide-react';
+import { Clock, ArrowRight, Printer, Search, FileDown } from 'lucide-react';
 import CourseHeader from "@/components/Formation/CoursHeader";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import test from '@/assets/images/test.jpg';
+import { useFormations } from '@/contexts/FormationContext';
+import FormationCard from "@/components/Formation/FormationCards";
+import { useState, useEffect } from "react";
+import { sendEvaluationFormation } from "@/services/formationService";
+
 
 // Types
 interface Beneficiaire {
-  _id?: string;
+  _id: any;
   nom: string;
   prenom: string;
   email: string;
@@ -22,210 +26,179 @@ interface Beneficiaire {
   isSaturate: boolean;
 }
 
-interface Formation {
+interface BeneficiairesListeProps {
+  formationId: string;
+}
+
+interface BeneficiaireInscription {
+  _id: string;
+  confirmationAppel: boolean;
+  confirmationEmail: boolean;
+  horodateur: string;
+  formation: string;
+  beneficiaire: Beneficiaire;
+}
+
+interface FormationItem {
   id: string;
   title: string;
-  description: string;
-  status: "En cours" | "A venir" | "Terminé" | "Replanifié";
-  image: string;
-  duration: string;
+  status: "En Cours" | "Terminé" | "Avenir" | "Replanifier";
+  image: string|File;
+  dateDebut: string;
+  dateFin?: string;
+  dateCreated?: string;
 }
 
-interface FormationCardProps {
-  formation: Formation;
-  onAccess: () => void;
-  onEdit?: (formation: Formation) => void;
-  onDelete?: (id: string) => void;
+interface FormationsListProps {
+  formations: FormationItem[];
+  onAccessBeneficiaires: (formation: FormationItem) => void;
 }
 
-// Formation Card Component
-const FormationCard = ({ formation, onAccess, onEdit, onDelete }: FormationCardProps) => {
-  const getStatusClass = () => {
-    switch (formation.status) {
-      case "En cours":
-        return "bg-[#FFF4EB] text-[#FF7900]";
-      case "A venir":
-        return "bg-[#F2E7FF] text-[#9C00C3]";
-      case "Terminé":
-        return "bg-[#E6F7EA] text-[#00C31F]";
-      case "Replanifié":
-        return "bg-[#F5F5F5] text-[#4D4D4D]"; 
-      default:
-        return "";
-    }
+// Composant FormationsList avec typage amélioré
+const FormationsList = ({ formations, onAccessBeneficiaires }: FormationsListProps) => {
+  const filterAndGroupFormations = () => {
+    const groupes = {
+      enCours: [] as FormationItem[],
+      aVenir: [] as FormationItem[],
+      autres: [] as FormationItem[]
+    };
+
+    formations.forEach(formation => {
+      if (formation.status === "En Cours") {
+        groupes.enCours.push(formation);
+      } else if (formation.status === "Avenir") {
+        groupes.aVenir.push(formation);
+      } else {
+        groupes.autres.push(formation);
+      }
+    });
+
+    return groupes;
   };
 
-  return (
-    <Card className="overflow-hidden shadow-md border rounded-none bg-white">
-      <div className="relative">
-        <div className="h-48 bg-gray-100 flex items-center justify-center">
-          <img src={test} alt="Formation" className="w-full h-full object-cover" />
-        </div>
+  const { enCours, aVenir, autres } = filterAndGroupFormations();
+
+  const renderSection = (title: string, formations: FormationItem[]) => (
+    <>
+      <div className="flex items-center mb-4">
+        <hr className="flex-grow border-t-2 border-gray-300" />
       </div>
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-3">
-          <div className={`px-3 py-1 rounded-full ${getStatusClass()}`}>
-            {formation.status}
-          </div>
-        </div>
-        <h3 className="font-semibold text-base mb-2">{formation.title}</h3>
-        <p className="text-sm text-gray-500 mb-5">
-          {formation.description.substring(0, 50)}...
-        </p>
-        <div className="flex justify-between items-center">
-          <Button
-            variant="orange"
-            size="sm"
-            className="rounded-none"
-            onClick={onAccess}
-          >
-            Accéder →
-          </Button>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        {formations.map(formation => (
+          <FormationCard
+            key={formation.id}
+            formation={formation}
+            onAccess={() => onAccessBeneficiaires(formation)}
+            onEdit={() => console.log("edit", formation)}
+            onDelete={() => console.log("delete", formation.id)}
+          />
+        ))}
       </div>
-    </Card>
+    </>
   );
-};
-
-// Formations List Component
-interface FormationsListProps {
-  formations: Formation[];
-  onAccessBeneficiaires: (formationId: string) => void;
-}
-
-const FormationsList = ({ formations, onAccessBeneficiaires }: FormationsListProps) => {
-  // Trier les formations: "En cours" d'abord, puis les autres
-  const sortedFormations = React.useMemo(() => {
-    const enCoursFormations = formations.filter(formation => formation.status === "En cours");
-    const otherFormations = formations.filter(formation => formation.status !== "En cours");
-    
-    return { enCoursFormations, otherFormations };
-  }, [formations]);
-  
   return (
     <div>
       <h2 className="text-2xl font-bold mb-6">Liste des formations</h2>
-      
-      {/* Afficher les formations "En cours" */}
-      {sortedFormations.enCoursFormations.length > 0 && (
-        <>
-          <div className="flex items-center mb-4">
-            <hr className="flex-grow border-t border-gray-300" />
-            <h3 className="text-xl font-semibold mx-4 whitespace-nowrap">Formations en cours</h3>
-            <hr className="flex-grow border-t border-gray-300" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {sortedFormations.enCoursFormations.map((formation) => (
-              <FormationCard 
-                key={formation.id} 
-                formation={formation} 
-                onAccess={() => onAccessBeneficiaires(formation.id)}
-              />
-            ))}
-          </div>
-        </>
-      )}
-      
-      {/* Afficher les autres formations */}
-      {sortedFormations.otherFormations.length > 0 && (
-        <>
-          <div className="flex items-center mb-4">
-            <hr className="flex-grow border-t border-gray-300" />
-            <h3 className="text-xl font-semibold mx-4 whitespace-nowrap">Autres formations</h3>
-            <hr className="flex-grow border-t border-gray-300" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sortedFormations.otherFormations.map((formation) => (
-              <FormationCard 
-                key={formation.id} 
-                formation={formation} 
-                onAccess={() => onAccessBeneficiaires(formation.id)}
-              />
-            ))}
-          </div>
-        </>
-      )}
+      {enCours.length > 0 && renderSection("Formations en cours", enCours)}
+      {aVenir.length > 0 && renderSection("Formations à venir", aVenir)}
+      {autres.length > 0 && renderSection("Autres formations", autres)}
     </div>
   );
 };
 
-// Composant de la liste des bénéficiaires avec fonctionnalité d'envoi
-const BeneficiairesListe = ({ formationId }) => {
+// Composant de la liste des bénéficiaires
+const BeneficiairesTable: React.FC<BeneficiairesListeProps> = ({ formationId }) => {
   const [beneficiaires, setBeneficiaires] = React.useState<Beneficiaire[]>([]);
   const [search, setSearch] = React.useState("");
   const [selectAll, setSelectAll] = React.useState(false);
   const [selectedBeneficiaires, setSelectedBeneficiaires] = React.useState<number[]>([]);
   const [expandedRow, setExpandedRow] = React.useState<number | null>(null);
-  const [currentPage, setCurrentPage] = React.useState(1);
-  const [linkSent, setLinkSent] = React.useState(false);
+  const { getBeneficiaireFormation, sendEvaluationFormation: sendEvalLink } = useFormations();  
+  const [error, setError] = React.useState<string | null>(null);
+  const [inscriptions, setInscriptions] = React.useState<BeneficiaireInscription[]>([]);
   const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null); 
+
+  // Ajout des états pour la pagination
+  const [currentPage, setCurrentPage] = React.useState(1);
   const itemsPerPage = 11;
+  
+  const handleSendLinks = async () => {
+    if (selectedBeneficiaires.length === 0) {
+      alert("Veuillez sélectionner au moins un bénéficiaire");
+      console.log("API Base URL:", import.meta.env.VITE_API_BASE_URL);
+
+      return;
+    }
+    
+    // Obtenir les IDs des bénéficiaires sélectionnés
+    const beneficiaryIds = selectedBeneficiaires.map(index => 
+      displayedBeneficiaires[index]._id
+    );
+    
+    try {
+      setLoading(true);
+      // Appeler la fonction sendEvaluationFormation avec les IDs et l'ID de formation
+      const response = await sendEvaluationFormation(beneficiaryIds, formationId);
+      
+      // Afficher un message de succès
+      alert(`Liens d'évaluation envoyés avec succès à ${beneficiaryIds.length} bénéficiaires`);
+      
+      // Réinitialiser la sélection après l'envoi réussi
+      setSelectedBeneficiaires([]);
+      setSelectAll(false);
+    } catch (error) {
+      console.error("Erreur lors de l'envoi des liens d'évaluation:", error);
+      
+      // Message d'erreur plus spécifique basé sur le type d'erreur
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 404) {
+          alert("Erreur: Le point d'accès API pour l'envoi des liens d'évaluation n'existe pas. Veuillez contacter l'administrateur.");
+        } else if (error.response?.status === 401 || error.response?.status === 403) {
+          alert("Erreur: Vous n'êtes pas autorisé à effectuer cette action.");
+        } else if (error.response?.data?.message) {
+          alert(`Erreur: ${error.response.data.message}`);
+        } else {
+          alert(`Erreur lors de l'envoi des liens d'évaluation: ${error.message}`);
+        }
+      } else {
+        alert("Une erreur inattendue est survenue lors de l'envoi des liens d'évaluation");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   React.useEffect(() => {
-    // Simulons des données au cas où l'API n'est pas disponible
-    const mockData: Beneficiaire[] = [
-      {
-        nom: "Dupont", 
-        prenom: "Jean", 
-        email: "jean.dupont@example.com", 
-        genre: "Homme", 
-        pays: "France", 
-        specialite: "Développement web", 
-        etablissement: "Université Paris-Saclay", 
-        profession: "Étudiant",
-        isBlack: false,
-        isSaturate: false
-      },
-      {
-        nom: "Martin", 
-        prenom: "Sophie", 
-        email: "sophie.martin@example.com", 
-        genre: "Femme", 
-        pays: "France", 
-        specialite: "UX/UI Design", 
-        etablissement: "École de design", 
-        profession: "Designer",
-        isBlack: true,
-        isSaturate: false
-      },
-      {
-        nom: "Dubois", 
-        prenom: "Pierre", 
-        email: "pierre.dubois@example.com", 
-        genre: "Homme", 
-        pays: "Belgique", 
-        specialite: "Data Science", 
-        etablissement: "Université de Bruxelles", 
-        profession: "Ingénieur",
-        isBlack: false,
-        isSaturate: true
-      },
-      {
-        nom: "Garcia", 
-        prenom: "Maria", 
-        email: "maria.garcia@example.com", 
-        genre: "Femme", 
-        pays: "Espagne", 
-        specialite: "IA", 
-        etablissement: "Universidad de Madrid", 
-        profession: "Chercheuse",
-        isBlack: false,
-        isSaturate: false
+    const fetchBeneficiaires = async () => {
+      try {
+        setLoading(true);
+        console.log("ID Formation envoyé:", formationId);
+        
+        // Utiliser type assertion pour correspondre aux types attendus
+        const data = await getBeneficiaireFormation(formationId) as unknown as BeneficiaireInscription[];
+        console.log("Réponse API:", data);
+        
+        // Adapter pour gérer un tableau ou un objet unique
+        const formattedData: BeneficiaireInscription[] = Array.isArray(data) ? data : [data];
+        setInscriptions(formattedData);
+        
+        // Extraire les bénéficiaires des inscriptions
+        const extractedBeneficiaires = formattedData.map(item => item.beneficiaire);
+        setBeneficiaires(extractedBeneficiaires);
+        
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erreur de chargement");
+        console.error("Erreur complète:", err); 
+      } finally {
+        setLoading(false);
       }
-    ];
-    
-    // Essayez d'abord d'obtenir les données de l'API
-    axios.get("http://localhost:5000/api/beneficiaires")
-      .then(response => {
-        setBeneficiaires(response.data);
-      })
-      .catch(error => {
-        console.error("Erreur lors de la récupération des bénéficiaires", error);
-        // Utilisez des données fictives en cas d'échec de l'API
-        setBeneficiaires(mockData);
-      });
-  }, []);
+    };
+
+    if (formationId) {
+      fetchBeneficiaires();
+    }
+  }, [formationId, getBeneficiaireFormation]);
 
   const filteredBeneficiaires = beneficiaires.filter(b =>
     b.nom.toLowerCase().includes(search.toLowerCase()) ||
@@ -259,44 +232,6 @@ const BeneficiairesListe = ({ formationId }) => {
     setSelectAll(newSelected.length === displayedBeneficiaires.length);
   };
 
-  const sendLink = async () => {
-    if (selectedBeneficiaires.length === 0) {
-      alert("Veuillez sélectionner au moins un bénéficiaire");
-      return;
-    }
-    
-    // Simulation d'envoi de lien
-    console.log("Envoi du lien aux bénéficiaires sélectionnés:", 
-      selectedBeneficiaires.map(index => displayedBeneficiaires[index])
-    );
-    
-    const selectedBeneficiairesList = selectedBeneficiaires.map(index => displayedBeneficiaires[index]);
-    const beneficiaryIds = selectedBeneficiairesList.map(beneficiaire => beneficiaire._id || "");
-    
-    setLoading(true);
-    setError(null);
-    
-    try {
-      // Appel à l'API backend pour envoyer les liens d'évaluation
-      const response = await axios.post('/api/formations/send-evaluation-links', {
-        beneficiaryIds,
-        formationId
-      });
-      
-      console.log("Réponse de l'API:", response.data);
-      
-      // Afficher un message de confirmation
-      setLinkSent(true);
-      setTimeout(() => setLinkSent(false), 3000);
-      
-    } catch (error) {
-      console.error("Erreur lors de l'envoi des liens:", error);
-      setError(error.response?.data?.message || "Une erreur est survenue lors de l'envoi des liens");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Fonctions de navigation pour la pagination
   const goToPage = (page: number) => {
     setCurrentPage(page);
@@ -326,44 +261,30 @@ const BeneficiairesListe = ({ formationId }) => {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Liste des bénéficiaires</h2>
         
-        <Button
-          variant="orange"
-          className="flex items-center gap-2 px-4 py-2"
-          onClick={sendLink}
-          disabled={selectedBeneficiaires.length === 0 || loading}
+        {/* Bouton d'envoi de lien */}
+        <Button 
+          onClick={handleSendLinks}
+          disabled={loading || selectedBeneficiaires.length === 0}
+          className="bg-[#FF7900] hover:bg-[#E56A00] text-white flex items-center gap-2"
         >
           {loading ? (
             <>
-              <span className="animate-spin h-5 w-5 mr-2 border-b-2 border-white rounded-full"></span>
+              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
               Envoi en cours...
             </>
           ) : (
             <>
-              <Send size={18} />
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 4H4C2.9 4 2.01 4.9 2.01 6L2 18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4ZM20 8L12 13L4 8V6L12 11L20 6V8Z" fill="white"/>
+              </svg>
               Envoyer le lien
             </>
           )}
         </Button>
       </div>
-
-      {linkSent && (
-        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4 flex items-center">
-          <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-          </svg>
-          <span>Lien envoyé avec succès aux bénéficiaires sélectionnés!</span>
-        </div>
-      )}
-
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 flex items-center">
-          <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-          </svg>
-          <span>{error}</span>
-        </div>
-      )}
-
       <div className="flex items-center mb-6 gap-3">
         <div className="relative flex-grow mr-4">
           <input
@@ -403,223 +324,237 @@ const BeneficiairesListe = ({ formationId }) => {
         </Button> 
       </div>
 
-      <table className="w-full border-collapse">
-        <thead>
-          <tr className="bg-[#F5F5F5]">
-            <th className="p-3 text-left">
-              <input 
-                type="checkbox" 
-                className="border border-[#DDD] w-4 h-4" 
-                checked={selectAll} 
-                onChange={handleSelectAll} 
-              />
-            </th>
-            <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">ID</th>
-            <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Nom</th>
-            <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Prénom</th>
-            <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Email</th>
-            <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Genre</th>
-            <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">isBlack</th>
-            <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">isSaturate</th>
-            <th className="p-3 font-bold"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {displayedBeneficiaires.map((beneficiaire, index) => (
-            <React.Fragment key={index}>
-              <tr className="border-t border-[#DDD] hover:bg-[#F5F5F5]">
-                <td className="p-3">
+      {loading ? (
+        <div className="flex justify-center py-8">
+          <svg className="animate-spin h-8 w-8 text-[#FF7900]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </div>
+      ) : error ? (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <p>{error}</p>
+        </div>
+      ) : beneficiaires.length === 0 ? (
+        <div className="text-center py-8 text-gray-500">
+          Aucun bénéficiaire trouvé pour cette formation
+        </div>
+      ) : (
+        <>
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-[#F5F5F5]">
+                <th className="p-3 text-left">
                   <input 
                     type="checkbox" 
-                    className="border border-[#DDD] w-4 h-4"
-                    checked={selectedBeneficiaires.includes(index)}
-                    onChange={() => handleSelectOne(index)}
+                    className="border border-[#DDD] w-4 h-4" 
+                    checked={selectAll} 
+                    onChange={handleSelectAll} 
                   />
-                </td>
-                <td className="p-3 text-[#333] text-sm">{beneficiaire._id}</td>
-                <td className="p-3 text-[#333] text-sm">{beneficiaire.nom}</td>
-                <td className="p-3 text-[#333] text-sm">{beneficiaire.prenom}</td>
-                <td className="p-3 text-[#333] text-sm">{beneficiaire.email}</td>
-                <td className="p-3 text-[#333] text-sm">{beneficiaire.genre}</td>
-                <td className={`p-3 text-sm ${beneficiaire.isBlack ? "text-red-500" : "text-green-500"}`}>
-                  {beneficiaire.isBlack ? "Oui" : "Non"}
-                </td>
-                <td className={`p-3 text-sm ${beneficiaire.isSaturate ? "text-red-500" : "text-green-500"}`}>
-                  {beneficiaire.isSaturate ? "Oui" : "Non"}
-                </td>
-                <td className="p-3">
-                  <button 
-                    className="flex items-center gap-2 text-sm text-[#333] font-bold"
-                    onClick={() => toggleRowExpansion(index)}
-                  >
-                    {expandedRow === index ? "Voir moins" : "Voir plus"}
-                    <svg 
-                      width="8" 
-                      height="12" 
-                      viewBox="0 0 8 12" 
-                      fill="none" 
-                      xmlns="http://www.w3.org/2000/svg"
-                      className={`transform transition-transform ${expandedRow === index ? "rotate-90" : ""}`}
-                    >
-                      <path fillRule="evenodd" clipRule="evenodd" d="M1.77778 12L8 6L1.77778 0L0 1.71343L4.44533 6L0 10.2849L1.77778 12Z" fill="black"/>
-                    </svg>
-                  </button>
-                </td>
+                </th>
+                <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Nom</th>
+                <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Prénom</th>
+                <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Email</th>
+                <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Genre</th>
+                <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">isBlack</th>
+                <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">isSaturate</th>
+                <th className="p-3 font-bold"></th>
               </tr>
-              {expandedRow === index && (
-                <tr className="border-t border-[#DDD] bg-[#F9F9F9]">
-                  <td colSpan={8} className="p-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="font-bold text-sm mb-2">Pays</p>
-                        <p className="text-sm text-[#333]">{beneficiaire.pays}</p>
-                      </div>
-                      <div>
-                        <p className="font-bold text-sm mb-2">Spécialité</p>
-                        <p className="text-sm text-[#333]">{beneficiaire.specialite}</p>
-                      </div>
-                      <div>
-                        <p className="font-bold text-sm mb-2">Établissement</p>
-                        <p className="text-sm text-[#333]">{beneficiaire.etablissement}</p>
-                      </div>
-                      <div>
-                        <p className="font-bold text-sm mb-2">Profession</p>
-                        <p className="text-sm text-[#333]">{beneficiaire.profession}</p>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </React.Fragment>
-          ))}
-        </tbody>
-      </table>
-      
-      {/* Pagination - Centrée */}
-      {totalPages > 1 && (
-        <div className="flex flex-col items-center mt-6">
-          <div className="text-sm text-[#666] mb-2">
-            Affichage de {startIndex + 1} à {Math.min(endIndex, filteredBeneficiaires.length)} sur {filteredBeneficiaires.length} bénéficiaires
-          </div>
-          <div className="flex items-center gap-2">
-            {/* Bouton précédent */}
-            <button 
-              onClick={goToPreviousPage}
-              disabled={currentPage === 1}
-              className={`flex items-center justify-center w-8 h-8 rounded ${currentPage === 1 ? 'text-[#999] cursor-not-allowed' : 'text-[#333] hover:bg-[#F5F5F5]'}`}
-            >
-              <svg width="8" height="12" viewBox="0 0 8 12" fill="none" xmlns="http://www.w3.org/2000/svg" className="transform rotate-180">
-                <path fillRule="evenodd" clipRule="evenodd" d="M1.77778 12L8 6L1.77778 0L0 1.71343L4.44533 6L0 10.2849L1.77778 12Z" fill="currentColor"/>
-              </svg>
-            </button>
-            
-            {/* Numéros de page */}
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-              <button
-                key={page}
-                onClick={() => goToPage(page)}
-                className={`flex items-center justify-center w-8 h-8 rounded ${
-                  currentPage === page 
-                    ? 'bg-[#FF7900] text-white' 
-                    : 'text-[#333] hover:bg-[#F5F5F5]'
-                }`}
-              >
-                {page}
-              </button>
-            ))}
-            
-            {/* Bouton suivant */}
-            <button 
-              onClick={goToNextPage}
-              disabled={currentPage === totalPages}
-              className={`flex items-center justify-center w-8 h-8 rounded ${currentPage === totalPages ? 'text-[#999] cursor-not-allowed' : 'text-[#333] hover:bg-[#F5F5F5]'}`}
-            >
-              <svg width="8" height="12" viewBox="0 0 8 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path fillRule="evenodd" clipRule="evenodd" d="M1.77778 12L8 6L1.77778 0L0 1.71343L4.44533 6L0 10.2849L1.77778 12Z" fill="currentColor"/>
-              </svg>
-            </button>
-          </div>
-        </div>
+            </thead>
+            <tbody>
+              {displayedBeneficiaires.map((beneficiaire, index) => (
+                <React.Fragment key={index}>
+                  <tr className="border-t border-[#DDD] hover:bg-[#F5F5F5]">
+                    <td className="p-3">
+                      <input 
+                        type="checkbox" 
+                        className="border border-[#DDD] w-4 h-4"
+                        checked={selectedBeneficiaires.includes(index)}
+                        onChange={() => handleSelectOne(index)}
+                      />
+                    </td>
+                    <td className="p-3 text-[#333] text-sm">{beneficiaire.nom}</td>
+                    <td className="p-3 text-[#333] text-sm">{beneficiaire.prenom}</td>
+                    <td className="p-3 text-[#333] text-sm">{beneficiaire.email}</td>
+                    <td className="p-3 text-[#333] text-sm">{beneficiaire.genre}</td>
+                    <td className={`p-3 text-sm ${beneficiaire.isBlack ? "text-red-500" : "text-green-500"}`}>
+                      {beneficiaire.isBlack ? "Oui" : "Non"}
+                    </td>
+                    <td className={`p-3 text-sm ${beneficiaire.isSaturate ? "text-red-500" : "text-green-500"}`}>
+                      {beneficiaire.isSaturate ? "Oui" : "Non"}
+                    </td>
+                    <td className="p-3">
+                      <button 
+                        className="flex items-center gap-2 text-sm text-[#333] font-bold"
+                        onClick={() => toggleRowExpansion(index)}
+                      >
+                        {expandedRow === index ? "Voir moins" : "Voir plus"}
+                        <svg 
+                          width="8" 
+                          height="12" 
+                          viewBox="0 0 8 12" 
+                          fill="none" 
+                          xmlns="http://www.w3.org/2000/svg"
+                          className={`transform transition-transform ${expandedRow === index ? "rotate-90" : ""}`}
+                        >
+                          <path fillRule="evenodd" clipRule="evenodd" d="M1.77778 12L8 6L1.77778 0L0 1.71343L4.44533 6L0 10.2849L1.77778 12Z" fill="black"/>
+                          <mask id="mask0_717_3240" maskUnits="userSpaceOnUse" x="0" y="0" width="8" height="12">
+                            <path fillRule="evenodd" clipRule="evenodd" d="M1.77778 12L8 6L1.77778 0L0 1.71343L4.44533 6L0 10.2849L1.77778 12Z" fill="white"/>
+                          </mask>
+                          <g mask="url(#mask0_717_3240)"></g>
+                        </svg>
+                      </button>
+                    </td>
+                  </tr>
+                  {expandedRow === index && (
+                    <tr className="border-t border-[#DDD] bg-[#F9F9F9]">
+                      <td colSpan={8} className="p-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p className="font-bold text-sm mb-2">Pays</p>
+                            <p className="text-sm text-[#333]">{beneficiaire.pays}</p>
+                          </div>
+                          <div>
+                            <p className="font-bold text-sm mb-2">Spécialité</p>
+                            <p className="text-sm text-[#333]">{beneficiaire.specialite}</p>
+                          </div>
+                          <div>
+                            <p className="font-bold text-sm mb-2">Établissement</p>
+                            <p className="text-sm text-[#333]">{beneficiaire.etablissement}</p>
+                          </div>
+                          <div>
+                            <p className="font-bold text-sm mb-2">Profession</p>
+                            <p className="text-sm text-[#333]">{beneficiaire.profession}</p>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
+          
+          {/* Pagination - Centrée */}
+          {totalPages > 1 && (
+            <div className="flex flex-col items-center mt-6">
+              <div className="text-sm text-[#666] mb-2">
+                Affichage de {startIndex + 1} à {Math.min(endIndex, filteredBeneficiaires.length)} sur {filteredBeneficiaires.length} bénéficiaires
+              </div>
+              <div className="flex items-center gap-2">
+                {/* Bouton précédent */}
+                <button 
+                  onClick={goToPreviousPage}
+                  disabled={currentPage === 1}
+                  className={`flex items-center justify-center w-8 h-8 rounded ${currentPage === 1 ? 'text-[#999] cursor-not-allowed' : 'text-[#333] hover:bg-[#F5F5F5]'}`}
+                >
+                  <svg width="8" height="12" viewBox="0 0 8 12" fill="none" xmlns="http://www.w3.org/2000/svg" className="transform rotate-180">
+                    <path fillRule="evenodd" clipRule="evenodd" d="M1.77778 12L8 6L1.77778 0L0 1.71343L4.44533 6L0 10.2849L1.77778 12Z" fill="currentColor"/>
+                  </svg>
+                </button>
+                
+                {/* Numéros de page */}
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button
+                    key={page}
+                    onClick={() => goToPage(page)}
+                    className={`flex items-center justify-center w-8 h-8 rounded ${
+                      currentPage === page 
+                        ? 'bg-[#FF7900] text-white' 
+                        : 'text-[#333] hover:bg-[#F5F5F5]'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+                
+                {/* Bouton suivant */}
+                <button 
+                  onClick={goToNextPage}
+                  disabled={currentPage === totalPages}
+                  className={`flex items-center justify-center w-8 h-8 rounded ${currentPage === totalPages ? 'text-[#999] cursor-not-allowed' : 'text-[#333] hover:bg-[#F5F5F5]'}`}
+                >
+                  <svg width="8" height="12" viewBox="0 0 8 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path fillRule="evenodd" clipRule="evenodd" d="M1.77778 12L8 6L1.77778 0L0 1.71343L4.44533 6L0 10.2849L1.77778 12Z" fill="currentColor"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
 };
 
-// App Component
+// Composant principal qui gère la navigation
 const EvaluationPages = () => {
-  const [showBeneficiaires, setShowBeneficiaires] = React.useState(false);
-  const [selectedFormation, setSelectedFormation] = React.useState<string | null>(null);
-  
-  // Simulated formations data
-  const formationsData: Formation[] = [
-    {
-      id: "1",
-      title: "Formation React Avancé",
-      description: "Maîtrisez les concepts avancés de React et ses hooks",
-      status: "En cours",
-      image: "/api/placeholder/400/300",
-      duration: "20 heures"
-    },
-    {
-      id: "2",
-      title: "Formation TypeScript",
-      description: "Apprenez TypeScript pour des applications React robustes",
-      status: "A venir",
-      image: "/api/placeholder/400/300",
-      duration: "15 heures"
-    },
-    {
-      id: "3",
-      title: "Formation Node.js",
-      description: "Créez des API RESTful avec Node.js et Express",
-      status: "Terminé",
-      image: "/api/placeholder/400/300",
-      duration: "18 heures"
+  const [showBeneficiaires, setShowBeneficiaires] = useState(false);
+  const [selectedFormation, setSelectedFormation] = useState<FormationItem | null>(null);
+  const { formations: contextFormations, loading, error } = useFormations();
+  const [formations, setFormations] = useState<FormationItem[]>([]);
+
+  // Mappage des formations du contexte vers l'interface locale
+  useEffect(() => {
+    if (contextFormations?.length) {
+      const mapped = contextFormations.map(f => ({
+        id: f._id,
+        title: f.nom,
+        status: f.status,
+        image: f.image,
+        dateDebut: f.dateDebut,
+        dateFin: f.dateFin,
+      }));
+      setFormations(mapped);
     }
-  ];
-  
-  const handleAccessBeneficiaires = (formationId: string) => {
-    setSelectedFormation(formationId);
+  }, [contextFormations]);
+
+  const handleAccessBeneficiaires = (formation: FormationItem) => {
+    setSelectedFormation(formation);
     setShowBeneficiaires(true);
   };
-  
+
   const handleBackToFormations = () => {
     setShowBeneficiaires(false);
     setSelectedFormation(null);
   };
-    return (
-      <div className="container mx-auto p-6">
-        {!showBeneficiaires ? (
-          <FormationsList 
-            formations={formationsData} 
-            onAccessBeneficiaires={handleAccessBeneficiaires}
-          />
-        ) : (
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <Button 
-                variant="outline" 
-                className="flex items-center gap-1 text-xl font-medium text-orange-600 hover:text-orange-800 transition"
-                onClick={handleBackToFormations}
-              >
-                <svg width="18" height="19" viewBox="0 0 18 19" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M10.6665 4.65625L5.21143 10L10.6665 15.3437L12.2251 13.8177L8.32784 10L12.2251 6.1838L10.6665 4.65625Z" fill="#F16E00"/>
-                </svg>
-                <span className="text-lg font-bold text-[#000000]"> Retour</span> 
-              </Button>
-            </div>
-            
-            <CourseHeader 
-              title="Formation" 
-              subtitle={formationsData.find(f => f.id === selectedFormation)?.title || "Formation"} 
-              status="En Cours" 
-            />
-            {/* Passage de l'ID de la formation au composant BeneficiairesListe */}
-            <BeneficiairesListe formationId={selectedFormation} />
+
+  if (loading) return <div>Chargement en cours...</div>;
+  if (error) return <div>Erreur : {error}</div>;
+
+  return (
+    <div className="container mx-auto p-6">
+      {!showBeneficiaires ? (
+        <FormationsList 
+          formations={formations} 
+          onAccessBeneficiaires={handleAccessBeneficiaires}
+        />
+      ) : (
+        <div>
+          <div className="flex justify-between items-center mb-4">
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-1 text-xl font-medium text-orange-600 hover:text-orange-800 transition"
+              onClick={handleBackToFormations}
+            >
+              <span className="text-lg font-bold text-[#000000]">Retour</span> 
+            </Button>
           </div>
-        )}
-      </div>
-    );
-  };
+          
+          {selectedFormation && (
+            <CourseHeader 
+              title={selectedFormation.title}
+              subtitle="Détails de la formation"
+              status={selectedFormation.status}
+            />
+          )}
+          
+          {/* Passer l'ID de la formation sélectionnée au composant BeneficiairesTable */}
+          <BeneficiairesTable formationId={selectedFormation?.id || ''} />
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default EvaluationPages;

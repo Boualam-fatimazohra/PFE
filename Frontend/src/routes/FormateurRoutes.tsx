@@ -9,6 +9,7 @@ import { EvenementsAssociesProvider } from '../contexts/FormateurContext';
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import EvaluationPages from "@/pages/EvaluationPages";
 import BeneficiairesList from "@/components/Formation/Beneficiaires";
+import CalendarView from "@/components/dashboardElement/CalendarView"
 const FormateurRoutes = () => {
   return (
     <FormationProvider>
@@ -18,6 +19,10 @@ const FormateurRoutes = () => {
       <Route path="mesformation" element={<MesFormations />} />
       <Route path="formationModal" element={< FormationModal/>} />
       <Route path="*" element={<NotFound />} />
+      <Route path="BeneficiairesList"element={<BeneficiairesList/>}/>
+      <Route path="EvaluationPages"element={<EvaluationPages/>}/>
+      <Route path="CalendarView"element={<CalendarView/>}/>
+
     </Routes>
     </EvenementsAssociesProvider>
     </FormationProvider>
