@@ -8,14 +8,17 @@ const formateurRoutes = require("./Routes/formateur.route.js");
 const beneficiaireRoutes = require("./Routes/beneficiaire.route.js");
 const coordinateurRoutes = require("./Routes/coordinateur.route.js");
 const managerRoutes = require("./Routes/manager.route.js");
-const evaluationRoutes =require("./Routes/evaluation.route.js");
+const evaluationRoutes = require("./Routes/evaluation.route.js");
 const evenementRoutes = require("./Routes/evenement.route.js");
+const notificationRoutes = require("./Routes/notification.route.js"); // Added notification routes
 const multer = require("multer");
 const fs = require("fs");
 const cookieParser = require("cookie-parser");
 const path = require("path");
 const axios = require("axios");
 const bodyParser = require("body-parser");
+const http = require("http"); // Required for Socket.io
+const socketIo = require("socket.io"); // Socket.io library
 
 dotenv.config();
 
@@ -23,65 +26,25 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Create HTTP server for Socket.io
+const server = http.createServer(app);
+
+// Initialize Socket.io
+const io = socketIo(server, {
+  cors: {
+    origin: "http://localhost:8080",
+    methods: ["GET", "POST"],
+    credentials: true
+  }
+});
+
+// Make io accessible to routes
+app.set('io', io);
+
 // Stockage des historiques de conversation par utilisateur
 const userConversations = {};
 
 // Fonction pour interagir avec DeepSeek API
-// const deepSeekChat = async (userId, message, fileContext = []) => {
-//     try {
-//         if (!userConversations[userId]) {
-//             userConversations[userId] = [];
-//         }
-        
-//         // Construire le message avec le contexte des fichiers si nécessaire
-//         let contextualizedMessage = message;
-        
-//         if (fileContext && fileContext.length > 0) {
-//             // Vérifier si fileContext contient des données valides
-//             const validFiles = fileContext.filter(file => 
-//                 file && file.name && file.data && typeof file.data === 'string' && file.data.trim().length > 0
-//             );
-            
-//             if (validFiles.length > 0) {
-//                 contextualizedMessage = "";
-                
-//                 // Ajouter chaque fichier au contexte
-//                 validFiles.forEach((file, index) => {
-//                     contextualizedMessage += `### DÉBUT DU FICHIER ${index + 1}: ${file.name} ###\n${file.data}\n### FIN DU FICHIER ${index + 1}: ${file.name} ###\n\n`;
-//                 });
-                
-//                 // Ajouter la question
-//                 contextualizedMessage += `Question: ${message}`;
-//             }
-//         }
-        
-//         userConversations[userId].push({ role: "user", content: contextualizedMessage });
-
-//         const response = await axios.post(
-//             "https://api.deepseek.com/v1/chat/completions",
-//             {
-//                 model: "deepseek-chat",
-//                 messages: userConversations[userId],
-//                 temperature: 0.7,
-//                 top_p: 0.95
-//             },
-//             {
-//                 headers: {
-//                     "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`,
-//                     "Content-Type": "application/json"
-//                 }
-//             }
-//         );
-        
-//         const botResponse = response.data.choices[0].message.content;
-//         userConversations[userId].push({ role: "assistant", content: botResponse });
-        
-//         return botResponse;
-//     } catch (error) {
-//         console.error("Erreur DeepSeek API:", error);
-//         throw new Error("Impossible de récupérer une réponse de l'API DeepSeek");
-//     }
-// };// Fonction pour interagir avec DeepSeek API
 const deepSeekChat = async (userId, message, fileContext = []) => {
     try {
         // Initialiser la conversation pour l'utilisateur si elle n'existe pas
@@ -235,6 +198,29 @@ const deepSeekChat = async (userId, message, fileContext = []) => {
     }
 };
 
+// Socket.io connection handler
+io.on("connection", (socket) => {
+  console.log("New client connected");
+  
+  // Join a room based on user role and ID
+  socket.on("join", (userData) => {
+    const { userId, role } = userData;
+    console.log(`User ${userId} with role ${role} joined`);
+    
+    // Join user-specific room
+    socket.join(userId);
+    
+    // Store user info in socket
+    socket.userId = userId;
+    socket.userRole = role;
+  });
+  
+  // Handle disconnect
+  socket.on("disconnect", () => {
+    console.log("Client disconnected");
+  });
+});
+
 // Configuration de l'application
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -270,13 +256,14 @@ const upload = multer({ storage: storage });
 // Routes d'API
 app.use("/api/auth", Auth);
 app.use("/api/formation", formationRoutes);
-app.use("/api/beneficiaires",beneficiaireRoutes);
+app.use("/api/beneficiaires", beneficiaireRoutes);
 app.use("/api/coordinateurs", coordinateurRoutes);
 app.use("/api/managers", managerRoutes);
-app.use("/api/formateur",formateurRoutes);
-app.use("/api/evaluation",evaluationRoutes);
+app.use("/api/formateur", formateurRoutes);
+app.use("/api/evaluation", evaluationRoutes);
 app.use("/api/formation/Addformation", formationRoutes);
 app.use("/api/evenement", evenementRoutes);
+app.use("/api/notifications", notificationRoutes); // Added notification routes
 
 // Route pour télécharger des fichiers
 app.post("/upload-csv", upload.single("csvFile"), (req, res) => {
@@ -319,7 +306,7 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: "Une erreur est survenue sur le serveur", message: process.env.NODE_ENV === 'development' ? err.message : undefined });
 });
 
-// Démarrage du serveur
-app.listen(PORT, () => {
+// Démarrage du serveur (using server instance instead of app for Socket.io)
+server.listen(PORT, () => {
     console.log(`✅ Serveur démarré sur http://localhost:${PORT}`);
 });
