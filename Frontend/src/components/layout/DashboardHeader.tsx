@@ -105,17 +105,20 @@ export function DashboardHeader() {
   if (user?.role === "Formateur") {
     navigationLinks = [
       { name: "Dashboard", path: "/formateur/dashboardFormateur" },
-      { name: "Mes Formations", path: "/formateur/mesformation" },
-      { name: "Calendrier", path: "/CalendarView" },
-      { name: "Mes Bénéficiaires", path: "/BeneficiairesList" },
-      { name: "Evaluation", path: "/EvaluationPages" },
+      { name: "Mes Formations", path: "/formateur/mesformation", additionalPaths: ["/formateur/formationModal"] },
+      { name: "Calendrier", path: "/formateur/CalendarView" },
+      { name: "Mes Bénéficiaires", path: "/formateur/BeneficiairesList" },
+      { name: "Evaluation", path: "/formateur/EvaluationPages"},
     ];
   } else if (user?.role === "Manager") {
     navigationLinks = [
       { name: "Dashboard", path: "/manager/dashboardManager" },
-      { name: "Formations", path: "/manager/FormationDashboard" },
-      { name: "Formateurs", path: "/manager/FormateurManager" },
-      { name: "Page Link", path: "/page-link-3" },
+      { name: "Ecole du code", path: "/Ecolcode" },
+      { name: "Fablab Solidaire", path: "/manager/FormateurManager" },
+      { name: "Orange Fab", path: "/page-link-3" },
+      { name: "Coordination", path: "/page-link-3" },
+      { name: "Événements", path: "/page-link-3" },
+
     ];
   } else if (user?.role === "Coordinateur") {
     navigationLinks = [
@@ -132,6 +135,21 @@ export function DashboardHeader() {
       { name: "Page Link", path: "/page-link-3" },
     ];
   }
+
+  // Function to check if a link should be highlighted
+  const isLinkActive = (link) => {
+    // Exact match
+    if (location.pathname === link.path) {
+      return true;
+    }
+    
+    // Check additional paths if defined
+    if (link.additionalPaths && link.additionalPaths.includes(location.pathname)) {
+      return true;
+    }
+
+    return false;
+  };
 
   // Fonction pour vérifier si l'utilisateur est sur une page Dashboard
   const isOnDashboard = () => {
@@ -164,7 +182,7 @@ export function DashboardHeader() {
                     key={index}
                     to={link.path}
                     className={`relative text-sm transition-colors font-medium ${
-                      location.pathname === link.path
+                      isLinkActive(link)
                         ? "text-orange-500 after:absolute after:bottom-[-22px] after:left-0 after:w-full after:h-[3px] after:bg-orange-500"
                         : "text-gray-300 hover:text-orange-500"
                     }`}>

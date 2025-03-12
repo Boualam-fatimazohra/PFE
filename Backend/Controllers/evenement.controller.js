@@ -229,3 +229,52 @@ exports.getMesEvenements = async (req, res) => {
     });
   }
 };
+exports.getEvenementByMonth = async (req, res) => {
+  try {
+    const { month } = req.body;
+    
+    if (!month) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Le mois est requis dans le corps de la requête" 
+      });
+    }
+
+    // Conversion du mois en date de début et fin
+    const [year, monthNum] = month.split('-').map(Number);
+    
+    if (isNaN(year) || isNaN(monthNum) || monthNum < 1 || monthNum > 12) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Format de mois invalide. Utilisez YYYY-MM" 
+      });
+    }
+
+    const startOfMonth = new Date(year, monthNum - 1, 1);
+    const endOfMonth = new Date(year, monthNum, 1);
+
+    // Recherche des événements qui chevauchent le mois
+    const countInMonth = await Evenement.countDocuments({
+      $and: [
+        { dateDebut: { $lt: endOfMonth } },
+        { dateFin: { $gte: startOfMonth } }
+      ]
+    });
+
+    // Calcul du total de tous les événements
+    const totalCount = await Evenement.countDocuments({});
+
+    res.status(200).json({
+      success: true,
+      countInMonth,
+      totalCount
+    });
+
+  } catch (error) {
+    console.log("erreur a partir de getEvenemntByMonth");
+    res.status(500).json({
+      success: false,
+      message: error.message || "Une erreur est survenue"
+    });
+  }
+};

@@ -65,7 +65,7 @@ export const EvaluationsTable = ({ onGenerateLink }: EvaluationsTableProps) => {
         
         // Option 1: Generate token on client-side (less secure)
         const randomToken = Math.random().toString(36).substring(2, 10);
-        const generatedLink = `${window.location.origin}/evaluation/${id}/${randomToken}`;
+        const generatedLink = `${window.location.origin}/formulaire-evaluation/${id}/${randomToken}`;
         
         setLinks(prev => ({ ...prev, [id]: generatedLink }));
         toast.success("Lien d'évaluation généré avec succès");
@@ -139,8 +139,7 @@ export const EvaluationsTable = ({ onGenerateLink }: EvaluationsTableProps) => {
                     <button
                       onClick={() => generateEvaluationLink(formation._id)}
                       disabled={generating[formation._id]}
-                      className="bg-black hover:bg-orange-600 text-white px-3 py-1 text-sm font-medium transition duration-150 ease-in-out flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed w-auto min-w-[80px] h-[30px]"
-                    >
+                      className="bg-black hover:bg-orange-600 text-white px-3 py-1 text-sm font-medium transition duration-150 ease-in-out flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed w-auto w-[58%] h-[30px] ml-auto">
                       {generating[formation._id] ? (
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -157,7 +156,7 @@ export const EvaluationsTable = ({ onGenerateLink }: EvaluationsTableProps) => {
                           <input
                             readOnly
                             value={links[formation._id]}
-                            className="w-full bg-gray-50 border border-gray-300 text-gray-700 text-sm rounded-md pl-3 pr-10 py-2 focus:ring-orange-500 focus:border-orange-500"
+                            className="w-full bg-gray-50 border border-gray-300 text-gray-700 text-sm rounded-md pl-3 pr-10 py-2 focus:ring-orange-500 focus:border-orange-500 w-auto w-[58%] h-[30px] ml-auto"
                           />
                           <button
                             onClick={() => copyToClipboard(formation._id)}

@@ -3,11 +3,14 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useAuth } from "@/contexts/AuthContext";
+import { Eye, EyeOff } from "lucide-react";
 
 export function LoginForm() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
+
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -45,12 +48,27 @@ export function LoginForm() {
         </label>
         <input id="email" name="email" type="email" required className="w-full p-2 border border-gray-300 rounded" />
       </div>
-      <div className="space-y-2">
-        <label htmlFor="password" className="block text-sm font-bold font-inter">
-          Mot de passe <span className="text-sm font-bold font-inter text-[#CD3C14]">*</span>
-        </label>
-        <input id="password" name="password" type="password" required className="w-full p-2 border border-gray-300 rounded" />
+      <div className="relative space-y-2">
+      <label htmlFor="password" className="block text-sm font-bold font-inter">
+        Mot de passe <span className="text-sm font-bold font-inter text-[#CD3C14]">*</span>
+      </label>
+      <div className="relative">
+        <input
+          id="password"
+          name="password"
+          type={showPassword ? "text" : "password"}
+          required
+          className="w-full p-2 border border-gray-300 rounded pr-10"
+        />
+        <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          className="absolute inset-y-0 right-3 flex items-center text-gray-500"
+        >
+          {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+        </button>
       </div>
+    </div>
       <div className="text-right">
         <a href="/forgot-password" className="text-sm text-[#CD3C14] hover:text-red-700">Mot de passe oublié</a>
       </div>

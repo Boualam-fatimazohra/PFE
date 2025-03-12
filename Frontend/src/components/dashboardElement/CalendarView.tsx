@@ -4,355 +4,307 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
 import interactionPlugin from '@fullcalendar/interaction';
-import MiniCalendar from './minicalendar';
-import EventDialog from './EventDialog';
+import multiMonthPlugin from '@fullcalendar/multimonth';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from "react-router-dom";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
 import * as dayjs from 'dayjs';
 import 'dayjs/locale/fr';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogClose,
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Calendar } from '@/components/ui/calendar';
+const calendarStyles = `
+  /* Style pour les en-têtes de jour (lun, mar, mer, etc.) */
+  .fc .fc-col-header-cell {
+    background-color: #f1f1f1; /* Fond gris clair pour les en-têtes de jour */
+    padding: 10px 0;
+  }
 
-interface EventItem {
-  id: string;
-  title: string;
-  start: string;
-  end: string;
-  type: 'Formation' | 'Événement';
-  location: string;
-  status: 'En cours' | 'Terminé' | 'À venir';
-}
+  .fc .fc-col-header-cell-cushion {
+    font-weight: 500;
+    color: #666;
+    text-transform: capitalize;
+  }
 
-const events: EventItem[] = [
+  /* Style pour les cellules des jours */
+  .fc .fc-daygrid-day {
+    transition: background-color 0.2s;
+  }
+
+  .fc .fc-daygrid-day:hover {
+    background-color: #f9f9f9;
+  }
+
+  /* Style pour les événements */
+  .fc-event {
+    border: none !important;
+    border-radius: 4px !important;
+    font-size: 0.85em !important;
+    padding: 2px 4px !important;
+  }
+  /* Style pour le jour actuel */
+  .fc .fc-day-today {
+    background-color: rgba(255, 220, 40, 0.15) !important;
+  }
+  /* Styles spécifiques pour l'en-tête du calendrier */
+  .fc .fc-toolbar {
+    margin-bottom: 1em !important;
+  }
+
+  /* Style pour le titre du calendrier (mois et année) */
+  h2.calendar-title {
+    font-weight: 700 !important;
+    font-size: 1.25rem !important;
+  }
+
+  /* Adaptation pour les mobiles */
+  @media (max-width: 768px) {
+    .fc .fc-daygrid-event {
+      font-size: 0.75em !important;
+    }
+  }
+`;
+
+const events = [
   {
     id: '1',
-    title: 'Conception Mobile',
-    start: '2025-03-01',
-    end: '2025-03-05',
-    type: 'Formation',
-    location: 'Salle A',
-    status: 'En cours',
+    title: 'Réunion Marketing',
+    start: '2025-01-02',
+    end: '2025-01-03',
+    backgroundColor: '#F16E00',
   },
   {
     id: '2',
-    title: 'Développement Web',
-    start: '2025-04-10',
-    end: '2025-04-15',
-    type: 'Formation',
-    location: 'Salle B',
-    status: 'À venir',
+    title: 'Team Call',
+    start: '2025-01-03',
+    end: '2025-01-04',
+    backgroundColor: '#2196F3',
   },
   {
     id: '3',
-    title: 'Atelier IA',
-    start: '2025-03-12',
-    end: '2025-03-12',
-    type: 'Événement',
-    location: 'Amphi 1',
-    status: 'Terminé',
+    title: 'Design',
+    start: '2025-01-04',
+    end: '2025-01-05',
+    backgroundColor: '#4CAF50',
   },
+  
   {
     id: '4',
-    title: 'Hackathon',
-    start: '2025-04-22',
-    end: '2025-04-23',
-    type: 'Événement',
-    location: 'Espace Innovation',
-    status: 'À venir',
+    title: 'Design Brief',
+    start: '2025-01-04T16:00:00',
+    end: '2025-01-04T17:00:00',
+    backgroundColor: '#F16E00',
   },
+  {
+    id: '5',
+    title: 'Team Call',
+    start: '2025-01-10',
+    end: '2025-01-11',
+    backgroundColor: '#2196F3',
+  },
+  {
+    id: '6',
+    title: 'Workshop',
+    start: '2025-01-12',
+    end: '2025-01-13',
+    backgroundColor: '#F16E00',
+  },
+  {
+    id: '7',
+    title: 'Design Review',
+    start: '2025-01-18',
+    end: '2025-01-19',
+    backgroundColor: '#4CAF50',
+  },
+  {
+    id: '8',
+    title: 'Workshop',
+    start: '2025-01-19',
+    end: '2025-01-20',
+    backgroundColor: '#F16E00',
+  },
+  {
+    id: '9',
+    title: 'Workshop',
+    start: '2025-01-26',
+    end: '2025-01-27',
+    backgroundColor: '#F16E00',
+  }
 ];
 
-const CalendarView = () => {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState(null);
-  const [eventColor, setEventColor] = useState("#3788d8");
-  const [calendarEvents, setCalendarEvents] = useState([]);
-  const mainCalendarRef = useRef(null);
+const CalendarView = () => { const [currentMonth, setCurrentMonth] = useState(new Date(2025, 0, 1)); // January 2025
+const [currentView, setCurrentView] = useState('dayGridMonth'); // Default view is month
+const calendarRef = useRef(null);
+const [open, setOpen] = useState(false);
 
-  
-  useEffect(() => {
-    if (mainCalendarRef.current) {
-      const updateEvents = () => {
-        const api = mainCalendarRef.current.getApi();
-        const currentEvents = api.getEvents().map(event => ({
-          id: event.id,
-          title: event.title,
-          start: event.start,
-          end: event.end || event.start,
-          backgroundColor: event.backgroundColor,
-          type: event.extendedProps.type || ''
-        }));
-        setCalendarEvents(currentEvents);
-      };
-      
-      
-      updateEvents();
-      
-      
-      const api = mainCalendarRef.current.getApi();
-      api.on('eventAdd', updateEvents);
-      api.on('eventChange', updateEvents);
-      api.on('eventRemove', updateEvents);
-      
-      return () => {
-        if (mainCalendarRef.current) {
-          const api = mainCalendarRef.current.getApi();
-          api.off('eventAdd', updateEvents);
-          api.off('eventChange', updateEvents);
-          api.off('eventRemove', updateEvents);
-        }
-      };
-    }
-  }, [mainCalendarRef.current]);
+const handleSelection = (type: "event" | "formation") => {
+  setOpen(false);
+  if (type === "event") {
+    navigate("/CreatEvent");
+  } else if (type === "formation") {
+    // Redirige vers la page de formation
+    navigate("/formateur/formationModal")  }
+};
 
-  const handleDateClick = (arg) => {
-    mainCalendarRef.current.getApi().gotoDate(arg.date);
-  };
+// Function to format month and year
+const formatMonthYear = (date) => {
+  return new Intl.DateTimeFormat('fr-FR', {
+    month: 'long',
+    year: 'numeric'
+  }).format(date);
+};
 
-  const handleDelete = (eventId) => {
-    const calendarApi = mainCalendarRef.current.getApi();
-    const event = calendarApi.getEventById(eventId);
-    if (event) {
-      event.remove();
-    }
-    setIsEventDialogOpen(false);
-    setSelectedEvent(null);
-  };
+const navigateMonth = (direction) => {
+  const newDate = new Date(currentMonth);
+  newDate.setMonth(newDate.getMonth() + (direction === 'next' ? 1 : -1));
+  setCurrentMonth(newDate);
+  if (calendarRef.current) {
+    const calendarApi = calendarRef.current.getApi();
+    calendarApi.gotoDate(newDate);
+  }
+};
 
-  const handleEventClick = (info) => {
-    setSelectedEvent({
-      id: info.event.id,
-      title: info.event.title || "",
-      start: info.event.start,
-      end: info.event.end || info.event.start,
-      guests: info.event.extendedProps.guests || "",
-      location: info.event.extendedProps.location || "",
-      description: info.event.extendedProps.description || "",
-      type: info.event.extendedProps.type || "",
-    });
-    setEventColor(info.event.backgroundColor || "#3788d8");
-    setIsEventDialogOpen(true);
-  };
-
-  const handleEventCreate = (info) => {
-    const startDate = info.date;
-    const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); 
-    setSelectedEvent({
-      start: startDate,
-      end: endDate,
-      title: "",
-      guests: "",
-      location: "",
-      description: "",
-      type: undefined 
-    });
-    setIsEventDialogOpen(true);
-  };
-
-  const handleSelect = (info) => {
-    setSelectedEvent({
-      start: info.start,
-      end: info.end,
-      title: "",
-      guests: "",
-      location: "",
-      description: "",
-      type: undefined
-    });
-    setIsEventDialogOpen(true);
-  };
-
-  const handleSave = () => {
-    if (!selectedEvent.type) {
-      alert("Veuillez sélectionner un type d'événement");
-      return;
-    }
-
-    const calendarApi = mainCalendarRef.current.getApi();
-    if (selectedEvent.id) {
-      const event = calendarApi.getEventById(selectedEvent.id);
-      event.setProp("title", selectedEvent.title);
-      event.setStart(selectedEvent.start);
-      event.setEnd(selectedEvent.end);
-      event.setExtendedProp("guests", selectedEvent.guests);
-      event.setExtendedProp("location", selectedEvent.location);
-      event.setExtendedProp("description", selectedEvent.description);
-      event.setExtendedProp("type", selectedEvent.type);
-      event.setProp("backgroundColor", eventColor);
-      event.setExtendedProp("backgroundColor", eventColor);
-
+const navigateDate = (direction) => {
+  if (calendarRef.current) {
+    const calendarApi = calendarRef.current.getApi();
+    if (direction === 'next') {
+      calendarApi.next();
     } else {
-      // Add new event
-      calendarApi.addEvent({
-        id: String(Math.random()),
-        title: selectedEvent.title,
-        start: selectedEvent.start,
-        end: selectedEvent.end,
-        backgroundColor: eventColor, // Appliquer directement la couleur à l'événement
-        borderColor: eventColor,     // Ajouter aussi la couleur de bordure
-        extendedProps: {
-          type: selectedEvent.type,
-          guests: selectedEvent.guests,
-          location: selectedEvent.location,
-          description: selectedEvent.description
-        }
-      });
+      calendarApi.prev();
     }
-    setIsEventDialogOpen(false);
-    setSelectedEvent(null);
-  };
+    // Update current date state based on calendar's current date
+    setCurrentMonth(calendarApi.getDate());
+  }
+};
 
-  const navigateMonth = (direction) => {
-    const newDate = new Date(currentMonth);
-    if (direction === "prev") {
-      newDate.setMonth(newDate.getMonth() - 1);
-    } else {
-      newDate.setMonth(newDate.getMonth() + 1);
+const changeView = (viewName) => {
+  if (calendarRef.current) {
+    const calendarApi = calendarRef.current.getApi();
+    calendarApi.changeView(viewName);
+    setCurrentView(viewName);
+  }
+};
+
+// Synchronize title when view changes
+useEffect(() => {
+  if (calendarRef.current) {
+    const calendarApi = calendarRef.current.getApi();
+    setCurrentMonth(calendarApi.getDate());
+  }
+}, [currentView]);
+
+// Get appropriate title based on current view
+const getTitle = () => {
+  if (calendarRef.current) {
+    const calendarApi = calendarRef.current.getApi();
+    const currentDate = calendarApi.getDate();
+    
+    switch (currentView) {
+      case 'timeGridDay':
+        return new Intl.DateTimeFormat('fr-FR', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        }).format(currentDate);
+      case 'timeGridWeek':
+        const startDate = calendarApi.view.currentStart;
+        const endDate = calendarApi.view.currentEnd;
+        const startFormatted = new Intl.DateTimeFormat('fr-FR', {
+          day: 'numeric'
+        }).format(startDate);
+        const endFormatted = new Intl.DateTimeFormat('fr-FR', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        }).format(new Date(endDate.getTime() - 86400000)); // Subtract one day
+        return `${startFormatted} - ${endFormatted}`;
+      case 'multiMonthYear':
+        return new Intl.DateTimeFormat('fr-FR', {
+          year: 'numeric'
+        }).format(currentDate);
+      default:
+        return formatMonthYear(currentDate);
     }
-    setCurrentMonth(newDate);
-  };
+  }
+  return formatMonthYear(currentMonth);
+};
+const navigate = useNavigate();
 
-  return (
-    <div className="flex min-h-screen bg-white flex-col">
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
-
-        * {
-          font-family: 'Inter', sans-serif !important;
-        }
-
-        .fc {
-          font-family: 'Inter', sans-serif !important;
-          width: 100%;
-          max-width: 100%;
-        }
-        
-        .fc-header-toolbar {
-          padding: 1rem 0 !important;
-        }
-        
-        .fc-toolbar-title {
-          font-size: 1.5rem !important;
-          font-weight: 400 !important;
-          text-transform: capitalize;
-        }
-        
-        .fc-col-header {
-          background: white !important;
-        }
-        
-        .fc-col-header-cell {
-          padding: 8px 0 !important;
-          vertical-align: top !important;
-        }
-        
-        .fc-col-header-cell-cushion {
-          display: flex !important;
-          flex-direction: column !important;
-          align-items: center !important;
-          color: #70757a !important;
-          text-decoration: none !important;
-          padding: 4px !important;
-        }
-        
-        .fc-day-today .fc-col-header-cell-cushion {
-          background: #F16E00 !important;
-          color: white !important;
-          border-radius: 60% !important;
-          width: 52px !important;
-          height: 52px !important;
-          display: flex !important;
-          align-items: center !important;
-          justify-content: center !important;
-        }
-        
-        .fc-timegrid-slot {
-          height: 48px !important;
-        }
-        
-        .fc-timegrid-slot-label {
-          font-size: 0.75rem !important;
-          color: #70757a !important;
-        }
-        
-        .fc-theme-standard td, .fc-theme-standard th {
-          border-color: #DFE0E1 !important;
-        }
-        
-        .fc-scrollgrid {
-          border: none !important;
-        }
-        
-        .fc .fc-button {
-          background: white !important;
-          border: 1px solid #DFE0E1 !important;
-          color: #70757a !important;
-          border-radius: 20px !important;
-          padding: 6px 16px !important;
-          font-weight: 500 !important;
-          text-transform: none !important;
-          box-shadow: none !important;
-        }
-
-        .fc .fc-button:hover {
-          background: #f8f9fa !important;
-        }
-
-        .fc .fc-prev-button, .fc .fc-next-button {
-          width: 32px !important;
-          height: 32px !important;
-          padding: 0 !important;
-          display: flex !important;
-          align-items: center !important;
-          justify-content: center !important;
-        }
-
-        .fc .fc-today-button {
-          padding: 6px 16px !important;
-        }
-
-        .fc .fc-button-active {
-          background: #F16E00 !important;
-          border-color: #F16E00 !important;
-          color: white !important;
-        }
+return (
+  <div className="max-w-7xl mx-auto px-4 py-6">
+    {/* Intégration des styles CSS directement dans le composant */}
+    <style>{calendarStyles}</style>
+    
+    {/* En-tête */}
+    <div className="flex justify-between items-center mb-6">
+      <h1 className="text-3xl font-bold text-left">Mon Calendrier</h1>
       
-        .mini-calendar {
-          border: 1px solid #DFE0E1;
-          border-radius: 8px;
-          padding: 16px;
-          background: white;
-        }
-        
-        .fc-toolbar-chunk {
-          gap: 12px !important;
-        }
-        
-        .fc-button-group {
-          gap: 6px !important;
-        }
+      {/* Bouton qui ouvre le choix */}
+      <Button 
+        className="bg-black text-white hover:bg-orange-600 rounded-[4px]"
+        onClick={() => setOpen(true)}
+      >
+        + Créer événement/Formation
+      </Button>
 
-        .fc-button {
-          margin: 0 4px !important;
-        }
+      {/* Modal de sélection */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Que souhaitez-vous créer ?</DialogTitle>
+          </DialogHeader>
+          <div className="flex justify-center gap-4">
+            <Button className="bg-blue-500 hover:bg-blue-600 text-white" onClick={() => handleSelection("event")}>
+              Événement
+            </Button>
+            <Button className="bg-green-500 hover:bg-green-600 text-white" onClick={() => handleSelection("formation")}>
+              Formation
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+    
+    <div className="flex">
+      {/* Sidebar des catégories */}
+      <div className="w-48 h-48 border-r border-gray-200 p-4  rounded-[4px] shadow-md" style={{ backgroundColor: "#FF79000D" }}>
+        <h3 className="font-medium font-bold text-gray-700 mb-4">Catégories</h3>
+        <ul className="space-y-2">
+          <li className="flex items-center">
+            <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: "#FBCFE8" }}></div>
+            <span className="text-sm">Personnel Task</span>
+          </li>
+          <li className="flex items-center">
+            <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: "#A7F3D0" }}></div>
+            <span className="text-sm">Meetings</span>
+          </li>
+          <li className="flex items-center">
+            <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: "#FED7AA" }}></div>
+            <span className="text-sm">Formations</span>
+          </li>
+          <li className="flex items-center">
+            <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: "#BFDBFE" }}></div>
+            <span className="text-sm">Calls</span>
+          </li>
+          <li className="flex items-center">
+            <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: "#FECACA" }}></div>
+            <span className="text-sm">Urgent</span>
+          </li>
+        </ul>
+      </div>
 
+      {/* Zone principale du calendrier */}
+      <div className="flex-grow p-6 bg-white shadow-md rounded-[4px]">
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center">
+            {/* Titre du calendrier à gauche */}
+            <h2 className="text-lg font-bold calendar-title">{getTitle()}</h2>
+            
+            {/* Flèches de navigation à droite */}
+            <div className="ml-4 flex items-center">
+              <button onClick={() => navigateDate('prev')} className="p-2 hover:bg-gray-100 rounded-[4px]">&lt;</button>
+              <button onClick={() => navigateDate('next')} className="p-2 hover:bg-gray-100 rounded-[4px]">&gt;</button>
+            </div>
+          </div>
+          <style>{`
         .fc-header-toolbar .fc-toolbar-chunk:first-child {
           gap: 8px !important;
         }
@@ -378,79 +330,65 @@ const CalendarView = () => {
         }
       `}</style>
 
-      {/* Contenu du calendrier */}
-      <div className="calendar-content">
-        {/* Mini Calendar (reste à gauche) */}
-        <div className="mini-calendar-wrapper">
-          <MiniCalendar
-            currentMonth={currentMonth}
-            onMonthChange={navigateMonth}
-            onDateClick={handleDateClick}
-            events={calendarEvents}
-          />
+          <div className="flex space-x-2">
+            <Button 
+              variant="secondary" 
+              className={currentView === 'timeGridDay' ? 'bg-orange-500 text-white' : ''} 
+              size="sm" 
+              onClick={() => changeView('timeGridDay')}
+            >
+              Jour
+            </Button>
+            <Button 
+              variant="secondary" 
+              className={currentView === 'timeGridWeek' ? 'bg-orange-500 text-white' : ''} 
+              size="sm" 
+              onClick={() => changeView('timeGridWeek')}
+            >
+              Semaine
+            </Button>
+            <Button 
+              variant="secondary" 
+              className={currentView === 'dayGridMonth' ? 'bg-orange-500 text-white' : ''} 
+              size="sm" 
+              onClick={() => changeView('dayGridMonth')}
+            >
+              Mois
+            </Button>
+            <Button 
+              variant="secondary" 
+              className={currentView === 'multiMonthYear' ? 'bg-orange-500 text-white' : ''} 
+              size="sm" 
+              onClick={() => changeView('multiMonthYear')}
+            >
+              Année
+            </Button>
+          </div>
         </div>
 
-        {/* Main Calendar (centré) */}
-        <div className="main-calendar-wrapper">
-          <FullCalendar
-            ref={mainCalendarRef}
-            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-            headerToolbar={{
-              left: "prev,next today",
-              center: "title",
-              right: "dayGridMonth,timeGridWeek,timeGridDay",
-            }}
-            buttonText={{
-              today: "Aujourd'hui",
-              month: "Mois",
-              week: "Semaine",
-              day: "Jour",
-            }}
-            initialView="timeGridWeek"
-            editable={true}
-            selectable={true}
-            selectMirror={true}
-            dayMaxEvents={true}
-            weekends={true}
-            slotMinTime="09:00:00"
-            slotMaxTime="21:00:00"
-            eventColor="#039BE5"
-            eventBorderColor="transparent"
-            height="calc(100vh - 120px)" 
-            nowIndicator={true}
-            allDaySlot={true}
-            allDayText="All day"
-            slotLabelFormat={{
-              hour: "numeric",
-              minute: "2-digit",
-              omitZeroMinute: true,
-              meridiem: "short",
-            }}
-            dayHeaderFormat={{
-              weekday: "short",
-              day: "numeric",
-              omitCommas: true,
-            }}
-            dateClick={handleEventCreate}
-            eventClick={handleEventClick}
-            select={handleSelect}
-          />
-        </div>
+        <FullCalendar
+          ref={calendarRef}
+          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, multiMonthPlugin]}
+          initialView={currentView}
+          headerToolbar={false}
+          events={events}
+          initialDate={currentMonth}
+          height="calc(80vh - 150px)"
+          locale="fr"
+          eventDisplay="block"
+          eventTextColor="white"
+          dayHeaderFormat={{ weekday: 'short' }}
+          views={{
+            timeGridDay: { dayHeaderFormat: { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' } },
+            timeGridWeek: { dayHeaderFormat: { weekday: 'short', month: 'numeric', day: 'numeric' } },
+            dayGridMonth: { dayHeaderFormat: { weekday: 'short' } },
+            multiMonthYear: { multiMonthMaxColumns: 3, multiMonthTitleFormat: { month: 'long' } }
+          }}
+        />
       </div>
-
-      {/* Event Dialog */}
-      <EventDialog
-        isOpen={isEventDialogOpen}
-        setIsOpen={setIsEventDialogOpen}
-        selectedEvent={selectedEvent}
-        setSelectedEvent={setSelectedEvent}
-        eventColor={eventColor}
-        setEventColor={setEventColor}
-        handleSave={handleSave}
-        handleDelete={handleDelete}
-      />
     </div>
-  );
+  </div>
+);
 };
 
 export default CalendarView;
