@@ -39,11 +39,13 @@ class NotificationService {
   /**
    * Accept a notification
    */
-  async acceptNotification(id: string): Promise<void> {
-    await apiClient.put(`/notifications/${id}/process`, {
-      status: "accepted"
-    });
-  }
+// In NotificationService.ts
+async acceptNotification(id: string): Promise<any> {
+  const response = await apiClient.put(`/notifications/${id}/process`, {
+    status: "accepted"
+  });
+  return response.data.notification; // Return the updated notification
+}
     
   /**
    * Decline a notification

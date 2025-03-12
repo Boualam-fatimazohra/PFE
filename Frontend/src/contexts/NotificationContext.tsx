@@ -127,17 +127,15 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       setError('Erreur lors du marquage de la notification');
     }
   };
-
   const acceptNotification = async (id: string) => {
     try {
-      await NotificationService.acceptNotification(id);
+      const updatedNotification = await NotificationService.acceptNotification(id);
+      console.log('API accept notife Response:', updatedNotification);
       
-      // Update local state
+      // Update local state using the returned notification
       setNotifications(prevNotifications => 
         prevNotifications.map(notification => 
-          notification._id === id 
-            ? { ...notification, isRead: true, status: "accepted" } 
-            : notification
+          notification._id === id ? { ...notification, ...updatedNotification } : notification
         )
       );
     } catch (err) {
@@ -145,7 +143,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       setError("Erreur lors de l'acceptation de la notification");
     }
   };
-
+  
   const declineNotification = async (id: string) => {
     try {
       await NotificationService.declineNotification(id);
