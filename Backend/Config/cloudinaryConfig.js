@@ -1,6 +1,7 @@
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const multer = require('multer');
+const streamifier = require('streamifier');
 require('dotenv').config();
 
 // Configure Cloudinary
@@ -53,8 +54,48 @@ const uploadExcel = multer({
   }
 });
 
-module.exports = { 
-  uploadImage, 
-  uploadExcel, 
-  cloudinary 
+// Helper function to upload buffer to cloudinary
+const uploadToCloudinary = (buffer, options = {}) => {
+  return new Promise((resolve, reject) => {
+    const stream = streamifier.createReadStream(buffer);
+    const uploadStream = cloudinary.uploader.upload_stream(
+      options,
+      (error, result) => {
+        if (result) {
+          resolve(result);
+        } else {
+          reject(error);
+        }
+      }
+    );
+    stream.pipe(uploadStream);
+  });
+};
+
+// Helper function to delete from cloudinary
+const deleteFromCloudinary = async (publicId) => {
+  return await cloudinary.uploader.destroy(publicId);
+};
+
+// Helper function to create a folder for uploads
+const createFolder = async (folderPath) => {
+  return await cloudinary.api.create_folder(folderPath);
+};
+
+// Helper function to get resources in a folder
+const getFolderResources = async (folderPath) => {
+  return await cloudinary.api.resources({
+    type: 'upload',
+    prefix: folderPath
+  });
+};
+
+module.exports = {
+  cloudinary,
+  uploadImage,
+  uploadExcel,
+  uploadToCloudinary,
+  deleteFromCloudinary,
+  createFolder,
+  getFolderResources
 };
