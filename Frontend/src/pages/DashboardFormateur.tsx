@@ -95,7 +95,7 @@ const DashboardFormateur: React.FC = () => {
   }));
 
   // Définir la classe de transition pour le contenu principal
-  const mainContentClass = isChatbotOpen ? 'transform -translate-x-1/4 w-[3300px]' : 'w-full';
+  const mainContentClass = isChatbotOpen ? 'transform -translate-x-1/4 w-[3000px]' : 'w-full';
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -150,7 +150,7 @@ const DashboardFormateur: React.FC = () => {
                   <StatsCard title="Total Formations" 
                       value={isLoading ? '...' : formationCount} 
                   />
-                  <StatsCard title="Prochain événement" value={isLoadingEvenements ?'...':stats?.total ?? 0} />
+                  <StatsCard title="Prochain événement" value={isLoadingEvenements ?'...':stats?.count ?? 0} />
                   <StatsCard title="Satisfaction moyenne" value="95%" />
                 </div>
     

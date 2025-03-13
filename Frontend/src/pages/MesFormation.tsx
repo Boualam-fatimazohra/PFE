@@ -80,7 +80,9 @@ const MesFormations = () => {
         status: formation.status,
         image: formation.image as string,
         dateDebut: formation.dateDebut,
-        dateCreated: formation.createdAt ? new Date(formation.createdAt).toISOString() : new Date().toISOString()
+        dateCreated: formation.createdAt ? new Date(formation.createdAt).toISOString() : new Date().toISOString(),
+        isDraft:formation.isDraft,
+        currentStep:formation.currentStep
 
       }));
       
