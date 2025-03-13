@@ -9,7 +9,7 @@ const {
     getFormations
 } = require('../Controllers/formation.controller.js');
 const authorizeRoles = require('../Middlewares/RoleMiddleware.js');
-const { upload } = require('../Config/cloudinaryConfig.js');
+const { uploadImage } = require('../Config/cloudinaryConfig.js');
 const authorizeFormationAccess = require('../Middlewares/FormationAccess.js');
 const { 
   getFormationStep, 
@@ -23,13 +23,13 @@ const router = express.Router();
 router.post('/Addformation', 
     authenticated, 
     authorizeRoles('Formateur'),
-    upload.single("image"),
+    uploadImage.single("image"),
     createFormation
 );
 router.post('/createFormationDraft',
     authenticated,
     authorizeRoles('Formateur'),
-    upload.single("image"),
+    uploadImage.single("image"),
     createFormationDraft);
 
 // Route to get all formations d'un formateur soit ce qui sont draft ou non
@@ -41,7 +41,7 @@ router.get('/getAllFormationsWithDraft',
 router.get('/getAllFormations', 
     authenticated,
     authorizeRoles('Manager'),
-    upload.single("image"),
+    uploadImage.single("image"),
     getAllFormations
 );
 
@@ -58,7 +58,7 @@ router.delete('/DeleteFormation/:id',
 router.put('/UpdateFormation/:id', 
     authenticated, 
     authorizeRoles('Admin', 'Manager', 'Formateur'),
-    upload.single("image"),
+    uploadImage.single("image"),
     authorizeFormationAccess('update'),
     UpdateFormation
 ); 
