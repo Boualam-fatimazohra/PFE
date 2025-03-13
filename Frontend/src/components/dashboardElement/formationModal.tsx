@@ -11,7 +11,7 @@ import styled, { createGlobalStyle } from "styled-components";
 import { fr } from "date-fns/locale"; // Assurez-vous d'avoir installé `date-fns`
 import { Loader2 } from "lucide-react";
 import EnhanceListButton from "./EnhanceListButton";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate ,useLocation} from 'react-router-dom';
 // Types
 interface Step {
   number: string;
@@ -75,12 +75,15 @@ interface Message {
 }
 
 const FormationModal = () => {
-  const { addNewFormation, error: contextError ,createFormationDraft } = useFormations();
-  const [selectedDate, setSelectedDate] = useState(new Date());
   const navigate = useNavigate();
+  const location = useLocation();
+  const { addNewFormation, error: contextError ,createFormationDraft } = useFormations();
+  const formationFromState = location.state?.formation;
+  const fromDraft = location.state?.fromDraft;
+  const [selectedDate, setSelectedDate] = useState(new Date());
   // State
-  const [currentStep, setCurrentStep] = useState(1);
-  const [formState, setFormState] = useState<FormState>(initialFormState);
+  const [currentStep, setCurrentStep] = useState(formationFromState?.currentStep||1);
+  const [formState, setFormState] = useState<FormState>(formationFromState||initialFormState);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fileList, setFileList] = useState<File[]>([]);
@@ -547,7 +550,7 @@ const FormationModal = () => {
       setFormState(initialFormState);
       
       setFileList([]);
-      navigate("/formateur/mesformation");
+      navigate("/formateur/dashboardFormateur");
 
     } catch (error) {
       console.error('Error submitting formation:', error);
