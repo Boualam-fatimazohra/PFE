@@ -114,7 +114,7 @@ const DashboardManager = () => {
     {/* Bouton Filtres */}
     
     <Link
-      to="/CalendrierManager"
+      to="/manager/CalendrierManager"
       className="bg-orange-500 text-white px-4 py-2 rounded-[4px] shadow-md hover:bg-orange-600"
     >
       Mon Calendrier
