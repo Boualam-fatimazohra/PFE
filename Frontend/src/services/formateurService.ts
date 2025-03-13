@@ -88,6 +88,7 @@ export const getNbrEvenementsAssocies= async ()=>{
   try {
     console.log("debut de getNbrEvents.............")
     const response=await apiClient.get('/formateur/getNbrEvenementsAssocies');
+    console.log("ressponse de getNbrEvenementsAssocies",response.data);
     return response.data;
   } catch (error) {
     console.log("erreuuuuuuur dans getNbrEvenementsAssocies ",error);

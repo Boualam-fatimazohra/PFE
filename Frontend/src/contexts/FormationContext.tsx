@@ -2,7 +2,7 @@ import axios from 'axios';
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getAllFormations as fetchFormations, createFormation as addFormation } from '../services/formationService';
 import { deleteFormation as apiDeleteFormation, updateFormation as ipUpdateFormation } from '../services/formationService';
-import { getNbrBeneficiairesParFormateur, getBeneficiaireFormation as fetchBeneficiaires } from "../services/formationService";
+import {getNbrBeneficiairesParFormateur, getBeneficiaireFormation as fetchBeneficiaires ,  createFormationDraft as createFormationDraftService} from "../services/formationService";
 
 import { getAllFormationsManager as fetchAuthenticatedFormations } from "../services/formationService";
 interface Formation {
@@ -13,8 +13,12 @@ interface Formation {
   lienInscription: string;
   tags: string;
   status?: "En Cours" | "Terminé" | "Avenir" | "Replanifier";
-  image?: File | string;
-  createdAt?: string;
+  image?: File | string; // include image url
+  createdAt?: string; //  Add this field
+  // Champs optionnels pour le draft
+  isDraft?: boolean;
+  currentStep?: number;
+
 }
 
 interface Beneficiaire {
@@ -43,6 +47,7 @@ interface FormationContextType {
   searchFormations: (query: string) => void;
   nombreBeneficiaires: number | null; 
   getBeneficiaireFormation: (formationId: string) => Promise<Beneficiaire[]>;
+  createFormationDraft: (formationData: any) => Promise<void>; // Ajoutez cette ligne,
   sendEvaluationFormation: (beneficiaryIds: string[], formationId: string) => Promise<any>;
   getAllFormationsManager: () => Promise<Formation[]>;
 }
@@ -88,6 +93,7 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
         ]);
         
         setFormations(formationsData);
+        console.log("formation de contexte",formationsData);
         setNombreBeneficiaires(beneficiairesData.nombreBeneficiaires);
         setFilteredFormations(formationsData);
         setError(null);
@@ -248,7 +254,18 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
       setLoading(false);
     }
   };
+  const createFormationDraft = async (formationData:any) => {
+    try {
+      setError(null);
+      const newDraft = await createFormationDraftService(formationData);
+      setFormations(prev => [...prev, newDraft]);
+      return newDraft;
+    } catch (error) {
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "Erreur lors de la création du brouillon";
 
+    }}
   const sendEvaluationFormation = async (beneficiaryIds: string[], formationId: string) => {
     try {
       setError(null);
@@ -258,12 +275,12 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
       const errorMessage = error instanceof Error 
         ? error.message 
         : "Erreur lors de l'envoi des liens d'évaluation";
+
       console.error(errorMessage);
       setError(errorMessage);
       throw error;
     }
   };
-
   return (
     <FormationContext.Provider value={{ 
       formations, 
@@ -278,8 +295,10 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
       nombreBeneficiaires,
       getBeneficiaireFormation,
       sendEvaluationFormation,
-      getAllFormationsManager
+      getAllFormationsManager,
+      createFormationDraft
     }}>
+
       {children}
     </FormationContext.Provider>
   );

@@ -26,6 +26,8 @@ export interface FormationTableItem {
   image?: string;
   dateDebut: string;
   dateFin?: string;
+  isDraft?:boolean;
+  currentStep?:number;
 }
 
 const formatDate = (dateString: string) => {
