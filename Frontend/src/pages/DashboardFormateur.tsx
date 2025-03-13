@@ -150,7 +150,7 @@ const DashboardFormateur: React.FC = () => {
                   <StatsCard title="Total Formations" 
                       value={isLoading ? '...' : formationCount} 
                   />
-                  <StatsCard title="Prochain événement" value={isLoadingEvenements ?'...':stats?.total ?? 0} />
+                  <StatsCard title="Prochain événement" value={isLoadingEvenements ?'...':stats?.count ?? 0} />
                   <StatsCard title="Satisfaction moyenne" value="95%" />
                 </div>
     
