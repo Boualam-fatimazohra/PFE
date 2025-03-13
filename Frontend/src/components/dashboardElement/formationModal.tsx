@@ -238,8 +238,8 @@ const FormationModal = () => {
     font-weight: bold;
     text-align: center;
     border-bottom: 1px solid #F16E00;
-    padding: 8px 0;
-  }
+    padding:8px 0;
+}
 `;
   // Options for select inputs
   const statusOptions = [

@@ -48,13 +48,24 @@ export const sendEvaluationFormation = async (beneficiaryIds: string[], formatio
     throw error;
   }
 };
-
+//formations par formateur
 export const getAllFormations = async () => {
   try {
     const response = await apiClient.get('/formation/getAllFormationsWithDraft');
     return response.data;
   } catch (error) {
     console.error('Error fetching formations:', error);
+    throw error;
+  }
+};
+
+//all formations de tous les formateurs
+export const getAllFormationsManager = async () => {
+  try {
+    const response = await apiClient.get('/formation/getAllFormations');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching authenticated formations:', error);
     throw error;
   }
 };
