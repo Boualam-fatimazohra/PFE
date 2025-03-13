@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -6,40 +6,41 @@ import interactionPlugin from '@fullcalendar/interaction';
 import multiMonthPlugin from '@fullcalendar/multimonth';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from "react-router-dom";
-import { maxHeaderSize } from 'http';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useFormations } from "@/contexts/FormationContext";
 
-// Styles personnalisés directement dans le composant
+// Styles personnalisés (inchangés)
 const calendarStyles = `
   /* Style pour les en-têtes de jour (lun, mar, mer, etc.) */
   .fc .fc-col-header-cell {
-    background-color: #f1f1f1; /* Fond gris clair pour les en-têtes de jour */
+    background-color: #f1f1f1;
     padding: 10px 0;
   }
   /* Personnalisation de l'en-tête du calendrier */
 .fc .fc-toolbar-title {
-    color: #333; /* Couleur du titre (Mois, Année) */
+    color: #333;
     font-weight: bold;
 }
 
 /* Personnalisation de l'arrière-plan de l'en-tête */
 .fc .fc-toolbar {
-    background-color: #f4f4f4; /* Fond clair pour l'en-tête */
+    background-color: #f4f4f4;
     padding: 10px 20px;
 }
 
 /* Personnalisation des flèches de navigation */
 .fc .fc-button {
-    background-color: #EEE; /* Fond des boutons de navigation */
-    color: #333333; /* Couleur des flèches */
+    background-color: #EEE;
+    color: #333333;
 }
 
 .fc .fc-button:hover {
-    background-color: #ccc; /* Effet hover sur les boutons de navigation */
+    background-color: #ccc;
 }
 
 /* Personnalisation du bouton de vue (Jour, Semaine, Mois, Année) */
 .fc .fc-button-active {
-    background-color: #FF7900; /* Couleur du bouton actif */
+    background-color: #FF7900;
     color: white;
 }
 
@@ -90,7 +91,8 @@ const calendarStyles = `
   }
 `;
 
-const events = [
+// Événements statiques
+const staticEvents = [
   {
     id: '1',
     title: 'Réunion Marketing',
@@ -112,78 +114,209 @@ const events = [
     end: '2025-01-05',
     backgroundColor: '#4CAF50',
   },
-  
   {
     id: '4',
     title: 'Design Brief',
     start: '2025-01-04T16:00:00',
     end: '2025-01-04T17:00:00',
     backgroundColor: '#F16E00',
-  },
-  {
-    id: '5',
-    title: 'Team Call',
-    start: '2025-01-10',
-    end: '2025-01-11',
-    backgroundColor: '#2196F3',
-  },
-  {
-    id: '6',
-    title: 'Workshop',
-    start: '2025-01-12',
-    end: '2025-01-13',
-    backgroundColor: '#F16E00',
-  },
-  {
-    id: '7',
-    title: 'Design Review',
-    start: '2025-01-18',
-    end: '2025-01-19',
-    backgroundColor: '#4CAF50',
-  },
-  {
-    id: '8',
-    title: 'Workshop',
-    start: '2025-01-19',
-    end: '2025-01-20',
-    backgroundColor: '#F16E00',
-  },
-  {
-    id: '9',
-    title: 'Workshop',
-    start: '2025-01-26',
-    end: '2025-01-27',
-    backgroundColor: '#F16E00',
   }
 ];
 
+// Cache constants
+const STORAGE_KEY = {
+  FORMATIONS: 'cached_manager_formations',
+  TIMESTAMP: 'cached_manager_formations_timestamp',
+  HASH: 'cached_manager_formations_hash'
+};
+const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
+
 const CalendrierManager = () => {
-  const [currentMonth, setCurrentMonth] = useState(new Date(2025, 0, 1)); // January 2025
-  const [currentView, setCurrentView] = useState('dayGridMonth'); // Default view is month
+  const [currentMonth, setCurrentMonth] = useState(new Date(2025, 0, 1));
+  const [currentView, setCurrentView] = useState('dayGridMonth');
   const calendarRef = useRef(null);
+  const [open, setOpen] = useState(false);
+  const [events, setEvents] = useState([...staticEvents]); // Initialiser avec événements statiques
+  const [isLoading, setIsLoading] = useState(true);
+  const [formationEvents, setFormationEvents] = useState([]);
+  const [lastUpdated, setLastUpdated] = useState(null);
   
-  // Function to format month and year
+  const navigate = useNavigate();
+  
+  // Récupération des formations depuis le context
+  const { 
+    formations: contextFormations, 
+    loading, 
+    getAllFormationsManager 
+  } = useFormations();
+
+  // Fonction pour générer un hash simple des formations
+  const generateFormationsHash = useCallback((formations) => {
+    return formations
+      .map(f => `${f._id}-${f.dateDebut}-${f.dateFin}-${f.nom}-${f.status}`)
+      .sort()
+      .join('|');
+  }, []);
+
+  // Fonction pour convertir les formations en événements
+  const convertFormationsToEvents = useCallback((formations) => {
+    return formations.map(formation => {
+      const startDate = new Date(formation.dateDebut);
+      let endDate;
+      
+      if (formation.dateFin) {
+        endDate = new Date(formation.dateFin);
+      } else {
+        endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + 1); 
+      }
+      
+      return {
+        id: `formation-${formation._id}`,
+        title: formation.nom,
+        start: startDate.toISOString().split('T')[0], 
+        end: endDate.toISOString().split('T')[0],
+        backgroundColor: '#FFEDD5',
+        textColor: '#9A3412',
+        extendedProps: {
+          type: 'formation',
+          status: formation.status,
+          formationId: formation._id
+        }
+      };
+    });
+  }, []);
+
+  // Fonction pour récupérer les formations depuis le cache ou l'API
+  const loadCachedFormations = useCallback(() => {
+    try {
+      const cachedFormations = localStorage.getItem(STORAGE_KEY.FORMATIONS);
+      const cachedTimestamp = localStorage.getItem(STORAGE_KEY.TIMESTAMP);
+      
+      if (cachedFormations && cachedTimestamp) {
+        const parsedFormations = JSON.parse(cachedFormations);
+        const timestamp = parseInt(cachedTimestamp);
+        
+        // Vérifier si le cache est encore valide
+        if (Date.now() - timestamp < CACHE_DURATION) {
+          setFormationEvents(parsedFormations);
+          setEvents([...staticEvents, ...parsedFormations]);
+          setLastUpdated(new Date(timestamp));
+          setIsLoading(false);
+          return true;
+        }
+      }
+      return false;
+    } catch (error) {
+      console.error("Erreur lors du chargement du cache:", error);
+      return false;
+    }
+  }, []);
+
+  // Fonction pour mettre à jour le cache et les événements
+  const updateFormationsCache = useCallback((formations) => {
+    try {
+      const formationEvents = convertFormationsToEvents(formations);
+      const hash = generateFormationsHash(formations);
+      
+      // Stocker dans le localStorage
+      localStorage.setItem(STORAGE_KEY.FORMATIONS, JSON.stringify(formationEvents));
+      localStorage.setItem(STORAGE_KEY.TIMESTAMP, Date.now().toString());
+      localStorage.setItem(STORAGE_KEY.HASH, hash);
+      
+      // Mettre à jour l'état
+      setFormationEvents(formationEvents);
+      setEvents([...staticEvents, ...formationEvents]);
+      setLastUpdated(new Date());
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour du cache:", error);
+    }
+  }, [convertFormationsToEvents, generateFormationsHash]);
+
+  // Fonction pour charger les formations depuis l'API
+  const fetchFormations = useCallback(async (force = false) => {
+    // Si on charge déjà depuis le cache et que ce n'est pas forcé, on sort
+    if (!force && loadCachedFormations()) {
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      const managerFormations = await getAllFormationsManager();
+      
+      // Vérifier si les données ont changé par rapport au cache
+      const newHash = generateFormationsHash(managerFormations);
+      const oldHash = localStorage.getItem(STORAGE_KEY.HASH);
+      
+      if (newHash !== oldHash) {
+        // Les données ont changé, mettre à jour le cache
+        updateFormationsCache(managerFormations);
+      }
+      
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Erreur lors du chargement des formations:", error);
+      setIsLoading(false);
+      
+      // Si erreur, essayer d'utiliser le cache même s'il est expiré
+      const cachedFormations = localStorage.getItem(STORAGE_KEY.FORMATIONS);
+      if (cachedFormations) {
+        const parsedFormations = JSON.parse(cachedFormations);
+        setFormationEvents(parsedFormations);
+        setEvents([...staticEvents, ...parsedFormations]);
+      }
+    }
+  }, [loadCachedFormations, getAllFormationsManager, generateFormationsHash, updateFormationsCache]);
+
+  // Effet pour charger les formations au montage et configurer un poller
+  useEffect(() => {
+    // Charger les formations depuis le cache ou l'API
+    fetchFormations();
+    
+    // Configurer un intervalle pour vérifier les mises à jour
+    const intervalId = setInterval(() => {
+      fetchFormations(true); // Force refresh
+    }, CACHE_DURATION);
+    
+    // Nettoyer l'intervalle au démontage
+    return () => clearInterval(intervalId);
+  }, [fetchFormations]);
+
+  // Effet pour mettre à jour les événements quand le context change
+  useEffect(() => {
+    // Si nous avons des formations dans le context et qu'elles ont changé
+    if (contextFormations && contextFormations.length > 0) {
+      const newHash = generateFormationsHash(contextFormations);
+      const oldHash = localStorage.getItem(STORAGE_KEY.HASH);
+      
+      if (newHash !== oldHash) {
+        updateFormationsCache(contextFormations);
+      }
+    }
+  }, [contextFormations, generateFormationsHash, updateFormationsCache]);
+
+  // Gestionnaire d'événements pour la création
+  const handleSelection = (type) => {
+    setOpen(false);
+    if (type === "event") {
+      navigate("/CreatEvent");
+    } else if (type === "formation") {
+      navigate("/formateur/formationModal");
+    }
+  };
+  
+  // Fonction pour formater le mois et l'année
   const formatMonthYear = (date) => {
     const monthYear = new Intl.DateTimeFormat('fr-FR', {
       month: 'long',
       year: 'numeric'
     }).format(date);
     
-    // Capitalise uniquement la première lettre
     return monthYear.charAt(0).toUpperCase() + monthYear.slice(1).toLowerCase();
   };
   
-  
-  const navigateMonth = (direction) => {
-    const newDate = new Date(currentMonth);
-    newDate.setMonth(newDate.getMonth() + (direction === 'next' ? 1 : -1));
-    setCurrentMonth(newDate);
-    if (calendarRef.current) {
-      const calendarApi = calendarRef.current.getApi();
-      calendarApi.gotoDate(newDate);
-    }
-  };
-  
+  // Navigation entre les dates
   const navigateDate = (direction) => {
     if (calendarRef.current) {
       const calendarApi = calendarRef.current.getApi();
@@ -192,11 +325,11 @@ const CalendrierManager = () => {
       } else {
         calendarApi.prev();
       }
-      // Update current date state based on calendar's current date
       setCurrentMonth(calendarApi.getDate());
     }
   };
   
+  // Changement de vue
   const changeView = (viewName) => {
     if (calendarRef.current) {
       const calendarApi = calendarRef.current.getApi();
@@ -205,7 +338,7 @@ const CalendrierManager = () => {
     }
   };
   
-  // Synchronize title when view changes
+  // Synchroniser le titre avec la vue
   useEffect(() => {
     if (calendarRef.current) {
       const calendarApi = calendarRef.current.getApi();
@@ -213,7 +346,7 @@ const CalendrierManager = () => {
     }
   }, [currentView]);
   
-  // Get appropriate title based on current view
+  // Obtenir le titre approprié selon la vue courante
   const getTitle = () => {
     if (calendarRef.current) {
       const calendarApi = calendarRef.current.getApi();
@@ -236,7 +369,7 @@ const CalendrierManager = () => {
             day: 'numeric',
             month: 'long',
             year: 'numeric'
-          }).format(new Date(endDate.getTime() - 86400000)); // Subtract one day
+          }).format(new Date(endDate.getTime() - 86400000));
           return `${startFormatted} - ${endFormatted}`;
         case 'multiMonthYear':
           return new Intl.DateTimeFormat('fr-FR', {
@@ -248,22 +381,58 @@ const CalendrierManager = () => {
     }
     return formatMonthYear(currentMonth);
   };
-  const navigate = useNavigate();
 
+  // Handler pour le clic sur un événement
+  const handleEventClick = (info) => {
+    const event = info.event;
+    
+    if (event.extendedProps && event.extendedProps.type === 'formation') {
+      const formationId = event.extendedProps.formationId;
+      navigate(`/formateur/formations/${formationId}`);
+    }
+  };
+
+  // Mémoiser les événements pour éviter les re-rendus inutiles
+  const memoizedEvents = useMemo(() => events, [events]);
+
+  // Rafraîchir manuellement les formations
+  const handleRefresh = () => {
+    fetchFormations(true);
+  };
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 "style={{ maxWidth: '83rem' }}>
+    <div className="max-w-7xl mx-auto px-4 py-6" style={{ maxWidth: '83rem' }}>
       {/* Intégration des styles CSS directement dans le composant */}
       <style>{calendarStyles}</style>
       
       {/* En-tête */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-left">Mon Calendrier</h1>
+        
+        {/* Bouton qui ouvre le choix */}
         <Button 
           className="bg-black text-white hover:bg-orange-600 rounded-[4px]"
-          onClick={() => navigate("/CreatEvent")}  >
-          + Créer un événement
-        </Button>      
-    </div>
+          onClick={() => setOpen(true)}
+        >
+          + Créer événement/Formation
+        </Button>
+
+        {/* Modal de sélection */}
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Que souhaitez-vous créer ?</DialogTitle>
+            </DialogHeader>
+            <div className="flex justify-center gap-4">
+              <Button className="bg-blue-500 hover:bg-blue-600 text-white" onClick={() => handleSelection("event")}>
+                Événement
+              </Button>
+              <Button className="bg-green-500 hover:bg-green-600 text-white" onClick={() => handleSelection("formation")}>
+                Formation
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
       
       <div className="flex">
         {/* Sidebar des catégories */}
@@ -294,7 +463,7 @@ const CalendrierManager = () => {
         </div>
 
         {/* Zone principale du calendrier */}
-        <div className="flex-grow p-6 bg-white  rounded-[4px]">
+        <div className="flex-grow p-6 bg-white rounded-[4px]">
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center">
               {/* Titre du calendrier à gauche */}
@@ -302,83 +471,89 @@ const CalendrierManager = () => {
               
               {/* Flèches de navigation à droite */}
               <div className="ml-4 flex items-center">
-  <button onClick={() => navigateDate('prev')} className="p-2 hover:bg-white rounded-[4px] font-bold" style={{ color: "#6B7280" }}>&lt;</button>
-  <button onClick={() => navigateDate('next')} className="p-2 hover:bg-white rounded-[4px] font-bold" style={{ color: "#6B7280" }}>&gt;</button>
-</div>
+                <button onClick={() => navigateDate('prev')} className="p-2 hover:bg-white rounded-[4px] font-bold" style={{ color: "#6B7280" }}>&lt;</button>
+                <button onClick={() => navigateDate('next')} className="p-2 hover:bg-white rounded-[4px] font-bold" style={{ color: "#6B7280" }}>&gt;</button>
+              </div>
             </div>
            
             <div className="flex space-x-2 bg-white">
-  <Button 
-    variant="ghost" 
-    className="text-[#333] flex items-center gap-1 font-bold py-1 px-4 text-xs rounded-[4px] border border-gray-300 p-4"
-    style={{ height: '28px', backgroundColor: '#EEE' }}
-  >
-    <svg width="12" height="12" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M0 3C0 2.44772 0.447715 2 1 2H19C19.5523 2 20 2.44772 20 3V5C20 5.26522 19.8946 5.51957 19.7071 5.70711L13 12.4142V19C13 19.5523 12.5523 20 12 20H8C7.44772 20 7 19.5523 7 19V12.4142L0.292893 5.70711C0.105357 5.51957 0 5.26522 0 5V3Z" fill="#000"/>
-    </svg>
-    Filtres
-  </Button>
+              <Button 
+                variant="ghost" 
+                className="text-[#333] flex items-center gap-1 font-bold py-1 px-4 text-xs rounded-[4px] border border-gray-300 p-4"
+                style={{ height: '28px', backgroundColor: '#EEE' }}
+              >
+                <svg width="12" height="12" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M0 3C0 2.44772 0.447715 2 1 2H19C19.5523 2 20 2.44772 20 3V5C20 5.26522 19.8946 5.51957 19.7071 5.70711L13 12.4142V19C13 19.5523 12.5523 20 12 20H8C7.44772 20 7 19.5523 7 19V12.4142L0.292893 5.70711C0.105357 5.51957 0 5.26522 0 5V3Z" fill="#000"/>
+                </svg>
+                Filtres
+              </Button>
 
-  <div className="flex space-x-1 bg-white p-0 border border-gray-300 rounded-[4px]">
-    <Button 
-      variant="secondary" 
-      className={`bg-white  hover:bg-gray-100 ${currentView === 'timeGridDay' ? 'bg-orange-500 text-white' : 'text-[#333]'} rounded-[4px] py-1 px-4 text-xs`}
-      style={{ height: '28px' }}
-      onClick={() => changeView('timeGridDay')}
-    >
-      Jour
-    </Button>
+              <div className="flex space-x-1 bg-white p-0 border border-gray-300 rounded-[4px]">
+                <Button 
+                  variant="secondary" 
+                  className={`bg-white hover:bg-gray-100 ${currentView === 'timeGridDay' ? 'bg-orange-500 text-white' : 'text-[#333]'} rounded-[4px] py-1 px-4 text-xs`}
+                  style={{ height: '28px' }}
+                  onClick={() => changeView('timeGridDay')}
+                >
+                  Jour
+                </Button>
 
-    <Button 
-      variant="secondary" 
-      className={`bg-white  hover:bg-gray-100 ${currentView === 'timeGridWeek' ? 'bg-orange-500 text-white' : 'text-[#333]'} rounded-[4px] py-1 px-4 text-xs`}
-      style={{ height: '28px' }}
-      onClick={() => changeView('timeGridWeek')}
-    >
-      Semaine
-    </Button>
+                <Button 
+                  variant="secondary" 
+                  className={`bg-white hover:bg-gray-100 ${currentView === 'timeGridWeek' ? 'bg-orange-500 text-white' : 'text-[#333]'} rounded-[4px] py-1 px-4 text-xs`}
+                  style={{ height: '28px' }}
+                  onClick={() => changeView('timeGridWeek')}
+                >
+                  Semaine
+                </Button>
 
-    <Button 
-      variant="secondary" 
-      className={`bg-white  hover:bg-gray-100 ${currentView === 'dayGridMonth' ? 'bg-orange-500 text-white' : 'text-[#333]'} rounded-[4px] py-1 px-4 text-xs`}
-      style={{ height: '28px' }}
-      onClick={() => changeView('dayGridMonth')}
-    >
-      Mois
-    </Button>
+                <Button 
+                  variant="secondary" 
+                  className={`bg-white hover:bg-gray-100 ${currentView === 'dayGridMonth' ? 'bg-orange-500 text-white' : 'text-[#333]'} rounded-[4px] py-1 px-4 text-xs`}
+                  style={{ height: '28px' }}
+                  onClick={() => changeView('dayGridMonth')}
+                >
+                  Mois
+                </Button>
 
-    <Button 
-      variant="secondary" 
-      className={`bg-white  hover:bg-gray-100 ${currentView === 'multiMonthYear' ? 'bg-orange-500 text-white' : 'text-[#333]'} rounded-[4px] py-1 px-4 text-xs`}
-      style={{ height: '28px' }}
-      onClick={() => changeView('multiMonthYear')}
-    >
-      Année
-    </Button>
-  </div>
-</div>
-
+                <Button 
+                  variant="secondary" 
+                  className={`bg-white hover:bg-gray-100 ${currentView === 'multiMonthYear' ? 'bg-orange-500 text-white' : 'text-[#333]'} rounded-[4px] py-1 px-4 text-xs`}
+                  style={{ height: '28px' }}
+                  onClick={() => changeView('multiMonthYear')}
+                >
+                  Année
+                </Button>
+              </div>
+            </div>
           </div>
 
-          <FullCalendar
-            ref={calendarRef}
-            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, multiMonthPlugin]}
-            initialView={currentView}
-            headerToolbar={false}
-            events={events}
-            initialDate={currentMonth}
-            height="calc(80vh - 150px)"
-            locale="fr"
-            eventDisplay="block"
-            eventTextColor="white"
-            dayHeaderFormat={{ weekday: 'short' }}
-            views={{
-              timeGridDay: { dayHeaderFormat: { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' } },
-              timeGridWeek: { dayHeaderFormat: { weekday: 'short', month: 'numeric', day: 'numeric' } },
-              dayGridMonth: { dayHeaderFormat: { weekday: 'short' } },
-              multiMonthYear: { multiMonthMaxColumns: 3, multiMonthTitleFormat: { month: 'long' } }
-            }}
-          />
+          {loading ? (
+            <div className="h-64 flex items-center justify-center">
+              <p>Chargement des événements...</p>
+            </div>
+          ) : (
+            <FullCalendar
+              ref={calendarRef}
+              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, multiMonthPlugin]}
+              initialView={currentView}
+              headerToolbar={false}
+              events={events}
+              initialDate={currentMonth}
+              height="calc(80vh - 150px)"
+              locale="fr"
+              eventDisplay="block"
+              eventTextColor="white"
+              dayHeaderFormat={{ weekday: 'short' }}
+              eventClick={handleEventClick}
+              views={{
+                timeGridDay: { dayHeaderFormat: { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' } },
+                timeGridWeek: { dayHeaderFormat: { weekday: 'short', month: 'numeric', day: 'numeric' } },
+                dayGridMonth: { dayHeaderFormat: { weekday: 'short' } },
+                multiMonthYear: { multiMonthMaxColumns: 3, multiMonthTitleFormat: { month: 'long' } }
+              }}
+            />
+          )}
         </div>
       </div>
     </div>
