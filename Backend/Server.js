@@ -24,6 +24,7 @@ const evenementRoutes = require("./Routes/evenement.route.js");
 const notificationRoutes = require("./Routes/notification.route.js");
 const chatRoutes = require("./Routes/chat.route.js");
 const uploadRoutes = require("./Routes/upload/upload.route.js");
+const beneficiaireFileRoutes = require('./Routes/beneficiaireFileUpload.route');
 
 dotenv.config();
 
@@ -82,6 +83,7 @@ app.use("/api/evenement", evenementRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/chat", chatRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use('/api/beneficiaire-files', beneficiaireFileRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
