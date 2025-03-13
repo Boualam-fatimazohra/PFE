@@ -13,6 +13,8 @@ interface Formation {
   categorie?: string;
   niveau?: string;
   image?: File | string; // Allow both File (for uploads) and string (for URLs)
+   
+
 }
 
 export const getBeneficiaireFormation = async (id: string) => {
@@ -48,16 +50,35 @@ export const sendEvaluationFormation = async (beneficiaryIds: string[], formatio
     throw error;
   }
 };
-
+//formations par formateur
 export const getAllFormations = async () => {
   try {
-    const response = await apiClient.get('/formation/getFormations');
+    const response = await apiClient.get('/formation/getAllFormationsWithDraft');
     return response.data;
   } catch (error) {
     console.error('Error fetching formations:', error);
     throw error;
   }
 };
+//all formations de tous les formateurs
+export const getAllFormationsManager = async () => {
+  try {
+    const response = await apiClient.get('/formation/getAllFormations');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching authenticated formations:', error);
+    throw error;
+  }
+};
+// export const getAllFormationsDraftOrNot = async () => {
+//   try {
+//     const response = await apiClient.get('/formation/getAllFormations');
+//     return response.data;
+//   } catch (error) {
+//     console.error('Error fetching formations:', error);
+//     throw error;
+//   }
+// };
 export const getNbrBeneficiairesParFormateur=async ()=>{
   try {
     const response = await apiClient.get('/beneficiaires/getNbrBeneficiairesParFormateur');
@@ -151,5 +172,53 @@ export const deleteFormation = async (id: string) => {
   } catch (error) {
     console.error(`Error deleting formation ${id}:`, error);
     throw error;
+  }
+};
+export const createFormationDraft = async (formationData: any) => {
+  try {
+    const formData = new FormData();
+    
+    // Append all form fields to FormData
+    Object.keys(formationData).forEach(key => {
+      // Skip image - we'll handle it separately
+      if (key !== 'image' && formationData[key] !== null && formationData[key] !== undefined) {
+        formData.append(key, formationData[key]);
+      }
+    });
+    
+    // Append image if it exists and is a File
+    if (formationData.image && formationData.image instanceof File) {
+      formData.append('image', formationData.image);
+    }
+    
+    const response = await apiClient.post('/formation/createFormationDraft', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    
+    return response.data;
+  } catch (error) {
+    // Gestion différenciée des erreurs selon leur type
+    if (axios.isAxiosError(error)) {
+      // Erreur Axios - nous pouvons accéder à error.response
+      const status = error.response?.status || 500;
+      
+      // Erreurs spécifiques selon le code d'erreur
+      if (status === 401) {
+        console.error('Erreur d\'authentification:', error.response?.data?.message || 'Utilisateur non authentifié');
+        throw new Error('Vous devez être connecté pour créer une formation en brouillon');
+      } else if (status === 400) {
+        console.error('Données invalides:', error.response?.data?.message);
+        throw new Error(error.response?.data?.message || 'Veuillez remplir tous les champs obligatoires');
+      } else {
+        console.error('Erreur serveur:', error.response?.data);
+        throw new Error(error.response?.data?.message || 'Une erreur est survenue lors de la création de la formation');
+      }
+    } else {
+      // Erreur non-Axios (réseau, etc.)
+      console.error('Erreur inconnue lors de la création de la formation:', error);
+      throw new Error('Impossible de communiquer avec le serveur. Veuillez vérifier votre connexion Internet.');
+    }
   }
 };
