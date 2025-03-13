@@ -11,6 +11,7 @@ import styled, { createGlobalStyle } from "styled-components";
 import { fr } from "date-fns/locale"; // Assurez-vous d'avoir installé `date-fns`
 import { Loader2 } from "lucide-react";
 import EnhanceListButton from "./EnhanceListButton";
+import { useNavigate } from 'react-router-dom';
 // Types
 interface Step {
   number: string;
@@ -74,9 +75,9 @@ interface Message {
 }
 
 const FormationModal = () => {
-  const { addNewFormation, error: contextError } = useFormations();
+  const { addNewFormation, error: contextError ,createFormationDraft } = useFormations();
   const [selectedDate, setSelectedDate] = useState(new Date());
-
+  const navigate = useNavigate();
   // State
   const [currentStep, setCurrentStep] = useState(1);
   const [formState, setFormState] = useState<FormState>(initialFormState);
@@ -517,7 +518,44 @@ const FormationModal = () => {
       setIsSubmitting(false);
     }
   };
+  const handleSubmitDraft = async () => {
+    if (!validateForm()) {
+      return;
+    }
+    setIsSubmitting(true);
+    console.log("currentstep",currentStep);
+  
+    try {
+      // Map formState to the structure needed by the API
+      const formationData = {
+        nom: formState.title,
+        description: formState.description,
+        status: formState.status as "En Cours" | "Terminé" | "Avenir" | "Replanifier", // Add type assertion here
+        categorie: formState.category,
+        niveau: formState.level,
+        image: formState.imageFormation,
+        lienInscription: formState.registrationLink,
+        dateDebut: formState.dateDebut, // Conversion de la date de début
+        dateFin: formState.dateFin,    
+        tags: formState.tags,
+        currentStep:currentStep
+      };
+  console.log("nuemro de step : ",currentStep);
+      await createFormationDraft(formationData);
+      
+      alert('Formation créée avec succès!');
+      setFormState(initialFormState);
+      
+      setFileList([]);
+      navigate("/formateur/mesformation");
 
+    } catch (error) {
+      console.error('Error submitting formation:', error);
+      alert('Erreur lors de la création de la formation. Veuillez réessayer.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   // Render Step Indicator
   const renderStepIndicator = () => (
     <div className="flex items-center justify-between w-full mb-8 max-w-10xl mx-auto relative gap-x-8">
@@ -1124,6 +1162,15 @@ const FormationModal = () => {
               Retour
             </button>
           )}
+          {currentStep < 4 && currentStep >1 && (
+    <button
+      type="button"
+      onClick={handleSubmitDraft}
+      className="rounded-none px-6 py-2 border border-orange-500 text-orange-500 rounded-lg hover:bg-orange-100 font-bold"
+    >
+      Enregistrer en brouillon
+    </button>
+  )}
           {currentStep < steps.length ? (
             <button
               type="button"
