@@ -4,6 +4,7 @@ import { getAllFormations as fetchFormations, createFormation as addFormation } 
 import { deleteFormation as apiDeleteFormation, updateFormation as ipUpdateFormation } from '../services/formationService';
 import { getNbrBeneficiairesParFormateur, getBeneficiaireFormation as fetchBeneficiaires } from "../services/formationService";
 
+import { getAllFormationsManager as fetchAuthenticatedFormations } from "../services/formationService";
 interface Formation {
   _id?: string;
   nom: string;
@@ -43,6 +44,7 @@ interface FormationContextType {
   nombreBeneficiaires: number | null; 
   getBeneficiaireFormation: (formationId: string) => Promise<Beneficiaire[]>;
   sendEvaluationFormation: (beneficiaryIds: string[], formationId: string) => Promise<any>;
+  getAllFormationsManager: () => Promise<Formation[]>;
 }
 
 interface FormationProviderProps {
@@ -228,6 +230,24 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
       throw error;
     }
   };
+  
+  const getAllFormationsManager = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await fetchAuthenticatedFormations();
+      return data;
+    } catch (error) {
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "Erreur lors de la récupération des formations authentifiées";
+      console.error(errorMessage);
+      setError(errorMessage);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const sendEvaluationFormation = async (beneficiaryIds: string[], formationId: string) => {
     try {
@@ -257,7 +277,8 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
       searchFormations, 
       nombreBeneficiaires,
       getBeneficiaireFormation,
-      sendEvaluationFormation
+      sendEvaluationFormation,
+      getAllFormationsManager
     }}>
       {children}
     </FormationContext.Provider>
