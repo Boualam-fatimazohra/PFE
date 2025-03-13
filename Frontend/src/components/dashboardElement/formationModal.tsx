@@ -11,6 +11,7 @@ import styled, { createGlobalStyle } from "styled-components";
 import { fr } from "date-fns/locale"; // Assurez-vous d'avoir installé `date-fns`
 import { Loader2 } from "lucide-react";
 import EnhanceListButton from "./EnhanceListButton";
+import {uploadBeneficiairesFromExcel} from "../../services/formationService";
 import { useNavigate ,useLocation} from 'react-router-dom';
 // Types
 interface Step {
@@ -57,6 +58,7 @@ interface UploadedFile {
 
 // Initial form state
 const initialFormState: FormState = {
+
   title: "",
   description: "",
   status: "En Cours",
@@ -822,10 +824,14 @@ const FormationModal = () => {
      </div>
       );
       const renderStep2 = () => {
+       
         const handleEnhanceComplete = (results) => {
             setProcessingResults(results);
         };
     
+        // fct d'upload :
+        
+        
         return (
             <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <div className="space-y-6">
@@ -875,7 +881,7 @@ const FormationModal = () => {
                                 </div>
                             </div>
                         ))}
-    
+                         
                         {fileList.length === 0 && (
                             <div className="border-2 border-dashed border-gray-300 rounded-lg p-8">
                                 <div className="flex flex-col items-center">
@@ -935,6 +941,7 @@ const FormationModal = () => {
     
 
   const renderStep3 = () => (
+    
     <div className="bg-white rounded-lg border border-gray-200 p-8 w-full h-auto">
       <div className="space-y-6">
         <h2 className="text-lg font-semibold">Liste de confirmation</h2>

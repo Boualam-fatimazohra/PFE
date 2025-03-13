@@ -5,6 +5,9 @@ const XLSX = require("xlsx");
 const  BeneficiareFormation=require("../Models/beneficiairesFormation.js");
 const mongoose = require('mongoose');
 const Formateur=require("../Models/formateur.model");
+const {parseExcelFile} =require("../utils/excelUtils.js");
+const {getExistingBeneficiairesHashes, isDuplicateBeneficiaire }= require("../utils/existedBenef.js");
+
 const createBeneficiaire = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -211,79 +214,149 @@ const deleteBeneficiaire = async (req, res) => {
 
 // Upload beinificiaire excel data directly to database
 
+// const uploadBeneficiairesFromExcel = async (req, res) => {
+//   try {
+//     // Vérifier que idFormation est présent et valide
+//     const idFormation = req.body.idFormation; // Assurez-vous que c'est bien dans le body
+    
+//     if (!idFormation || !mongoose.Types.ObjectId.isValid(idFormation)) {
+//       return res.status(400).json({ 
+//         message: "ID de formation invalide ou manquant",
+//         error: "Invalid formation ID" 
+//       });
+//     }
+
+//     if (!req.file) {
+//       return res.status(400).json({ message: "No file uploaded" });
+//     }
+     
+//     const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
+//     if (!workbook.SheetNames.length) {
+//       return res.status(400).json({ message: "No sheets found in the uploaded Excel file" });
+//     }
+
+//     // Get first sheet
+//     const sheetName = workbook.SheetNames[0];
+//     const worksheet = workbook.Sheets[sheetName];
+//     if (!worksheet) {
+//       return res.status(400).json({ message: "First sheet is empty or not found" });
+//     }
+
+//     // Convert the worksheet to JSON
+//     const rawData = XLSX.utils.sheet_to_json(worksheet);
+    
+//     // Transform data to match MongoDB schema
+//     const beneficiaires = rawData.map(item => ({
+//       horodateur: item["Horodateur"] || null,
+//       email: item["Email"] || null,
+//       prenom: typeof item["Prénom"] === "string" ? item["Prénom"].trim() : null,
+//       nom: typeof item["Nom"] === "string" ? item["Nom"].trim() : null,
+//       genre: item["Genre"] || null,
+//       dateDeNaissance: item["Date de naissance"]
+//         ? new Date((item["Date de naissance"] - 25569) * 86400000)
+//         : null,
+//       pays: typeof item["Pays"] === "string" ? item["Pays"].trim() : null,
+//       situationProfessionnelle: item["Situation Profetionnelle"] || null,
+//       profession: typeof item["Profession"] === "string" ? item["Profession"].trim() : null,
+//       age: item["Votre age"] || null,
+//       telephone: item["Télélphone"] || null,
+//       niveauEtudes: item["Niveau d'etudes"] || null,
+//       experienceGestionProjet: item["Avez vous une expérience avec la gestion de projet."] || null,
+//       specialite: typeof item["Votre spécialité"] === "string" ? item["Votre spécialité"].trim() : null,
+//       etablissement: typeof item["Établissement"] === "string" ? item["Établissement"].trim() : null,
+//       dejaParticipeODC: item["Avez-vous déja participé au programmes ODC"] || null,
+//     }));
+   
+//     // Utiliser une session MongoDB pour garantir l'atomicité
+//     const session = await mongoose.startSession();
+//     session.startTransaction();
+
+//     try {
+//       const insertedBeneficiaires = await Beneficiaire.insertMany(beneficiaires, { session });
+//       const beneficiareFormations = insertedBeneficiaires.map(b => ({
+//         formation: new mongoose.Types.ObjectId(idFormation), // Convertir en ObjectId
+//         beneficiaire: b._id,
+//         confirmationAppel: false,
+//         confirmationEmail: false,
+//       }));
+
+//       // Insérer les instances de BeneficiareFormation
+//       await BeneficiareFormation.insertMany(beneficiareFormations, { session });
+      
+//       await session.commitTransaction();
+      
+//       res.status(200).json({ 
+//         message: "Beneficiaires uploaded successfully", 
+//         count: insertedBeneficiaires.length 
+//       });
+//     } catch (error) {
+//       await session.abortTransaction();
+//       throw error;
+//     } finally {
+//       session.endSession();
+//     }
+//   } catch (error) {
+//     console.error('Upload error:', error);
+//     res.status(500).json({ 
+//       message: "Error uploading beneficiaires", 
+//       error: error.message 
+//     });
+//   }
+// };
+// Simple read data from excel testing
 const uploadBeneficiairesFromExcel = async (req, res) => {
   try {
-    // Vérifier que idFormation est présent et valide
-    const idFormation = req.body.idFormation; // Assurez-vous que c'est bien dans le body
-    
+    const idFormation = req.body.idFormation;
+
     if (!idFormation || !mongoose.Types.ObjectId.isValid(idFormation)) {
-      return res.status(400).json({ 
-        message: "ID de formation invalide ou manquant",
-        error: "Invalid formation ID" 
-      });
+      return res.status(400).json({ message: "ID de formation invalide ou manquant" });
     }
 
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
     }
-     
-    const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
-    if (!workbook.SheetNames.length) {
-      return res.status(400).json({ message: "No sheets found in the uploaded Excel file" });
-    }
 
-    // Get first sheet
-    const sheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[sheetName];
-    if (!worksheet) {
-      return res.status(400).json({ message: "First sheet is empty or not found" });
-    }
+    const rawBeneficiaires = parseExcelFile(req.file.buffer);
 
-    // Convert the worksheet to JSON
-    const rawData = XLSX.utils.sheet_to_json(worksheet);
+    // Récupérer la liste des bénéficiaires déjà enregistrés sous forme de hash
+    const existingHashes = await getExistingBeneficiairesHashes();
+    // console.log("beneficiaires hashee", existingHashes);
+    rawBeneficiaires.forEach(b => {
+      const isDuplicate = isDuplicateBeneficiaire(b, existingHashes);
+      console.log(`Bénéficiaire: ${b.nom}, Email: ${b.email}, Doublon: ${isDuplicate}`);
+    });
+    // Filtrer les nouveaux bénéficiaires qui ne sont pas déjà stockés
+    const newBeneficiaires = rawBeneficiaires.filter(b => !isDuplicateBeneficiaire(b, existingHashes));
+    console.log("Données des nouveaux bénéficiaires avant insertion:", newBeneficiaires);
+    if (newBeneficiaires.length === 0) {
+      return res.status(200).json({ message: "Tous les bénéficiaires sont déjà enregistrés." });
+    }
+    newBeneficiaires.forEach(b => {
+      if (!b.nom || !b.email || !b.genre || !b.pays) {
+        console.error("Bénéficiaire invalide détecté :", b);
+      }
+    });
     
-    // Transform data to match MongoDB schema
-    const beneficiaires = rawData.map(item => ({
-      horodateur: item["Horodateur"] || null,
-      email: item["Email"] || null,
-      prenom: typeof item["Prénom"] === "string" ? item["Prénom"].trim() : null,
-      nom: typeof item["Nom"] === "string" ? item["Nom"].trim() : null,
-      genre: item["Genre"] || null,
-      dateDeNaissance: item["Date de naissance"]
-        ? new Date((item["Date de naissance"] - 25569) * 86400000)
-        : null,
-      pays: typeof item["Pays"] === "string" ? item["Pays"].trim() : null,
-      situationProfessionnelle: item["Situation Profetionnelle"] || null,
-      profession: typeof item["Profession"] === "string" ? item["Profession"].trim() : null,
-      age: item["Votre age"] || null,
-      telephone: item["Télélphone"] || null,
-      niveauEtudes: item["Niveau d'etudes"] || null,
-      experienceGestionProjet: item["Avez vous une expérience avec la gestion de projet."] || null,
-      specialite: typeof item["Votre spécialité"] === "string" ? item["Votre spécialité"].trim() : null,
-      etablissement: typeof item["Établissement"] === "string" ? item["Établissement"].trim() : null,
-      dejaParticipeODC: item["Avez-vous déja participé au programmes ODC"] || null,
-    }));
-   
-    // Utiliser une session MongoDB pour garantir l'atomicité
+    // Début de la transaction
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
-      const insertedBeneficiaires = await Beneficiaire.insertMany(beneficiaires, { session });
+      const insertedBeneficiaires = await Beneficiaire.insertMany(newBeneficiaires, { session });
+
       const beneficiareFormations = insertedBeneficiaires.map(b => ({
-        formation: new mongoose.Types.ObjectId(idFormation), // Convertir en ObjectId
+        formation: new mongoose.Types.ObjectId(idFormation),
         beneficiaire: b._id,
         confirmationAppel: false,
         confirmationEmail: false,
       }));
 
-      // Insérer les instances de BeneficiareFormation
       await BeneficiareFormation.insertMany(beneficiareFormations, { session });
-      
+
       await session.commitTransaction();
       
       res.status(200).json({ 
-        message: "Beneficiaires uploaded successfully", 
+        message: "Bénéficiaires uploadés avec succès", 
         count: insertedBeneficiaires.length 
       });
     } catch (error) {
@@ -293,14 +366,10 @@ const uploadBeneficiairesFromExcel = async (req, res) => {
       session.endSession();
     }
   } catch (error) {
-    console.error('Upload error:', error);
-    res.status(500).json({ 
-      message: "Error uploading beneficiaires", 
-      error: error.message 
-    });
+    console.error("Upload error:", error);
+    res.status(500).json({ message: "Erreur lors de l'upload", error: error.message });
   }
 };
-// Simple read data from excel testing
 const getBeneficiaireFormation = async (req, res) => {
   console.log('Requête reçue sur:', req.originalUrl); //  Debug
   const idFormation = req.params.id || req.body.idFormation;
