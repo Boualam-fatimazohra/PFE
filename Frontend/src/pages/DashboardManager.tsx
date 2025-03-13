@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { io } from 'socket.io-client';
+
 import { LineChart, Line, Tooltip, ResponsiveContainer,CartesianGrid, AreaChart, Area } from "recharts";
 import { XAxis } from "recharts";
 import { YAxis } from "recharts";
@@ -8,12 +10,16 @@ import {
   Users,  
   AlertTriangle,
   Icon,
+  Bell,
 } from "lucide-react";
 import { DatePicker } from "@/components/ui/DatePicker";
 import KPIStats from "@/components/dashboardElement/KPIStats";
 import AbsenceManager from "./AbsenceManager";
 import BenificairesManager from "@/components/dashboardElement/BenificairesManager";
 import { parseClassNames } from "@fullcalendar/core/internal";
+import axios from "axios";
+import { toast } from "react-toastify";
+import NotificationBell from "@/components/notification/NotificationBell";
 import EventAvenir from "@/components/dashboardElement/EventAvenir";
 import PerformanceOdc from "@/components/dashboardElement/PerformanceOdc";
 import { Button } from "@/components/ui/button";

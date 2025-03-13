@@ -7,7 +7,7 @@ import { StatsCard } from "@/components/dashboardElement/StatsCard";
 import { FormationsTable, FormationTableItem } from "@/components/dashboardElement/FormationTable";
 import KitFormateur from "@/components/dashboardElement/KitFormateur";
 import RapportCard from "@/components/dashboardElement/RapportCard";
-import { Plus, Search, X } from "lucide-react";
+import { Bell, Plus, Search, X } from "lucide-react";
 import { toast, ToastContainer } from 'react-toastify';
 import { EvaluationsTable } from "@/components/dashboardElement/EvaluationTable";
 import { SearchBar } from "@/components/dashboardElement/SearchBar";
@@ -17,6 +17,8 @@ import { FormationAvenir } from "@/pages/FormationAvenir";
 import FormationTerminer from "@/pages/FormationTerminer";
 import { useEvenementsAssocies } from '../contexts/FormateurContext';
 import { FormationItem, FormationStatus } from "@/pages/types"; 
+import axios from "axios";
+import NotificationButton from "@/components/notification/NotificationButton";
 
 const DashboardFormateur: React.FC = () => {
   const navigate = useNavigate();
@@ -148,7 +150,7 @@ const DashboardFormateur: React.FC = () => {
                   <StatsCard title="Total Formations" 
                       value={isLoading ? '...' : formationCount} 
                   />
-                  <StatsCard title="Prochain événement" value={isLoadingEvenements ?'...':stats?.total ?? 0} />
+                  <StatsCard title="Prochain événement" value={isLoadingEvenements ?'...':stats?.count ?? 0} />
                   <StatsCard title="Satisfaction moyenne" value="95%" />
                 </div>
     
