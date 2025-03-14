@@ -1,59 +1,28 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import * as React from "react";
+// src/components/formation-modal/FormationModal.tsx
+import * as React from 'react';
 import { useState, useRef } from "react";
-import { Eye, Download, Trash2, PlusCircle, ChevronDown, ChevronLeft, ChevronRight, Search, Filter } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import ParticipantsSection from "../Formation/ParticipantsSection";
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useFormations } from "../../contexts/FormationContext";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import styled, { createGlobalStyle } from "styled-components";
-import { fr } from "date-fns/locale"; // Assurez-vous d'avoir installé `date-fns`
-import { Loader2 } from "lucide-react";
-import EnhanceListButton from "./EnhanceListButton";
-import { useNavigate ,useLocation} from 'react-router-dom';
-// Types
-interface Step {
-  number: string;
-  label: string;
-  active: boolean;
-  completed: boolean;
-}
 
-interface Participant {
-  date: string;
-  nom: string;
-  prenom: string;
-  email: string;
-  genre: string;
-  telephone: string;
-  confTel: string;
-  confEmail: string;
-}
-interface ProcessingResults {
-  totalBeneficiaries?: number;
-  eligiblePhoneNumbers?: number;
-  totalContacts?: number;
-}
+// Components
+import StepIndicator from '@/components/formation-modal/StepIndicator';
+import FormStepOne from '@/components/formation-modal/form-steps/FormStepOne';
+import FormStepTwo from '@/components/formation-modal/form-steps/FormStepTwo';
+import FormStepThree from '@/components/formation-modal/form-steps/FormStepThree';
+import FormStepFour from '@/components/formation-modal/form-steps/FormStepFour';
+import FormNavigationButtons from '@/components/formation-modal/ui/FormNavigationButtons';
 
-interface FormState {
-  title: string;  // Will map to 'nom'
-  description: string;
-  status: "En Cours" | "Terminé" | "Avenir" | "Replanifier";  
-  category: string;  // Will map to 'categorie'
-  level: string;  // Will map to 'niveau'
-  imageFormation: File | null;  // Will map to 'image'
-  registrationLink: string;  // Will map to 'lienInscription'
-  dateDebut: string;
-  dateFin: string;
-  tags: string;  // Add this field
-}
-interface UploadedFile {
-  name: string;
-  data: string;
-  fullLength?: number;
-  type: 'image' | 'participant-list'; // Added type to differentiate
-}
+// Types and Styles
+import { 
+  FormState, 
+  Step, 
+  Participant, 
+  ProcessingResults, 
+  UploadedFile, 
+  Message, 
+  FormOption 
+} from '@/components/formation-modal/types';
+import { GlobalStyle, inlineStyles } from '@/components/formation-modal/styles';
 
 // Initial form state
 const initialFormState: FormState = {
@@ -66,206 +35,64 @@ const initialFormState: FormState = {
   registrationLink: "",
   dateDebut: "",
   dateFin: "",
-  tags: "",  // Initialize tags field
+  tags: "",
 };
-interface Message {
-  sender: 'user' | 'bot';
-  text: string;
-  id?: number;
-}
 
-const FormationModal = () => {
+const FormationModal: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { addNewFormation, error: contextError ,createFormationDraft } = useFormations();
+  const { addNewFormation, createFormationDraft } = useFormations();
   const formationFromState = location.state?.formation;
   const fromDraft = location.state?.fromDraft;
-  const [selectedDate, setSelectedDate] = useState(new Date());
+
   // State
-  const [currentStep, setCurrentStep] = useState(formationFromState?.currentStep||1);
-  const [formState, setFormState] = useState<FormState>(formationFromState||initialFormState);
+  const [currentStep, setCurrentStep] = useState<number>(formationFromState?.currentStep || 1);
+  const [formState, setFormState] = useState<FormState>(formationFromState || initialFormState);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [fileList, setFileList] = useState<File[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [dateDebut, setDateDebut] = useState<Date | null>(null);
   const [dateFin, setDateFin] = useState<Date | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const imageInputRef = useRef<HTMLInputElement>(null);
   const [processingResults, setProcessingResults] = useState<ProcessingResults | null>(null);
-  const participantListInputRef = useRef<HTMLInputElement>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const GlobalStyle = createGlobalStyle`
-  .custom-calendar {
-    font-family: Arial, sans-serif;
-    border: 1px solid #F16E00;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    width: auto; /* Ajustement automatique */
-    display: flex;
-    border-radius: 5px;
-    overflow: hidden;
-  }
-  .react-datepicker__header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start; /* Alignement en haut */
-    position: relative;
-    padding-top: 0;
-}
+  const [useIcon, setUseIcon] = useState<boolean>(true);
 
-.react-datepicker__current-month {
-    order: -1; /* Place le mois en premier */
-    margin-top: 5px;
-    font-size: 16px;
-    font-weight: bold;
-}
+  // Refs
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const participantListInputRef = useRef<HTMLInputElement>(null);
 
-
-  /* Permet d'afficher calendrier + heures côte à côte */
-  .react-datepicker {
-    display: flex !important;
-    border: none !important;
-    flex-direction: row !important;
-    align-items: flex-start; /* Alignement parfait des headers */
-  }
-
-  /* Fixe une largeur correcte au calendrier pour éviter une seule ligne */
-  .react-datepicker__month-container {
-    width: 280px;
-    border-right: 1px solid #F16E00;
-  }
-
-  /* Conteneur des heures : même hauteur que le calendrier */
-  .react-datepicker__time-container {
-    width: 100px;
-    overflow: hidden; /* Empêche le scroll vertical */
-    display: flex;
-    flex-direction: column;
-  }
-
-  /* Correction du conteneur pour empêcher les heures de descendre */
-  .react-datepicker__time-box {
-    height: 100%; /* S'assure que les heures restent dans le même cadre */
-    overflow-y: auto;
-  }
-
-  /* Alignement parfait du trait orange */
-  .react-datepicker__header {
-    background-color: white;
-    border-bottom: 1px solid #F16E00;
-    padding-top: 10px;
-    height: 40px; /* Hauteur fixe pour un alignement parfait */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-  }
-
-  .react-datepicker_time-container .react-datepicker_header {
-    height: 40px; /* Même hauteur que le header des dates */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-bottom: 1px solid #F16E00;
-    padding: 0;
-  }
-
-  .react-datepicker__current-month {
-    color: black;
-    font-weight: bold;
-    margin-bottom: 10px;
-  }
-
-  .react-datepicker__day-names {
-    display: flex;
-    justify-content: space-between;
-    color: black;
-    font-weight: bold;
-  }
-
-  .react-datepicker__week {
-    display: flex;
-    justify-content: space-between;
-  }
-
-  .react-datepicker__day {
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: black;
-    transition: background-color 0.2s;
-  }
-
-  .react-datepicker__day--selected,
-  .react-datepicker__day--keyboard-selected,
-  .react-datepicker__day:hover {
-    background-color: #F16E00 !important;
-    color: white !important;
-  }
-
-  .react-datepicker__time-list {
-    height: auto !important;
-    max-height: 270px; /* Ajuste la hauteur des heures */
-    overflow-y: auto; /* Ajoute un scroll limité si trop d'heures */
-  }
-
-  .react-datepicker__time-list-item {
-    padding: 8px;
-    transition: background-color 0.2s;
-    text-align: center;
-  }
-
-  .react-datepicker__time-list-item:hover {
-    background-color: #F16E00 !important;
-    color: white !important;
-  }
-
-  .react-datepicker__time-list-item--selected {
-    background-color: #F16E00 !important;
-    color: white !important;
-    font-weight: bold;
-  }
-
-  .react-datepicker__time-caption {
-    font-weight: bold;
-    text-align: center;
-    border-bottom: 1px solid #F16E00;
-    padding: 8px 0;
-  }
-`;
   // Options for select inputs
-  const statusOptions = [
+  const statusOptions: FormOption[] = [
     { label: "En Cours", value: "En Cours" },
     { label: "Terminé", value: "Terminé" },
     { label: "Avenir", value: "Avenir" },
     { label: "Replanifier", value: "Replanifier" }
   ];
 
-  const categoryOptions = [
+  const categoryOptions: FormOption[] = [
     { label: "type1", value: "type1" },
     { label: "type2", value: "type2" },
     { label: "type3", value: "type3" }
   ];
 
-  const levelOptions = [
+  const levelOptions: FormOption[] = [
     { label: "type1", value: "type1" },
     { label: "type2", value: "type2" },
     { label: "type3", value: "type3" }
   ];
 
+  // Define steps
   const steps: Step[] = [
     { number: "1", label: "Informations générales", active: currentStep === 1, completed: currentStep > 1 },
     { number: "2", label: "Participants & Classes", active: currentStep === 2, completed: currentStep > 2 },
     { number: "3", label: "Confirmations", active: currentStep === 3, completed: currentStep > 3 },
     { number: "✓", label: "Terminé", active: currentStep === 4, completed: currentStep > 3 }
   ];
-  const [useIcon, setUseIcon] = useState(true); // Valeur par défaut à true ou false selon votre besoin
 
   // Sample participant data
   const participants: Participant[] = [
@@ -318,35 +145,18 @@ const FormationModal = () => {
     }
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      const file = event.target.files[0];
-      
-      if (file.size > 2 * 1024 * 1024) {
-        alert("Le fichier est trop volumineux. La taille maximum est de 2MB.");
-        return;
-      }
-      
-      setFormState(prev => ({
-        ...prev,
-        imageFormation: file
-      }));
-    }
-  };
   const handleImageButtonClick = () => {
     if (imageInputRef.current) {
       imageInputRef.current.click();
     }
   };
 
-  // Handler for participant list upload
   const handleParticipantListButtonClick = () => {
     if (participantListInputRef.current) {
       participantListInputRef.current.click();
     }
   };
 
-  // Handler for image file change - modifié pour définir l'URL de prévisualisation
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
       const file = event.target.files[0];
@@ -380,7 +190,6 @@ const FormationModal = () => {
     }
   };
 
-  // Handler for participant list file change
   const handleParticipantListChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
       const file = event.target.files[0];
@@ -400,7 +209,7 @@ const FormationModal = () => {
           setUploadedFiles(prev => [...prev, { 
             name: file.name, 
             data: e.target.result as string,
-            type: 'participant-list'  // Mark this as a participant list type
+            type: 'participant-list'
           }]);
         }
       };
@@ -410,15 +219,11 @@ const FormationModal = () => {
     }
   };
 
-  // Fonction pour supprimer l'image
   const handleRemoveImage = () => {
     setImagePreviewUrl(null);
     setFormState(prevState => ({ ...prevState, imageFormation: null }));
-    // Supprimer du tableau uploadedFiles
     setUploadedFiles(prev => prev.filter(file => file.type !== 'image'));
   };
-
-  
 
   // Form validation
   const validateForm = () => {
@@ -440,32 +245,36 @@ const FormationModal = () => {
       if (!formState.level) {
         newErrors.level = "Le niveau est obligatoire";
       }
-       // Modification pour les dates
-    if (!dateDebut) {
-      newErrors.dateDebut = "La date de début est obligatoire";
-    } else {
-      // Convertir la date en string au format ISO
-      formState.dateDebut = dateDebut.toISOString();
-    }
+      
+      // Date validation
+      if (!dateDebut) {
+        newErrors.dateDebut = "La date de début est obligatoire";
+      } else {
+        // Convert date to ISO string
+        formState.dateDebut = dateDebut.toISOString();
+      }
 
-    if (!dateFin) {
-      newErrors.dateFin = "La date de Fin est obligatoire";
-    } else {
-      // Convertir la date en string au format ISO
-      formState.dateFin = dateFin.toISOString();
-    }
+      if (!dateFin) {
+        newErrors.dateFin = "La date de fin est obligatoire";
+      } else {
+        // Convert date to ISO string
+        formState.dateFin = dateFin.toISOString();
+      }
 
-    // Validation supplémentaire : date de fin doit être après date de début
-    if (dateDebut && dateFin && dateFin <= dateDebut) {
-      newErrors.dateFin = "La date de fin doit être postérieure à la date de début";
+      // Additional validation for dates
+      if (dateDebut && dateFin && dateFin <= dateDebut) {
+        newErrors.dateFin = "La date de fin doit être postérieure à la date de début";
+      }
+
+      if (!formState.imageFormation) {
+        newErrors.imageFormation = "L'image est obligatoire";
+      }
+      
+      if (!formState.registrationLink) {
+        newErrors.registrationLink = "Le lien est obligatoire";
+      }
     }
-    if (!formState.imageFormation) {
-      newErrors.imageFormation = "L'image est obligatoire";
-    }
-    if (!formState.registrationLink) {
-      newErrors.registrationLink = "Le lein est obligatoire";
-    }
-    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -495,13 +304,13 @@ const FormationModal = () => {
       const formationData = {
         nom: formState.title,
         description: formState.description,
-        status: formState.status as "En Cours" | "Terminé" | "Avenir" | "Replanifier", // Add type assertion here
+        status: formState.status,
         categorie: formState.category,
         niveau: formState.level,
         image: formState.imageFormation,
         lienInscription: formState.registrationLink,
-        dateDebut: formState.dateDebut, // Conversion de la date de début
-        dateFin: formState.dateFin,    
+        dateDebut: formState.dateDebut,
+        dateFin: formState.dateFin,
         tags: formState.tags
       };
   
@@ -521,37 +330,35 @@ const FormationModal = () => {
       setIsSubmitting(false);
     }
   };
+
   const handleSubmitDraft = async () => {
     if (!validateForm()) {
       return;
     }
     setIsSubmitting(true);
-    console.log("currentstep",currentStep);
   
     try {
       // Map formState to the structure needed by the API
       const formationData = {
         nom: formState.title,
         description: formState.description,
-        status: formState.status as "En Cours" | "Terminé" | "Avenir" | "Replanifier", // Add type assertion here
+        status: formState.status,
         categorie: formState.category,
         niveau: formState.level,
         image: formState.imageFormation,
         lienInscription: formState.registrationLink,
-        dateDebut: formState.dateDebut, // Conversion de la date de début
-        dateFin: formState.dateFin,    
+        dateDebut: formState.dateDebut,
+        dateFin: formState.dateFin,
         tags: formState.tags,
-        currentStep:currentStep
+        currentStep: currentStep
       };
-  console.log("nuemro de step : ",currentStep);
+  
       await createFormationDraft(formationData);
       
       alert('Formation créée avec succès!');
       setFormState(initialFormState);
-      
       setFileList([]);
       navigate("/formateur/dashboardFormateur");
-
     } catch (error) {
       console.error('Error submitting formation:', error);
       alert('Erreur lors de la création de la formation. Veuillez réessayer.');
@@ -559,577 +366,58 @@ const FormationModal = () => {
       setIsSubmitting(false);
     }
   };
-  // Render Step Indicator
-  const renderStepIndicator = () => (
-    <div className="flex items-center justify-between w-full mb-8 max-w-10xl mx-auto relative gap-x-8">
-      {steps.map((step, index) => (
-        <div key={index} className="flex flex-col items-center relative flex-1">
-          {/* Trait de connexion entre les cercles */}
-          {index > 0 && (
-            <div className={`font-bold font-inter absolute h-px -left-1/2 right-1/2 top-5 -z-10 ${
-              steps[index - 1].completed ? "bg-black" : "bg-gray-200"
-            }`}></div>
-          )}
-          {/* Cercle du step */}
-          <div
-  className={`w-12 h-12 flex items-center justify-center rounded-full 
-    ${step.active ? "bg-white border-4 border-orange-400" : 
-      step.completed ? "bg-white border-2 border-black text-black" : 
-      "bg-white border-2 border-gray-300 text-gray-500"} 
-    text-lg font-medium mb-2 z-10`}
->
-  {step.number}
-</div>
 
-  
-          {/* Label */}
-          <span className={`text-sm font-medium ${step.active ? "text-gray-900" : "text-gray-500"}`}>
-            {step.label}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-  
-  
-  
-  // Render functions
-  const renderStep1 = () => (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <div className="space-y-6">
-        <h1 className="text-2xl font-bold mb-6">Informations générales</h1>
-
-        <div>
-          <label className="block text-sm font-bold text-black mb-1">
-            Titre de la formation <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            value={formState.title}
-            onChange={(e) => setFormState({ ...formState, title: e.target.value })}
-            className={`rounded-none w-full p-2.5 border ${errors.title ? 'border-red-500' : 'border-gray-300'} rounded-lg`}
-          />
-          {errors.title && <p className="mt-1 text-sm text-red-500">{errors.title}</p>}
-        </div>
-
-        <div>
-          <label className="block text-sm font-bold text-black mb-1">
-            Description <span className="text-red-500">*</span>
-          </label>
-          <textarea
-            value={formState.description}
-            onChange={(e) => setFormState({ ...formState, description: e.target.value })}
-            className={`rounded-none w-full p-2.5 border ${errors.description ? 'border-red-500' : 'border-gray-300'} rounded-lg h-32`}
-          />
-          {errors.description && <p className="mt-1 text-sm text-red-500">{errors.description}</p>}
-        </div>
-
-        <div className="grid grid-cols-3 gap-6">
-      <div >
-        <label className="rounded-none block text-sm font-bold text-black mb-1">
-          Date début formation <span className="text-red-500">*</span>
-        </label>
-        <div className="relative w-full">
-        <>
-      <GlobalStyle />
-        <DatePicker
-          selected={dateDebut}
-          onChange={(date) => setDateDebut(date)}
-          locale={fr}
-          showTimeSelect
-          dateFormat="MMMM d, yyyy h:mm aa"
-          placeholderText="jj/mm/aaaa"
-          className={`rounded-none w-full p-2.5 border ${dateDebut ? 'border-gray-300' : 'border-gray-300'} rounded-lg`}
-          calendarClassName="custom-calendar"
-          popperClassName="custom-popper"
-          wrapperClassName="w-full"
-          timeCaption="Heure"
-        />
-         <div className="absolute inset-y-0 right-2 flex items-center pointer-events-none">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <path fill-rule="evenodd" clip-rule="evenodd" d="M14.8306 6.33861C14.8303 5.8435 15.0633 5.37732 15.4594 5.08056V6.33861C15.4594 6.85963 15.882 7.28223 16.4031 7.28223C16.9244 7.28223 17.347 6.85963 17.347 6.33861L17.3467 6.02418H17.347V5.09305C17.7425 5.38464 17.9758 5.84715 17.9758 6.33861C17.9758 7.20728 17.2717 7.91111 16.4031 7.91111C15.535 7.91111 14.8306 7.20728 14.8306 6.33861ZM6.02415 6.33861C6.02385 5.8435 6.25693 5.37732 6.65303 5.08056V6.33861C6.65303 6.85963 7.07563 7.28223 7.59695 7.28223C8.11797 7.28223 8.54026 6.85963 8.54026 6.33861V6.02418H8.54057V5.08086C9.23525 5.60188 9.37602 6.58754 8.8547 7.28254C8.33338 7.97692 7.34741 8.11768 6.65303 7.59636C6.25693 7.29929 6.02415 6.83343 6.02415 6.33861ZM20.4919 20.4919H4.45164C3.93063 20.4919 3.50803 20.0693 3.50803 19.5483V9.79831H19.5483C20.0693 9.79831 20.4919 10.2206 20.4919 10.7419V20.4919ZM19.8631 4.13693H17.347V3.18082C17.347 2.6598 16.9244 2.25 16.403 2.25C15.882 2.25 15.4594 2.6723 15.4594 3.19331V4.13693H8.54058L8.54027 3.19331C8.54027 2.6723 8.11798 2.25 7.59696 2.25C7.07564 2.25 6.65304 2.6723 6.65304 3.19331V4.13693H2.25V19.8628C2.25 20.9051 3.09459 21.75 4.13693 21.75H21.75V6.02416C21.75 4.98183 20.9051 4.13693 19.8631 4.13693Z" fill="#F16E00"/>
-      </svg>
-    </div>
-    </>
-      </div>
-      </div>
-      <div>
-  <label className="block text-sm font-bold text-black mb-1">
-    Date fin formation<span className="text-red-500">*</span>
-  </label>
-  <div className="relative w-full">
-  <>
-      <GlobalStyle />
-    <DatePicker
-      selected={dateFin}
-      onChange={(date) => setDateFin(date)}
-      locale={fr}
-      showTimeSelect
-      dateFormat="d MMMM yyyy - HH:mm"
-      placeholderText="jj/mm/aaaa"
-      className="rounded-none w-full p-2.5 border border-gray-300 rounded-lg pr-10" // Espace à droite pour l'icône
-      calendarClassName="custom-calendar"
-      popperClassName="custom-popper"
-      wrapperClassName="w-full"
-      timeCaption="Heure"
-    />
-    <div className="absolute inset-y-0 right-2 flex items-center pointer-events-none">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <path fill-rule="evenodd" clip-rule="evenodd" d="M14.8306 6.33861C14.8303 5.8435 15.0633 5.37732 15.4594 5.08056V6.33861C15.4594 6.85963 15.882 7.28223 16.4031 7.28223C16.9244 7.28223 17.347 6.85963 17.347 6.33861L17.3467 6.02418H17.347V5.09305C17.7425 5.38464 17.9758 5.84715 17.9758 6.33861C17.9758 7.20728 17.2717 7.91111 16.4031 7.91111C15.535 7.91111 14.8306 7.20728 14.8306 6.33861ZM6.02415 6.33861C6.02385 5.8435 6.25693 5.37732 6.65303 5.08056V6.33861C6.65303 6.85963 7.07563 7.28223 7.59695 7.28223C8.11797 7.28223 8.54026 6.85963 8.54026 6.33861V6.02418H8.54057V5.08086C9.23525 5.60188 9.37602 6.58754 8.8547 7.28254C8.33338 7.97692 7.34741 8.11768 6.65303 7.59636C6.25693 7.29929 6.02415 6.83343 6.02415 6.33861ZM20.4919 20.4919H4.45164C3.93063 20.4919 3.50803 20.0693 3.50803 19.5483V9.79831H19.5483C20.0693 9.79831 20.4919 10.2206 20.4919 10.7419V20.4919ZM19.8631 4.13693H17.347V3.18082C17.347 2.6598 16.9244 2.25 16.403 2.25C15.882 2.25 15.4594 2.6723 15.4594 3.19331V4.13693H8.54058L8.54027 3.19331C8.54027 2.6723 8.11798 2.25 7.59696 2.25C7.07564 2.25 6.65304 2.6723 6.65304 3.19331V4.13693H2.25V19.8628C2.25 20.9051 3.09459 21.75 4.13693 21.75H21.75V6.02416C21.75 4.98183 20.9051 4.13693 19.8631 4.13693Z" fill="#F16E00"/>
-      </svg>
-    </div>
-    </>
-  </div>
-</div>
-
-    </div>
-
-        <div className="grid grid-cols-3 gap-6">
-          <div>
-            <label className="block text-sm font-bold text-black mb-1">
-              Status <span className="text-red-500">*</span>
-            </label>
-            <select
-              value={formState.status}
-              onChange={(e) => setFormState({ ...formState, status: e.target.value as "En Cours" | "Terminé" | "Avenir" | "Replanifier"})}
-              className={`rounded-none w-full p-2.5 border ${errors.status ? 'border-red-500' : 'border-gray-300'} rounded-lg`}
-            >
-              <option value="">Sélectionnez un status</option>
-              {statusOptions.map((option) => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
-            {errors.status && <p className="mt-1 text-sm text-red-500">{errors.status}</p>}
-          </div>
-
-          <div>
-            <label className="block text-sm font-bold text-black mb-1">
-              Catégorie <span className="text-red-500">*</span>
-            </label>
-            <select
-              value={formState.category}
-              onChange={(e) => setFormState({ ...formState, category: e.target.value })}
-              className={`rounded-none w-full p-2.5 border ${errors.category ? 'border-red-500' : 'border-gray-300'} rounded-lg`}
-            >
-              <option value="">Sélectionnez une catégorie</option>
-              {categoryOptions.map((option) => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
-            {errors.category && <p className="mt-1 text-sm text-red-500">{errors.category}</p>}
-          </div>
-
-          <div>
-            <label className="block text-sm font-bold text-black mb-1">
-              Niveau <span className="text-red-500">*</span>
-            </label>
-            <select
-              value={formState.level}
-              onChange={(e) => setFormState({ ...formState, level: e.target.value })}
-              className={`rounded-none w-full p-2.5 border ${errors.level ? 'border-red-500' : 'border-gray-300'} rounded-lg`}
-            >
-              <option value="">Sélectionnez un niveau</option>
-              {levelOptions.map((option) => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
-            {errors.level && <p className="mt-1 text-sm text-red-500">{errors.level}</p>}
-          </div>
-        </div>
-        <div>
-          <label className="block text-sm font-bold text-black mb-1">
-            Image de formation <span className="text-red-500">*</span>
-          </label>
-          <div className="border-4 border-dashed border-gray-300 p-6 relative" style={{ borderSpacing: '10px' }}>
-            {imagePreviewUrl ? (
-              <div className="flex flex-col items-center">
-                <div className="relative mb-4 w-full max-w-sm mx-auto">
-                  <img 
-                    src={imagePreviewUrl} 
-                    alt="Prévisualisation" 
-                    className="w-full h-auto rounded object-cover max-h-60"
-                  />
-                  <div className="flex justify-between items-center mt-2">
-                    <span className="text-sm text-gray-700 truncate flex-1">
-                      {formState.imageFormation?.name}
-                    </span>
-                    <button 
-                      onClick={handleRemoveImage}
-                      className="p-1 text-gray-600 hover:text-red-500"
-                    >
-                      <Trash2 size={20} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center">
-                <input
-                  type="file"
-                  onChange={handleImageChange}
-                  accept=".jpg,.jpeg,.png"
-                  className="rounded-none hidden"
-                  ref={imageInputRef}
-                />
-                <button
-                  onClick={handleImageButtonClick}
-                  className="flex flex-col items-center cursor-pointer"
-                >
-                  <div className="w-12 h-12 mb-4 text-black">
-                    <svg width="68" height="68" viewBox="0 0 68 68" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M29.75 38.25H38.25V21.25H51L34 4.25L17 21.25H29.75V38.25ZM42.5 28.6875V35.241L61.9608 42.5L34 52.9253L6.03925 42.5L25.5 35.241V28.6875L0 38.25V55.25L34 68L68 55.25V38.25L42.5 28.6875Z" fill="black"/>
-                    </svg>
-                  </div>
-                  <p className="mt-2 text-sm text-gray-500">
-                    Maximum file size: <strong>2 MB</strong>. Supported files: jpg, jpeg, png.
-                  </p>
-                  <span className="mt-3 border-2 border-black px-4 py-2 text-black font-bold text-sm">
-                    Select a file
-                  </span>
-                </button>
-              </div>
-            )}
-            {errors.imageFormation && <p className="mt-1 text-sm text-red-500">{errors.imageFormation}</p>}
-          </div>
-        </div>
-
-     
-        <div className="rounded-none bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-bold">Lien d'inscription</h2>
-            <button className="bg-black text-white px-6 py-2 text-sm w-32">
-              Créer un lien
-            </button>
-          </div>
-          <label className="block text-sm font-bold text-black mb-1">
-            Insérer Lien <span className="text-red-500">*</span>
-          </label>
-          <div className="flex items-center gap-2 ">
-            <input
-              type="url"
-              value={formState.registrationLink}
-              onChange={(e) => setFormState({ ...formState, registrationLink: e.target.value })}
-              className="rounded-none flex-1 p-2.5 border border-gray-300 rounded-lg"
-              placeholder="https://"
-            />
-            <button className="bg-gray-200 text-gray-700 px-6 py-2 text-sm w-32">
-              Ajouter
-            </button>
-            {errors.registrationLink && <p className="mt-1 text-sm text-red-500">{errors.registrationLink}</p>}
-          </div>
-        </div>
-        </div>
-     </div>
-      );
-      const renderStep2 = () => {
-        const handleEnhanceComplete = (results) => {
-            setProcessingResults(results);
-        };
-    
-        return (
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <div className="space-y-6">
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-lg font-semibold">Listes des Participants</h2>
-                        <EnhanceListButton 
-                            fileList={uploadedFiles.filter(file => file.type === 'participant-list')}
-                            setMessages={setMessages}
-                            setProcessingResults={setProcessingResults}
-                            setLoading={setLoading}
-                            onEnhanceComplete={handleEnhanceComplete}
-                        />
-                    </div>
-    
-                    <div className="space-y-4">
-                        {fileList.map((file, index) => (
-                            <div key={index} className="border rounded-lg p-4">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="text-gray-600">
-                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
-                                                <polyline points="13 2 13 9 20 9"></polyline>
-                                            </svg>
-                                        </div>
-                                        <div>
-                                            <div className="font-medium">{file.name}</div>
-                                            <div className="text-sm text-gray-500">
-                                                {new Date().toLocaleDateString()}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <button className="p-2 text-gray-600 hover:text-gray-800">
-                                            <Eye size={20} />
-                                        </button>
-                                        <button className="p-2 text-gray-600 hover:text-gray-800">
-                                            <Download size={20} />
-                                        </button>
-                                        <button 
-                                            className="p-2 text-gray-600 hover:text-gray-800"
-                                            onClick={() => setFileList(fileList.filter((_, i) => i !== index))}
-                                        >
-                                            <Trash2 size={20} />
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-    
-                        {fileList.length === 0 && (
-                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8">
-                                <div className="flex flex-col items-center">
-                                    <div className="mb-4">
-                                        <svg width="68" height="68" viewBox="0 0 68 68" fill="none">
-                                            <path d="M29.75 38.25H38.25V21.25H51L34 4.25L17 21.25H29.75V38.25ZM42.5 28.6875V35.241L61.9608 42.5L34 52.9253L6.03925 42.5L25.5 35.241V28.6875L0 38.25V55.25L34 68L68 55.25V38.25L42.5 28.6875Z" fill="black"/>
-                                        </svg>
-                                    </div>
-                                    <p className="text-sm text-gray-500 mb-1">Maximum file size: 100 MB, liste Excel ou fichier CSV</p>
-                                    <button
-                                        onClick={handleParticipantListButtonClick}
-                                        className="mt-4 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-                                    >
-                                        Select a file
-                                    </button>
-                                    <input
-                                        type="file"
-                                        ref={participantListInputRef}
-                                        className="hidden"
-                                        onChange={handleParticipantListChange}
-                                        accept=".xlsx,.xls,.csv,.pdf"
-                                    />
-                                </div>
-                            </div>
-                        )}
-                    </div>
-    
-                    {loading && (
-                        <div className="flex flex-col items-center justify-center p-8">
-                            <Loader2 size={24} className="text-purple-600 animate-spin mb-2" />
-                            <div className="text-purple-600 font-medium">AI Loading...</div>
-                        </div>
-                    )}
-    
-                    {processingResults && !loading && (
-                        <div className="w-full border border-purple-300 rounded-lg p-4">
-                            <h3 className="text-lg font-medium mb-4">Résultat AI</h3>
-                            <div className="grid grid-cols-5 gap-4">
-                                {[
-                                    { label: "Numéros éligibles", value: processingResults.eligiblePhoneNumbers },
-                                    { label: "Total des inscrits", value: processingResults.totalContacts },
-                                    { label: "Total bénéficiaires", value: processingResults.totalBeneficiaries },
-                                    { label: "Total inscription", value: processingResults.totalBeneficiaries },
-                                ].map((item, index) => (
-                                    <div key={index} className="bg-white shadow-md border rounded-lg p-4 text-center">
-                                        <p className="text-gray-500 text-sm">{item.label}</p>
-                                        <p className="text-lg font-semibold">{item.value}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </div>
-        );
-    };
-    
-
-  const renderStep3 = () => (
-    <div className="bg-white rounded-lg border border-gray-200 p-8 w-full h-auto">
-      <div className="space-y-6">
-        <h2 className="text-lg font-semibold">Liste de confirmation</h2>
-        <div className="flex flex-col gap-4 w-full">
-  {/* Barre de recherche avec filtre */}
-  <div className="flex items-center gap-4 w-full">
-    <div className="relative flex-1">
-      <input
-        type="text"
-        placeholder="Recherche participants..."
-        className="w-full pl-10 pr-12 py-3 border rounded-lg text-lg"
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-      />
-      {/* Icône de recherche à gauche */}
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-
-      {/* Icône loupe orange à droite */}
-      <div className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 bg-orange-500 rounded-full flex items-center justify-center">
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 16 16"
-          fill="white"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            fillRule="evenodd"
-            clipRule="evenodd"
-            d="M14.2765 13.1102L10.6661 9.49975C11.2718 8.65338 11.5966 7.6383 11.5949 6.59754C11.5949 3.83754 9.35745 1.6001 6.59742 1.6001C3.83738 1.6001 1.59998 3.83751 1.59998 6.59754C1.59998 9.35757 3.83738 11.595 6.59742 11.595C7.63822 11.5966 8.65333 11.2718 9.49981 10.6662L13.1101 14.2765C13.2665 14.4321 13.5192 14.4321 13.6756 14.2765L14.2765 13.6757C14.432 13.5193 14.432 13.2667 14.2765 13.1102ZM6.59742 9.99581C4.72062 9.99581 3.19916 8.47434 3.19916 6.59754C3.19916 4.72074 4.72062 3.19928 6.59742 3.19928C8.47422 3.19928 9.99569 4.72074 9.99569 6.59754C9.99569 8.47434 8.47422 9.99581 6.59742 9.99581Z"
-          />
-        </svg>
-      </div>
-    </div>
-
-    {/* Bouton Filtre */}
-    <button className="p-3 border rounded-lg flex items-center justify-center w-12 h-12 bg-black">
-  <Filter size={20} className="text-white" />
-</button>
-
-  </div>
-  </div>
-  {/* Bouton Générer liste en dessous */}
-  <div className="flex justify-end">
-  <button className="bg-gray-900 text-white px-4 py-2 rounded-lg flex items-center gap-2">
-    <Download size={20} />
-    Générer liste présence
-  </button>
-</div>
-<div className="overflow-x-auto">
-  <table className="w-full border-collapse">
-    <thead>
-      <tr className="bg-gray-100 border-b text-gray-700 text-sm">
-        <th className="w-6 p-3">
-          <input type="checkbox" className="rounded" />
-        </th>
-        <th className="p-3 text-left">Date & Heure</th>
-        <th className="p-3 text-left">Nom</th>
-        <th className="p-3 text-left">Prénom</th>
-        <th className="p-3 text-left">Email</th>
-        <th className="p-3 text-left">Genre</th>
-        <th className="p-3 text-left">Téléphone</th>
-        <th className="p-3 text-left">Conf Tél</th>
-        <th className="p-3 text-left">Conf Email</th>
-        <th className="w-8"></th>
-      </tr>
-    </thead>
-    <tbody>
-      {participants.map((participant, index) => (
-        <tr key={index} className="border-b text-sm hover:bg-gray-50">
-          <td className="p-3">
-            <input type="checkbox" className="rounded" />
-          </td>
-          <td className="p-3">{participant.date}</td>
-          <td className="p-3">{participant.nom}</td>
-          <td className="p-3">{participant.prenom}</td>
-          <td className="p-3">{participant.email}</td>
-          <td className="p-3">{participant.genre}</td>
-          <td className="p-3">{participant.telephone}</td>
-          <td className="p-3">
-            <div className="flex items-center gap-1">
-              <span
-                className={`font-semibold ${
-                  participant.confTel === "Confirmé (e)"
-                    ? "text-green-500"
-                    : "text-orange-500"
-                }`}
-              >
-                {participant.confTel}
-              </span>
-              <ChevronDown size={16} className="text-gray-500" />
-            </div>
-          </td>
-          <td className="p-3">
-            <div className="flex items-center gap-1">
-              <span
-                className={`font-semibold ${
-                  participant.confEmail === "Confirmé (e)"
-                    ? "text-green-500"
-                    : "text-orange-500"
-                }`}
-              >
-                {participant.confEmail}
-              </span>
-              <ChevronDown size={16} className="text-gray-500" />
-            </div>
-          </td>
-          {/* <td className="p-3">
-            <button className="text-black hover:text-gray-600">
-              <ChevronRight size={20} />
-            </button>
-          </td> */}
-          <td className="p-3">
-  <button className="text-black hover:text-gray-600">
-    {useIcon ? (
-      <ChevronRight size={20} />
-    ) : (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path fillRule="evenodd" clipRule="evenodd" d="M13.0629 18.0114C12.7967 18.2286 12.4856 18.3375 12.1305 18.3375C11.7695 18.3375 11.4544 18.2301 11.1851 18.0153C10.9159 17.8007 10.7812 17.5006 10.7812 17.1148C10.7812 16.7778 10.9098 16.491 11.1672 16.2545C11.4247 16.0182 11.7401 15.9 12.1129 15.9C12.4856 15.9 12.8039 16.0182 13.0674 16.2545C13.3307 16.491 13.4625 16.7778 13.4625 17.1148C13.4625 17.4951 13.3293 17.7941 13.0629 18.0114ZM11.1672 6.04998C11.4113 5.80199 11.7313 5.67522 12.1219 5.6625C12.5122 5.67522 12.8322 5.80199 13.0763 6.04998C13.3335 6.31157 13.4625 6.67601 13.4625 7.14326C13.4625 7.48635 12.9563 13.7974 12.8322 14.0534C12.7077 14.3096 12.4857 14.4375 12.166 14.4375C12.1501 14.4375 12.1374 14.4331 12.1219 14.4323C12.1064 14.4331 12.0932 14.4375 12.0775 14.4375C11.7578 14.4375 11.5359 14.3096 11.4116 14.0534C11.2871 13.7974 10.7812 7.48635 10.7812 7.14326C10.7812 6.67601 10.9098 6.31157 11.1672 6.04998ZM12 2.25C6.61522 2.25 2.25 6.61525 2.25 12C2.25 17.3848 6.61522 21.75 12 21.75C17.3848 21.75 21.75 17.3848 21.75 12C21.75 6.61525 17.3848 2.25 12 2.25Z" fill="#FFCD0B"/>
-      </svg>
-    )}
-  </button>
-</td>
-
-        </tr>
-      ))}
-    </tbody>
-  </table>
-</div>
-
-        <div className="flex justify-center items-center gap-2 mt-4">
-          <button className="p-1 border rounded">
-            <ChevronLeft size={20} />
-          </button>
-          <button className="px-3 py-1 bg-gray-900 text-white rounded">1</button>
-          <button className="px-3 py-1 hover:bg-gray-100 rounded">2</button>
-          <button className="px-3 py-1 hover:bg-gray-100 rounded">3</button>
-          <button className="p-1 border rounded">
-            <ChevronRight size={20} />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderStep4 = () => (
-    <div className="bg-white rounded-lg border border-gray-200 p-6 min-h-[400px]">
-      <div className="space-y-6">
-        <h2 className="text-xl font-semibold">AWS : Développement, déploiement et gestion</h2>
-        
-        <div className="grid grid-cols-3 gap-6">
-          <div className="border rounded-lg p-4">
-            <div className="flex items-center gap-4">
-              <div className="bg-gray-200 rounded-full w-12 h-12"></div>
-              <div>
-                <div className="text-sm text-gray-600">Total Formations</div>
-                <div className="text-2xl font-bold">41</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="border rounded-lg p-4">
-            <div className="flex items-center gap-4">
-              <div className="bg-gray-200 rounded-full w-12 h-12"></div>
-              <div>
-                <div className="text-sm text-gray-600">Total Formations</div>
-                <div className="text-2xl font-bold">25</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="border rounded-lg p-4">
-            <div className="flex items-center gap-4">
-              <div className="bg-gray-200 rounded-full w-12 h-12"></div>
-              <div>
-                <div className="text-sm text-gray-600">Total</div>
-                <div className="text-2xl font-bold">-</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
+  // Render current step content
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
-        return renderStep1();
+        return (
+          <FormStepOne
+            formState={formState}
+            setFormState={setFormState}
+            errors={errors}
+            dateDebut={dateDebut}
+            setDateDebut={setDateDebut}
+            dateFin={dateFin}
+            setDateFin={setDateFin}
+            imagePreviewUrl={imagePreviewUrl}
+            handleImageButtonClick={handleImageButtonClick}
+            handleImageChange={handleImageChange}
+            handleRemoveImage={handleRemoveImage}
+            imageInputRef={imageInputRef}
+            GlobalStyle={GlobalStyle}
+            statusOptions={statusOptions}
+            categoryOptions={categoryOptions}
+            levelOptions={levelOptions}
+          />
+        );
       case 2:
-        return renderStep2();
+        return (
+          <FormStepTwo
+            fileList={fileList}
+            setFileList={setFileList}
+            uploadedFiles={uploadedFiles}
+            loading={loading}
+            processingResults={processingResults}
+            setMessages={setMessages}
+            setProcessingResults={setProcessingResults}
+            setLoading={setLoading}
+            handleParticipantListButtonClick={handleParticipantListButtonClick}
+            handleParticipantListChange={handleParticipantListChange}
+            participantListInputRef={participantListInputRef}
+          />
+        );
       case 3:
-        return renderStep3();
+        return (
+          <FormStepThree
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            participants={participants}
+            useIcon={useIcon}
+          />
+        );
       case 4:
-        return renderStep4();
+        return <FormStepFour />;
       default:
         return null;
     }
@@ -1137,65 +425,24 @@ const FormationModal = () => {
 
   return (
     <>
-      <style>{`
-        input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-          filter: invert(65%) sepia(54%) saturate(2651%) hue-rotate(346deg) brightness(98%) contrast(96%);
-          cursor: pointer;
-          transition: opacity 0.2s ease-in-out;
-        }
+      <style>{inlineStyles}</style>
+      <main className="max-w-6xl mx-auto mt-8 p-4">
+        <h1 className="text-4xl font-bold mb-6">Créer une formation</h1>
         
-        input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
-          opacity: 0.7;
-        }
-      `}</style>
-    <main className="max-w-6xl mx-auto mt-8 p-4">
-<h1 className="text-4xl font-bold mb-6">Créer une formation</h1>
-      
-      {renderStepIndicator()}
-
-      {renderStepContent()}
-
-      <div className="flex justify-end mt-6 gap-4">
-          {currentStep > 1 && (
-            <button
-              type="button"
-              onClick={handleBack}
-              className="rounded-none px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50  font-bold"
-            >
-              Retour
-            </button>
-          )}
-          {currentStep < 4 && currentStep >1 && (
-    <button
-      type="button"
-      onClick={handleSubmitDraft}
-      className="rounded-none px-6 py-2 border border-orange-500 text-orange-500 rounded-lg hover:bg-orange-100 font-bold"
-    >
-      Enregistrer en brouillon
-    </button>
-  )}
-          {currentStep < steps.length ? (
-            <button
-              type="button"
-              onClick={handleNext}
-              className="rounded-none px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
-              disabled={isSubmitting}
-            >
-              Suivant
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={handleSubmit}
-              className="rounded-none px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-green-600"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'En cours...' : 'Valider'}
-            </button>
-          )}
-        </div>
-
-    </main>
+        <StepIndicator steps={steps} />
+        
+        {renderStepContent()}
+        
+        <FormNavigationButtons
+          currentStep={currentStep}
+          totalSteps={steps.length}
+          handleBack={handleBack}
+          handleNext={handleNext}
+          handleSubmit={handleSubmit}
+          handleSubmitDraft={handleSubmitDraft}
+          isSubmitting={isSubmitting}
+        />
+      </main>
     </>
   );
 };
