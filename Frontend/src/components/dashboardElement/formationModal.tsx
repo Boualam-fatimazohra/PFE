@@ -280,9 +280,15 @@ const FormationModal: React.FC = () => {
   };
 
   // Navigation handlers
-  const handleNext = () => {
-    if (validateForm() && currentStep < steps.length) {
-      setCurrentStep(currentStep + 1);
+  const handleNext = async () => {
+    if (validateForm()) {
+      if (currentStep === 1) {
+        // Create formation in backend before moving to next step
+        await handleSubmitDraft();
+      } else if (currentStep < steps.length) {
+        // For other steps, just proceed to next step
+        setCurrentStep(currentStep + 1);
+      }
     }
   };
 
@@ -298,37 +304,10 @@ const FormationModal: React.FC = () => {
       return;
     }
     setIsSubmitting(true);
-  
-    try {
-      // Map formState to the structure needed by the API
-      const formationData = {
-        nom: formState.title,
-        description: formState.description,
-        status: formState.status,
-        categorie: formState.category,
-        niveau: formState.level,
-        image: formState.imageFormation,
-        lienInscription: formState.registrationLink,
-        dateDebut: formState.dateDebut,
-        dateFin: formState.dateFin,
-        tags: formState.tags
-      };
-  
-      await addNewFormation(formationData);
-      
-      alert('Formation créée avec succès!');
-      setFormState(initialFormState);
-      setCurrentStep(1);
-      setFileList([]);
-      
-      // Optionally redirect after creation
-      // window.location.href = '/formateur/mesformation';
-    } catch (error) {
-      console.error('Error submitting formation:', error);
-      alert('Erreur lors de la création de la formation. Veuillez réessayer.');
-    } finally {
-      setIsSubmitting(false);
-    }
+    alert('Formation Steps créée avec succès!');
+    setFormState(initialFormState);
+    setCurrentStep(1);
+    setFileList([]);
   };
 
   const handleSubmitDraft = async () => {
@@ -355,10 +334,8 @@ const FormationModal: React.FC = () => {
   
       await createFormationDraft(formationData);
       
-      alert('Formation créée avec succès!');
-      setFormState(initialFormState);
-      setFileList([]);
-      navigate("/formateur/dashboardFormateur");
+      alert('Formation Successfully created as Draft!');
+      setCurrentStep(currentStep + 1);
     } catch (error) {
       console.error('Error submitting formation:', error);
       alert('Erreur lors de la création de la formation. Veuillez réessayer.');
