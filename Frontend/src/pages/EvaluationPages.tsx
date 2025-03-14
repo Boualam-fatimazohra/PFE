@@ -47,6 +47,8 @@ interface FormationItem {
   dateDebut: string;
   dateFin?: string;
   dateCreated?: string;
+  isDraft?: boolean;
+  currentStep?: number;
 }
 
 interface FormationsListProps {
@@ -497,14 +499,19 @@ const EvaluationPages = () => {
   // Mappage des formations du contexte vers l'interface locale
   useEffect(() => {
     if (contextFormations?.length) {
-      const mapped = contextFormations.map(f => ({
-        id: f._id,
-        title: f.nom,
-        status: f.status,
-        image: f.image,
-        dateDebut: f.dateDebut,
-        dateFin: f.dateFin,
-      }));
+      const mapped = contextFormations
+        .filter(f => !f.isDraft) // Filtre pour exclure les brouillons
+        .map(f => ({
+          id: f._id,
+          title: f.nom,
+          status: f.status,
+          image: f.image,
+          dateDebut: f.dateDebut,
+          dateFin: f.dateFin,
+          dateCreated: f.createdAt,
+          isDraft: f.isDraft,
+          currentStep: f.currentStep
+        }));
       setFormations(mapped);
     }
   }, [contextFormations]);
