@@ -37,6 +37,8 @@ import BootcampsList from "./components/dashboardElement/Bootcamps";
 import CalendrierManager from "./components/dashboardElement/CalendrierManager";
 import CreatEvent from "./components/dashboardElement/CreatEvent";
 import Ecolecode from "./components/dashboardElement/Ecolcode";
+import { ProtectedRoute, AccessDenied } from "./components/ProtectedRoute";
+
 const queryClient = new QueryClient();
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
@@ -57,57 +59,82 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      
+      <FormationProvider>
         <TooltipProvider>
           <BrowserRouter>
             <Layout>
               <Routes>
+                {/* Routes publiques - Pas de protection */}
                 <Route path="/" element={<Index />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/verify-code" element={<VerifyPassword/>} />
+                <Route path="/verify-code" element={<VerifyPassword />} />
                 <Route path="/reset-password" element={<NewPassword />} />
-                <Route path="/evaluation/:id" element={<EvaluationForm />} />
-                <Route path="/Chatbot" element={<Chatbot />} />
                 <Route path="/ValidatePassword" element={<ValidatePassword />} />
                 <Route path="/NewPassword" element={<NewPassword />} />
-                {/* Routes pour les différents types d'utilisateurs */}
-
-                <Route path="/formateur/*" element={<FormateurRoutes />} />
-                <Route path="/manager/*" element={<ManagerRoutes />} />
-                <Route path="/coordinateur/*" element={<CoordinateurRoutes />} />
-                <Route path="/technicien/*" element={<TechnicienRoutes />} />
                 <Route path="/evaluation/:id/:token" element={<EvaluationForm />} />
-
-                {/* Autres pages */}
-                <Route path="/generate-link" element={<GenerateLink />} />
-                <Route path="/formulaire-evaluation" element={<FormulaireEvaluation />} />
-                <Route path="/EvaluationForm" element={<EvaluationForm />} />
-                {/* <Route path="/BeneficiairesList" element={<BeneficiairesList/>} /> */}
-                <Route path="/CalendarView" element={<CalendarView/>}/>
-                <Route path="/beneficiaires" element={<BeneficiairesList/>}/>
-                <Route path="/DetailsFormation" element={<DetailsFormation />} />
-                <Route path="/FormationTerminer" element={<FormationTerminer />} />
-                <Route path="/FormationAvenir" element={<FormationAvenir />} />
-                <Route path="/FormationModal" element={<FormationModal/>}/>
-                <Route path="/EvaluationPages" element={<EvaluationPages />} />
-                <Route path="/addformation" element={<AddFormation />} /> 
-                <Route path="/formations" element={<FormateurFormations />} /> 
-                <Route path="/Ecolcode" element={<Ecolecode/>}/>
-                <Route path="/CalendrierManager" element={<CalendrierManager/>}/>
-                <Route path="/CreatEvent" element={<CreatEvent/>}/>
-                <Route path="/formulaire-evaluation" element={<EvaluationForm />} />
-
-                <Route path="/formulaire-evaluation/:id/:token" element={<EvaluationForm />} />
-
-
-
-                {/* Page 404 */}
+                <Route path="/access-denied" element={<AccessDenied />} />
                 <Route path="*" element={<NotFound />} />
+
+                {/* Routes protégées pour tous les utilisateurs authentifiés */}
+                <Route element={<ProtectedRoute />}>
+                  <Route path="/Chatbot" element={<Chatbot />} />
+                  <Route path="/formulaire-evaluation" element={<FormulaireEvaluation />} />
+                  <Route path="/EvaluationForm" element={<EvaluationForm />} />
+                  <Route path="/CalendarView" element={<CalendarView />} />
+
+                  <Route path="/formations" element={<FormateurFormations />} />
+                  <Route path="/CreatEvent" element={<CreatEvent />} />
+
+                </Route>
+
+                {/* Routes pour formateurs, managers et coordinateurs */}
+                <Route element={<ProtectedRoute allowedRoles={["Formateur"]} />}>
+                  <Route path="/generate-link" element={<GenerateLink />} />
+                  <Route path="/beneficiaires" element={<BeneficiairesList />} />
+                  <Route path="/addformation" element={<AddFormation />} />
+                  <Route path="/FormationTerminer" element={<FormationTerminer />} />
+                  <Route path="/FormationAvenir" element={<FormationAvenir />} />
+                  <Route path="/FormationModal" element={<FormationModal />} />
+                  <Route path="/EvaluationPages" element={<EvaluationPages />} />
+                  <Route path="/DetailsFormation" element={<DetailsFormation />} />
+
+                </Route>
+
+                {/* Routes spécifiques par rôle */}
+                <Route path="/formateur/*" element={
+                  <ProtectedRoute allowedRoles={["Formateur"]}>
+                    <FormateurRoutes />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/manager/*" element={
+                  <ProtectedRoute allowedRoles={["Manager"]}>
+                    <ManagerRoutes />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/coordinateur/*" element={
+                  <ProtectedRoute allowedRoles={["Coordinateur"]}>
+                    <CoordinateurRoutes />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/technicien/*" element={
+                  <ProtectedRoute allowedRoles={["Technicien"]}>
+                    <TechnicienRoutes />
+                  </ProtectedRoute>
+                } />
+
+                {/* Route spécifique aux managers */}
+                <Route element={<ProtectedRoute allowedRoles={["Manager"]} />}>
+                  <Route path="/CalendrierManager" element={<CalendrierManager />} />
+                  <Route path="/Ecolcode" element={<Ecolecode />} />
+                </Route>
               </Routes>
             </Layout>
           </BrowserRouter>
         </TooltipProvider>
-       
+      </FormationProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
