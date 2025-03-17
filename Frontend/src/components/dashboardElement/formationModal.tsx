@@ -60,6 +60,9 @@ const FormationModal: React.FC = () => {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [useIcon, setUseIcon] = useState<boolean>(true);
+  const [formationId, setFormationId] = useState<string | null>(
+    formationFromState?.id || null
+  );
 
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -190,33 +193,13 @@ const FormationModal: React.FC = () => {
     }
   };
 
+
   const handleParticipantListChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files.length > 0) {
-      const file = event.target.files[0];
-
-      if (file.size > 100 * 1024 * 1024) {
-        alert("Le fichier est trop volumineux. La taille maximum est de 100MB.");
-        event.target.value = "";
-        return;
-      }
-
-      // Add to fileList for participant files
-      setFileList(prevList => [...prevList, file]);
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        if (e.target && e.target.result) {
-          setUploadedFiles(prev => [...prev, { 
-            name: file.name, 
-            data: e.target.result as string,
-            type: 'participant-list'
-          }]);
-        }
-      };
-
-      reader.readAsDataURL(file);
-      event.target.value = "";
-    }
+    // This is now handled in FormStepTwo directly via validateAndProcessFiles
+    // The parent component doesn't need to handle validation logic anymore
+    
+    // We're keeping this as a placeholder to pass to FormStepTwo
+    // The actual implementation is in FormStepTwo
   };
 
   const handleRemoveImage = () => {
@@ -332,10 +315,22 @@ const FormationModal: React.FC = () => {
         currentStep: currentStep
       };
   
-      await createFormationDraft(formationData);
-      
-      alert('Formation Successfully created as Draft!');
-      setCurrentStep(currentStep + 1);
+      try {
+        // Store the response to get the formation ID
+        const result = await createFormationDraft(formationData);
+        console.log("Rsult======", result);
+        // Check if the result has an ID and set it in state
+        if (result && result._id) {
+          setFormationId(result._id);
+        }
+        
+        alert('Formation Successfully created as Draft!');
+        setCurrentStep(currentStep + 1);
+      } catch (err) {
+        // Handle the error specifically for this operation
+        console.error('Error creating formation draft:', err);
+        alert('Erreur lors de la création de la formation en brouillon. Veuillez réessayer.');
+      }
     } catch (error) {
       console.error('Error submitting formation:', error);
       alert('Erreur lors de la création de la formation. Veuillez réessayer.');
@@ -343,6 +338,7 @@ const FormationModal: React.FC = () => {
       setIsSubmitting(false);
     }
   };
+  
 
   // Render current step content
   const renderStepContent = () => {
@@ -374,6 +370,7 @@ const FormationModal: React.FC = () => {
             fileList={fileList}
             setFileList={setFileList}
             uploadedFiles={uploadedFiles}
+            setUploadedFiles={setUploadedFiles} // Add this prop
             loading={loading}
             processingResults={processingResults}
             setMessages={setMessages}
@@ -382,6 +379,7 @@ const FormationModal: React.FC = () => {
             handleParticipantListButtonClick={handleParticipantListButtonClick}
             handleParticipantListChange={handleParticipantListChange}
             participantListInputRef={participantListInputRef}
+            formationId={formationId || undefined} // Pass formationId correctly
           />
         );
       case 3:
