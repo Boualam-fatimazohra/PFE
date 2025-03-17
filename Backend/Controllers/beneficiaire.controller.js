@@ -199,15 +199,31 @@ const updateBeneficiaire = async (req, res) => {
 // Delete a Beneficiaire
 const deleteBeneficiaire = async (req, res) => {
   try {
-    const result = await Beneficiaire.deleteMany({}); 
-
-    if (result.deletedCount === 0) {
+    // Trouver d'abord tous les bénéficiaires pour obtenir leurs IDs
+    const beneficiaires = await Beneficiaire.find({});
+    
+    if (beneficiaires.length === 0) {
       return res.status(404).json({ message: "Aucun bénéficiaire trouvé" });
     }
-
-    res.status(200).json({ message: "Tous les bénéficiaires ont été supprimés avec succès" });
+    
+    // Extraire les IDs des bénéficiaires
+    const beneficiaireIds = beneficiaires.map(b => b._id);
+    
+    // Supprimer toutes les instances liées dans BeneficiareFormation
+    await BeneficiareFormation.deleteMany({ beneficiaire: { $in: beneficiaireIds } });
+    
+    // Ensuite, supprimer les bénéficiaires
+    const result = await Beneficiaire.deleteMany({});
+    
+    res.status(200).json({ 
+      message: `Tous les bénéficiaires ont été supprimés avec succès, ainsi que leurs Beneficiaireformations associées`,
+      deletedBeneficiaires: result.deletedCount
+    });
   } catch (error) {
-    res.status(500).json({ message: "Erreur lors de la suppression des bénéficiaires", error: error.message });
+    res.status(500).json({ 
+      message: "Erreur lors de la suppression des bénéficiaires", 
+      error: error.message 
+    });
   }
 };
 
@@ -349,6 +365,8 @@ const uploadBeneficiairesFromExcel = async (req, res) => {
         beneficiaire: b._id,
         confirmationAppel: false,
         confirmationEmail: false,
+        horodateur:b.horodateur
+
       }));
 
       await BeneficiareFormation.insertMany(beneficiareFormations, { session });
@@ -403,8 +421,6 @@ const getBeneficiaireFormation = async (req, res) => {
     res.status(500).json({ message: "Erreur serveur", error: error.message });
   }
 };
-
-
 const getNombreBeneficiairesParFormateur = async (req, res) => {
   console.log("debut de la fct getNbrBeneficiaire par formateur");
   const  utilisateurId = req.user.userId;
@@ -460,6 +476,68 @@ const getNombreBeneficiairesParFormateur = async (req, res) => {
     res.status(500).json({ message: "Erreur interne du serveur", error: error.message });
   }
 };
+// debut:end point de qui sera appeler dans l'etape 3 dans le stepers pour enregister les confirmations
+const updateBeneficiaireConfirmations = async (req, res) => {
+  try {
+    const confirmationsList = req.body; // Liste des confirmations à mettre à jour
+    
+    if (!Array.isArray(confirmationsList)) {
+      return res.status(400).json({ success: false, message: "Le corps de la requête doit être un tableau" });
+    }
+    
+    if (!confirmationsList.length) {
+      return res.status(400).json({ success: false, message: "Le tableau de confirmations est vide" });
+    }
+    
+    // Vérification de la structure des données
+    for (const item of confirmationsList) {
+      if (!item.id) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Chaque élément doit contenir un _id de formationBeneficiaire" 
+        });
+      }
+    }
+    // Tableau pour stocker les promesses de mise à jour
+    const updatePromises = confirmationsList.map(async (item) => {
+      // Récupérer uniquement les champs qui nous intéressent
+      const updateData = {
+        confirmationAppel: item.confirmationAppel,
+        confirmationEmail: item.confirmationEmail
+      };
+      
+      // Mettre à jour le document avec l'ID spécifié
+      const updated = await BeneficiareFormation.findByIdAndUpdate(
+        item.id,
+        { $set: updateData },
+        { new: true } // Retourner le document mis à jour
+      );
+      
+      return updated;
+    });
+    
+    // Exécuter toutes les mises à jour en parallèle
+    const results = await Promise.all(updatePromises);
+    
+    // Filtrer pour obtenir uniquement les mises à jour réussies
+    const successfulUpdates = results.filter(result => result !== null);
+    
+    return res.status(200).json({
+      success: true,
+      message: `${successfulUpdates.length} sur ${confirmationsList.length} confirmations mises à jour avec succès`,
+      updatedItems: successfulUpdates
+    });
+    
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour des confirmations:', error);
+    return res.status(500).json({
+      success: false,
+      message: "Une erreur est survenue lors de la mise à jour des confirmations",
+      error: error.message
+    });
+  }
+};
+// fin:end point de qui sera appeler dans l'etape 3 dans le stepers pour enregister les confirmations
 
 // Export the functions for use in routes
 module.exports = {
@@ -470,5 +548,6 @@ module.exports = {
     uploadBeneficiairesFromExcel,
     createBeneficiaire,
     getBeneficiaireFormation,
-    getNombreBeneficiairesParFormateur
+    getNombreBeneficiairesParFormateur,
+    updateBeneficiaireConfirmations
 };
