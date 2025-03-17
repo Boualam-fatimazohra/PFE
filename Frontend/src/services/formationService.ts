@@ -1,19 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from 'axios';
 import apiClient from './apiClient';
-
-interface Formation {
-  nom: string;
-  dateDebut: string;
-  dateFin: string;
-  description?: string;
-  lienInscription: string;
-  status?: string;
-  tags?: string;
-  categorie?: string;
-  niveau?: string;
-  image?: File | string; // Allow both File (for uploads) and string (for URLs)
-}
+import { Formation } from '../components/formation-modal/types'; // Adjust the import path
 
 export const getBeneficiaireFormation = async (id: string) => {
   try {
@@ -184,7 +172,7 @@ export const deleteFormation = async (id: string) => {
     throw error;
   }
 };
-export const createFormationDraft = async (formationData: any) => {
+export const createFormationDraft = async (formationData: Formation): Promise<{ message: string; data: Formation }> => {
   try {
     const formData = new FormData();
     
@@ -209,26 +197,7 @@ export const createFormationDraft = async (formationData: any) => {
     
     return response.data;
   } catch (error) {
-    // Gestion différenciée des erreurs selon leur type
-    if (axios.isAxiosError(error)) {
-      // Erreur Axios - nous pouvons accéder à error.response
-      const status = error.response?.status || 500;
-      
-      // Erreurs spécifiques selon le code d'erreur
-      if (status === 401) {
-        console.error('Erreur d\'authentification:', error.response?.data?.message || 'Utilisateur non authentifié');
-        throw new Error('Vous devez être connecté pour créer une formation en brouillon');
-      } else if (status === 400) {
-        console.error('Données invalides:', error.response?.data?.message);
-        throw new Error(error.response?.data?.message || 'Veuillez remplir tous les champs obligatoires');
-      } else {
-        console.error('Erreur serveur:', error.response?.data);
-        throw new Error(error.response?.data?.message || 'Une erreur est survenue lors de la création de la formation');
-      }
-    } else {
-      // Erreur non-Axios (réseau, etc.)
-      console.error('Erreur inconnue lors de la création de la formation:', error);
-      throw new Error('Impossible de communiquer avec le serveur. Veuillez vérifier votre connexion Internet.');
-    }
+    // Error handling
+    throw error; // Make sure to rethrow
   }
 };
