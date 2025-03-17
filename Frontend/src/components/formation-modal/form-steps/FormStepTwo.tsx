@@ -1,14 +1,17 @@
 // src/components/formation-modal/form-steps/FormStepTwo.tsx
-import * as React from "react";
+import * as React from 'react';
+import { useState } from "react";
 import FileListDisplay from "../sections/FileListDisplay";
 import ParticipantFileUpload from "../sections/ParticipantFileUpload";
 import ProcessingResultsDisplay from "../sections/ProcessingResultsDisplay";
 import { ProcessingResults, Message, UploadedFile } from "../types";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"; // Import Alert components if available
 
 interface FormStepTwoProps {
   fileList: File[];
   setFileList: React.Dispatch<React.SetStateAction<File[]>>;
   uploadedFiles: UploadedFile[];
+  setUploadedFiles: React.Dispatch<React.SetStateAction<UploadedFile[]>>; 
   loading: boolean;
   processingResults: ProcessingResults | null;
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
@@ -17,12 +20,14 @@ interface FormStepTwoProps {
   handleParticipantListButtonClick: () => void;
   handleParticipantListChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   participantListInputRef: React.RefObject<HTMLInputElement>;
+  formationId?: string; // Optional formation ID if you're updating an existing formation
 }
 
 const FormStepTwo: React.FC<FormStepTwoProps> = ({
   fileList,
   setFileList,
   uploadedFiles,
+  setUploadedFiles, 
   loading,
   processingResults,
   setMessages,
@@ -30,17 +35,90 @@ const FormStepTwo: React.FC<FormStepTwoProps> = ({
   setLoading,
   handleParticipantListButtonClick,
   handleParticipantListChange,
-  participantListInputRef
+  participantListInputRef,
+  formationId
 }) => {
+  // State for displaying validation errors
+  const [fileError, setFileError] = useState<string | null>(null);
+  
+  // Accepted file formats
+  const acceptedFormats = ['.xlsx', '.xls', '.csv'];
+  
+  // Enhanced file removal function
   const handleRemoveFile = (index: number) => {
     setFileList(fileList.filter((_, i) => i !== index));
+    // Clear any error messages when removing files
+    setFileError(null);
+  };
+
+  // Custom file validation and handling
+  const validateAndProcessFiles = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setFileError(null); // Reset errors
+    
+    if (event.target.files && event.target.files.length > 0) {
+      const files = Array.from(event.target.files);
+      
+      // Check if files are valid Excel/CSV files
+      const invalidFiles = files.filter(file => {
+        const extension = '.' + file.name.split('.').pop()?.toLowerCase();
+        return !acceptedFormats.includes(extension);
+      });
+      
+      if (invalidFiles.length > 0) {
+        setFileError(`Les fichiers suivants ne sont pas au format Excel/CSV: ${invalidFiles.map(f => f.name).join(', ')}`);
+        event.target.value = ''; // Clear the input
+        return;
+      }
+      
+      // Check file sizes
+      const oversizedFiles = files.filter(file => file.size > 100 * 1024 * 1024);
+      if (oversizedFiles.length > 0) {
+        setFileError(`Les fichiers suivants dépassent la limite de 100MB: ${oversizedFiles.map(f => f.name).join(', ')}`);
+        event.target.value = ''; // Clear the input
+        return;
+      }
+      
+      // All checks passed, handle the files
+      // Add all valid files to fileList
+      const newFiles = [...fileList, ...files];
+      setFileList(newFiles);
+      
+      // Process each file
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          if (e.target && e.target.result) {
+            const fileData = e.target.result as string;
+            
+            // Add to uploadedFiles
+            setUploadedFiles(prev => [...prev, {
+              name: file.name,
+              data: fileData,
+              type: 'participant-list'
+            }]);
+            
+            // If you want to auto-process each file, you could call a processing function here
+            // processExcelFile(file);
+          }
+        };
+        
+        reader.readAsDataURL(file);
+      });
+    }
+    
+    if (event.target) {
+      event.target.value = ''; // Clear the input to allow selecting the same file again
+    }
   };
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6">
       <div className="space-y-6">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">Listes des Participants</h2>
+          <h2 className="text-lg font-semibold">
+            Listes des Participants
+            {formationId && <span className="text-sm text-gray-500 ml-2">(Formation ID: {formationId})</span>}
+          </h2>
           <button 
             className={`${
               fileList.length > 0 
@@ -53,18 +131,28 @@ const FormStepTwo: React.FC<FormStepTwoProps> = ({
           </button>
         </div>
 
-        <FileListDisplay 
-          fileList={fileList}
-          onRemoveFile={handleRemoveFile}
-        />
+        {fileError && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertTitle>Erreur de validation</AlertTitle>
+            <AlertDescription>{fileError}</AlertDescription>
+          </Alert>
+        )}
 
-        {fileList.length === 0 && (
-          <ParticipantFileUpload
-            handleParticipantListButtonClick={handleParticipantListButtonClick}
-            handleParticipantListChange={handleParticipantListChange}
-            participantListInputRef={participantListInputRef}
+        {fileList.length > 0 && (
+          <FileListDisplay 
+            fileList={fileList}
+            onRemoveFile={handleRemoveFile}
           />
         )}
+
+        {/* Always display the file upload component, regardless of whether files exist */}
+        <ParticipantFileUpload
+          handleParticipantListButtonClick={handleParticipantListButtonClick}
+          // Replace the original handler with our enhanced version
+          handleParticipantListChange={validateAndProcessFiles}
+          participantListInputRef={participantListInputRef}
+          acceptedFormats={acceptedFormats}
+        />
 
         <ProcessingResultsDisplay
           loading={loading}

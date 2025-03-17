@@ -60,6 +60,9 @@ const FormationModal: React.FC = () => {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [useIcon, setUseIcon] = useState<boolean>(true);
+  const [formationId, setFormationId] = useState<string | null>(
+    formationFromState?.id || null
+  );
 
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -190,33 +193,13 @@ const FormationModal: React.FC = () => {
     }
   };
 
+
   const handleParticipantListChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files.length > 0) {
-      const file = event.target.files[0];
-
-      if (file.size > 100 * 1024 * 1024) {
-        alert("Le fichier est trop volumineux. La taille maximum est de 100MB.");
-        event.target.value = "";
-        return;
-      }
-
-      // Add to fileList for participant files
-      setFileList(prevList => [...prevList, file]);
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        if (e.target && e.target.result) {
-          setUploadedFiles(prev => [...prev, { 
-            name: file.name, 
-            data: e.target.result as string,
-            type: 'participant-list'
-          }]);
-        }
-      };
-
-      reader.readAsDataURL(file);
-      event.target.value = "";
-    }
+    // This is now handled in FormStepTwo directly via validateAndProcessFiles
+    // The parent component doesn't need to handle validation logic anymore
+    
+    // We're keeping this as a placeholder to pass to FormStepTwo
+    // The actual implementation is in FormStepTwo
   };
 
   const handleRemoveImage = () => {
@@ -280,9 +263,15 @@ const FormationModal: React.FC = () => {
   };
 
   // Navigation handlers
-  const handleNext = () => {
-    if (validateForm() && currentStep < steps.length) {
-      setCurrentStep(currentStep + 1);
+  const handleNext = async () => {
+    if (validateForm()) {
+      if (currentStep === 1) {
+        // Create formation in backend before moving to next step
+        await handleSubmitFormation();
+      } else if (currentStep < steps.length) {
+        // For other steps, just proceed to next step
+        setCurrentStep(currentStep + 1);
+      }
     }
   };
 
@@ -298,40 +287,13 @@ const FormationModal: React.FC = () => {
       return;
     }
     setIsSubmitting(true);
-  
-    try {
-      // Map formState to the structure needed by the API
-      const formationData = {
-        nom: formState.title,
-        description: formState.description,
-        status: formState.status,
-        categorie: formState.category,
-        niveau: formState.level,
-        image: formState.imageFormation,
-        lienInscription: formState.registrationLink,
-        dateDebut: formState.dateDebut,
-        dateFin: formState.dateFin,
-        tags: formState.tags
-      };
-  
-      await addNewFormation(formationData);
-      
-      alert('Formation créée avec succès!');
-      setFormState(initialFormState);
-      setCurrentStep(1);
-      setFileList([]);
-      
-      // Optionally redirect after creation
-      // window.location.href = '/formateur/mesformation';
-    } catch (error) {
-      console.error('Error submitting formation:', error);
-      alert('Erreur lors de la création de la formation. Veuillez réessayer.');
-    } finally {
-      setIsSubmitting(false);
-    }
+    alert('Formation Steps créée avec succès!');
+    setFormState(initialFormState);
+    setCurrentStep(1);
+    setFileList([]);
   };
 
-  const handleSubmitDraft = async () => {
+  const handleSubmitFormation = async () => {
     if (!validateForm()) {
       return;
     }
@@ -353,12 +315,25 @@ const FormationModal: React.FC = () => {
         currentStep: currentStep
       };
   
-      await createFormationDraft(formationData);
-      
-      alert('Formation créée avec succès!');
-      setFormState(initialFormState);
-      setFileList([]);
-      navigate("/formateur/dashboardFormateur");
+      try {
+        // Store the response to get the formation ID
+        const result = await createFormationDraft(formationData);
+        console.log("Formation result:", result);
+        
+        // The ID is inside the data property
+        if (result && result.data && result.data._id) {
+          setFormationId(result.data._id);
+          console.log(`Formation Created ID: ${result.data._id}`);
+        } else {
+          console.error("Could not find formation ID in result:", result);
+        }
+        
+        alert('Formation Successfully created as Draft!');
+        setCurrentStep(currentStep + 1);
+      } catch (err) {
+        console.error('Error creating formation draft:', err);
+        alert('Erreur lors de la création de la formation en brouillon. Veuillez réessayer.');
+      }
     } catch (error) {
       console.error('Error submitting formation:', error);
       alert('Erreur lors de la création de la formation. Veuillez réessayer.');
@@ -366,6 +341,11 @@ const FormationModal: React.FC = () => {
       setIsSubmitting(false);
     }
   };
+  
+  const handleSubmitDraft = async () => {
+    console.log("formation submited as Draft; FormationId: ", formationId);
+    navigate("formateur/dashboardFormateur");
+  }
 
   // Render current step content
   const renderStepContent = () => {
@@ -397,6 +377,7 @@ const FormationModal: React.FC = () => {
             fileList={fileList}
             setFileList={setFileList}
             uploadedFiles={uploadedFiles}
+            setUploadedFiles={setUploadedFiles} // Add this prop
             loading={loading}
             processingResults={processingResults}
             setMessages={setMessages}
@@ -405,6 +386,7 @@ const FormationModal: React.FC = () => {
             handleParticipantListButtonClick={handleParticipantListButtonClick}
             handleParticipantListChange={handleParticipantListChange}
             participantListInputRef={participantListInputRef}
+            formationId={formationId || undefined} // Pass formationId correctly
           />
         );
       case 3:
