@@ -5,7 +5,7 @@ import test from '@/assets/images/test.jpg';
 import { useNavigate } from 'react-router-dom';
 interface FormationItem {
   id?: string;
-  nom: string;
+  title: string;
   dateDebut: string;
   dateFin: string;
   lienInscription: string;
@@ -58,13 +58,14 @@ const FormationCard = ({ formation, onEdit, onDelete, onAccess }: FormationCardP
           {/* Use formation image if available, otherwise fallback to test image */}
           <img
             src={formation.image instanceof File ? URL.createObjectURL(formation.image) : formation.image || test}
-            alt={formation.nom}
+            alt={formation.title}
             className="w-full h-full object-cover"
             onError={(e) => {
               // Fallback if image fails to load
               e.currentTarget.src = test;
             }}
           />
+
         </div>
       </div>
       <div className="p-6">
@@ -78,6 +79,7 @@ const FormationCard = ({ formation, onEdit, onDelete, onAccess }: FormationCardP
               <span>Brouillon</span>
             </div>
           )}
+
           <div className="flex space-x-3">
             <Trash2
               className="w-5 h-5 text-red-500 hover:text-red-700 cursor-pointer transition"
@@ -89,7 +91,7 @@ const FormationCard = ({ formation, onEdit, onDelete, onAccess }: FormationCardP
             />
           </div>
         </div>
-        <h3 className="font-semibold text-base mb-2">{formation.nom}</h3>
+        <h3 className="font-semibold text-base mb-2">{formation.title}</h3>
         <p className="text-sm text-gray-500 mb-5">
           Explorez les fondamentaux de la conception d'interfaces...
         </p>
