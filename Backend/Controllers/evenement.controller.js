@@ -1,4 +1,5 @@
 const Evenement = require('../Models/evenement.model');
+const Manager  = require('../Models/manager.model');
 const Formateur = require('../Models/formateur.model');
 const Coordinateur = require('../Models/coordinateur.model');
 const Notification = require('../Models/notification.model');
@@ -70,7 +71,7 @@ exports.createEvenement = async (req, res) => {
         createdBy: userId,
         organisateur: eventData.organisateur || userId,
         isValidate: true // Managers can create pre-validated events
-      });
+      }); 
       
       const savedEvent = await nouvelEvenement.save();
       
@@ -275,6 +276,56 @@ exports.getEvenementByMonth = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || "Une erreur est survenue"
+    });
+  }
+};
+
+// Compter tous les événements créés par les managers, formateurs ou coordinateurs
+exports.getAllEventsByRole = async (req, res) => {
+  try {
+    // Récupérer tous les managers, formateurs et coordinateurs
+    const managers = await Manager.find().populate('utilisateur');
+    const formateurs = await Formateur.find().populate('utilisateur');
+    const coordinateurs = await Coordinateur.find().populate('utilisateur');
+
+    // Combiner tous les utilisateurs associés aux managers, formateurs et coordinateurs
+    const allUsers = [
+      ...managers.map(manager => manager.utilisateur),
+      ...formateurs.map(formateur => formateur.utilisateur),
+      ...coordinateurs.map(coordinateur => coordinateur.utilisateur)
+    ].filter(user => user); // Filtrer les utilisateurs non définis
+
+    // Extraire les IDs des utilisateurs
+    const userIds = allUsers.map(user => user._id);
+
+    // Compter les événements créés par ces utilisateurs
+    const totalEvents = await Evenement.countDocuments({
+      createdBy: { $in: userIds }
+    });
+
+    // Compter les événements validés et non validés
+    const validatedEvents = await Evenement.countDocuments({
+      createdBy: { $in: userIds },
+      isValidate: true
+    });
+
+    const nonValidatedEvents = totalEvents - validatedEvents;
+
+    // Réponse avec les résultats
+    res.status(200).json({
+      success: true,
+      message: 'Nombre total d\'événements créés par les managers, formateurs et coordinateurs',
+      totalEvents,
+      validatedEvents,
+      nonValidatedEvents
+    });
+
+  } catch (error) {
+    console.error('Erreur lors du comptage des événements:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors du comptage des événements',
+      error: error.message
     });
   }
 };
