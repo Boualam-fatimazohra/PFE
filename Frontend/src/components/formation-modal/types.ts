@@ -1,6 +1,3 @@
-// src/components/formation-modal/types.ts
-import { RefObject } from 'react';
-
 export interface Formation {
   _id?: string;
   nom: string;
@@ -16,6 +13,10 @@ export interface Formation {
   isDraft?: boolean;
   currentStep?: number;
   createdAt?: string;
+}
+export interface FormationResponse {
+  message: string;
+  data: Formation;
 }
 
 export interface Beneficiaire {

@@ -5,7 +5,7 @@ import { deleteFormation as apiDeleteFormation, updateFormation as ipUpdateForma
 import {getNbrBeneficiairesParFormateur, getBeneficiaireFormation as fetchBeneficiaires ,  createFormationDraft as createFormationDraftService} from "../services/formationService";
 
 import { getAllFormationsManager as fetchAuthenticatedFormations } from "../services/formationService";
-import { Formation, Beneficiaire } from '@/components/formation-modal/types';
+import { Formation, Beneficiaire, FormationResponse } from '@/components/formation-modal/types';
 
 
 
@@ -21,7 +21,7 @@ interface FormationContextType {
   searchFormations: (query: string) => void;
   nombreBeneficiaires: number | null; 
   getBeneficiaireFormation: (formationId: string) => Promise<Beneficiaire[]>;
-  createFormationDraft: (formationData: Formation) => Promise<Formation>; // Ajoutez cette ligne,
+  createFormationDraft: (formationData: Formation) => Promise<FormationResponse>;
   sendEvaluationFormation: (beneficiaryIds: string[], formationId: string) => Promise<any>;
   getAllFormationsManager: () => Promise<Formation[]>;
 }
@@ -229,13 +229,16 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
     }
   };
 
-  const createFormationDraft = async (formationData: Formation): Promise<Formation> => {
+  const createFormationDraft = async (formationData: Formation): Promise<FormationResponse> => {
     try {
       setError(null);
       const newDraft = await createFormationDraftService(formationData);
       
-      // Explicitly type the return value
-      setFormations((prev: Formation[]) => [...prev, newDraft as Formation]);
+      // Add the new formation to the state only if it has 'data'
+      if (newDraft && newDraft.data) {
+        setFormations(prev => [...prev, newDraft.data]);
+      }
+      
       return newDraft;
     } catch (error) {
       const errorMessage = error instanceof Error
