@@ -236,7 +236,14 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
       
       // Add the new formation to the state only if it has 'data'
       if (newDraft && newDraft.data) {
-        setFormations(prev => [...prev, newDraft.data]);
+        // Add isDraft property to the formation data before adding it to the state
+        const formationWithDraft = {
+          ...newDraft.data,
+          isDraft: true,  // Set this explicitly
+          currentStep: 2
+        };
+        console.log("formatio Draft: ", formationWithDraft.isDraft);
+        setFormations(prev => [...prev, formationWithDraft]);
       }
       
       return newDraft;
