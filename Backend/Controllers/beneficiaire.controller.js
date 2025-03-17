@@ -199,15 +199,31 @@ const updateBeneficiaire = async (req, res) => {
 // Delete a Beneficiaire
 const deleteBeneficiaire = async (req, res) => {
   try {
-    const result = await Beneficiaire.deleteMany({}); 
-
-    if (result.deletedCount === 0) {
+    // Trouver d'abord tous les bénéficiaires pour obtenir leurs IDs
+    const beneficiaires = await Beneficiaire.find({});
+    
+    if (beneficiaires.length === 0) {
       return res.status(404).json({ message: "Aucun bénéficiaire trouvé" });
     }
-
-    res.status(200).json({ message: "Tous les bénéficiaires ont été supprimés avec succès" });
+    
+    // Extraire les IDs des bénéficiaires
+    const beneficiaireIds = beneficiaires.map(b => b._id);
+    
+    // Supprimer toutes les instances liées dans BeneficiareFormation
+    await BeneficiareFormation.deleteMany({ beneficiaire: { $in: beneficiaireIds } });
+    
+    // Ensuite, supprimer les bénéficiaires
+    const result = await Beneficiaire.deleteMany({});
+    
+    res.status(200).json({ 
+      message: `Tous les bénéficiaires ont été supprimés avec succès, ainsi que leurs Beneficiaireformations associées`,
+      deletedBeneficiaires: result.deletedCount
+    });
   } catch (error) {
-    res.status(500).json({ message: "Erreur lors de la suppression des bénéficiaires", error: error.message });
+    res.status(500).json({ 
+      message: "Erreur lors de la suppression des bénéficiaires", 
+      error: error.message 
+    });
   }
 };
 
@@ -492,7 +508,7 @@ const updateBeneficiaireConfirmations = async (req, res) => {
       
       // Mettre à jour le document avec l'ID spécifié
       const updated = await BeneficiareFormation.findByIdAndUpdate(
-        item._id,
+        item.id,
         { $set: updateData },
         { new: true } // Retourner le document mis à jour
       );
