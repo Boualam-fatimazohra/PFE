@@ -25,7 +25,7 @@ router.post('/createBeneficiaire', createBeneficiaire);
 router.get("/", getAllBeneficiaires);
 // Route to get a single Beneficiaire by ID (with Formation details)
 router.get("/:id", getBeneficiaireById);
-router.get("/getBeneficiaireByFormation/:id",authenticated,RoleMiddleware("Formateur"),getBeneficiaireFormation);
+router.get("/getBeneficiaireByFormation/:id",authenticated,RoleMiddleware("Formateur"),authorizeFormationAccess("read"),getBeneficiaireFormation);
 
 // Route to update a Beneficiaire
 router.put("/:id",authenticated,RoleMiddleware("Formateur"),updateBeneficiaire);
