@@ -70,7 +70,7 @@ connectDB();
 const uploadsDir = initializeUploadsDirectory();
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// API Routes
+// API Routes 
 app.use("/api/auth", Auth);
 app.use("/api/formation", formationRoutes);
 app.use("/api/beneficiaires", beneficiaireRoutes);
