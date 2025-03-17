@@ -172,7 +172,7 @@ export const deleteFormation = async (id: string) => {
     throw error;
   }
 };
-export const createFormationDraft = async (formationData: Formation): Promise<Formation> => {
+export const createFormationDraft = async (formationData: Formation): Promise<{ message: string; data: Formation }> => {
   try {
     const formData = new FormData();
     

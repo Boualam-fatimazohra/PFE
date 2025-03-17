@@ -267,7 +267,7 @@ const FormationModal: React.FC = () => {
     if (validateForm()) {
       if (currentStep === 1) {
         // Create formation in backend before moving to next step
-        await handleSubmitDraft();
+        await handleSubmitFormation();
       } else if (currentStep < steps.length) {
         // For other steps, just proceed to next step
         setCurrentStep(currentStep + 1);
@@ -293,7 +293,7 @@ const FormationModal: React.FC = () => {
     setFileList([]);
   };
 
-  const handleSubmitDraft = async () => {
+  const handleSubmitFormation = async () => {
     if (!validateForm()) {
       return;
     }
@@ -318,16 +318,19 @@ const FormationModal: React.FC = () => {
       try {
         // Store the response to get the formation ID
         const result = await createFormationDraft(formationData);
-        console.log("Rsult======", result);
-        // Check if the result has an ID and set it in state
-        if (result && result._id) {
-          setFormationId(result._id);
+        console.log("Formation result:", result);
+        
+        // The ID is inside the data property
+        if (result && result.data && result.data._id) {
+          setFormationId(result.data._id);
+          console.log(`Formation Created ID: ${result.data._id}`);
+        } else {
+          console.error("Could not find formation ID in result:", result);
         }
         
         alert('Formation Successfully created as Draft!');
         setCurrentStep(currentStep + 1);
       } catch (err) {
-        // Handle the error specifically for this operation
         console.error('Error creating formation draft:', err);
         alert('Erreur lors de la création de la formation en brouillon. Veuillez réessayer.');
       }
@@ -339,6 +342,10 @@ const FormationModal: React.FC = () => {
     }
   };
   
+  const handleSubmitDraft = async () => {
+    console.log("formation submited as Draft; FormationId: ", formationId);
+    navigate("formateur/dashboardFormateur");
+  }
 
   // Render current step content
   const renderStepContent = () => {
