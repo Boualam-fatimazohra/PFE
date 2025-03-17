@@ -1,6 +1,6 @@
 // Express route handler
 const express = require('express');
-const {createEvenement,updateEvenement,deleteEvenement,getMesEvenements, getAllEvenements,getEvenementByMonth} =require ('../Controllers/evenement.controller.js');
+const {createEvenement,updateEvenement,deleteEvenement,getMesEvenements, getAllEvenements,getEvenementByMonth,getAllEventsByRole} =require ('../Controllers/evenement.controller.js');
 const authenticated=require("../Middlewares/Authmiddleware.js");
 const {checkEventOwnership} = require('../Middlewares/EvenementMiddleware.js');
 const router = express.Router();
@@ -12,5 +12,7 @@ router.delete('/deleteEvenement/:id',authenticated,checkEventOwnership,deleteEve
 router.get('/getMesEvenements',authenticated,getMesEvenements);
 router.get('/getEvenements',authenticated,getAllEvenements);
 router.post('/getNbrEventByMonth',authenticated,getEvenementByMonth);
-// fin
+
+router.get("/stats/events-count",authenticated,getAllEventsByRole);
+
 module.exports = router;
