@@ -5,35 +5,9 @@ import { deleteFormation as apiDeleteFormation, updateFormation as ipUpdateForma
 import {getNbrBeneficiairesParFormateur, getBeneficiaireFormation as fetchBeneficiaires ,  createFormationDraft as createFormationDraftService} from "../services/formationService";
 
 import { getAllFormationsManager as fetchAuthenticatedFormations } from "../services/formationService";
-interface Formation {
-  _id?: string;
-  nom: string;
-  dateDebut: string;
-  dateFin: string;
-  lienInscription: string;
-  tags: string;
-  status?: "En Cours" | "Terminé" | "Avenir" | "Replanifier";
-  image?: File | string; // include image url
-  createdAt?: string; //  Add this field
-  // Champs optionnels pour le draft
-  isDraft?: boolean;
-  currentStep?: number;
+import { Formation, Beneficiaire } from '@/components/formation-modal/types';
 
-}
 
-interface Beneficiaire {
-  _id?: string;
-  nom: string;
-  prenom: string;
-  email: string;
-  genre: string;
-  pays: string;
-  specialite: string;
-  etablissement: string;
-  profession: string;
-  isBlack: boolean;
-  isSaturate: boolean;
-}
 
 interface FormationContextType {
   formations: Formation[];
@@ -47,7 +21,7 @@ interface FormationContextType {
   searchFormations: (query: string) => void;
   nombreBeneficiaires: number | null; 
   getBeneficiaireFormation: (formationId: string) => Promise<Beneficiaire[]>;
-  createFormationDraft: (formationData: any) => Promise<void>; // Ajoutez cette ligne,
+  createFormationDraft: (formationData: Formation) => Promise<Formation>; // Ajoutez cette ligne,
   sendEvaluationFormation: (beneficiaryIds: string[], formationId: string) => Promise<any>;
   getAllFormationsManager: () => Promise<Formation[]>;
 }
@@ -254,18 +228,26 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
       setLoading(false);
     }
   };
-  const createFormationDraft = async (formationData:any) => {
+
+  const createFormationDraft = async (formationData: Formation): Promise<Formation> => {
     try {
       setError(null);
       const newDraft = await createFormationDraftService(formationData);
-      setFormations(prev => [...prev, newDraft]);
+      
+      // Explicitly type the return value
+      setFormations((prev: Formation[]) => [...prev, newDraft as Formation]);
       return newDraft;
     } catch (error) {
-      const errorMessage = error instanceof Error 
-        ? error.message 
+      const errorMessage = error instanceof Error
+        ? error.message
         : "Erreur lors de la création du brouillon";
+      
+      console.error(errorMessage);
+      setError(errorMessage);
+      throw error;
+    }
+  };
 
-    }}
   const sendEvaluationFormation = async (beneficiaryIds: string[], formationId: string) => {
     try {
       setError(null);

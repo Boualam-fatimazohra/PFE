@@ -1,6 +1,37 @@
 // src/components/formation-modal/types.ts
 import { RefObject } from 'react';
 
+export interface Formation {
+  _id?: string;
+  nom: string;
+  dateDebut: string;
+  dateFin: string;
+  description?: string;
+  lienInscription: string;
+  status?: string;
+  tags: string; // Decide whether this is required or optional
+  categorie?: string;
+  niveau?: string;
+  image?: File | string;
+  isDraft?: boolean;
+  currentStep?: number;
+  createdAt?: string;
+}
+
+export interface Beneficiaire {
+  _id?: string;
+  nom: string;
+  prenom: string;
+  email: string;
+  genre: string;
+  pays: string;
+  specialite: string;
+  etablissement: string;
+  profession: string;
+  isBlack: boolean;
+  isSaturate: boolean;
+}
+
 export interface Step {
   number: string;
   label: string;
@@ -54,4 +85,36 @@ export interface Message {
 export interface FormOption {
   label: string;
   value: string;
+}
+
+// In types.ts or a similar file
+export interface FormationDraftData {
+  nom: string;
+  description: string;
+  status: string;
+  categorie: string;
+  niveau: string;
+  image?: File | null;
+  lienInscription: string;
+  dateDebut: string;
+  dateFin: string;
+  tags: string;
+  currentStep?: number;
+  id?: string; 
+}
+
+export interface FormationDraftResponse {
+  _id: string;
+  nom: string;
+  description: string;
+  status: string;
+  categorie: string;
+  niveau: string;
+  image: string;
+  lienInscription: string;
+  dateDebut: string;
+  dateFin: string;
+  tags: string;
+  currentStep: number;
+  // Add any other fields returned by the API
 }
