@@ -4,12 +4,10 @@ const authorizeFormationAccess = (accessType) => {
     return async (req, res, next) => {
         try {
             const { userId, role } = req.user;
-
             // Admin bypass
             if (role === "Admin") {
                 return next();
             }
-
             const Formation = mongoose.models.Formation;
             const Formateur = mongoose.models.Formateur;
             
