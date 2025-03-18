@@ -8,10 +8,13 @@ import { Routes, Route } from "react-router-dom";
 import NotFound from "../pages/NotFound";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 
+import { EvenementProvider } from "@/contexts/EvenementContext";
+
 const ManagerRoutes = () => {
   return (
     <FormationProvider>
     <NotificationProvider>
+    <EvenementProvider>
     <Routes>
       <Route path="/dashboardManager" element={<DashboardManager />} />
       <Route path="*" element={<NotFound />} />
@@ -21,6 +24,7 @@ const ManagerRoutes = () => {
           <Route path="/CalendrierManager" element={<CalendrierManager />} />
 
     </Routes>
+    </EvenementProvider>
     </NotificationProvider>
     </FormationProvider>
 
