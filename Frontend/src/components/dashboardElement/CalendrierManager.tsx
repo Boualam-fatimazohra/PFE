@@ -6,8 +6,18 @@ import interactionPlugin from '@fullcalendar/interaction';
 import multiMonthPlugin from '@fullcalendar/multimonth';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from "react-router-dom";
+import { ChevronDown, Filter } from 'lucide-react'; // Ajout de l'icône Filter
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useFormations } from "@/contexts/FormationContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 // Styles personnalisés (inchangés)
 const calendarStyles = `
@@ -99,28 +109,47 @@ const staticEvents = [
     start: '2025-01-02',
     end: '2025-01-03',
     backgroundColor: '#F16E00',
+    extendedProps: {
+      category: 'meetings'
+    }
   },
   {
     id: '2',
     title: 'Team Call',
     start: '2025-01-03',
     end: '2025-01-04',
-    backgroundColor: '#2196F3',
+    backgroundColor: '#BFDBFE',
+    extendedProps: {
+      category: 'calls'
+    }
   },
   {
     id: '3',
-    title: 'Design',
-    start: '2025-01-04',
-    end: '2025-01-05',
-    backgroundColor: '#4CAF50',
+    title: 'Tâche importante',
+    start: '2025-01-05',
+    end: '2025-01-06',
+    backgroundColor: '#FECACA',
+    extendedProps: {
+      category: 'urgent'
+    }
   },
   {
     id: '4',
-    title: 'Design Brief',
-    start: '2025-01-04T16:00:00',
-    end: '2025-01-04T17:00:00',
-    backgroundColor: '#F16E00',
-  }
+    title: 'Rendez-vous personnel',
+    start: '2025-01-10',
+    end: '2025-01-11',
+    backgroundColor: '#FBCFE8',
+    extendedProps: {
+      category: 'personal'
+    }
+  },
+];
+const categories = [
+  { id: 'personal', name: 'Personnel Task', color: '#FBCFE8', checked: true },
+  { id: 'meetings', name: 'Meetings', color: '#A7F3D0', checked: true },
+  { id: 'formations', name: 'Formations', color: '#FED7AA', checked: true },
+  { id: 'calls', name: 'Calls', color: '#BFDBFE', checked: true },
+  { id: 'urgent', name: 'Urgent', color: '#FECACA', checked: true },
 ];
 
 // Cache constants
@@ -131,24 +160,27 @@ const STORAGE_KEY = {
 };
 const CACHE_DURATION =  60 * 1000; 
 
-const CalendrierManager = () => {
-  const [currentMonth, setCurrentMonth] = useState(new Date(2025, 0, 1));
-  const [currentView, setCurrentView] = useState('dayGridMonth');
+const CalendrierManager  = () => {
+  const [currentMonth, setCurrentMonth] = useState(new Date(2025, 0, 1)); // January 2025
+  const [currentView, setCurrentView] = useState('dayGridMonth'); // Default view is month
   const calendarRef = useRef(null);
   const [open, setOpen] = useState(false);
-  const [events, setEvents] = useState([...staticEvents]); 
+  const [events, setEvents] = useState([...staticEvents]); // Initialiser avec événements statiques
   const [isLoading, setIsLoading] = useState(true);
   const [formationEvents, setFormationEvents] = useState([]);
   const [lastUpdated, setLastUpdated] = useState(null);
   
-  const navigate = useNavigate();
+  // État pour les catégories filtrables
+  const [categoryFilters, setCategoryFilters] = useState(categories);
   
+  // Récupération des formations depuis le context
   const { 
     formations: contextFormations, 
     loading, 
     getAllFormationsManager 
   } = useFormations();
 
+  // Fonction pour générer un hash simple des formations
   const generateFormationsHash = useCallback((formations) => {
     return formations
       .map(f => `${f._id}-${f.dateDebut}-${f.dateFin}-${f.nom}-${f.status}`)
@@ -156,6 +188,7 @@ const CalendrierManager = () => {
       .join('|');
   }, []);
 
+  // Fonction pour convertir les formations en événements
   const convertFormationsToEvents = useCallback((formations) => {
     return formations.map(formation => {
       const startDate = new Date(formation.dateDebut);
@@ -194,6 +227,7 @@ const CalendrierManager = () => {
         const parsedFormations = JSON.parse(cachedFormations);
         const timestamp = parseInt(cachedTimestamp);
         
+        // Vérifier si le cache est encore valide
         if (Date.now() - timestamp < CACHE_DURATION) {
           setFormationEvents(parsedFormations);
           setEvents([...staticEvents, ...parsedFormations]);
@@ -209,6 +243,7 @@ const CalendrierManager = () => {
     }
   }, []);
 
+  // Fonction pour mettre à jour le cache et les événements
   const updateFormationsCache = useCallback((formations) => {
     try {
       const formationEvents = convertFormationsToEvents(formations);
@@ -235,73 +270,28 @@ const CalendrierManager = () => {
       return;
     }
     
-    setIsLoading(true);
-    
-    try {
-      const managerFormations = await getAllFormationsManager();
-      
-      // Vérifier si les données ont changé par rapport au cache
-      const newHash = generateFormationsHash(managerFormations);
-      const oldHash = localStorage.getItem(STORAGE_KEY.HASH);
-      
-      if (newHash !== oldHash) {
-        // Les données ont changé, mettre à jour le cache
-        updateFormationsCache(managerFormations);
-      }
-      
-      setIsLoading(false);
-    } catch (error) {
-      console.error("Erreur lors du chargement des formations:", error);
-      setIsLoading(false);
-      
-      // Si erreur, essayer d'utiliser le cache même s'il est expiré
-      const cachedFormations = localStorage.getItem(STORAGE_KEY.FORMATIONS);
-      if (cachedFormations) {
-        const parsedFormations = JSON.parse(cachedFormations);
-        setFormationEvents(parsedFormations);
-        setEvents([...staticEvents, ...parsedFormations]);
-      }
-    }
-  }, [loadCachedFormations, getAllFormationsManager, generateFormationsHash, updateFormationsCache]);
+    setEvents(allEvents);
+  }, [contextFormations, categoryFilters]);
 
-  // Effet pour charger les formations au montage et configurer un poller
-  useEffect(() => {
-    // Charger les formations depuis le cache ou l'API
-    fetchFormations();
-    
-    // Configurer un intervalle pour vérifier les mises à jour
-    const intervalId = setInterval(() => {
-      fetchFormations(true); // Force refresh
-    }, CACHE_DURATION);
-    
-    // Nettoyer l'intervalle au démontage
-    return () => clearInterval(intervalId);
-  }, [fetchFormations]);
+  // Fonction pour gérer le changement d'état des cases à cocher
+  const handleCategoryChange = (categoryId) => {
+    setCategoryFilters(prev => 
+      prev.map(cat => 
+        cat.id === categoryId 
+          ? { ...cat, checked: !cat.checked } 
+          : cat
+      )
+    );
+  };
 
-  // Effet pour mettre à jour les événements quand le context change
-  useEffect(() => {
-    // Si nous avons des formations dans le context et qu'elles ont changé
-    if (contextFormations && contextFormations.length > 0) {
-      const newHash = generateFormationsHash(contextFormations);
-      const oldHash = localStorage.getItem(STORAGE_KEY.HASH);
-      
-      if (newHash !== oldHash) {
-        updateFormationsCache(contextFormations);
-      }
-    }
-  }, [contextFormations, generateFormationsHash, updateFormationsCache]);
-
-  // Gestionnaire d'événements pour la création
   const handleSelection = (type) => {
-    setOpen(false);
     if (type === "event") {
-      navigate("/CreatEvent");
+      navigate("/manager/CreatEvent");
     } else if (type === "formation") {
       navigate("/formateur/formationModal");
     }
   };
-  
-  // Fonction pour formater le mois et l'année
+
   const formatMonthYear = (date) => {
     const monthYear = new Intl.DateTimeFormat('fr-FR', {
       month: 'long',
@@ -310,8 +300,17 @@ const CalendrierManager = () => {
     
     return monthYear.charAt(0).toUpperCase() + monthYear.slice(1).toLowerCase();
   };
-  
-  // Navigation entre les dates
+
+  const navigateMonth = (direction) => {
+    const newDate = new Date(currentMonth);
+    newDate.setMonth(newDate.getMonth() + (direction === 'next' ? 1 : -1));
+    setCurrentMonth(newDate);
+    if (calendarRef.current) {
+      const calendarApi = calendarRef.current.getApi();
+      calendarApi.gotoDate(newDate);
+    }
+  };
+
   const navigateDate = (direction) => {
     if (calendarRef.current) {
       const calendarApi = calendarRef.current.getApi();
@@ -320,11 +319,11 @@ const CalendrierManager = () => {
       } else {
         calendarApi.prev();
       }
+      // Update current date state based on calendar's current date
       setCurrentMonth(calendarApi.getDate());
     }
   };
-  
-  // Changement de vue
+
   const changeView = (viewName) => {
     if (calendarRef.current) {
       const calendarApi = calendarRef.current.getApi();
@@ -332,16 +331,16 @@ const CalendrierManager = () => {
       setCurrentView(viewName);
     }
   };
-  
-  // Synchroniser le titre avec la vue
+
+  // Synchronize title when view changes
   useEffect(() => {
     if (calendarRef.current) {
       const calendarApi = calendarRef.current.getApi();
       setCurrentMonth(calendarApi.getDate());
     }
   }, [currentView]);
-  
-  // Obtenir le titre approprié selon la vue courante
+
+  // Get appropriate title based on current view
   const getTitle = () => {
     if (calendarRef.current) {
       const calendarApi = calendarRef.current.getApi();
@@ -364,7 +363,7 @@ const CalendrierManager = () => {
             day: 'numeric',
             month: 'long',
             year: 'numeric'
-          }).format(new Date(endDate.getTime() - 86400000));
+          }).format(new Date(endDate.getTime() - 86400000)); // Subtract one day
           return `${startFormatted} - ${endFormatted}`;
         case 'multiMonthYear':
           return new Intl.DateTimeFormat('fr-FR', {
@@ -376,26 +375,27 @@ const CalendrierManager = () => {
     }
     return formatMonthYear(currentMonth);
   };
-
-  // Handler pour le clic sur un événement
+  
+  // Handler pour cliquer sur un événement
   const handleEventClick = (info) => {
     const event = info.event;
     
+    // Si c'est une formation, naviguer vers la page détaillée
     if (event.extendedProps && event.extendedProps.type === 'formation') {
-      const formationId = event.extendedProps.formationId;
-      navigate(`/formateur/formations/${formationId}`);
+      const formationId = event.id.replace('formation-', '');
+      // Trouver la formation dans le context
+      const formation = contextFormations.find(f => f._id === formationId);
+      if (formation) {
+        // Rediriger vers la page de détails de la formation
+        navigate(`/formateur/formations/${formationId}`);
+      }
     }
   };
+  
+  const navigate = useNavigate();
 
-  // Mémoiser les événements pour éviter les re-rendus inutiles
-  const memoizedEvents = useMemo(() => events, [events]);
-
-  // Rafraîchir manuellement les formations
-  const handleRefresh = () => {
-    fetchFormations(true);
-  };
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6" style={{ maxWidth: '83rem' }}>
+    <div className="max-w-7xl mx-auto px-4 py-6">
       {/* Intégration des styles CSS directement dans le composant */}
       <style>{calendarStyles}</style>
       
@@ -403,57 +403,40 @@ const CalendrierManager = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-left">Mon Calendrier</h1>
         
-        {/* Bouton qui ouvre le choix */}
-        <Button 
-          className="bg-black text-white hover:bg-orange-600 rounded-[4px]"
-          onClick={() => setOpen(true)}
-        >
-          + Créer événement/Formation
-        </Button>
-
-        {/* Modal de sélection */}
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Que souhaitez-vous créer ?</DialogTitle>
-            </DialogHeader>
-            <div className="flex justify-center gap-4">
-              <Button className="bg-blue-500 hover:bg-blue-600 text-white" onClick={() => handleSelection("event")}>
-                Événement
-              </Button>
-              <Button className="bg-green-500 hover:bg-green-600 text-white" onClick={() => handleSelection("formation")}>
-                Formation
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        {/* Menu déroulant pour créer formations/événements */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button className="bg-orange-500 text-white hover:bg-orange-600 rounded-[4px] flex items-center gap-2">
+              + Créer formation <ChevronDown size={16} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => handleSelection("formation")}>
+              Formation
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleSelection("event")}>
+              Événement
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       
       <div className="flex">
         {/* Sidebar des catégories */}
-        <div className="w-48 h-48 border-r border-gray-200 p-4  rounded-[4px] shadow-md" style={{ backgroundColor: "#FF79000D" }}>
+        <div className="w-48 h-48 border-r border-gray-200 p-4 rounded-[4px]" style={{ backgroundColor: "#FF79000D" }}>
           <h3 className="font-medium font-bold text-gray-700 mb-4">Catégories</h3>
           <ul className="space-y-2">
-            <li className="flex items-center">
-              <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: "#FBCFE8" }}></div>
-              <span className="text-sm">Personnel Task</span>
-            </li>
-            <li className="flex items-center">
-              <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: "#A7F3D0" }}></div>
-              <span className="text-sm">Meetings</span>
-            </li>
-            <li className="flex items-center">
-              <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: "#FED7AA" }}></div>
-              <span className="text-sm">Formations</span>
-            </li>
-            <li className="flex items-center">
-              <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: "#BFDBFE" }}></div>
-              <span className="text-sm">Calls</span>
-            </li>
-            <li className="flex items-center">
-              <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: "#FECACA" }}></div>
-              <span className="text-sm">Urgent</span>
-            </li>
+            {categoryFilters.map((category) => (
+              <li key={category.id} className="flex items-center">
+                <div 
+                  className="w-3 h-3 rounded-full mr-2" 
+                  style={{ backgroundColor: category.color, opacity: category.checked ? 1 : 0.5 }}
+                ></div>
+                <span className="text-sm" style={{ opacity: category.checked ? 1 : 0.5 }}>
+                  {category.name}
+                </span>
+              </li>
+            ))}
           </ul>
         </div>
 
@@ -466,22 +449,70 @@ const CalendrierManager = () => {
               
               {/* Flèches de navigation à droite */}
               <div className="ml-4 flex items-center">
-                <button onClick={() => navigateDate('prev')} className="p-2 hover:bg-white rounded-[4px] font-bold" style={{ color: "#6B7280" }}>&lt;</button>
-                <button onClick={() => navigateDate('next')} className="p-2 hover:bg-white rounded-[4px] font-bold" style={{ color: "#6B7280" }}>&gt;</button>
+                <button onClick={() => navigateDate('prev')} className="p-2 hover:bg-gray-100 rounded-[4px]">&lt;</button>
+                <button onClick={() => navigateDate('next')} className="p-2 hover:bg-gray-100 rounded-[4px]">&gt;</button>
               </div>
             </div>
-           
+            <style>{`
+          .fc-header-toolbar .fc-toolbar-chunk:first-child {
+            gap: 8px !important;
+          }
+          
+          .calendar-content {
+            display: flex;
+            width: 100%;
+          }
+          
+          .mini-calendar-wrapper {
+            width: 200px;
+            padding-top: 250px;
+            margin-left: 300px;
+            flex-shrink: 0;
+          }
+          
+          .main-calendar-wrapper {
+            flex-grow: 1;
+            max-width: 1200px;
+            margin-left: 0px;
+            margin-right: 0px;
+            padding: 0 80px;
+          }
+        `}</style>
+
             <div className="flex space-x-2 bg-white">
-              <Button 
-                variant="ghost" 
-                className="text-[#333] flex items-center gap-1 font-bold py-1 px-4 text-xs rounded-[4px] border border-gray-300 p-4"
-                style={{ height: '28px', backgroundColor: '#EEE' }}
-              >
-                <svg width="12" height="12" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M0 3C0 2.44772 0.447715 2 1 2H19C19.5523 2 20 2.44772 20 3V5C20 5.26522 19.8946 5.51957 19.7071 5.70711L13 12.4142V19C13 19.5523 12.5523 20 12 20H8C7.44772 20 7 19.5523 7 19V12.4142L0.292893 5.70711C0.105357 5.51957 0 5.26522 0 5V3Z" fill="#000"/>
-                </svg>
-                Filtres
-              </Button>
+              {/* Bouton de filtrage avec menu déroulant */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    className="text-[#333] flex items-center gap-1 font-bold py-1 px-4 text-xs rounded-[4px] border border-gray-300 p-4"
+                    style={{ height: '28px', backgroundColor: '#EEE' }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M0 3C0 2.44772 0.447715 2 1 2H19C19.5523 2 20 2.44772 20 3V5C20 5.26522 19.8946 5.51957 19.7071 5.70711L13 12.4142V19C13 19.5523 12.5523 20 12 20H8C7.44772 20 7 19.5523 7 19V12.4142L0.292893 5.70711C0.105357 5.51957 0 5.26522 0 5V3Z" fill="#000"/>
+                    </svg>
+                    Filtres
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="px-2 py-1.5 text-sm font-semibold">Catégories</div>
+                  <DropdownMenuSeparator />
+                  {categoryFilters.map((category) => (
+                    <DropdownMenuCheckboxItem
+                      key={category.id}
+                      checked={category.checked}
+                      onCheckedChange={() => handleCategoryChange(category.id)}
+                      className="flex items-center gap-2"
+                    >
+                      <div 
+                        className="w-3 h-3 rounded-full" 
+                        style={{ backgroundColor: category.color }}
+                      ></div>
+                      {category.name}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               <div className="flex space-x-1 bg-white p-0 border border-gray-300 rounded-[4px]">
                 <Button 
