@@ -1,32 +1,27 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const { deepSeekChat } = require('../services/deepseekService');
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
+const { uploadCSV, getChatWelcome, sendChatMessage } = require("../Controllers/chat.controller.js");
 
-// Route simple pour obtenir un message de bienvenue
-router.get('/', (req, res) => {
-    res.status(200).json({ 
-        message: "Bonjour ! Je suis votre assistant virtuel. Comment puis-je vous aider aujourd'hui ?" 
-    });
+// Configuration du stockage multer
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const uploadsDir = path.join(__dirname, "../uploads");
+        if (!fs.existsSync(uploadsDir)){
+            fs.mkdirSync(uploadsDir, { recursive: true });
+        }
+        cb(null, uploadsDir);
+    },
+    filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
 });
 
-// Route pour envoyer un message avec contexte de fichier
-router.post('/', async (req, res) => {
-    const { message, fileContext = [] } = req.body;
-    if (!message) {
-        return res.status(400).json({ error: "Message manquant" });
-    }
+const upload = multer({ storage: storage });
 
-    const userId = req.cookies?.userId || "defaultUser";
-
-    try {
-        const response = await deepSeekChat(userId, message, fileContext);
-        res.json({ response });
-    } catch (error) {
-        console.error("Erreur dans le chatbot :", error);
-        res.status(500).json({ 
-            error: "Erreur du serveur lors du traitement de votre demande. Veuillez réessayer."
-        });
-    }
-});
+// Routes pour le chatbot et l'upload de fichiers
+router.post("/upload-csv", upload.single("csvFile"), uploadCSV);
+router.get("/chat", getChatWelcome);
+router.post("/chat", sendChatMessage);
 
 module.exports = router;
