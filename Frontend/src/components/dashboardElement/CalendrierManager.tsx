@@ -129,28 +129,26 @@ const STORAGE_KEY = {
   TIMESTAMP: 'cached_manager_formations_timestamp',
   HASH: 'cached_manager_formations_hash'
 };
-const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
+const CACHE_DURATION =  60 * 1000; 
 
 const CalendrierManager = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date(2025, 0, 1));
   const [currentView, setCurrentView] = useState('dayGridMonth');
   const calendarRef = useRef(null);
   const [open, setOpen] = useState(false);
-  const [events, setEvents] = useState([...staticEvents]); // Initialiser avec événements statiques
+  const [events, setEvents] = useState([...staticEvents]); 
   const [isLoading, setIsLoading] = useState(true);
   const [formationEvents, setFormationEvents] = useState([]);
   const [lastUpdated, setLastUpdated] = useState(null);
   
   const navigate = useNavigate();
   
-  // Récupération des formations depuis le context
   const { 
     formations: contextFormations, 
     loading, 
     getAllFormationsManager 
   } = useFormations();
 
-  // Fonction pour générer un hash simple des formations
   const generateFormationsHash = useCallback((formations) => {
     return formations
       .map(f => `${f._id}-${f.dateDebut}-${f.dateFin}-${f.nom}-${f.status}`)
@@ -158,7 +156,6 @@ const CalendrierManager = () => {
       .join('|');
   }, []);
 
-  // Fonction pour convertir les formations en événements
   const convertFormationsToEvents = useCallback((formations) => {
     return formations.map(formation => {
       const startDate = new Date(formation.dateDebut);
@@ -197,7 +194,6 @@ const CalendrierManager = () => {
         const parsedFormations = JSON.parse(cachedFormations);
         const timestamp = parseInt(cachedTimestamp);
         
-        // Vérifier si le cache est encore valide
         if (Date.now() - timestamp < CACHE_DURATION) {
           setFormationEvents(parsedFormations);
           setEvents([...staticEvents, ...parsedFormations]);
@@ -213,7 +209,6 @@ const CalendrierManager = () => {
     }
   }, []);
 
-  // Fonction pour mettre à jour le cache et les événements
   const updateFormationsCache = useCallback((formations) => {
     try {
       const formationEvents = convertFormationsToEvents(formations);
