@@ -47,7 +47,7 @@ export const uploadBeneficiaireFile = async (
       formData.append('tags', tags.join(','));
     }
     
-    const response = await apiClient.post('/beneficiaireFileUpload/upload', formData, {
+    const response = await apiClient.post('/beneficiaire-files/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
@@ -67,7 +67,7 @@ export const uploadBeneficiaireFile = async (
  */
 export const getFormationFiles = async (formationId: string): Promise<BeneficiaireFileUpload[]> => {
   try {
-    const response = await apiClient.get(`/beneficiaireFileUpload/formation/${formationId}`);
+    const response = await apiClient.get(`/beneficiaire-files/formation/${formationId}`);
     return response.data.files;
   } catch (error) {
     console.error('Error fetching formation files:', error);
@@ -82,7 +82,7 @@ export const getFormationFiles = async (formationId: string): Promise<Beneficiai
  */
 export const getFileById = async (fileId: string): Promise<BeneficiaireFileUpload> => {
   try {
-    const response = await apiClient.get(`/beneficiaireFileUpload/${fileId}`);
+    const response = await apiClient.get(`/beneficiaire-files/${fileId}`);
     return response.data.file;
   } catch (error) {
     console.error(`Error fetching file ${fileId}:`, error);
@@ -97,7 +97,7 @@ export const getFileById = async (fileId: string): Promise<BeneficiaireFileUploa
  */
 export const deleteFile = async (fileId: string): Promise<{ deletedFileId: string }> => {
   try {
-    const response = await apiClient.delete(`/beneficiaireFileUpload/${fileId}`);
+    const response = await apiClient.delete(`/beneficiaire-files/${fileId}`);
     return response.data;
   } catch (error) {
     console.error(`Error deleting file ${fileId}:`, error);
@@ -116,7 +116,7 @@ export const updateFileMetadata = async (
   metadata: { description?: string; tags?: string[] }
 ): Promise<BeneficiaireFileUpload> => {
   try {
-    const response = await apiClient.patch(`/beneficiaireFileUpload/${fileId}`, metadata);
+    const response = await apiClient.patch(`/beneficiaire-files/${fileId}`, metadata);
     return response.data.file;
   } catch (error) {
     console.error(`Error updating file metadata for ${fileId}:`, error);
