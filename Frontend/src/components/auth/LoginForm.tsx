@@ -34,8 +34,8 @@ export function LoginForm() {
   const handleForgotPassword = (e: React.MouseEvent) => {
     e.preventDefault();
     const emailInput = document.getElementById("email") as HTMLInputElement;
-    const email = emailInput.value.trim();
-    
+    const email = emailInput?.value?.trim() || "";
+  
     if (!email) {
       setEmailError("Veuillez entrer un email");
       return;
@@ -47,6 +47,7 @@ export function LoginForm() {
       return;
     }
   
+    console.log("Navigating to /forgot-password with email:", email); // Debug
     navigate("/forgot-password", { state: { email } });
   };
 
