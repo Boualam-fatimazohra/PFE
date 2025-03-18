@@ -32,6 +32,7 @@ interface FormationItem {
   dateDebut: string;
   dateFin?: string;
   dateCreated?: string;
+  description?: string;
 }
 
 const sortFormationsByStatus = (formations) => {
@@ -82,7 +83,8 @@ const MesFormations = () => {
         dateDebut: formation.dateDebut,
         dateCreated: formation.createdAt ? new Date(formation.createdAt).toISOString() : new Date().toISOString(),
         isDraft:formation.isDraft,
-        currentStep:formation.currentStep
+        currentStep:formation.currentStep,
+        description: formation.description 
 
       }));
       

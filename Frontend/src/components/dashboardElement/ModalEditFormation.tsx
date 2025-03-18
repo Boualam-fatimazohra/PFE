@@ -64,7 +64,6 @@ const ModalEditFormation = ({ formation, onClose }) => {
     setShowImagePreview(true);
   };
 
-  // Fonction pour télécharger l'image
   const handleDownloadImage = () => {
     // Si nous avons le fichier d'origine, l'utiliser directement
     if (fileObject) {
