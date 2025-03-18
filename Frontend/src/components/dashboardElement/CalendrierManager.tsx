@@ -286,7 +286,7 @@ const CalendrierManager  = () => {
 
   const handleSelection = (type) => {
     if (type === "event") {
-      navigate("/CreatEvent");
+      navigate("/manager/CreatEvent");
     } else if (type === "formation") {
       navigate("/formateur/formationModal");
     }
