@@ -7,6 +7,7 @@ const mongoose = require('mongoose');
 const Formateur=require("../Models/formateur.model");
 const {parseExcelFile} =require("../utils/excelUtils.js");
 const {getExistingBeneficiairesHashes, isDuplicateBeneficiaire }= require("../utils/existedBenef.js");
+const { hashBeneficiaire } = require("../utils/hashBenef");
 
 const createBeneficiaire = async (req, res) => {
   const session = await mongoose.startSession();
@@ -321,61 +322,76 @@ const deleteBeneficiaire = async (req, res) => {
 // };
 // Simple read data from excel testing
 const uploadBeneficiairesFromExcel = async (req, res) => {
+  console.log("uploadBeneficiairesFromExcel!!!!!!!!!!! ENDPOINT");
   try {
     const idFormation = req.body.idFormation;
-
     if (!idFormation || !mongoose.Types.ObjectId.isValid(idFormation)) {
       return res.status(400).json({ message: "ID de formation invalide ou manquant" });
     }
-
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
     const rawBeneficiaires = parseExcelFile(req.file.buffer);
+    const existingBeneficiaires = await getExistingBeneficiairesHashes();
 
-    // Récupérer la liste des bénéficiaires déjà enregistrés sous forme de hash
-    const existingHashes = await getExistingBeneficiairesHashes();
-    // console.log("beneficiaires hashee", existingHashes);
-    rawBeneficiaires.forEach(b => {
-      const isDuplicate = isDuplicateBeneficiaire(b, existingHashes);
-      console.log(`Bénéficiaire: ${b.nom}, Email: ${b.email}, Doublon: ${isDuplicate}`);
-    });
-    // Filtrer les nouveaux bénéficiaires qui ne sont pas déjà stockés
-    const newBeneficiaires = rawBeneficiaires.filter(b => !isDuplicateBeneficiaire(b, existingHashes));
-    console.log("Données des nouveaux bénéficiaires avant insertion:", newBeneficiaires);
-    if (newBeneficiaires.length === 0) {
-      return res.status(200).json({ message: "Tous les bénéficiaires sont déjà enregistrés." });
-    }
-    newBeneficiaires.forEach(b => {
-      if (!b.nom || !b.email || !b.genre || !b.pays) {
-        console.error("Bénéficiaire invalide détecté :", b);
+    // Transformer en Map pour accès rapide
+    const existingMap = new Map(existingBeneficiaires.map(b => [b.hash, b.id]));
+
+    const newBeneficiaires = [];
+    const existingBeneficiairesToUpdate = [];
+
+    for (const b of rawBeneficiaires) {
+      const hash = hashBeneficiaire(b.email, b.nom, b.prenom);
+      if (existingMap.has(hash)) {
+        const beneficiaireId = existingMap.get(hash);
+        existingBeneficiairesToUpdate.push(beneficiaireId);
+      } else {
+        newBeneficiaires.push(b);
       }
-    });
-    
-    // Début de la transaction
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    }
 
-    try {
-      const insertedBeneficiaires = await Beneficiaire.insertMany(newBeneficiaires, { session });
+    // Vérifier si des bénéficiaires existent déjà avec cette formation
+    const formationsExistantes = await BeneficiareFormation.find({
+      beneficiaire: { $in: existingBeneficiairesToUpdate },
+      formation: idFormation
+    }).select("beneficiaire");
 
-      const beneficiareFormations = insertedBeneficiaires.map(b => ({
+    const beneficiairesAvecFormation = new Set(formationsExistantes.map(f => f.beneficiaire.toString()));
+
+    const nouvellesInstances = existingBeneficiairesToUpdate
+      .filter(id => !beneficiairesAvecFormation.has(id.toString()))
+      .map(id => ({
         formation: new mongoose.Types.ObjectId(idFormation),
-        beneficiaire: b._id,
+        beneficiaire: id,
         confirmationAppel: false,
         confirmationEmail: false,
-        horodateur:b.horodateur
-
       }));
 
-      await BeneficiareFormation.insertMany(beneficiareFormations, { session });
+    // Transaction
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+      if (newBeneficiaires.length > 0) {
+        const insertedBeneficiaires = await Beneficiaire.insertMany(newBeneficiaires, { session });
+        const beneficiareFormations = insertedBeneficiaires.map(b => ({
+          formation: new mongoose.Types.ObjectId(idFormation),
+          beneficiaire: b._id,
+          confirmationAppel: false,
+          confirmationEmail: false,
+        }));
+        await BeneficiareFormation.insertMany(beneficiareFormations, { session });
+      }
+
+      if (nouvellesInstances.length > 0) {
+        await BeneficiareFormation.insertMany(nouvellesInstances, { session });
+      }
 
       await session.commitTransaction();
-      
-      res.status(200).json({ 
-        message: "Bénéficiaires uploadés avec succès", 
-        count: insertedBeneficiaires.length 
+      res.status(200).json({
+        message: "Traitement terminé avec succès",
+        nouveauxBeneficiaires: newBeneficiaires.length,
+        nouvellesInstances: nouvellesInstances.length
       });
     } catch (error) {
       await session.abortTransaction();
@@ -388,6 +404,7 @@ const uploadBeneficiairesFromExcel = async (req, res) => {
     res.status(500).json({ message: "Erreur lors de l'upload", error: error.message });
   }
 };
+
 const getBeneficiaireFormation = async (req, res) => {
   console.log('Requête reçue sur:', req.originalUrl); //  Debug
   const idFormation = req.params.id || req.body.idFormation;

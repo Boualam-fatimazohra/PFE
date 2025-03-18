@@ -79,6 +79,7 @@ export interface UploadedFile {
   uploadId?: string;
   url?: string;
   uploadDate?: string;
+  processed?: boolean; // New property with default value
 }
 export interface Message {
   sender: 'user' | 'bot';

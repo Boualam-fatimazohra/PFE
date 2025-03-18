@@ -23,6 +23,7 @@ import {
   FormOption 
 } from '@/components/formation-modal/types';
 import { GlobalStyle, inlineStyles } from '@/components/formation-modal/styles';
+import { uploadBeneficiairesFromExcel } from '@/services/beneficiaireService';
 
 // Initial form state
 const initialFormState: FormState = {
@@ -263,17 +264,110 @@ const FormationModal: React.FC = () => {
   };
 
   // Navigation handlers
-  const handleNext = async () => {
-    if (validateForm()) {
-      if (currentStep === 1) {
-        // Create formation in backend before moving to next step
-        await handleSubmitFormation();
-      } else if (currentStep < steps.length) {
-        // For other steps, just proceed to next step
+// Fixed handleNext function
+const handleNext = async () => {
+  if (validateForm()) {
+    if (currentStep === 1) {
+      // Create formation in backend before moving to next step
+      await handleSubmitFormation();
+    } else if (currentStep === 2) {
+      // Process beneficiaires at step 2
+      if (!formationId) { // Fixed condition - check if formationId does NOT exist
+        // Formation ID is needed for beneficiaire upload
+        setErrors(prevErrors => ({
+          ...prevErrors,
+          general: "Veuillez d'abord créer la formation avant de continuer"
+        }));
+        return;
+      }
+      
+      // Process files that have been uploaded but not processed yet
+      const filesToProcess = uploadedFiles.filter(file => 
+        file.status === 'uploaded' && file.uploadId && !file.processed
+      );
+      
+      if (filesToProcess.length > 0) {
+        setIsSubmitting(true);
+        setProcessingResults(null);
+        
+        try {
+          // Track results for each file
+          const results = [];
+          let hasError = false;
+          
+          for (const file of filesToProcess) {
+            try {
+              // Fetch file from URL to process
+              const response = await fetch(file.url);
+              const blob = await response.blob();
+              const fetchedFile = new File([blob], file.name, { 
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+              });
+              
+              // Upload beneficiaires from Excel file
+              const result = await uploadBeneficiairesFromExcel(fetchedFile, formationId);
+              
+              // Add to results
+              results.push({
+                fileName: file.name,
+                success: true,
+                nouveauxBeneficiaires: result.nouveauxBeneficiaires,
+                nouvellesInstances: result.nouvellesInstances,
+                message: result.message
+              });
+              
+              // Mark file as processed
+              setUploadedFiles(prev => 
+                prev.map(f => 
+                  f.uploadId === file.uploadId 
+                    ? { ...f, processed: true } 
+                    : f
+                )
+              );
+            } catch (error) {
+              console.error(`Error processing file ${file.name}:`, error);
+              hasError = true;
+              results.push({
+                fileName: file.name,
+                success: false,
+                message: error.message || "Une erreur est survenue lors du traitement du fichier"
+              });
+            }
+          }
+          
+          // Update processing results
+          /*setProcessingResults({
+            success: !hasError,
+            message: hasError 
+              ? "Des erreurs sont survenues lors du traitement des fichiers" 
+              : "Traitement des fichiers terminé avec succès",
+            results: results
+          });*/
+          console.log("OOOOW Uploaded Successfuly");
+          // If successful, move to next step
+          if (!hasError) {
+            setCurrentStep(currentStep + 1);
+          }
+        } catch (error) {
+          console.error("Error processing beneficiaire files:", error);
+          /*setProcessingResults({
+            success: false,
+            message: `Erreur de traitement: ${error.message || "Une erreur inattendue est survenue"}`,
+            results: []
+          });*/
+        } finally {
+          setIsSubmitting(false);
+        }
+      } else {
+        // No files to process, proceed to next step
         setCurrentStep(currentStep + 1);
       }
+    } else if (currentStep < steps.length) {
+      // For other steps, just proceed to next step
+      setCurrentStep(currentStep + 1);
     }
-  };
+  }
+};
 
   const handleBack = () => {
     if (currentStep > 1) {
