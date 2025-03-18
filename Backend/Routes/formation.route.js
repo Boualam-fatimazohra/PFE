@@ -6,7 +6,8 @@ const {
     UpdateFormation, 
     getAllFormations, 
     DeleteFormation,
-    getFormations
+    getFormations,
+    getFormationsByManager
 } = require('../Controllers/formation.controller.js');
 const authorizeRoles = require('../Middlewares/RoleMiddleware.js');
 const { uploadImage } = require('../Config/cloudinaryConfig.js');
@@ -45,6 +46,11 @@ router.get('/getAllFormations',
     getAllFormations
 );
 
+router.get('/getAllFormationsByManager', 
+    authenticated,
+    authorizeRoles('Manager'),
+    getFormationsByManager
+); 
 
 // Route to delete a formation by ID
 router.delete('/DeleteFormation/:id', 
