@@ -1,20 +1,80 @@
-// src/components/formation-modal/sections/FileListDisplay.tsx
 import * as React from "react";
-import { Eye, Download, Trash2 } from "lucide-react";
+import { Eye, Download, Trash2, FileText, CheckCircle } from "lucide-react";
+import { UploadedFile } from "../types";
 
 interface FileListDisplayProps {
   fileList: File[];
   onRemoveFile: (index: number) => void;
+  uploadedFiles?: UploadedFile[]; // Add this prop to handle files fetched from backend
+  onRemoveUploadedFile?: (id: string) => void; // Optional callback to delete backend files
 }
 
 const FileListDisplay: React.FC<FileListDisplayProps> = ({
   fileList,
-  onRemoveFile
+  onRemoveFile,
+  uploadedFiles = [], // Default to empty array
+  onRemoveUploadedFile
 }) => {
+  // Function to handle viewing/downloading a file
+  const handleViewFile = (url: string) => {
+    window.open(url, '_blank');
+  };
+
   return (
     <div className="space-y-4">
+      {/* Display files fetched from backend */}
+      {uploadedFiles.map((file, index) => (
+        <div key={`uploaded-${index}`} className="border rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="text-gray-600">
+                <FileText size={24} />
+              </div>
+              <div>
+                <div className="font-medium flex items-center gap-2">
+                  {file.name}
+                  {file.status === 'uploaded' && (
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                  )}
+                </div>
+                <div className="text-sm text-gray-500">
+                  {file.uploadDate ? new Date(file.uploadDate).toLocaleDateString() : 'Téléchargé depuis le serveur'}
+                </div>
+                {file.uploadId && (
+                  <div className="text-xs text-gray-400 mt-1">
+                    ID: {file.uploadId}
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <button 
+                className="p-2 text-gray-600 hover:text-gray-800"
+                onClick={() => file.url && handleViewFile(file.url)}
+              >
+                <Eye size={20} />
+              </button>
+              <button 
+                className="p-2 text-gray-600 hover:text-gray-800"
+                onClick={() => file.url && handleViewFile(file.url)}
+              >
+                <Download size={20} />
+              </button>
+              <button 
+                className="p-2 text-gray-600 hover:text-red-600"
+                onClick={() => onRemoveUploadedFile && file.uploadId && onRemoveUploadedFile(file.uploadId)}
+              >
+                <Trash2 size={20} />
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
+
+      {/* Display files from local selection */}
       {fileList.map((file, index) => (
-        <div key={index} className="border rounded-lg p-4">
+        <div key={`local-${index}`} className="border rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="text-gray-600">
@@ -38,7 +98,7 @@ const FileListDisplay: React.FC<FileListDisplayProps> = ({
                 <Download size={20} />
               </button>
               <button 
-                className="p-2 text-gray-600 hover:text-gray-800"
+                className="p-2 text-gray-600 hover:text-red-600"
                 onClick={() => onRemoveFile(index)}
               >
                 <Trash2 size={20} />
@@ -47,6 +107,13 @@ const FileListDisplay: React.FC<FileListDisplayProps> = ({
           </div>
         </div>
       ))}
+
+      {/* Show a message if no files are displayed */}
+      {fileList.length === 0 && uploadedFiles.length === 0 && (
+        <div className="text-center p-4 bg-gray-50 rounded-lg">
+          <p className="text-gray-500">Aucun fichier à afficher</p>
+        </div>
+      )}
     </div>
   );
 };
