@@ -94,5 +94,5 @@ export const getNbrEvenementsAssocies= async ()=>{
     console.log("erreuuuuuuur dans getNbrEvenementsAssocies ",error);
     throw error;
   }
-}
+} 
 // fin : 
