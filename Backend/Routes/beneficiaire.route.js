@@ -15,7 +15,9 @@ const upload = require("../utils/upload");
 const authenticated = require("../Middlewares/Authmiddleware.js");
 const RoleMiddleware = require("../Middlewares/RoleMiddleware.js");
 const authorizeFormationAccess=require("../Middlewares/FormationAccess.js");
+
 router.get("/getNbrBeneficiairesParFormateur",authenticated,RoleMiddleware("Formateur"), getNombreBeneficiairesParFormateur);
+
 router.post("/upload", upload.single("file"), uploadBeneficiairesFromExcel);
 
 // Route to create a new Beneficiaire (Must be associated with a Formation)

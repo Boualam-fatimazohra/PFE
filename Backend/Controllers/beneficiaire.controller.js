@@ -390,6 +390,7 @@ const deleteBeneficiaire = async (req, res) => {
 //   }
 // };
 const uploadBeneficiairesFromExcel = async (req, res) => {
+  console.log("uploadBeneficiairesFromExcel!!!!!!!!!!! ENDPOINT");
   try {
     const idFormation = req.body.idFormation;
     if (!idFormation || !mongoose.Types.ObjectId.isValid(idFormation)) {
@@ -471,7 +472,6 @@ const uploadBeneficiairesFromExcel = async (req, res) => {
     res.status(500).json({ message: "Erreur lors de l'upload", error: error.message });
   }
 };
- 
 const getBeneficiaireFormation = async (req, res) => {
   console.log('Requête reçue sur:', req.originalUrl); //  Debug
   const idFormation = req.params.id || req.body.idFormation;

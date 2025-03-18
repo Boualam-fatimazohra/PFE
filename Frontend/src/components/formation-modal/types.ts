@@ -101,8 +101,12 @@ export interface UploadedFile {
   data: string;
   fullLength?: number;
   type: 'image' | 'participant-list';
+  status?: 'pending' | 'uploading' | 'uploaded' | 'error';
+  uploadId?: string;
+  url?: string;
+  uploadDate?: string;
+  processed?: boolean; // New property with default value
 }
-
 export interface Message {
   sender: 'user' | 'bot';
   text: string;
