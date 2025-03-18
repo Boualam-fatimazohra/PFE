@@ -5,15 +5,15 @@ import NotFound from "../pages/NotFound";
 import MesFormations from "@/pages/MesFormation";
 import { FormationProvider } from "@/contexts/FormationContext";
 import FormationModal from "@/components/dashboardElement/formationModal";
-import { EvenementsAssociesProvider } from '../contexts/FormateurContext';
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import EvaluationPages from "@/pages/EvaluationPages";
 import BeneficiairesList from "@/components/Formation/Beneficiaires";
 import CalendarView from "@/components/dashboardElement/CalendarView"
+import { EvenementProvider } from "@/contexts/EvenementContext";
 const FormateurRoutes = () => {
   return (
     <FormationProvider>
-    <EvenementsAssociesProvider>
+      <EvenementProvider>
     <Routes>
       <Route path="dashboardFormateur" element={<DashboardFormateur />} />
       <Route path="mesformation" element={<MesFormations />} />
@@ -24,7 +24,7 @@ const FormateurRoutes = () => {
       <Route path="CalendarView"element={<CalendarView/>}/>
 
     </Routes>
-    </EvenementsAssociesProvider>
+    </EvenementProvider>
     </FormationProvider>
   );
 };

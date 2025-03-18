@@ -257,7 +257,44 @@ const DeleteFormation = async (req, res) => {
   }
 };
 
-module.exports = { createFormation, getAllFormations, GetOneFormation, UpdateFormation,DeleteFormation, getFormations };
+const getFormationsByManager = async (req, res) => {
+  try {
+    // 1. Get user ID from authentication
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ message: "Utilisateur non authentifié" });
+    }
+
+    // 2. Find the manager associated with this user
+    const manager = await Manager.findOne({ utilisateur: userId });
+    if (!manager) {
+      return res.status(404).json({ message: "Manager non trouvé" });
+    }
+
+    // 3. Find all formateurs associated with this manager
+    const formateurs = await Formateur.find({ manager: manager._id });
+    if (!formateurs || formateurs.length === 0) {
+      return res.status(404).json({ message: "Aucun formateur trouvé pour ce manager" });
+    }
+
+    // 4. Extract formateur IDs
+    const formateurIds = formateurs.map(formateur => formateur._id);
+
+    // 5. Find all formations associated with these formateurs
+    const formations = await Formation.find({ formateur: { $in: formateurIds } })
+      .populate({ path: 'formateur', populate: { path: 'utilisateur' } });
+
+    // 6. Return the formations
+    res.status(200).json(formations);
+  } catch (error) {
+    res.status(500).json({ 
+      message: "Erreur lors de la récupération des formations par manager",
+      error: error.message 
+    });
+  }
+};
+
+module.exports = {getFormationsByManager, createFormation, getAllFormations, GetOneFormation, UpdateFormation,DeleteFormation, getFormations };
 // const createFormation = async (req, res) => {
 //   try {
 //     // 1. Get user ID from authentication
