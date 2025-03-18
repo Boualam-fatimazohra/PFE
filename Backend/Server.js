@@ -32,19 +32,11 @@ const server = http.createServer(app);
 
 // Initialize Socket.io
 const io = socketIo(server, {
-<<<<<<< HEAD
     cors: {
         origin: "http://localhost:8080",
         methods: ["GET", "POST"],
         credentials: true
     }
-=======
-  cors: {
-    origin: "http://localhost:8080",
-    methods: ["GET", "POST"],
-    credentials: true
-  }
->>>>>>> c78fdce (chat fichier complet csv)
 });
 
 // Make io accessible to routes
