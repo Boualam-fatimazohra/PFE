@@ -7,17 +7,56 @@ import interactionPlugin from '@fullcalendar/interaction';
 import multiMonthPlugin from '@fullcalendar/multimonth';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from "react-router-dom";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useFormations } from "@/contexts/FormationContext"; // Importez le context pour les formations
+import { useFormations } from "@/contexts/FormationContext";
+import { ChevronDown, Filter } from 'lucide-react'; // Ajout de l'icône Filter
+
+// Import des composants pour les dropdowns
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 import * as dayjs from 'dayjs';
 import 'dayjs/locale/fr';
+// Styles restent inchangés...
 const calendarStyles = `
   /* Style pour les en-têtes de jour (lun, mar, mer, etc.) */
   .fc .fc-col-header-cell {
-    background-color: #f1f1f1; /* Fond gris clair pour les en-têtes de jour */
+    background-color: #f1f1f1;
     padding: 10px 0;
   }
+  /* Personnalisation de l'en-tête du calendrier */
+.fc .fc-toolbar-title {
+    color: #333;
+    font-weight: bold;
+}
+
+/* Personnalisation de l'arrière-plan de l'en-tête */
+.fc .fc-toolbar {
+    background-color: #f4f4f4;
+    padding: 10px 20px;
+}
+
+/* Personnalisation des flèches de navigation */
+.fc .fc-button {
+    background-color: #EEE;
+    color: #333333;
+}
+
+.fc .fc-button:hover {
+    background-color: #ccc;
+}
+
+/* Personnalisation du bouton de vue (Jour, Semaine, Mois, Année) */
+.fc .fc-button-active {
+    background-color: #FF7900;
+    color: white;
+}
+
 
   .fc .fc-col-header-cell-cushion {
     font-weight: 500;
@@ -54,6 +93,7 @@ const calendarStyles = `
   h2.calendar-title {
     font-weight: 700 !important;
     font-size: 1.25rem !important;
+    
   }
 
   /* Adaptation pour les mobiles */
@@ -64,7 +104,16 @@ const calendarStyles = `
   }
 `;
 
-// Événements statiques (à conserver pour l'exemple ou pour les tests)
+// Définition des catégories avec leurs couleurs correspondantes
+const categories = [
+  { id: 'personal', name: 'Personnel Task', color: '#FBCFE8', checked: true },
+  { id: 'meetings', name: 'Meetings', color: '#A7F3D0', checked: true },
+  { id: 'formations', name: 'Formations', color: '#FED7AA', checked: true },
+  { id: 'calls', name: 'Calls', color: '#BFDBFE', checked: true },
+  { id: 'urgent', name: 'Urgent', color: '#FECACA', checked: true },
+];
+
+// Événements statiques avec les catégories correspondantes
 const staticEvents = [
   {
     id: '1',
@@ -72,32 +121,76 @@ const staticEvents = [
     start: '2025-01-02',
     end: '2025-01-03',
     backgroundColor: '#F16E00',
+    extendedProps: {
+      category: 'meetings'
+    }
   },
   {
     id: '2',
     title: 'Team Call',
     start: '2025-01-03',
     end: '2025-01-04',
-    backgroundColor: '#2196F3',
+    backgroundColor: '#BFDBFE',
+    extendedProps: {
+      category: 'calls'
+    }
   },
-  // ...autres événements statiques
+  {
+    id: '3',
+    title: 'Tâche importante',
+    start: '2025-01-05',
+    end: '2025-01-06',
+    backgroundColor: '#FECACA',
+    extendedProps: {
+      category: 'urgent'
+    }
+  },
+  {
+    id: '4',
+    title: 'Rendez-vous personnel',
+    start: '2025-01-10',
+    end: '2025-01-11',
+    backgroundColor: '#FBCFE8',
+    extendedProps: {
+      category: 'personal'
+    }
+  },
 ];
 
 const CalendarView = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date(2025, 0, 1)); // January 2025
   const [currentView, setCurrentView] = useState('dayGridMonth'); // Default view is month
   const calendarRef = useRef(null);
-  const [open, setOpen] = useState(false);
   const [events, setEvents] = useState([]);
+  
+  // État pour les catégories filtrables
+  const [categoryFilters, setCategoryFilters] = useState(categories);
   
   // Récupération des formations depuis le context
   const { formations: contextFormations, loading } = useFormations();
 
-  // Convertir les formations en événements du calendrier
+  // Convertir les formations en événements du calendrier et appliquer les filtres
   useEffect(() => {
-    if (contextFormations && contextFormations.length > 0) {
+    // Création d'un tableau avec les IDs des catégories actives
+    const activeCategories = categoryFilters
+      .filter(cat => cat.checked)
+      .map(cat => cat.id);
+    
+    // Construction de la liste des événements (formations + statiques)
+    let allEvents = [];
+    
+    // Ajouter les événements statiques filtrés
+    if (staticEvents && staticEvents.length > 0) {
+      const filteredStaticEvents = staticEvents.filter(event => 
+        !event.extendedProps?.category || 
+        activeCategories.includes(event.extendedProps.category)
+      );
+      allEvents = [...filteredStaticEvents];
+    }
+    
+    // Ajouter les formations filtrées (si la catégorie "formations" est active)
+    if (contextFormations && contextFormations.length > 0 && activeCategories.includes('formations')) {
       const formationEvents = contextFormations.map(formation => {
-        // Déterminer la fin de l'événement (si dateFin existe, sinon dateDebut + 1 jour)
         const startDate = new Date(formation.dateDebut);
         let endDate;
         
@@ -113,23 +206,34 @@ const CalendarView = () => {
           title: formation.nom,
           start: startDate.toISOString().split('T')[0], 
           end: endDate.toISOString().split('T')[0],
-          backgroundColor: '#FFEDD5',
+          backgroundColor: '#FED7AA',
           textColor: '#9A3412',
           extendedProps: {
             type: 'formation',
-            status: formation.status
+            status: formation.status,
+            category: 'formations'
           }
         };
       });
       
-      setEvents([...staticEvents, ...formationEvents]);
-    } else {
-      setEvents(staticEvents); 
+      allEvents = [...allEvents, ...formationEvents];
     }
-  }, [contextFormations]);
+    
+    setEvents(allEvents);
+  }, [contextFormations, categoryFilters]);
 
-  const handleSelection = (type: "event" | "formation") => {
-    setOpen(false);
+  // Fonction pour gérer le changement d'état des cases à cocher
+  const handleCategoryChange = (categoryId) => {
+    setCategoryFilters(prev => 
+      prev.map(cat => 
+        cat.id === categoryId 
+          ? { ...cat, checked: !cat.checked } 
+          : cat
+      )
+    );
+  };
+
+  const handleSelection = (type) => {
     if (type === "event") {
       navigate("/CreatEvent");
     } else if (type === "formation") {
@@ -138,10 +242,12 @@ const CalendarView = () => {
   };
 
   const formatMonthYear = (date) => {
-    return new Intl.DateTimeFormat('fr-FR', {
+    const monthYear = new Intl.DateTimeFormat('fr-FR', {
       month: 'long',
       year: 'numeric'
     }).format(date);
+    
+    return monthYear.charAt(0).toUpperCase() + monthYear.slice(1).toLowerCase();
   };
 
   const navigateMonth = (direction) => {
@@ -230,7 +336,6 @@ const CalendarView = () => {
       const formation = contextFormations.find(f => f._id === formationId);
       if (formation) {
         // Rediriger vers la page de détails de la formation
-        // Vous pouvez adapter cette partie selon votre navigation
         navigate(`/formateur/formations/${formationId}`);
       }
     }
@@ -247,62 +352,45 @@ const CalendarView = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-left">Mon Calendrier</h1>
         
-        {/* Bouton qui ouvre le choix */}
-        <Button 
-          className="bg-black text-white hover:bg-orange-600 rounded-[4px]"
-          onClick={() => setOpen(true)}
-        >
-          + Créer événement/Formation
-        </Button>
-
-        {/* Modal de sélection */}
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Que souhaitez-vous créer ?</DialogTitle>
-            </DialogHeader>
-            <div className="flex justify-center gap-4">
-              <Button className="bg-blue-500 hover:bg-blue-600 text-white" onClick={() => handleSelection("event")}>
-                Événement
-              </Button>
-              <Button className="bg-green-500 hover:bg-green-600 text-white" onClick={() => handleSelection("formation")}>
-                Formation
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        {/* Menu déroulant pour créer formations/événements */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button className="bg-orange-500 text-white hover:bg-orange-600 rounded-[4px] flex items-center gap-2">
+              + Créer formation <ChevronDown size={16} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => handleSelection("formation")}>
+              Formation
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleSelection("event")}>
+              Événement
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       
       <div className="flex">
         {/* Sidebar des catégories */}
-        <div className="w-48 h-48 border-r border-gray-200 p-4  rounded-[4px] shadow-md" style={{ backgroundColor: "#FF79000D" }}>
+        <div className="w-48 h-48 border-r border-gray-200 p-4 rounded-[4px]" style={{ backgroundColor: "#FF79000D" }}>
           <h3 className="font-medium font-bold text-gray-700 mb-4">Catégories</h3>
           <ul className="space-y-2">
-            <li className="flex items-center">
-              <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: "#FBCFE8" }}></div>
-              <span className="text-sm">Personnel Task</span>
-            </li>
-            <li className="flex items-center">
-              <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: "#A7F3D0" }}></div>
-              <span className="text-sm">Meetings</span>
-            </li>
-            <li className="flex items-center">
-              <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: "#FED7AA" }}></div>
-              <span className="text-sm">Formations</span>
-            </li>
-            <li className="flex items-center">
-              <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: "#BFDBFE" }}></div>
-              <span className="text-sm">Calls</span>
-            </li>
-            <li className="flex items-center">
-              <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: "#FECACA" }}></div>
-              <span className="text-sm">Urgent</span>
-            </li>
+            {categoryFilters.map((category) => (
+              <li key={category.id} className="flex items-center">
+                <div 
+                  className="w-3 h-3 rounded-full mr-2" 
+                  style={{ backgroundColor: category.color, opacity: category.checked ? 1 : 0.5 }}
+                ></div>
+                <span className="text-sm" style={{ opacity: category.checked ? 1 : 0.5 }}>
+                  {category.name}
+                </span>
+              </li>
+            ))}
           </ul>
         </div>
 
         {/* Zone principale du calendrier */}
-        <div className="flex-grow p-6 bg-white shadow-md rounded-[4px]">
+        <div className="flex-grow p-6 bg-white rounded-[4px]">
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center">
               {/* Titre du calendrier à gauche */}
@@ -327,52 +415,91 @@ const CalendarView = () => {
           .mini-calendar-wrapper {
             width: 200px;
             padding-top: 250px;
-            margin-left: 300px;  /*50px */
+            margin-left: 300px;
             flex-shrink: 0;
           }
           
           .main-calendar-wrapper {
             flex-grow: 1;
-            max-width: 1200px; /* Ajuste la largeur max selon ton besoin */
-            margin-left: 0px; /*70px */
-            margin-right: 0px; /* Centrage horizontal */
-            padding: 0 80px; /* 0 10 Ajoute du padding si besoin */
+            max-width: 1200px;
+            margin-left: 0px;
+            margin-right: 0px;
+            padding: 0 80px;
           }
         `}</style>
 
-            <div className="flex space-x-2">
-              <Button 
-                variant="secondary" 
-                className={currentView === 'timeGridDay' ? 'bg-orange-500 text-white' : ''} 
-                size="sm" 
-                onClick={() => changeView('timeGridDay')}
-              >
-                Jour
-              </Button>
-              <Button 
-                variant="secondary" 
-                className={currentView === 'timeGridWeek' ? 'bg-orange-500 text-white' : ''} 
-                size="sm" 
-                onClick={() => changeView('timeGridWeek')}
-              >
-                Semaine
-              </Button>
-              <Button 
-                variant="secondary" 
-                className={currentView === 'dayGridMonth' ? 'bg-orange-500 text-white' : ''} 
-                size="sm" 
-                onClick={() => changeView('dayGridMonth')}
-              >
-                Mois
-              </Button>
-              <Button 
-                variant="secondary" 
-                className={currentView === 'multiMonthYear' ? 'bg-orange-500 text-white' : ''} 
-                size="sm" 
-                onClick={() => changeView('multiMonthYear')}
-              >
-                Année
-              </Button>
+            <div className="flex space-x-2 bg-white">
+              {/* Bouton de filtrage avec menu déroulant */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    className="text-[#333] flex items-center gap-1 font-bold py-1 px-4 text-xs rounded-[4px] border border-gray-300 p-4"
+                    style={{ height: '28px', backgroundColor: '#EEE' }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M0 3C0 2.44772 0.447715 2 1 2H19C19.5523 2 20 2.44772 20 3V5C20 5.26522 19.8946 5.51957 19.7071 5.70711L13 12.4142V19C13 19.5523 12.5523 20 12 20H8C7.44772 20 7 19.5523 7 19V12.4142L0.292893 5.70711C0.105357 5.51957 0 5.26522 0 5V3Z" fill="#000"/>
+                    </svg>
+                    Filtres
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="px-2 py-1.5 text-sm font-semibold">Catégories</div>
+                  <DropdownMenuSeparator />
+                  {categoryFilters.map((category) => (
+                    <DropdownMenuCheckboxItem
+                      key={category.id}
+                      checked={category.checked}
+                      onCheckedChange={() => handleCategoryChange(category.id)}
+                      className="flex items-center gap-2"
+                    >
+                      <div 
+                        className="w-3 h-3 rounded-full" 
+                        style={{ backgroundColor: category.color }}
+                      ></div>
+                      {category.name}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <div className="flex space-x-1 bg-white p-0 border border-gray-300 rounded-[4px]">
+                <Button 
+                  variant="secondary" 
+                  className={`bg-white hover:bg-gray-100 ${currentView === 'timeGridDay' ? 'bg-orange-500 text-white' : 'text-[#333]'} rounded-[4px] py-1 px-4 text-xs`}
+                  style={{ height: '28px' }}
+                  onClick={() => changeView('timeGridDay')}
+                >
+                  Jour
+                </Button>
+
+                <Button 
+                  variant="secondary" 
+                  className={`bg-white hover:bg-gray-100 ${currentView === 'timeGridWeek' ? 'bg-orange-500 text-white' : 'text-[#333]'} rounded-[4px] py-1 px-4 text-xs`}
+                  style={{ height: '28px' }}
+                  onClick={() => changeView('timeGridWeek')}
+                >
+                  Semaine
+                </Button>
+
+                <Button 
+                  variant="secondary" 
+                  className={`bg-white hover:bg-gray-100 ${currentView === 'dayGridMonth' ? 'bg-orange-500 text-white' : 'text-[#333]'} rounded-[4px] py-1 px-4 text-xs`}
+                  style={{ height: '28px' }}
+                  onClick={() => changeView('dayGridMonth')}
+                >
+                  Mois
+                </Button>
+
+                <Button 
+                  variant="secondary" 
+                  className={`bg-white hover:bg-gray-100 ${currentView === 'multiMonthYear' ? 'bg-orange-500 text-white' : 'text-[#333]'} rounded-[4px] py-1 px-4 text-xs`}
+                  style={{ height: '28px' }}
+                  onClick={() => changeView('multiMonthYear')}
+                >
+                  Année
+                </Button>
+              </div>
             </div>
           </div>
 
