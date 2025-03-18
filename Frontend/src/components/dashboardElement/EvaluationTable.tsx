@@ -45,14 +45,11 @@ export const EvaluationsTable = ({ onGenerateLink }: EvaluationsTableProps) => {
   // Get API URL from environment variables
   const API_URL = import.meta.env.VITE_API_LINK || '';
 
-  // Fonction pour générer un lien d'évaluation
   const generateEvaluationLink = async (id: string) => {
     if (onGenerateLink) {
       try {
         setGenerating(prev => ({ ...prev, [id]: true }));
         await onGenerateLink(id);
-        // Si onGenerateLink ne met pas à jour les links, on peut utiliser un mécanisme de fallback
-        // ou laisser la logique à onGenerateLink
       } catch (error) {
         console.error("Erreur lors de la génération du lien:", error);
         toast.error("Erreur lors de la génération du lien d'évaluation");
@@ -135,39 +132,44 @@ export const EvaluationsTable = ({ onGenerateLink }: EvaluationsTableProps) => {
                   <StatusBadge status={formation.status} />
                 </TableCell>
                 <TableCell>
-                  <div className="flex flex-col space-y-2">
-                    <button
-                      onClick={() => generateEvaluationLink(formation._id)}
-                      disabled={generating[formation._id]}
-                      className="bg-black hover:bg-orange-600 text-white px-3 py-1 text-sm font-medium transition duration-150 ease-in-out flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed w-auto w-[58%] h-[30px] ml-auto">
-                      {generating[formation._id] ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Génération...
-                        </>
-                      ) : (
-                        "Générer lien "
-                      )}
-                    </button>
-                    
-                    {links[formation._id] && (
-                      <div className="flex flex-col mt-2 max-w-md">
-                        <div className="relative flex items-center">
-                          <input
-                            readOnly
-                            value={links[formation._id]}
-                            className="w-full bg-gray-50 border border-gray-300 text-gray-700 text-sm rounded-md pl-3 pr-10 py-2 focus:ring-orange-500 focus:border-orange-500 w-auto w-[58%] h-[30px] ml-auto"
-                          />
-                          <button
-                            onClick={() => copyToClipboard(formation._id)}
-                            className="absolute right-2 text-gray-500 hover:text-orange-500 transition"
-                            title="Copier le lien"
-                          >
-                            {copied[formation._id] ? <Check className="w-5 h-5 text-green-500" /> : <Clipboard className="w-5 h-5" />}
-                          </button>
+                  <div className="flex justify-end">
+                    <div className="w-full max-w-[200px]">
+                      <button
+                        onClick={() => generateEvaluationLink(formation._id)}
+                        disabled={generating[formation._id]}
+                        className="bg-black hover:bg-orange-600 text-white px-3 py-1 text-sm font-medium 
+                                  transition duration-150 ease-in-out flex items-center justify-center 
+                                  disabled:opacity-50 disabled:cursor-not-allowed w-full h-[30px]">
+                        {generating[formation._id] ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Génération...
+                          </>
+                        ) : (
+                          "Générer lien"
+                        )}
+                      </button>
+                      
+                      {links[formation._id] && (
+                        <div className="flex flex-col mt-2 relative">
+                          <div className="relative flex items-center">
+                            <input
+                              readOnly
+                              value={links[formation._id]}
+                              className="w-full bg-gray-50 border border-gray-300 text-gray-700 text-sm 
+                                        rounded-md pl-3 pr-10 py-2 focus:ring-orange-500 focus:border-orange-500 h-[30px]"
+                            />
+                            <button
+                              onClick={() => copyToClipboard(formation._id)}
+                              className="absolute right-2 text-gray-500 hover:text-orange-500 transition"
+                              title="Copier le lien"
+                            >
+                              {copied[formation._id] ? <Check className="w-5 h-5 text-green-500" /> : <Clipboard className="w-5 h-5" />}
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </TableCell>
               </TableRow>
