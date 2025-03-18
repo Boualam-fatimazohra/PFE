@@ -14,28 +14,11 @@ import ManagerRoutes from "./routes/ManagerRoutes";
 import TechnicienRoutes from "./routes/TechnecienRoutes";
 import GenerateLink from "./components/dashboardElement/GenerationLien";
 import FormulaireEvaluation from "./pages/FormulaireEvaluation";
-import DetailsFormation from "./components/dashboardElement/DetailsFormation";
-import { ToastContainer } from "react-toastify";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { Footer } from "@/components/layout/Footer";
-import FormationTerminer from "./pages/FormationTerminer";
-import { FormationAvenir } from "./pages/FormationAvenir";
-import FormationModal from "./components/dashboardElement/formationModal";
-import MesFormation from "./pages/MesFormation";
-import { Calendar } from "lucide-react";
-import CalendarView from "./components/dashboardElement/CalendarView";
 import Chatbot from "./pages/Chatbot";
 import { AuthProvider } from "./contexts/AuthContext";
-import AddFormation from "./pages/apiTesting/AddFormation";
-import FormateurFormations from "./pages/apiTesting/FormateurFormations";
-import { FormationProvider } from "./contexts/FormationContext";
-import BeneficiairesList from "./components/Formation/Beneficiaires";
-import EvaluationPages from "@/pages/EvaluationPages";
-import FormationDashboard from "@/components/dashboardElement/FormationManager";
-import FormateurManager from "@/components/dashboardElement/FormateurManager";
-import BootcampsList from "./components/dashboardElement/Bootcamps";
 import CalendrierManager from "./components/dashboardElement/CalendrierManager";
-import CreatEvent from "./components/dashboardElement/CreatEvent";
 import Ecolecode from "./components/dashboardElement/Ecolcode";
 import { ProtectedRoute, AccessDenied } from "./components/ProtectedRoute";
 
@@ -59,7 +42,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <FormationProvider>
         <TooltipProvider>
           <BrowserRouter>
             <Layout>
@@ -80,24 +62,11 @@ const App = () => (
                   <Route path="/Chatbot" element={<Chatbot />} />
                   <Route path="/formulaire-evaluation" element={<FormulaireEvaluation />} />
                   <Route path="/EvaluationForm" element={<EvaluationForm />} />
-                  <Route path="/CalendarView" element={<CalendarView />} />
-
-                  <Route path="/formations" element={<FormateurFormations />} />
-                  <Route path="/CreatEvent" element={<CreatEvent />} />
-
                 </Route>
 
                 {/* Routes pour formateurs, managers et coordinateurs */}
                 <Route element={<ProtectedRoute allowedRoles={["Formateur"]} />}>
                   <Route path="/generate-link" element={<GenerateLink />} />
-                  <Route path="/beneficiaires" element={<BeneficiairesList />} />
-                  <Route path="/addformation" element={<AddFormation />} />
-                  <Route path="/FormationTerminer" element={<FormationTerminer />} />
-                  <Route path="/FormationAvenir" element={<FormationAvenir />} />
-                  <Route path="/FormationModal" element={<FormationModal />} />
-                  <Route path="/EvaluationPages" element={<EvaluationPages />} />
-                  <Route path="/DetailsFormation" element={<DetailsFormation />} />
-
                 </Route>
 
                 {/* Routes spécifiques par rôle */}
@@ -134,7 +103,6 @@ const App = () => (
             </Layout>
           </BrowserRouter>
         </TooltipProvider>
-      </FormationProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
