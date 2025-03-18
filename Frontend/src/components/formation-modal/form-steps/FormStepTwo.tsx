@@ -74,12 +74,11 @@ const FormStepTwo: React.FC<FormStepTwoProps> = ({
           }));
           
           setUploadedFiles(prev => [...prev, ...downloadedUploadedFiles]);
-          
-          // Add success message
+        
           console.log("Fetching Files Uploaded Successfuly")
         } else {
-          // Add info message when no files found
-          console.log("Files Error fetching")
+          // message when no files found
+          console.log("Fetching Files empty cloudinary for this formation");
         }
       } catch (error) {
         console.error('Error fetching formation files:', error);
