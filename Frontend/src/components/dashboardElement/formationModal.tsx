@@ -3,7 +3,6 @@ import * as React from 'react';
 import { useState, useRef } from "react";
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useFormations } from "../../contexts/FormationContext";
-
 // Components
 import StepIndicator from '@/components/formation-modal/StepIndicator';
 import FormStepOne from '@/components/formation-modal/form-steps/FormStepOne';
@@ -11,7 +10,7 @@ import FormStepTwo from '@/components/formation-modal/form-steps/FormStepTwo';
 import FormStepThree from '@/components/formation-modal/form-steps/FormStepThree';
 import FormStepFour from '@/components/formation-modal/form-steps/FormStepFour';
 import FormNavigationButtons from '@/components/formation-modal/ui/FormNavigationButtons';
-
+import { updateBeneficiaireConfirmations } from '../../services/formationService';
 // Types and Styles
 import { 
   FormState, 
@@ -23,7 +22,8 @@ import {
   FormOption 
 } from '@/components/formation-modal/types';
 import { GlobalStyle, inlineStyles } from '@/components/formation-modal/styles';
-
+import { Beneficiaire,BeneficiaireInscription } from '../formation-modal/types';
+import axios from 'axios';
 // Initial form state
 const initialFormState: FormState = {
   title: "",
@@ -37,14 +37,12 @@ const initialFormState: FormState = {
   dateFin: "",
   tags: "",
 };
-
 const FormationModal: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { addNewFormation, createFormationDraft } = useFormations();
   const formationFromState = location.state?.formation;
   const fromDraft = location.state?.fromDraft;
-
   // State
   const [currentStep, setCurrentStep] = useState<number>(formationFromState?.currentStep || 1);
   const [formState, setFormState] = useState<FormState>(formationFromState || initialFormState);
@@ -63,12 +61,49 @@ const FormationModal: React.FC = () => {
   const [formationId, setFormationId] = useState<string | null>(
     formationFromState?.id || null
   );
-
+  const [inscriptions, setInscriptions] = React.useState<BeneficiaireInscription[]>([]);
+  const [beneficiairePreferences, setBeneficiairePreferences] = useState<Record<string, { appel: boolean; email: boolean }>>({});
+  console.log(beneficiairePreferences);
+  const { getBeneficiaireFormation } = useFormations();  
+  React.useEffect(() => {
+    const fetchBeneficiaires = async () => {
+      try {
+        setLoading(true);
+        const data = await getBeneficiaireFormation(formationId);
+        const formattedData = Array.isArray(data) ? data : [data];
+        setInscriptions(formattedData);
+  
+        // Vérifie si les valeurs sont bien récupérées depuis l'API
+        console.log("Données mises à jour :", formattedData);
+  
+        // Initialiser les préférences avec les vraies valeurs depuis l'API
+        const initialPreferences = formattedData.reduce((acc, benef) => {
+          acc[benef._id] = { 
+            appel: benef.confirmationAppel || false, 
+            email: benef.confirmationEmail || false 
+          };
+          return acc;
+        }, {} as Record<string, { appel: boolean; email: boolean }>);
+  
+        setBeneficiairePreferences(initialPreferences);
+        setErrors(null);
+      } catch (err) {
+        setErrors("Erreur de chargement");
+        console.error("Erreur complète:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    if (formationId) {
+      fetchBeneficiaires();
+    }
+  }, [formationId, getBeneficiaireFormation]);
+  
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const participantListInputRef = useRef<HTMLInputElement>(null);
-
   // Options for select inputs
   const statusOptions: FormOption[] = [
     { label: "En Cours", value: "En Cours" },
@@ -76,19 +111,16 @@ const FormationModal: React.FC = () => {
     { label: "Avenir", value: "Avenir" },
     { label: "Replanifier", value: "Replanifier" }
   ];
-
   const categoryOptions: FormOption[] = [
     { label: "type1", value: "type1" },
     { label: "type2", value: "type2" },
     { label: "type3", value: "type3" }
   ];
-
   const levelOptions: FormOption[] = [
     { label: "type1", value: "type1" },
     { label: "type2", value: "type2" },
     { label: "type3", value: "type3" }
   ];
-
   // Define steps
   const steps: Step[] = [
     { number: "1", label: "Informations générales", active: currentStep === 1, completed: currentStep > 1 },
@@ -96,75 +128,73 @@ const FormationModal: React.FC = () => {
     { number: "3", label: "Confirmations", active: currentStep === 3, completed: currentStep > 3 },
     { number: "✓", label: "Terminé", active: currentStep === 4, completed: currentStep > 3 }
   ];
-
-  // Sample participant data
-  const participants: Participant[] = [
-    {
-      date: "26/03/2024",
-      nom: "Bikarrane",
-      prenom: "Mohamed",
-      email: "mohamed.bikarrab@gmail...",
-      genre: "Homme",
-      telephone: "0644544512",
-      confTel: "Confirmé (e)",
-      confEmail: "En cours"
-    },
-    {
-      date: "26/03/2024",
-      nom: "Boualam",
-      prenom: "Fatima",
-      email: "fatima.boualam@gmail...",
-      genre: "femme",
-      telephone: "0644544512",
-      confTel: "En cours",
-      confEmail: "Confirmé (e)"
-    },
-    {
-      date: "26/03/2024",
-      nom: "AS-SAAD",
-      prenom: "Ikram",
-      email: "assad.ikram@gmail...",
-      genre: "femme",
-      telephone: "0644544512",
-      confTel: "Confirmé (e)",
-      confEmail: "Confirmé (e)"
-    },
-    {
-      date: "26/03/2024",
-      nom: "Trif",
-      prenom: "Ouidad",
-      email: "ouidad.tarif@gmail...",
-      genre: "femme",
-      telephone: "0644544512",
-      confTel: "En cours",
-      confEmail: "En cours"
-    }
-  ];
-
   // Handlers
   const handleFileButtonClick = () => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
   };
+  // debut : enregistrement des confirmation appel/email : 
+  const handleUpdateConfirmations = async () => {
+    try {
+      // Vérifier si `formationId` est valide
+      if (!formationId) {
+        throw new Error('ID de formation manquant');
+      }
+  
+      // Transformation des données de `beneficiairePreferences`
+      const confirmations = Object.keys(beneficiairePreferences).map((id) => {
+        const { appel, email } = beneficiairePreferences[id];
+        
+        // Vérification des valeurs de chaque confirmation
+        if (typeof appel !== 'boolean' || typeof email !== 'boolean') {
+          throw new Error(`Les données pour le bénéficiaire ${id} sont invalides`);
+        }
+  
+        return { id, confirmationAppel: appel, confirmationEmail: email };
+      });
+  
+      // Appel à l'API
+      const result = await updateBeneficiaireConfirmations(formationId, confirmations);
+  
+      // Vérification du résultat
+      if (result.success) {
+        console.log(result.message);
+      } else {
+        throw new Error(result.message || 'Erreur inconnue lors de la mise à jour');
+      }
+  
+      console.log(result); // Affiche le résultat de la mise à jour
+    } catch (error) {
+      // Gestion des erreurs
+      if (axios.isAxiosError(error)) {
+        // Gestion spécifique d'erreur liée à Axios
+        console.error('Erreur API:', error.response?.data || error.message);
+      } else {
+        // Erreurs générales
+        console.error('Erreur de mise à jour des confirmations:', error.message);
+      }
+  
+      // Ici tu pourrais également définir un état pour afficher des messages d'erreur dans l'UI
+      alert(`Une erreur est survenue : ${error.message}`);
+    }
+  };
+  // fin : enregistrement des confirmation appel/email : 
 
   const handleImageButtonClick = () => {
     if (imageInputRef.current) {
       imageInputRef.current.click();
     }
   };
-
   const handleParticipantListButtonClick = () => {
     if (participantListInputRef.current) {
       participantListInputRef.current.click();
     }
   };
-
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
       const file = event.target.files[0];
-
-      if (file.size > 2 * 1024 * 1024) {
+    if (file.size > 2 * 1024 * 1024) {
         alert("Le fichier est trop volumineux. La taille maximum est de 2MB.");
         event.target.value = "";
         return;
@@ -192,7 +222,6 @@ const FormationModal: React.FC = () => {
       event.target.value = "";
     }
   };
-
 
   const handleParticipantListChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     // This is now handled in FormStepTwo directly via validateAndProcessFiles
@@ -266,10 +295,15 @@ const FormationModal: React.FC = () => {
   const handleNext = async () => {
     if (validateForm()) {
       if (currentStep === 1) {
-        // Create formation in backend before moving to next step
+        // Créer la formation dans le backend avant de passer à l'étape suivante
         await handleSubmitFormation();
+      } else if (currentStep === 3) {
+        await handleUpdateConfirmations(); 
+        alert("changement des confirmation effecuter");
+        setCurrentStep(currentStep + 1);
+        // Appel à la fonction avec gestion d'erreur
       } else if (currentStep < steps.length) {
-        // For other steps, just proceed to next step
+        // Pour les autres étapes, juste avancer à l'étape suivante
         setCurrentStep(currentStep + 1);
       }
     }
@@ -298,7 +332,6 @@ const FormationModal: React.FC = () => {
       return;
     }
     setIsSubmitting(true);
-  
     try {
       // Map formState to the structure needed by the API
       const formationData = {
@@ -340,12 +373,23 @@ const FormationModal: React.FC = () => {
     } finally {
       setIsSubmitting(false);
     }
+    
+   
   };
   
   const handleSubmitDraft = async () => {
-    console.log("formation submited as Draft; FormationId: ", formationId);
-    navigate("formateur/dashboardFormateur");
-  }
+    try {
+      if (currentStep === 3) {
+        await handleUpdateConfirmations();
+      }
+  
+      console.log("Formation soumise comme Brouillon; ID de la formation:", formationId);
+      navigate("/formateur/dashboardFormateur");
+    } catch (error) {
+      console.error("Erreur lors de la soumission du brouillon :", error.message);
+      alert(`Erreur : ${error.message}`); // Affiche une alerte si une erreur se produit
+    }
+  };
 
   // Render current step content
   const renderStepContent = () => {
@@ -394,8 +438,10 @@ const FormationModal: React.FC = () => {
           <FormStepThree
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
-            participants={participants}
+            participants={inscriptions}
             useIcon={useIcon}
+            beneficiairePreferences={beneficiairePreferences}
+            setBeneficiairePreferences={setBeneficiairePreferences}
           />
         );
       case 4:
