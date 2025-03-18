@@ -33,7 +33,6 @@ interface BeneficiaireInscription {
   _id: string;
   confirmationAppel: boolean;
   confirmationEmail: boolean;
-  horodateur: string;
   formation: string;
   beneficiaire: Beneficiaire;
 }

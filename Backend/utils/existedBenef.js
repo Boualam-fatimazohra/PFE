@@ -4,9 +4,17 @@ const Beneficiaire = require("../Models/beneficiaire.model");
  * Récupère tous les bénéficiaires existants et stocke leurs hash pour vérification rapide
  * @returns {Set} Ensemble des hash des bénéficiaires
  */
+// const getExistingBeneficiairesHashes = async () => {
+//   const beneficiaires = await Beneficiaire.find({}, "email nom prenom").lean();
+//   return new Set(beneficiaires.map(b => hashBeneficiaire(b.email, b.nom, b.prenom)));
+// };
+
 const getExistingBeneficiairesHashes = async () => {
-  const beneficiaires = await Beneficiaire.find({}, "email nom prenom").lean();
-  return new Set(beneficiaires.map(b => hashBeneficiaire(b.email, b.nom, b.prenom)));
+  const beneficiaires = await Beneficiaire.find({}, "email nom prenom _id").lean();
+  return beneficiaires.map(b => ({
+    hash: hashBeneficiaire(b.email, b.nom, b.prenom),
+    id: b._id
+  }));
 };
 
 /**

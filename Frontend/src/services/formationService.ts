@@ -2,7 +2,31 @@
 import axios from 'axios';
 import apiClient from './apiClient';
 import { Formation } from '../components/formation-modal/types'; // Adjust the import path
+interface ConfirmationData {
+  id: string; // L'ID du bénéficiaire
+  confirmationAppel: boolean;
+  confirmationEmail: boolean;
+}
+interface ConfirmationData {
+  id: string; // L'ID du bénéficiaire
+  confirmationAppel: boolean;
+  confirmationEmail: boolean;
+}
 
+export const updateBeneficiaireConfirmations = async (idFormation: string, confirmations: ConfirmationData[]) => {
+  try {
+    // Envoi de la requête avec l'ID de la formation dans l'URL et la liste des confirmations dans le corps
+    const response = await apiClient.post(`beneficiaires/updateConfirmationBeneficiaire/${idFormation}`, confirmations);
+    return response.data; // Retourne la réponse en cas de succès
+  } catch (error) {
+    // Gestion des erreurs
+    console.error('Erreur lors de la mise à jour des confirmations:', error);
+    throw new Error(
+      error.response?.data?.message ||
+      'Erreur lors de la mise à jour des confirmations'
+    );
+  }
+};
 export const getBeneficiaireFormation = async (id: string) => {
   try {
     const response = await apiClient.get(`beneficiaires/getBeneficiaireByFormation/${id}`);
