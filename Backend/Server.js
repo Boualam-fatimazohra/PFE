@@ -7,6 +7,8 @@ const bodyParser = require("body-parser");
 const path = require("path");
 const http = require("http");
 const socketIo = require("socket.io");
+const multer = require('multer');
+const fs = require("fs")
 
 // Import services
 const { configureSocketIO } = require("./services/socketService");
@@ -38,7 +40,7 @@ const server = http.createServer(app);
 // Initialize and configure Socket.io
 const io = socketIo(server, {
     cors: {
-        origin: "http://localhost:8081",
+        origin: "http://localhost:8080",
         methods: ["GET", "POST"],
         credentials: true
     }
@@ -57,7 +59,7 @@ app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(
     cors({
-        origin: "http://localhost:8081",
+        origin: "http://localhost:8080",
         credentials: true,
         methods: "GET,POST,PUT,DELETE",
         allowedHeaders: "Content-Type,Authorization",
@@ -71,6 +73,15 @@ connectDB();
 const uploadsDir = initializeUploadsDirectory();
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
+// this one /////////////////
+// Configuration du stockage multer
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, "uploads/"),
+    filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
+});
+const upload = multer({ storage: storage });
+////////////////////////////
+
 // API Routes 
 app.use("/api/auth", Auth);
 app.use("/api/formation", formationRoutes);
@@ -82,6 +93,20 @@ app.use("/api/evaluation", evaluationRoutes);
 app.use("/api/evenement", evenementRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/chat", chatRoutes);
+/// this one
+app.post("/upload-csv", upload.single("csvFile"), (req, res) => {
+    console.log("upload csv lfdjksfdkldfsk");
+    if (!req.file) return res.status(400).json({ success: false, error: "Aucun fichier envoyé" });
+
+    const filePath = req.file.path;
+    fs.readFile(filePath, "utf8", (err, data) => {
+        if (err) return res.status(500).json({ success: false, error: "Erreur lecture fichier" });
+        
+        res.json({ success: true, data: data.substring(0, 1000), name: req.file.originalname });
+    });
+});
+///////////////////////////////
+
 app.use("/api/upload", uploadRoutes);
 app.use('/api/beneficiaire-files', beneficiaireFileRoutes);
 
