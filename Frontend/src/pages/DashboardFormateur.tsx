@@ -95,7 +95,7 @@ const DashboardFormateur: React.FC = () => {
   }));
 
   // Définir la classe de transition pour le contenu principal
-  const mainContentClass = isChatbotOpen ? 'transform -translate-x-1/4 w-[3000px]' : 'w-full';
+  const mainContentClass = isChatbotOpen ? 'transform -translate-x-[780px] w-[3000px]' : 'w-full';
 
   return (
     <div className="min-h-screen flex flex-col">

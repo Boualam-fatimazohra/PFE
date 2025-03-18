@@ -7,7 +7,7 @@ import DashboardManager from "@/pages/DashboardManager";
 import { Routes, Route } from "react-router-dom";
 import NotFound from "../pages/NotFound";
 import { NotificationProvider } from "@/contexts/NotificationContext";
-
+import CreatEvent from "@/components/dashboardElement/CreatEvent";
 import { EvenementProvider } from "@/contexts/EvenementContext";
 
 const ManagerRoutes = () => {
@@ -22,6 +22,7 @@ const ManagerRoutes = () => {
           <Route path="/FormateurManager" element={<FormateurManager />} /> 
           <Route path="/BootcampsList" element={<BootcampsList />} />
           <Route path="/CalendrierManager" element={<CalendrierManager />} />
+          <Route path="/CreatEvent" element={<CreatEvent />} />
 
     </Routes>
     </EvenementProvider>
