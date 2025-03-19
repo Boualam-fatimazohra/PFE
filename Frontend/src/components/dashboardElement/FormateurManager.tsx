@@ -1,301 +1,169 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { DashboardHeader } from "@/components/layout/DashboardHeader";
-import { Footer } from "@/components/layout/Footer";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import * as React from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
-  Book, 
-  Briefcase, 
-  Award, 
-  Users, 
-  ClipboardList, 
-  Calendar, 
-  FileText, 
-  Folder, 
-  MapPin, 
-  Clock, 
-  FileCheck, 
-  BarChart2, 
-  ChevronDown 
-} from "lucide-react";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
 
-const FormateurManager = () => {
-  const [activeTab, setActiveTab] = useState('dashboard');
+export interface FormateurItem {
+  id: string;
+  nom: string;
+  role: string;
+  ville: string;
+  disponible: boolean;
+  enFormation: boolean;
+}
+
+interface FormateurListProps {
+  formateurs?: FormateurItem[];
+  onAccederClick?: (formateur: FormateurItem) => void;
+}
+
+export const FormateurList = ({
+  formateurs = [
+    { id: "1", nom: "Nom/Prénom", role: "Formateur", ville: "ODC Agadir", disponible: false, enFormation: true },
+    { id: "2", nom: "Nom/Prénom", role: "Formateur", ville: "ODC Rabat", disponible: true, enFormation: false },
+    { id: "3", nom: "Nom/Prénom", role: "Formateur", ville: "ODC Casablanca", disponible: false, enFormation: true },
+    { id: "4", nom: "Nom/Prénom", role: "Formateur", ville: "ODC Casablanca", disponible: false, enFormation: false },
+    { id: "5", nom: "Nom/Prénom", role: "Formateur", ville: "ODC Agadir", disponible: true, enFormation: false },
+    { id: "6", nom: "Nom/Prénom", role: "Formateur", ville: "ODC Rabat", disponible: true, enFormation: false },
+    { id: "7", nom: "Nom/Prénom", role: "Formateur", ville: "ODC Rabat", disponible: false, enFormation: false },
+    { id: "8", nom: "Nom/Prénom", role: "Formateur", ville: "ODC Rabat", disponible: false, enFormation: true },
+    { id: "9", nom: "Nom/Prénom", role: "Formateur", ville: "ODC Casablanca", disponible: true, enFormation: false },
+    { id: "10", nom: "Nom/Prénom", role: "Formateur", ville: "ODC Casablanca", disponible: true, enFormation: false },
+    { id: "11", nom: "Nom/Prénom", role: "Formateur", ville: "ODC Casablanca", disponible: true, enFormation: false },  ],
+  onAccederClick
+}: FormateurListProps) => {
+  const [activeFilter, setActiveFilter] = React.useState<string>("Tous");
+  const [activeVille, setActiveVille] = React.useState<string>("Tous");
   const navigate = useNavigate();
 
+  const filteredFormateurs = React.useMemo(() => {
+    let result = [...formateurs];
+    
+    // Filter by city if not "Tous"
+    if (activeVille !== "Tous") {
+      result = result.filter(f => f.ville.includes(activeVille));
+    }
+    
+    return result;
+  }, [formateurs, activeVille]);
+
   return (
-    <div className="min-h-screen flex flex-col">
-      <DashboardHeader />
-      
-      <main className="flex-grow bg-gray-50">
-        <div className="container mx-auto px-4 py-8">
-          {/* Header Section */}
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <h1 className="text-2xl font-bold">Espace Formateur</h1>
-              <p className="text-gray-500">Gestion et suivi des formations et événements</p>
-            </div>
+    <Card className="font-inter">
+      <CardHeader className="pb-2">
+        <CardTitle>Formateur École du code</CardTitle>
+      </CardHeader>  
+      <CardContent>
+        <div className="flex items-center gap-2 mb-4">
+          <Button 
+            variant={activeVille === "Tous" ? "default" : "outline"}
+            className={`rounded-[4px] ${activeVille === "Tous" ? "bg-orange-500 text-white hover:bg-orange-600" : "bg-gray-200 text-gray-700 hover:bg-gray-300 border-none"}`}
+            size="sm"
+            onClick={() => setActiveVille("Tous")}
+          >
+            Tous
+          </Button>
+          <Button 
+            variant={activeVille === "Rabat" ? "default" : "outline"}
+            className={`rounded-[4px] ${activeVille === "Rabat" ? "bg-orange-500 text-white hover:bg-orange-600" : "bg-gray-200 text-gray-700 hover:bg-gray-300 border-none"}`}
+            size="sm"
+            onClick={() => setActiveVille("Rabat")}
+          >
+            Rabat
+          </Button>
+          <Button 
+            variant={activeVille === "Agadir" ? "default" : "outline"}
+            className={`rounded-[4px] ${activeVille === "Agadir" ? "bg-orange-500 text-white hover:bg-orange-600" : "bg-gray-200 text-gray-700 hover:bg-gray-300 border-none"}`}
+            size="sm"
+            onClick={() => setActiveVille("Agadir")}
+          >
+            Agadir
+          </Button>
+          <Button 
+            variant={activeVille === "Casablanca" ? "default" : "outline"}
+            className={`rounded-[4px] ${activeVille === "Casablanca" ? "bg-orange-500 text-white hover:bg-orange-600" : "bg-gray-200 text-gray-700 hover:bg-gray-300 border-none"}`}
+            size="sm"
+            onClick={() => setActiveVille("Casablanca")}
+          >
+            Casablanca
+          </Button>
+          <div className="mr-auto">
+          <Button variant="ghost" className="text-[#333] flex items-center gap-2 font-bold rounded-[4px]">
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M0 3C0 2.44772 0.447715 2 1 2H19C19.5523 2 20 2.44772 20 3V5C20 5.26522 19.8946 5.51957 19.7071 5.70711L13 12.4142V19C13 19.5523 12.5523 20 12 20H8C7.44772 20 7 19.5523 7 19V12.4142L0.292893 5.70711C0.105357 5.51957 0 5.26522 0 5V3Z" fill="#000"/>
+              </svg>
+              Filtres
+            </Button>
           </div>
-
-          {/* Main Dashboard Tabs */}
-          <Tabs defaultValue="dashboard" className="mb-8">
-            <TabsList className="mb-6 bg-white p-1 w-full">
-              <TabsTrigger value="dashboard" className="flex items-center py-3">
-                <BarChart2 size={18} className="mr-2" />
-                Tableau de bord
-              </TabsTrigger>
-              <TabsTrigger value="formations" className="flex items-center py-3">
-                <Book size={18} className="mr-2" />
-                Formations
-              </TabsTrigger>
-              <TabsTrigger value="calendrier" className="flex items-center py-3">
-                <Calendar size={18} className="mr-2" />
-                Calendrier
-              </TabsTrigger>
-              <TabsTrigger value="documents" className="flex items-center py-3">
-                <FileText size={18} className="mr-2" />
-                Documents
-              </TabsTrigger>
-              <TabsTrigger value="catalogue" className="flex items-center py-3">
-                <Folder size={18} className="mr-2" />
-                Catalogue
-              </TabsTrigger>
-              <TabsTrigger value="evenements" className="flex items-center py-3">
-                <Calendar size={18} className="mr-2" />
-                Événements
-              </TabsTrigger>
-              <TabsTrigger value="espaces" className="flex items-center py-3">
-                <MapPin size={18} className="mr-2" />
-                Espaces
-              </TabsTrigger>
-              <TabsTrigger value="absences" className="flex items-center py-3">
-                <Clock size={18} className="mr-2" />
-                Absences
-              </TabsTrigger>
-              <TabsTrigger value="da" className="flex items-center py-3">
-                <FileCheck size={18} className="mr-2" />
-                Gestion des D.A.
-              </TabsTrigger>
-            </TabsList>
-
-            {/* Dashboard Tab Content */}
-            <TabsContent value="dashboard" className="border-none p-0">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                <Card className="col-span-1">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-md font-medium">Profil Formateur</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-col items-center">
-                      <Avatar className="h-24 w-24 mb-4">
-                        <AvatarImage src="/api/placeholder/400/400" alt="Formateur" />
-                        <AvatarFallback>FM</AvatarFallback>
-                      </Avatar>
-                      <h3 className="text-lg font-semibold">Mohammed Amiri</h3>
-                      <p className="text-sm text-gray-500">Formateur Senior - Digital Skills</p>
-                      <div className="mt-4 w-full">
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="text-sm">Évaluation globale</span>
-                          <span className="text-sm font-semibold">4.8/5</span>
-                        </div>
-                        <Progress value={96} className="h-2" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="col-span-1 lg:col-span-2">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-md font-medium">Statistiques globales</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                      <div className="bg-blue-50 p-4 rounded-lg">
-                        <div className="text-blue-500 mb-2">
-                          <Award size={20} />
-                        </div>
-                        <div className="text-2xl font-bold">18</div>
-                        <div className="text-sm text-gray-500">Formations assurées</div>
-                      </div>
-                      <div className="bg-green-50 p-4 rounded-lg">
-                        <div className="text-green-500 mb-2">
-                          <Users size={20} />
-                        </div>
-                        <div className="text-2xl font-bold">243</div>
-                        <div className="text-sm text-gray-500">Bénéficiaires formés</div>
-                      </div>
-                      <div className="bg-purple-50 p-4 rounded-lg">
-                        <div className="text-purple-500 mb-2">
-                          <Calendar size={20} />
-                        </div>
-                        <div className="text-2xl font-bold">54</div>
-                        <div className="text-sm text-gray-500">Jours de formation</div>
-                      </div>
-                      <div className="bg-amber-50 p-4 rounded-lg">
-                        <div className="text-amber-500 mb-2">
-                          <BarChart2 size={20} />
-                        </div>
-                        <div className="text-2xl font-bold">4.8</div>
-                        <div className="text-sm text-gray-500">Note moyenne</div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Formations et Bénéficiaires */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-md font-medium">Formations assurées</CardTitle>
-                    <Button variant="outline" size="sm">
-                      Voir tout <ChevronDown size={16} />
-                    </Button>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {[
-                        { name: "Développement Web Full-Stack", participants: 42, rating: 4.9 },
-                        { name: "Data Science et IA", participants: 38, rating: 4.7 },
-                        { name: "Marketing Digital", participants: 25, rating: 4.8 },
-                        { name: "Gestion de Projets Agiles", participants: 30, rating: 4.6 }
-                      ].map((formation, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <div>
-                            <h4 className="font-medium">{formation.name}</h4>
-                            <p className="text-sm text-gray-500">{formation.participants} participants</p>
-                          </div>
-                          <Badge variant="secondary">{formation.rating} ★</Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-md font-medium">Données d'intégration</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div>
-                        <div className="flex justify-between mb-1">
-                          <span className="text-sm font-medium">Femmes</span>
-                          <span className="text-sm font-medium">48%</span>
-                        </div>
-                        <Progress value={48} className="h-2" />
-                      </div>
-                      <div>
-                        <div className="flex justify-between mb-1">
-                          <span className="text-sm font-medium">18-25 ans</span>
-                          <span className="text-sm font-medium">35%</span>
-                        </div>
-                        <Progress value={35} className="h-2" />
-                      </div>
-                      <div>
-                        <div className="flex justify-between mb-1">
-                          <span className="text-sm font-medium">26-35 ans</span>
-                          <span className="text-sm font-medium">42%</span>
-                        </div>
-                        <Progress value={42} className="h-2" />
-                      </div>
-                      <div>
-                        <div className="flex justify-between mb-1">
-                          <span className="text-sm font-medium">36+ ans</span>
-                          <span className="text-sm font-medium">23%</span>
-                        </div>
-                        <Progress value={23} className="h-2" />
-                      </div>
-                      <div>
-                        <div className="flex justify-between mb-1">
-                          <span className="text-sm font-medium">En recherche d'emploi</span>
-                          <span className="text-sm font-medium">65%</span>
-                        </div>
-                        <Progress value={65} className="h-2" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Calendrier et évaluations */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-md font-medium">Prochaines formations</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {[
-                        { date: "10 Mars 2025", title: "Développement Web Full-Stack", duration: "5 jours" },
-                        { date: "18 Mars 2025", title: "Intelligence Artificielle pour débutants", duration: "3 jours" },
-                        { date: "25 Mars 2025", title: "Marketing Digital Avancé", duration: "2 jours" }
-                      ].map((event, index) => (
-                        <div key={index} className="flex items-center p-3 bg-gray-50 rounded-lg">
-                          <div className="bg-blue-100 text-blue-800 p-3 rounded-lg mr-4 text-center min-w-16">
-                            <div className="text-xs">{event.date.split(' ')[1]}</div>
-                            <div className="text-lg font-bold">{event.date.split(' ')[0]}</div>
-                          </div>
-                          <div>
-                            <h4 className="font-medium">{event.title}</h4>
-                            <p className="text-sm text-gray-500">{event.duration}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-md font-medium">Dernières évaluations</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {[
-                        { name: "Amal B.", formation: "Développement Web", comment: "Formation exceptionnelle, très pratique.", rating: 5 },
-                        { name: "Karim M.", formation: "Data Science", comment: "Contenu clair et bien structuré.", rating: 4 },
-                        { name: "Leila H.", formation: "Marketing Digital", comment: "Formateur pédagogue et à l'écoute.", rating: 5 }
-                      ].map((evaluation, index) => (
-                        <div key={index} className="p-3 bg-gray-50 rounded-lg">
-                          <div className="flex justify-between mb-1">
-                            <span className="font-medium">{evaluation.name}</span>
-                            <span className="text-amber-500">{Array(evaluation.rating).fill('★').join('')}</span>
-                          </div>
-                          <p className="text-sm text-gray-600 mb-1">{evaluation.formation}</p>
-                          <p className="text-sm italic">"{evaluation.comment}"</p>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-
-            {/* Other tabs content */}
-            <TabsContent value="formations" className="border-none p-0">
-              {/* Formations content */}
-            </TabsContent>
-            <TabsContent value="calendrier" className="border-none p-0">
-              {/* Calendrier content */}
-            </TabsContent>
-            <TabsContent value="documents" className="border-none p-0">
-              {/* Documents content */}
-            </TabsContent>
-            {/* Add other tabs content as needed */}
-          </Tabs>
+          <Button
+            className="bg-orange-500 hover:bg-orange-600 text-white rounded-[4px]"
+            onClick={() => navigate("/manager/GestionFormateurManager")}
+          >
+            Découvrir
+          </Button>
         </div>
-      </main>
-      
-      <Footer />
-    </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredFormateurs.map((formateur) => (
+            <div key={formateur.id} className="border border-gray-300 rounded-[4px] p-4 flex flex-col font-inter">
+              <div className="flex items-start mb-2">
+                <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mr-4">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                </div>
+                <div className="flex-grow">
+                  <div className="font-medium text-gray-900">{formateur.nom}</div>
+                  <div className="text-sm text-gray-500">{formateur.role} {formateur.ville}</div>
+                </div>
+                {formateur.enFormation && (
+                <span
+                  className="bg-orange-100 text-orange-400 px-3 py-1 rounded-full text-sm "
+                >
+                  En formation
+                </span>
+              )}
+
+              {!formateur.enFormation && formateur.disponible && (
+                <span
+                  className="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-sm "
+                >
+                  Disponible
+                </span>
+              )}
+
+                  {!formateur.enFormation && !formateur.disponible && (
+                    <span
+                    className="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-sm "
+                  >
+                    Disponible
+                  </span>
+                  
+                  )}
+              </div>
+              <div className="flex justify-between items-center">
+              <Button
+                variant="default"
+                size="sm"
+                className="bg-black text-white hover:bg-gray-900 rounded-[4px] px-4 py-0 text-sm font-medium transition duration-200"
+                onClick={() => onAccederClick && onAccederClick(formateur)}
+              >
+                Accéder
+              </Button>
+
+                <button className="p-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M0 0H16V16H0V0Z" stroke="#E5E7EB"/>
+                <path d="M2 3.5C1.725 3.5 1.5 3.725 1.5 4V4.69063L6.89062 9.11563C7.5375 9.64688 8.46562 9.64688 9.1125 9.11563L14.5 4.69063V4C14.5 3.725 14.275 3.5 14 3.5H2ZM1.5 6.63125V12C1.5 12.275 1.725 12.5 2 12.5H14C14.275 12.5 14.5 12.275 14.5 12V6.63125L10.0625 10.275C8.8625 11.2594 7.13438 11.2594 5.9375 10.275L1.5 6.63125ZM0 4C0 2.89688 0.896875 2 2 2H14C15.1031 2 16 2.89688 16 4V12C16 13.1031 15.1031 14 14 14H2C0.896875 14 0 13.1031 0 12V4Z" fill="black"/>
+                </svg>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
-export default FormateurManager;
+export default FormateurList;
