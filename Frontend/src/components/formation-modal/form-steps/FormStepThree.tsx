@@ -3,20 +3,25 @@ import * as React from "react";
 import { Download, ChevronLeft, ChevronRight } from "lucide-react";
 import ParticipantSearchBar from "../sections/ParticipantSearchBar";
 import ParticipantsTable from "../sections/ParticipantsTable";
-import { Participant } from "../types";
+import { BeneficiaireInscription} from "../types";
 
 interface FormStepThreeProps {
   searchQuery: string;
   setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
-  participants: Participant[];
+  participants: BeneficiaireInscription[];
   useIcon: boolean;
+  beneficiairePreferences: Record<string, { appel: boolean; email: boolean }>;
+  setBeneficiairePreferences: React.Dispatch<React.SetStateAction<Record<string, { appel: boolean; email: boolean }>>>;
 }
 
 const FormStepThree: React.FC<FormStepThreeProps> = ({
   searchQuery,
   setSearchQuery,
   participants,
-  useIcon
+  useIcon,
+  beneficiairePreferences,
+  setBeneficiairePreferences
+
 }) => {
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-8 w-full h-auto">
@@ -41,6 +46,9 @@ const FormStepThree: React.FC<FormStepThreeProps> = ({
         <ParticipantsTable 
           participants={participants}
           useIcon={useIcon}
+          beneficiairePreferences={beneficiairePreferences}
+          setBeneficiairePreferences={setBeneficiairePreferences}
+          
         />
 
         <div className="flex justify-center items-center gap-2 mt-4">

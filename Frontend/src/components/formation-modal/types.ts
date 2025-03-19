@@ -18,7 +18,6 @@ export interface FormationResponse {
   message: string;
   data: Formation;
 }
-
 export interface Beneficiaire {
   _id?: string;
   nom: string;
@@ -31,7 +30,34 @@ export interface Beneficiaire {
   profession: string;
   isBlack: boolean;
   isSaturate: boolean;
+  dateNaissance?: string;
+  telephone?: number;
+  niveau?: string;
+  situationProfessionnel?: string;
+  nationalite?: string;
+  region?: string;
+  categorieAge?: string;
 }
+export interface BeneficiaireInscription {
+  _id: string;
+  confirmationAppel: boolean;
+  confirmationEmail: boolean;
+  formation: string;
+  beneficiaire: Beneficiaire;
+}
+// export interface Beneficiaire {
+//   _id?: string;
+//   nom: string;
+//   prenom: string;
+//   email: string;
+//   genre: string;
+//   pays: string;
+//   specialite: string;
+//   etablissement: string;
+//   profession: string;
+//   isBlack: boolean;
+//   isSaturate: boolean;
+// }
 
 export interface Step {
   number: string;
@@ -75,8 +101,12 @@ export interface UploadedFile {
   data: string;
   fullLength?: number;
   type: 'image' | 'participant-list';
+  status?: 'pending' | 'uploading' | 'uploaded' | 'error';
+  uploadId?: string;
+  url?: string;
+  uploadDate?: string;
+  processed?: boolean; // New property with default value
 }
-
 export interface Message {
   sender: 'user' | 'bot';
   text: string;
