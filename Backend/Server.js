@@ -20,6 +20,8 @@ const bodyParser = require("body-parser");
 const http = require("http"); // Required for Socket.io
 const socketIo = require("socket.io"); // Socket.io library
 const chatbotRoutes = require("./Routes/chat.route.js");
+const beneficiaireFileRoutes = require('./Routes/beneficiaireFileUpload.route');
+
 
 dotenv.config();
 
@@ -271,6 +273,7 @@ app.use((err, req, res, next) => {
     console.error("Erreur serveur:", err);
     res.status(500).json({ error: "Une erreur est survenue sur le serveur", message: process.env.NODE_ENV === 'development' ? err.message : undefined });
 });
+app.use('/api/beneficiaire-files', beneficiaireFileRoutes);
 
 // Démarrage du serveur (using server instance instead of app for Socket.io)
 server.listen(PORT, () => {
