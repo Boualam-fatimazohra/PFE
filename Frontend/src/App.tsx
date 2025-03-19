@@ -21,6 +21,9 @@ import { AuthProvider } from "./contexts/AuthContext";
 import CalendrierManager from "./components/dashboardElement/CalendrierManager";
 import Ecolecode from "./components/dashboardElement/Ecolcode";
 import { ProtectedRoute, AccessDenied } from "./components/ProtectedRoute";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 
 const queryClient = new QueryClient();
 
@@ -41,6 +44,17 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
     <AuthProvider>
         <TooltipProvider>
           <BrowserRouter>
