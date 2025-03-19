@@ -248,11 +248,12 @@ if (!fs.existsSync(uploadsDir)){
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Configuration du stockage multer
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, "uploads/"),
-    filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
+const storage = multer.memoryStorage(); // Utilise memoryStorage au lieu de diskStorage
+
+const upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 200 * 1024 * 1024 } // Limite augmentée à 200MB
 });
-const upload = multer({ storage: storage });
 
 // Routes d'API
 app.use("/api/auth", Auth);

@@ -95,10 +95,7 @@ const App = () => (
                 } />
 
                 {/* Route spécifique aux managers */}
-                <Route element={<ProtectedRoute allowedRoles={["Manager"]} />}>
-                  <Route path="/CalendrierManager" element={<CalendrierManager />} />
-                  <Route path="/Ecolcode" element={<Ecolecode />} />
-                </Route>
+                
               </Routes>
             </Layout>
           </BrowserRouter>
