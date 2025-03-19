@@ -113,8 +113,8 @@ export function DashboardHeader() {
   } else if (user?.role === "Manager") {
     navigationLinks = [
       { name: "Dashboard", path: "/manager/dashboardManager" },
-      { name: "Ecole du code", path: "/Ecolcode" },
-      { name: "Fablab Solidaire", path: "/manager/FormateurManager" },
+      { name: "Ecole du code", path: "/manager/Ecolcode" },
+      { name: "Fablab Solidaire", path: "/manager/Fablab" },
       { name: "Orange Fab", path: "/page-link-3" },
       { name: "Coordination", path: "/page-link-3" },
       { name: "Événements", path: "/page-link-3" },

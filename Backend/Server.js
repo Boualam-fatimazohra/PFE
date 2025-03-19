@@ -10,7 +10,8 @@ const coordinateurRoutes = require("./Routes/coordinateur.route.js");
 const managerRoutes = require("./Routes/manager.route.js");
 const evaluationRoutes = require("./Routes/evaluation.route.js");
 const evenementRoutes = require("./Routes/evenement.route.js");
-const notificationRoutes = require("./Routes/notification.route.js"); // Added notification routes
+const notificationRoutes = require("./Routes/notification.route.js");
+const entityRoutes = require("./Routes/entity.route.js");
 const multer = require("multer");
 const fs = require("fs");
 const cookieParser = require("cookie-parser");
@@ -20,6 +21,8 @@ const bodyParser = require("body-parser");
 const http = require("http"); // Required for Socket.io
 const socketIo = require("socket.io"); // Socket.io library
 const chatbotRoutes = require("./Routes/chat.route.js");
+const beneficiaireFileRoutes = require('./Routes/beneficiaireFileUpload.route');
+
 
 dotenv.config();
 
@@ -32,11 +35,11 @@ const server = http.createServer(app);
 
 // Initialize Socket.io
 const io = socketIo(server, {
-    cors: {
-        origin: "http://localhost:8080",
-        methods: ["GET", "POST"],
-        credentials: true
-    }
+  cors: {
+    origin: "http://localhost:8080",
+    methods: ["GET", "POST"],
+    credentials: true
+  }
 });
 
 // Make io accessible to routes
@@ -248,11 +251,12 @@ if (!fs.existsSync(uploadsDir)){
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Configuration du stockage multer
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, "uploads/"),
-    filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
+const storage = multer.memoryStorage(); // Utilise memoryStorage au lieu de diskStorage
+
+const upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 200 * 1024 * 1024 } // Limite augmentée à 200MB
 });
-const upload = multer({ storage: storage });
 
 // Routes d'API
 app.use("/api/auth", Auth);
@@ -264,12 +268,14 @@ app.use("/api/formateur", formateurRoutes);
 app.use("/api/evaluation", evaluationRoutes);
 app.use("/api/evenement", evenementRoutes);
 app.use("/api/notifications", notificationRoutes); 
+app.use("/api/entity", entityRoutes); 
 app.use("/api", chatbotRoutes);
 // Middleware de gestion des erreurs
 app.use((err, req, res, next) => {
     console.error("Erreur serveur:", err);
     res.status(500).json({ error: "Une erreur est survenue sur le serveur", message: process.env.NODE_ENV === 'development' ? err.message : undefined });
 });
+app.use('/api/beneficiaire-files', beneficiaireFileRoutes);
 
 // Démarrage du serveur (using server instance instead of app for Socket.io)
 server.listen(PORT, () => {

@@ -40,15 +40,8 @@ if (!fs.existsSync(FOLDERSTOCKAGE)) {
 }
 
 // Configuration de multer pour le stockage des fichiers avec limite augmentée
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, FOLDERSTOCKAGE);
-    },
-    filename: function (req, file, cb) {
-        let name = generateRandomString(16) + path.extname(file.originalname);
-        cb(null, name);
-    }
-});
+const storage = multer.memoryStorage(); // Utilise memoryStorage au lieu de diskStorage
+
 const upload = multer({ 
     storage: storage,
     limits: { fileSize: 200 * 1024 * 1024 } // Limite augmentée à 200MB
@@ -371,22 +364,22 @@ const deepSeekChat = async (userId, message, fileContext = [], hideFromChat = fa
 const uploadCSV = async (req, res) => {
     if (!req.file) return res.status(400).json({ success: false, error: "Aucun fichier envoyé" });
 
-    const filePath = req.file.path;
+    const fileBuffer = req.file.buffer; // Accéder au buffer du fichier
     const fileExt = path.extname(req.file.originalname).toLowerCase();
     
-    console.log(`Fichier reçu: ${req.file.originalname} (${fileExt}), taille: ${req.file.size} octets`);
+    console.log(`Fichier reçu: ${req.file.originalname} (${fileExt}), taille: ${fileBuffer.length} octets`);
     
     try {
         let fileData = "";
         
         // Traitement spécifique selon le type de fichier
         if (fileExt === '.pdf') {
-            // Utiliser la fonction existante pour les PDF
-            const result = await fileUpload(filePath);
-            fileData = result.data;
+            // Utiliser pdf-parse pour extraire le texte du PDF
+            const data = await pdfParse(fileBuffer);
+            fileData = data.text;
         } else {
-            // Lecture directe pour les autres types de fichiers
-            fileData = await fs.promises.readFile(filePath, "utf8");
+            // Convertir le buffer en string pour les autres types de fichiers
+            fileData = fileBuffer.toString("utf8");
         }
         
         // Vérifier que les données sont valides
@@ -405,29 +398,14 @@ const uploadCSV = async (req, res) => {
               "\n[... Contenu tronqué pour l'affichage seulement - le fichier complet sera utilisé pour l'analyse ...]"
             : fileData;
         
-        // Stockage du fichier complet pour l'analyse future
-        const storeFileName = `${Date.now()}_${path.parse(req.file.originalname).name}_processed${path.extname(req.file.originalname)}`;
-        const storePath = path.join(FOLDERSTOCKAGE, storeFileName);
-        
-        // S'assurer que le dossier existe
-        await fs.promises.mkdir(path.dirname(storePath), { recursive: true });
-        
-        // Écrire le fichier complet
-        await fs.promises.writeFile(storePath, fileData);
-        
-        console.log(`Fichier complet sauvegardé pour analyse: ${storePath} (${fileData.length} caractères)`);
-        
-        // S'assurer que le chemin est absolu pour une utilisation future
-        const absoluteStorePath = path.resolve(storePath);
-        
+        // Retourner les données sans sauvegarder sur le disque
         res.json({ 
             success: true, 
             data: truncatedForDisplay, // Version tronquée pour l'affichage seulement
             name: req.file.originalname,
-            fullPath: absoluteStorePath, // Chemin absolu vers le fichier complet
+            fullData: fileData, // Données complètes pour l'analyse immédiate
             fullLength: fileData.length,
-            lineCount: lineCount,
-            fullData: fileData // Données complètes pour l'analyse immédiate
+            lineCount: lineCount
         });
     } catch (error) {
         console.error(`Erreur lors du traitement du fichier ${req.file.originalname}:`, error);
