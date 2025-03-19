@@ -5,10 +5,37 @@ import { deleteFormation as apiDeleteFormation, updateFormation as ipUpdateForma
 import {getNbrBeneficiairesParFormateur, getBeneficiaireFormation as fetchBeneficiaires ,  createFormationDraft as createFormationDraftService} from "../services/formationService";
 
 import { getAllFormationsManager as fetchAuthenticatedFormations } from "../services/formationService";
-import { Formation, Beneficiaire, FormationResponse } from '@/components/formation-modal/types';
+// import { Formation, Beneficiaire, FormationResponse } from '@/components/formation-modal/types';
+import { Formation,FormationResponse } from '@/components/formation-modal/types';
 
 
-
+interface Beneficiaire {
+  _id?: string;
+  nom: string;
+  prenom: string;
+  email: string;
+  genre: string;
+  pays: string;
+  specialite: string;
+  etablissement: string;
+  profession: string;
+  isBlack: boolean;
+  isSaturate: boolean;
+  dateNaissance?: string;
+  telephone?: number;
+  niveau?: string;
+  situationProfessionnel?: string;
+  nationalite?: string;
+  region?: string;
+  categorieAge?: string;
+}
+interface BeneficiaireInscription {
+  _id: string;
+  confirmationAppel: boolean;
+  confirmationEmail: boolean;
+  formation: string;
+  beneficiaire: Beneficiaire;
+}
 interface FormationContextType {
   formations: Formation[];
   filteredFormations: Formation[];
@@ -20,7 +47,7 @@ interface FormationContextType {
   refreshFormations: () => Promise<void>;
   searchFormations: (query: string) => void;
   nombreBeneficiaires: number | null; 
-  getBeneficiaireFormation: (formationId: string) => Promise<Beneficiaire[]>;
+  getBeneficiaireFormation: (formationId: string) => Promise<BeneficiaireInscription[]>;
   createFormationDraft: (formationData: Formation) => Promise<FormationResponse>;
   sendEvaluationFormation: (beneficiaryIds: string[], formationId: string) => Promise<any>;
   getAllFormationsManager: () => Promise<Formation[]>;
