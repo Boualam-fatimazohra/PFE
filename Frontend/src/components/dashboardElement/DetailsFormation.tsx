@@ -68,7 +68,7 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
         firstName: entry.beneficiaire.prenom,
         email: entry.beneficiaire.email,
         gender: entry.beneficiaire.genre,
-        phone: entry.beneficiaire.telephone?.toString() || "",
+        situationProfessionnel: entry.beneficiaire.situationProfessionnel,
         status: entry.confirmationEmail ? "present" as "present" : "absent" as "absent", // Cast explicite
       }));
       
@@ -161,10 +161,10 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
           <StatsSection metrics={statsMetrics} />
         </div>
         {isLoading ? (
-  <div className="flex justify-center py-8">
-    <RefreshCw size={24} className="animate-spin" />
-    <span className="ml-2">Chargement des données...</span>
-  </div>
+        <div className="flex justify-center py-8">
+          <RefreshCw size={24} className="animate-spin" />
+          <span className="ml-2">Chargement des données...</span>
+        </div>
 ) : (
   <>
     {/* Your regular content */}
@@ -173,21 +173,8 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
       currentPage={participantsPage}
       itemsPerPage={PARTICIPANTS_PER_PAGE}
     />
-    
-    {/* Pagination */}
-    {totalParticipantsPages > 1 && (
-      <CustomPagination
-        currentPage={participantsPage}
-        totalPages={totalParticipantsPages}
-        onPageChange={setParticipantsPage}
-      />
-    )}
   </>
 )}
-
-        {/* Participants Section avec pagination externe */}
-      
-
         {/* Utilisation de CustomPagination pour naviguer entre les pages de participants */}
         {totalParticipantsPages > 1 && (
           <CustomPagination
