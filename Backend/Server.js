@@ -11,7 +11,9 @@ const managerRoutes = require("./Routes/manager.route.js");
 const evaluationRoutes = require("./Routes/evaluation.route.js");
 const evenementRoutes = require("./Routes/evenement.route.js");
 const notificationRoutes = require("./Routes/notification.route.js");
-//const entityRoutes = require("./Routes/entity.route.js");
+const entityRoutes = require("./Routes/entity.route.js");
+const edcRoutes = require("./Routes/edc.routes.js");
+
 const multer = require("multer");
 const fs = require("fs");
 const cookieParser = require("cookie-parser");
@@ -268,7 +270,8 @@ app.use("/api/formateur", formateurRoutes);
 app.use("/api/evaluation", evaluationRoutes);
 app.use("/api/evenement", evenementRoutes);
 app.use("/api/notifications", notificationRoutes); 
-//app.use("/api/entity", entityRoutes); 
+app.use("/api/entity", entityRoutes); 
+app.use("/api/edc",edcRoutes);
 app.use("/api", chatbotRoutes);
 // Middleware de gestion des erreurs
 app.use((err, req, res, next) => {
