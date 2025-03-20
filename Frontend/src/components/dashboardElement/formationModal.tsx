@@ -294,6 +294,8 @@ const FormationModal: React.FC = () => {
   };
 
   // Navigation handlers
+// Dans FormationModal.tsx, modifiez la fonction handleNext pour mettre à jour les données des bénéficiaires après le traitement des fichiers:
+
 const handleNext = async () => {
   if (validateForm()) {
     if (currentStep === 1) {
@@ -301,7 +303,7 @@ const handleNext = async () => {
       await handleSubmitFormation();
     } else if (currentStep === 2) {
       // Process beneficiaires at step 2
-      if (!formationId) { // Fixed condition - check if formationId does NOT exist
+      if (!formationId) {
         // Formation ID is needed for beneficiaire upload
         setErrors(prevErrors => ({
           ...prevErrors,
@@ -364,40 +366,70 @@ const handleNext = async () => {
             }
           }
           
-          // Update processing results
-          /*setProcessingResults({
-            success: !hasError,
-            message: hasError 
-              ? "Des erreurs sont survenues lors du traitement des fichiers" 
-              : "Traitement des fichiers terminé avec succès",
-            results: results
-          });*/
           console.log("OOOOW Uploaded Successfuly");
+          
+          // Fetch updated beneficiaires before moving to the next step
+          if (!hasError && formationId) {
+            try {
+              const data = await getBeneficiaireFormation(formationId);
+              const formattedData = Array.isArray(data) ? data : [data];
+              setInscriptions(formattedData);
+              
+              // Initialize preferences with the updated data
+              const initialPreferences = formattedData.reduce((acc, benef) => {
+                acc[benef._id] = { 
+                  appel: benef.confirmationAppel || false, 
+                  email: benef.confirmationEmail || false 
+                };
+                return acc;
+              }, {} as Record<string, { appel: boolean; email: boolean }>);
+              
+              setBeneficiairePreferences(initialPreferences);
+            } catch (err) {
+              console.error("Erreur lors de la récupération des données mises à jour:", err);
+            }
+          }
+          
           // If successful, move to next step
           if (!hasError) {
             setCurrentStep(currentStep + 1);
           }
         } catch (error) {
           console.error("Error processing beneficiaire files:", error);
-          /*setProcessingResults({
-            success: false,
-            message: `Erreur de traitement: ${error.message || "Une erreur inattendue est survenue"}`,
-            results: []
-          });*/
         } finally {
           setIsSubmitting(false);
         }
       } else {
-        // No files to process, proceed to next step
+        // No files to process, refresh the beneficiaires data anyway before proceeding
+        if (formationId) {
+          try {
+            const data = await getBeneficiaireFormation(formationId);
+            const formattedData = Array.isArray(data) ? data : [data];
+            setInscriptions(formattedData);
+            
+            // Initialize preferences
+            const initialPreferences = formattedData.reduce((acc, benef) => {
+              acc[benef._id] = { 
+                appel: benef.confirmationAppel || false, 
+                email: benef.confirmationEmail || false 
+              };
+              return acc;
+            }, {} as Record<string, { appel: boolean; email: boolean }>);
+            
+            setBeneficiairePreferences(initialPreferences);
+          } catch (err) {
+            console.error("Erreur lors de la récupération des données:", err);
+          }
+        }
+        
+        // Proceed to next step
         setCurrentStep(currentStep + 1);
       }
     } else if (currentStep === 3) {
       await handleUpdateConfirmations(); 
       alert("changement des confirmation effecuter");
       setCurrentStep(currentStep + 1);
-      // Appel à la fonction avec gestion d'erreur
-    } 
-     else if (currentStep < steps.length) {
+    } else if (currentStep < steps.length) {
       // For other steps, just proceed to next step
       setCurrentStep(currentStep + 1);
     }

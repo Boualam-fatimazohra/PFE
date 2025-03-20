@@ -572,7 +572,7 @@ const Chatbot = () => {
               <p className="text-xl font-semibold">{processingResults.totalBeneficiaries}</p>
             </div>
             <div className="text-center">
-              <p className="text-sm text-gray-500">Numéros éligibles</p>
+              <p className="text-sm text-gray-500">Total confirmée</p>
               <p className="text-xl font-semibold">{processingResults.eligiblePhoneNumbers}</p>
             </div>
             <div className="text-center">
