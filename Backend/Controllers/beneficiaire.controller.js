@@ -2,6 +2,8 @@ const Beneficiaire = require("../Models/beneficiaire.model");
 const Formation = require("../Models/formation.model");
 const readExcelFile = require("../utils/excelReader");
 const XLSX = require("xlsx");
+const path = require("path");
+const fs = require("fs");
 const  BeneficiareFormation=require("../Models/beneficiairesFormation.js");
 const mongoose = require('mongoose');
 const Formateur=require("../Models/formateur.model");
@@ -623,6 +625,147 @@ const updateBeneficiaireConfirmations = async (req, res) => {
 };
 // fin:end point de qui sera appeler dans l'etape 3 dans le stepers pour enregister les confirmations
 
+const exportBeneficiairesToExcel = async (req, res) => {
+  try {
+    const { formationId } = req.params;
+    
+    // Validation de l'ID
+    if (!formationId || !mongoose.Types.ObjectId.isValid(formationId)) {
+      return res.status(400).json({
+        success: false,
+        message: "ID de formation invalide"
+      });
+    }
+
+    // Vérification de l'existence de la formation
+    const formation = await Formation.findById(formationId);
+    if (!formation) {
+      return res.status(404).json({
+        success: false,
+        message: "Formation introuvable"
+      });
+    }
+
+    // Récupération des relations formation-bénéficiaires
+    const beneficiaireRelations = await BeneficiareFormation.find({ 
+      formation: formationId 
+    }).populate('beneficiaire');
+
+    if (beneficiaireRelations.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Aucun bénéficiaire trouvé pour cette formation"
+      });
+    }
+
+    // Préparation des données pour Excel
+    const workbook = XLSX.utils.book_new();
+    
+    // Données formatées pour la feuille Excel
+    const excelData = beneficiaireRelations.map(relation => {
+      const b = relation.beneficiaire;
+      if (!b) return null; // Skip if beneficiaire is null (shouldn't happen with proper DB integrity)
+      
+      return {
+        'Nom': b.nom || '',
+        'Prénom': b.prenom || '',
+        'Email': b.email || '',
+        'Téléphone': b.telephone || '',
+        'Genre': b.genre || '',
+        'Pays': b.pays || '',
+        'Région': b.region || '',
+        'Date de naissance': b.dateNaissance ? new Date(b.dateNaissance).toLocaleDateString('fr-FR') : '',
+        'Catégorie d\'âge': b.categorieAge || '',
+        'Situation professionnelle': b.situationProfessionnel || '',
+        'Niveau d\'études': b.niveau || '',
+        'Spécialité': b.specialite || '',
+        'Établissement': b.etablissement || '',
+        'Confirmation appel': relation.confirmationAppel ? 'Oui' : 'Non',
+        'Confirmation email': relation.confirmationEmail ? 'Oui' : 'Non',
+        'Évaluation soumise': relation.isSubmited ? 'Oui' : 'Non',
+        'Date d\'inscription': relation.horodateur ? new Date(relation.horodateur).toLocaleString('fr-FR') : '',
+        'Liste noire': b.isBlack ? 'Oui' : 'Non',
+        'Saturé': b.isSaturate ? 'Oui' : 'Non'
+      };
+    }).filter(item => item !== null); // Remove null entries
+    
+    // Création de la feuille de calcul
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    
+    // Configuration des largeurs de colonnes
+    const colWidths = [
+      { wch: 15 }, // Nom
+      { wch: 15 }, // Prénom
+      { wch: 30 }, // Email
+      { wch: 15 }, // Téléphone
+      { wch: 10 }, // Genre
+      { wch: 15 }, // Pays
+      { wch: 15 }, // Région
+      { wch: 15 }, // Date de naissance
+      { wch: 15 }, // Catégorie d'âge
+      { wch: 25 }, // Situation professionnelle
+      { wch: 15 }, // Niveau d'études
+      { wch: 20 }, // Spécialité
+      { wch: 20 }, // Établissement
+      { wch: 15 }, // Confirmation appel
+      { wch: 15 }, // Confirmation email
+      { wch: 15 }, // Évaluation soumise
+      { wch: 20 }, // Date d'inscription
+      { wch: 10 }, // Liste noire
+      { wch: 10 }  // Saturé
+    ];
+    worksheet['!cols'] = colWidths;
+    
+    // Sécurisation du nom de la formation pour le nom de fichier
+    const sanitizedFormationName = formation.nom
+      .replace(/[^a-z0-9]/gi, '_')
+      .toLowerCase()
+      .substring(0, 30); // Limiter la longueur
+    
+    // Ajout de la feuille au classeur
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Beneficiaires");
+    
+    // Création du répertoire temporaire s'il n'existe pas
+    const uploadsDir = path.join(__dirname, "..", "uploads", "temp");
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+    
+    // Génération du nom de fichier avec horodatage
+    const timestamp = Date.now();
+    const fileName = `beneficiaires_${sanitizedFormationName}_${timestamp}.xlsx`;
+    const filePath = path.join(uploadsDir, fileName);
+    
+    // Écriture du fichier
+    XLSX.writeFile(workbook, filePath);
+    
+    // Configuration des en-têtes pour le téléchargement
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+    
+    // Envoi du fichier au client
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
+    
+    // Suppression du fichier après envoi
+    fileStream.on('end', () => {
+      fs.unlinkSync(filePath);
+    });
+    
+    // Journalisation de l'activité
+    console.log(`[${new Date().toISOString()}] Export de ${excelData.length} bénéficiaires pour la formation ${formation.nom} (ID: ${formationId})`);
+    
+  } catch (error) {
+    console.error(`[${new Date().toISOString()}] Erreur lors de l'export des bénéficiaires:`, error);
+    
+    return res.status(500).json({
+      success: false,
+      message: "Erreur lors de l'export des bénéficiaires",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
 // Export the functions for use in routes
 module.exports = {
     getAllBeneficiaires,
@@ -633,5 +776,6 @@ module.exports = {
     createBeneficiaire,
     getBeneficiaireFormation,
     getNombreBeneficiairesParFormateur,
-    updateBeneficiaireConfirmations
+    updateBeneficiaireConfirmations,
+    exportBeneficiairesToExcel
 };

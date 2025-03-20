@@ -7,6 +7,7 @@ import ProcessingResultsDisplay from "../sections/ProcessingResultsDisplay";
 import { ProcessingResults, Message, UploadedFile } from "../types";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"; // Import Alert components if available
 import { getFormationFiles, uploadBeneficiaireFile } from '@/services/beneficiaireFileUploadService';
+import EnhanceListButton from '@/components/dashboardElement/EnhanceListButton';
 
 interface FormStepTwoProps {
   fileList: File[];
@@ -216,16 +217,12 @@ const FormStepTwo: React.FC<FormStepTwoProps> = ({
             Listes des Participants
             {formationId && <span className="text-sm text-gray-500 ml-2">(Formation ID: {formationId})</span>}
           </h2>
-          <button 
-            className={`${
-              fileList.length > 0 
-                ? "bg-purple-600 hover:bg-purple-700" 
-                : "bg-gray-400 cursor-not-allowed"
-            } text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors duration-200`}
-            disabled={fileList.length === 0}
-          >
-            Enhance List
-          </button>
+          <EnhanceListButton 
+          fileList={uploadedFiles}
+          setMessages={setMessages}
+          setProcessingResults={setProcessingResults}
+          setLoading={setLoading}
+        />
         </div>
 
         {fileError && (

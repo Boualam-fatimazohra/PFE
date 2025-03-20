@@ -28,19 +28,19 @@ const ProcessingResultsDisplay: React.FC<ProcessingResultsDisplayProps> = ({
   return (
     <div className="w-full border border-purple-300 rounded-lg p-4">
       <h3 className="text-lg font-medium mb-4">Résultat AI</h3>
-      <div className="grid grid-cols-5 gap-4">
-        {[
-          { label: "Numéros éligibles", value: processingResults.eligiblePhoneNumbers },
-          { label: "Total des inscrits", value: processingResults.totalContacts },
-          { label: "Total bénéficiaires", value: processingResults.totalBeneficiaries },
-          { label: "Total inscription", value: processingResults.totalBeneficiaries },
-        ].map((item, index) => (
-          <div key={index} className="bg-white shadow-md border rounded-lg p-4 text-center">
-            <p className="text-gray-500 text-sm">{item.label}</p>
-            <p className="text-lg font-semibold">{item.value}</p>
-          </div>
-        ))}
-      </div>
+      <div className="grid grid-cols-3 gap-4">
+  {[
+    { label: "Total Confirmée", value: processingResults.eligiblePhoneNumbers },
+    { label: "Total Etudiant", value: processingResults.totalContacts },
+    { label: "Total Bénéficiaires", value: processingResults.totalBeneficiaries },
+  ].map((item, index) => (
+    <div key={index} className="bg-white shadow-md border rounded-lg p-6 text-center col-span-1 w-full">
+      <p className="text-gray-500 text-sm">{item.label}</p>
+      <p className="text-lg font-semibold">{item.value}</p>
+    </div>
+  ))}
+</div>
+
     </div>
   );
 };
