@@ -20,7 +20,7 @@ export interface Participant {
   firstName: string;
   email: string;
   gender: string;
-  phone: string;
+  situationProfessionnel : string;
   status: "present" | "absent";
 }
 

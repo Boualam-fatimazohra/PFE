@@ -10,7 +10,7 @@ interface Participant {
   firstName: string;
   email: string;
   gender: string;
-  phone: string;
+  situationProfessionnel: string;
   status: string;
 }
 
@@ -117,7 +117,7 @@ const ParticipantsSection: React.FC<ParticipantsSectionProps> = ({
             <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Prénom</th>
             <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Email</th>
             <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Genre</th>
-            <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Téléphone</th>
+            <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Situation Profetionnelle</th>
             <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Status</th>
             <th className="p-3 font-bold"></th>
           </tr>
@@ -137,7 +137,7 @@ const ParticipantsSection: React.FC<ParticipantsSectionProps> = ({
               <td className="p-3 text-[#333] text-sm">{participant.firstName}</td>
               <td className="p-3 text-[#333] text-sm">{participant.email}</td>
               <td className="p-3 text-[#333] text-sm">{participant.gender}</td>
-              <td className="p-3 text-[#333] text-sm">{participant.phone}</td>
+              <td className="p-3 text-[#333] text-sm">{participant.situationProfessionnel}</td>
               <td className="p-3 text-sm">
                 <span className={cn(
                   "font-medium",
