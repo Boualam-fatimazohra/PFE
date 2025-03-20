@@ -16,7 +16,8 @@ const {
   getFormationStep, 
   updateFormationStep ,
   createFormationDraft,
-  getAllFormationsWithDraftStatus
+  getAllFormationsWithDraftStatus,
+  validerFormation
 } = require('../Controllers/formationDraft.controller'); // Ajustez le chemin selon votre structure
 
 const router = express.Router();
@@ -87,4 +88,6 @@ router.get('/formation-draft/:formationId', authenticated, getFormationStep);
 
 // Route pour incrémenter le currentStep d'une FormationDraft
 router.put('/formation-draft/:formationId', authenticated, updateFormationStep);
+router.put('/valider-foramtion/:formationId', authenticated, validerFormation);
+
 module.exports = router;
