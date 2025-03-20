@@ -12,29 +12,36 @@ const EDC = require('../Models/edc.model');
  * @param {string} edcId - The ID of the EDC entity
  * @returns {Array} - Array of formateur objects with populated fields
  */
-const getAllFormateursEdc = async (edcId) => {
+const getAllFormateursEdc = async (edcIds) => {
   try {
-    // Find the EDC
-    const edc = await EDC.findById(edcId).populate('entity');
-    if (!edc) {
-      throw new Error('EDC not found');
+    // Vérifier si edcIds est un tableau non vide
+    if (!edcIds || !Array.isArray(edcIds) || edcIds.length === 0) {
+        throw new Error('La liste des EDC IDs est requise');
     }
 
-    // Find all users associated with this EDC entity
-    const utilisateurEntities = await UtilisateurEntity.find({ id_entity: edc.entity._id });
-    
-    // Extract user IDs
+    // Trouver tous les EDCs correspondants
+    const edcs = await EDC.find({ _id: { $in: edcIds } }).populate('entity');
+    if (!edcs || edcs.length === 0) {
+        throw new Error('Aucun EDC trouvé');
+    }
+
+    // Extraire les IDs des entités associées aux EDCs
+    const entityIds = edcs.map(edc => edc.entity._id);
+
+    // Trouver toutes les associations UtilisateurEntity pour ces entités
+    const utilisateurEntities = await UtilisateurEntity.find({ id_entity: { $in: entityIds } });
+
+    // Extraire les IDs des utilisateurs
     const userIds = utilisateurEntities.map(ue => ue.id_utilisateur);
-    
-    // Find all formateurs whose utilisateur is in the list of user IDs
+
+    // Trouver tous les formateurs associés à ces utilisateurs
     const formateurs = await Formateur.find({ utilisateur: { $in: userIds } })
-      .populate('utilisateur', 'nom prenom email numeroTelephone role')
-      .populate('manager')
-      .populate('coordinateur');
-    
+        .populate('utilisateur', 'nom prenom email numeroTelephone role')
+        .populate('manager');
+
     return formateurs;
   } catch (error) {
-    throw new Error(`Error fetching formateurs: ${error.message}`);
+    throw new Error(`Erreur lors de la récupération des formateurs: ${error.message}`);
   }
 };
 
@@ -45,19 +52,19 @@ const getAllFormateursEdc = async (edcId) => {
  */
 const getAllFormationsEdc = async (formateurs) => {
   try {
-    // Extract formateur IDs
+    // Extraire les IDs des formateurs
     const formateurIds = formateurs.map(formateur => formateur._id);
-    
-    // Find all formations created by these formateurs
+
+    // Trouver toutes les formations créées par ces formateurs
     const formations = await Formation.find({ formateur: { $in: formateurIds } })
       .populate({ 
         path: 'formateur', 
         populate: { path: 'utilisateur' } 
       });
-    
+
     return formations;
   } catch (error) {
-    throw new Error(`Error fetching formations: ${error.message}`);
+    throw new Error(`Erreur lors de la récupération des formations: ${error.message}`);
   }
 };
 
@@ -68,33 +75,33 @@ const getAllFormationsEdc = async (formateurs) => {
  */
 const getAllBeneficiairesFormationsEdc = async (formations) => {
   try {
-    // Extract formation IDs
+    // Extraire les IDs des formations
     const formationIds = formations.map(formation => formation._id);
-    
-    // Find all beneficiaire-formation relations for these formations
+
+    // Trouver toutes les relations bénéficiaire-formation pour ces formations
     const beneficiaireFormations = await BeneficiareFormation.find({ formation: { $in: formationIds } });
-    
-    // Extract beneficiary IDs
+
+    // Extraire les IDs des bénéficiaires
     const beneficiaireIds = beneficiaireFormations.map(bf => bf.beneficiaire);
-    
-    // Find all beneficiaries
+
+    // Trouver tous les bénéficiaires
     const beneficiaires = await Beneficiaire.find({ _id: { $in: beneficiaireIds } });
-    
-    // Add formation information to each beneficiary
+
+    // Ajouter les informations de formation à chaque bénéficiaire
     const beneficiairesWithFormation = await Promise.all(
       beneficiaires.map(async (beneficiaire) => {
         const beneficiaireFormation = beneficiaireFormations.find(
           bf => bf.beneficiaire.toString() === beneficiaire._id.toString()
         );
-        
+
         if (!beneficiaireFormation) return beneficiaire._doc;
-        
+
         const formation = formations.find(
           f => f._id.toString() === beneficiaireFormation.formation.toString()
         );
-        
+
         if (!formation) return beneficiaire._doc;
-        
+
         return {
           ...beneficiaire._doc,
           formationDetails: {
@@ -109,10 +116,10 @@ const getAllBeneficiairesFormationsEdc = async (formations) => {
         };
       })
     );
-    
+
     return beneficiairesWithFormation;
   } catch (error) {
-    throw new Error(`Error fetching beneficiaires: ${error.message}`);
+    throw new Error(`Erreur lors de la récupération des bénéficiaires: ${error.message}`);
   }
 };
 

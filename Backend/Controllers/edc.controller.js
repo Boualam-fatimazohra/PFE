@@ -1,6 +1,11 @@
 const EDC = require('../Models/edc.model');
 const { Entity } = require('../Models/entity.model');
 const mongoose = require('mongoose');
+const { 
+    getAllFormateursEdc, 
+    getAllFormationsEdc, 
+    getAllBeneficiairesFormationsEdc 
+} = require('../utils/edcUtils');
 
 // Create a new EDC entity
 const createEDC = async (req, res) => {
@@ -161,9 +166,141 @@ const deleteEDC = async (req, res) => {
   }
 };
 
+const getFormateursEdc = async (req, res) => {
+  try {
+      // Récupérer les edcIds depuis les paramètres d'URL
+      const { edcIds } = req.params;
+
+      // Vérifier si edcIds est présent
+      if (!edcIds) {
+          return res.status(400).json({
+              success: false,
+              message: "La liste des EDC IDs est requise"
+          });
+      }
+
+      // Convertir la chaîne de caractères en tableau
+      const edcIdArray = edcIds.split(',');
+
+      // Vérifier si edcIdArray est un tableau non vide
+      if (!Array.isArray(edcIdArray) || edcIdArray.length === 0) {
+          return res.status(400).json({
+              success: false,
+              message: "La liste des EDC IDs est invalide"
+          });
+      }
+
+      // Récupérer les formateurs pour chaque EDC
+      const formateurs = await getAllFormateursEdc(edcIdArray);
+
+      res.status(200).json({
+          success: true,
+          count: formateurs.length,
+          data: formateurs
+      });
+  } catch (error) {
+      res.status(500).json({
+          success: false,
+          message: error.message
+      });
+  }
+};
+
+const getFormationsEdc = async (req, res) => {
+  try {
+      // Récupérer les edcIds depuis les paramètres d'URL
+      const { edcIds } = req.params;
+
+      // Vérifier si edcIds est présent
+      if (!edcIds) {
+          return res.status(400).json({
+              success: false,
+              message: "La liste des EDC IDs est requise"
+          });
+      }
+
+      // Convertir la chaîne de caractères en tableau
+      const edcIdArray = edcIds.split(',');
+
+      // Vérifier si edcIdArray est un tableau non vide
+      if (!Array.isArray(edcIdArray) || edcIdArray.length === 0) {
+          return res.status(400).json({
+              success: false,
+              message: "La liste des EDC IDs est invalide"
+          });
+      }
+
+      // Récupérer les formateurs pour chaque EDC
+      const formateurs = await getAllFormateursEdc(edcIdArray);
+
+      // Récupérer les formations pour ces formateurs
+      const formations = await getAllFormationsEdc(formateurs);
+
+      res.status(200).json({
+          success: true,
+          count: formations.length,
+          data: formations
+      });
+  } catch (error) {
+      res.status(500).json({
+          success: false,
+          message: error.message
+      });
+  }
+};
+
+const getBeneficiairesEdc = async (req, res) => {
+  try {
+      // Récupérer les edcIds depuis les paramètres d'URL
+      const { edcIds } = req.params;
+
+      // Vérifier si edcIds est présent
+      if (!edcIds) {
+          return res.status(400).json({
+              success: false,
+              message: "La liste des EDC IDs est requise"
+          });
+      }
+
+      // Convertir la chaîne de caractères en tableau
+      const edcIdArray = edcIds.split(',');
+
+      // Vérifier si edcIdArray est un tableau non vide
+      if (!Array.isArray(edcIdArray) || edcIdArray.length === 0) {
+          return res.status(400).json({
+              success: false,
+              message: "La liste des EDC IDs est invalide"
+          });
+      }
+
+      // Récupérer les formateurs pour chaque EDC
+      const formateurs = await getAllFormateursEdc(edcIdArray);
+
+      // Récupérer les formations pour ces formateurs
+      const formations = await getAllFormationsEdc(formateurs);
+
+      // Récupérer les bénéficiaires pour ces formations
+      const beneficiaires = await getAllBeneficiairesFormationsEdc(formations);
+
+      res.status(200).json({
+          success: true,
+          count: beneficiaires.length,
+          data: beneficiaires
+      });
+  } catch (error) {
+      res.status(500).json({
+          success: false,
+          message: error.message
+      });
+  }
+};
+
 module.exports = {
   createEDC,
   getAllEDCs,
   getEDCById,
-  deleteEDC
+  deleteEDC,
+  getFormateursEdc,
+  getFormationsEdc,
+  getBeneficiairesEdc
 };

@@ -13,6 +13,34 @@ interface BeneficiaireExcelUploadResponse {
  * @param idFormation - The ID of the formation to associate beneficiaries with
  * @returns Response data containing upload results
  */
+// la fct pour telecharger la liste des bénéficiaire sous forme excel
+export const exportBeneficiairesToExcel = async (formationId: string): Promise<ExportResponse> => {
+  try {
+    const response = await apiClient.get(`/beneficiaires/export/${formationId}`, {
+      responseType: 'blob', // Important pour la réception des fichiers binaires
+    });
+
+    // Extraction du nom de fichier depuis les headers
+    const contentDisposition = response.headers['content-disposition'];
+    const filenameMatch = contentDisposition?.match(/filename="?(.+)"?/);
+    const filename = filenameMatch ? filenameMatch[1] : `beneficiaires_${formationId}.xlsx`;
+
+    return {
+      blob: new Blob([response.data], { type: response.headers['content-type'] }),
+      filename
+    };
+  } catch (error) {
+    // Gestion des erreurs JSON du serveur
+    if (error.response?.data instanceof Blob) {
+      const errorText = await new Response(error.response.data).text();
+      const errorData = JSON.parse(errorText);
+      throw new Error(errorData.message || 'Erreur lors de l\'export');
+    }
+
+    console.error('Erreur d\'export des bénéficiaires:', error);
+    throw new Error('Erreur lors du téléchargement du fichier');
+  }
+};
 export const uploadBeneficiairesFromExcel = async (
   file: File, 
   idFormation: string
