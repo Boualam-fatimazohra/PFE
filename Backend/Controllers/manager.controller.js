@@ -3,24 +3,41 @@ const bcrypt = require('bcryptjs');
 const { Utilisateur } = require("../Models/utilisateur.model");
 const generateRandomPassword = require("../utils/generateRandomPassword.js");
 const {getEvenementByMonth} =require("../Controllers/evenement.controller.js")
+const { Entity } = require('../Models/entity.model.js'); 
+const {UtilisateurEntity} = require('../Models/utilisateurEntity.js'); 
+
+
 // Create a new Manager
 const createManager = async (req, res) => {
     try {
-        const { nom,prenom, email, numeroTelephone ,password} = req.body;
-        if (!email ) {
-            return res.status(400).json({ message: "Email, password" });
+        const { nom, prenom, email, numeroTelephone, password, entityId } = req.body;
+
+        // Validation des données requises
+        if (!email || !password) {
+            return res.status(400).json({ message: "Email et password sont requis" });
         }
-        /*if (role !== "Manager") {
-            return res.status(400).json({ message: "Role must be 'Manager'" });
-        }*/
+
+        // Vérification si entityId est présent et est un tableau non vide
+        if (!entityId || !Array.isArray(entityId) || entityId.length === 0) {
+            return res.status(400).json({ message: "Au moins un ID d'entité est requis" });
+        }
+
+        // Vérification si l'utilisateur existe déjà
         const existingUser = await Utilisateur.findOne({ email });
         if (existingUser) {
-            return res.status(400).json({ message: "Utilisateur with this email already exists" });
+            return res.status(400).json({ message: "Utilisateur avec cet email existe déjà" });
         }
-        // const temporaryPassword = generateRandomPassword();
-        const hashedPassword = await bcrypt.hash(password, 10);
-        /* await sendMail(email,temporaryPassword);*/
 
+        // Vérification si toutes les entités existent
+        const entities = await Entity.find({ _id: { $in: entityId } });
+        if (entities.length !== entityId.length) {
+            return res.status(400).json({ message: "Une ou plusieurs entités spécifiées n'existent pas" });
+        }
+
+        // Hashage du mot de passe
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Création de l'utilisateur
         const newUtilisateur = new Utilisateur({
             nom,
             prenom,
@@ -30,17 +47,33 @@ const createManager = async (req, res) => {
             role: "Manager"
         });
         await newUtilisateur.save();
-        // Create the manager entry with the utilisateur
-        const newManager = new Manager({ utilisateur: newUtilisateur._id });
+
+        // Création du manager
+        const newManager = new Manager({
+            utilisateur: newUtilisateur._id
+        });
         await newManager.save();
 
+        // Création des associations UtilisateurEntity
+        const utilisateurEntities = entityId.map(id_entity => ({
+            id_utilisateur: newUtilisateur._id,
+            id_entity
+        }));
+        await UtilisateurEntity.insertMany(utilisateurEntities);
+
         res.status(201).json({
-            message: "Manager created successfully",
+            success: true,
+            message: "Manager créé et affecté aux entités avec succès",
             manager: newManager,
-            utilisateur: newUtilisateur
+            utilisateur: newUtilisateur,
+            entities: entities
         });
     } catch (error) {
-        res.status(500).json({ message: "Error creating manager", error: error.message });
+        res.status(500).json({
+            success: false,
+            message: "Erreur lors de la création du manager",
+            error: error.message
+        });
     }
 };
 
