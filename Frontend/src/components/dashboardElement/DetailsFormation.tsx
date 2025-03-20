@@ -8,6 +8,7 @@ import StatsSection from "../Formation/StatsSection";
 import ParticipantsSection from "../Formation/ParticipantsSection";
 import { CustomPagination } from "../layout/CustomPagination";
 import { FormationItem, Participant, Document, StatMetric } from "@/pages/types"; 
+import { useFormations } from "@/contexts/FormationContext";
 
 interface DetailsFormationProps {
   formation: FormationItem;
@@ -15,6 +16,8 @@ interface DetailsFormationProps {
 }
 
 const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetourClick }) => {
+  const { getBeneficiaireFormation } = useFormations();
+  const [isLoading, setIsLoading] = useState(false);
 
   const [participantsPage, setParticipantsPage] = useState(1);
   const PARTICIPANTS_PER_PAGE = 11;
@@ -44,156 +47,47 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
   }, [formation.id]);
 
   const loadFormationData = async () => {
-    // Simulate API call or data fetch
-    // In a real app, you would fetch from your API
+    setIsLoading(true);
     
-    // For demo purposes, using mock data
-    setDocuments([
-      { title: "Programme du formation", date: "25/02/2025" },
-      { title: "Présentation Jour 01", date: "25/02/2025" },
-      { title: "Exercices Pratiques", date: "25/02/2025" },
-    ]);
-    
-    setParticipants([
-      {
-        date: "26/05/2024",
-        time: "14h00-16h00",
-        lastName: "Bikarrane",
-        firstName: "Mohamed",
-        email: "mohamed.bika@gmail.com",
-        gender: "Homme",
-        phone: "06445454512",
-        status: "present",
-      },
-      {
-        date: "26/05/2024",
-        time: "14h00-16h00",
-        lastName: "Dupont",
-        firstName: "Jean",
-        email: "jean.dupont@gmail.com",
-        gender: "Homme",
-        phone: "06445454513",
-        status: "absent",
-      },
-      // ...more participants (kept the same as your original data)
-      {
-        date: "26/05/2024",
-        time: "14h00-16h00",
-        lastName: "Bikarrane",
-        firstName: "Mohamed",
-        email: "mohamed.bika@gmail.com",
-        gender: "Homme",
-        phone: "06445454512",
-        status: "present",
-      },
-      {
-        date: "26/05/2024",
-        time: "14h00-16h00",
-        lastName: "Bikarrane",
-        firstName: "Mohamed",
-        email: "mohamed.bika@gmail.com",
-        gender: "Homme",
-        phone: "06445454512",
-        status: "present",
-      },
-      {
-        date: "26/05/2024",
-        time: "14h00-16h00",
-        lastName: "Bikarrane",
-        firstName: "Mohamed",
-        email: "mohamed.bika@gmail.com",
-        gender: "Homme",
-        phone: "06445454512",
-        status: "present",
-      },
-      {
-        date: "26/05/2024",
-        time: "14h00-16h00",
-        lastName: "Bikarrane",
-        firstName: "Mohamed",
-        email: "mohamed.bika@gmail.com",
-        gender: "Homme",
-        phone: "06445454512",
-        status: "present",
-      },
-      {
-        date: "26/05/2024",
-        time: "14h00-16h00",
-        lastName: "Bikarrane",
-        firstName: "Mohamed",
-        email: "mohamed.bika@gmail.com",
-        gender: "Homme",
-        phone: "06445454512",
-        status: "present",
-      },
-      {
-        date: "26/05/2024",
-        time: "14h00-16h00",
-        lastName: "Bikarrane",
-        firstName: "Mohamed",
-        email: "mohamed.bika@gmail.com",
-        gender: "Homme",
-        phone: "06445454512",
-        status: "present",
-      },
-      {
-        date: "26/05/2024",
-        time: "14h00-16h00",
-        lastName: "Bikarrane",
-        firstName: "Mohamed",
-        email: "mohamed.bika@gmail.com",
-        gender: "Homme",
-        phone: "06445454512",
-        status: "present",
-      },
-      {
-        date: "26/05/2024",
-        time: "14h00-16h00",
-        lastName: "Bikarrane",
-        firstName: "Mohamed",
-        email: "mohamed.bika@gmail.com",
-        gender: "Homme",
-        phone: "06445454512",
-        status: "present",
-      },
-      {
-        date: "26/05/2024",
-        time: "14h00-16h00",
-        lastName: "Bikarrane",
-        firstName: "Mohamed",
-        email: "mohamed.bika@gmail.com",
-        gender: "Homme",
-        phone: "06445454512",
-        status: "present",
-      },
-      {
-        date: "26/05/2024",
-        time: "14h00-16h00",
-        lastName: "Bikarrane",
-        firstName: "Mohamed",
-        email: "mohamed.bika@gmail.com",
-        gender: "Homme",
-        phone: "06445454512",
-        status: "present",
-      },
-      {
-        date: "26/05/2024",
-        time: "14h00-16h00",
-        lastName: "Bikarrane",
-        firstName: "Mohamed",
-        email: "mohamed.bika@gmail.com",
-        gender: "Homme",
-        phone: "06445454512",
-        status: "present",
-      },
-    ]);
-    
-    setStatsMetrics([
-      { label: "Taux de completion", value: null },
-      { label: "Taux Satisfaction", value: null },
-      { label: "Heures", value: null },
-    ]);
+    try {
+      // Load documents (replace with your actual document loading)
+      setDocuments([
+        { title: "Programme du formation", date: "25/02/2025" },
+        { title: "Présentation Jour 01", date: "25/02/2025" },
+        { title: "Exercices Pratiques", date: "25/02/2025" },
+      ]);
+      
+      // Fetch participants from the API
+      const beneficiairesData = await getBeneficiaireFormation(formation.id);
+      
+      // Convert beneficiary data to participant format
+      const participantsData = beneficiairesData.map(entry => ({
+        date: "26/05/2024", // You may want to get this from the API data
+        time: "14h00-16h00", // You may want to get this from the API data
+        lastName: entry.beneficiaire.nom,
+        firstName: entry.beneficiaire.prenom,
+        email: entry.beneficiaire.email,
+        gender: entry.beneficiaire.genre,
+        phone: entry.beneficiaire.telephone?.toString() || "",
+        status: entry.confirmationEmail ? "present" as "present" : "absent" as "absent", // Cast explicite
+      }));
+      
+      setParticipants(participantsData);
+      
+      // Set your stats metrics (you might want to calculate these based on the data)
+      setStatsMetrics([
+        { label: "Taux de completion", value: null },
+        { label: "Taux Satisfaction", value: null },
+        { label: "Heures", value: null },
+      ]);
+    } catch (error) {
+      console.error("Error loading formation data:", error);
+      // Handle error - maybe set an error state and show a message to the user
+    } finally {
+      setIsLoading(false);
+    }
   };
+
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -266,13 +160,33 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
           <DocumentsSection documents={documents} />
           <StatsSection metrics={statsMetrics} />
         </div>
+        {isLoading ? (
+  <div className="flex justify-center py-8">
+    <RefreshCw size={24} className="animate-spin" />
+    <span className="ml-2">Chargement des données...</span>
+  </div>
+) : (
+  <>
+    {/* Your regular content */}
+    <ParticipantsSection
+      participants={participants}
+      currentPage={participantsPage}
+      itemsPerPage={PARTICIPANTS_PER_PAGE}
+    />
+    
+    {/* Pagination */}
+    {totalParticipantsPages > 1 && (
+      <CustomPagination
+        currentPage={participantsPage}
+        totalPages={totalParticipantsPages}
+        onPageChange={setParticipantsPage}
+      />
+    )}
+  </>
+)}
 
         {/* Participants Section avec pagination externe */}
-        <ParticipantsSection
-          participants={participants}
-          currentPage={participantsPage}
-          itemsPerPage={PARTICIPANTS_PER_PAGE}
-        />
+      
 
         {/* Utilisation de CustomPagination pour naviguer entre les pages de participants */}
         {totalParticipantsPages > 1 && (
