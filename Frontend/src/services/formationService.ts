@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-catch */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from 'axios';
 import apiClient from './apiClient';
@@ -7,12 +8,76 @@ interface ConfirmationData {
   confirmationAppel: boolean;
   confirmationEmail: boolean;
 }
-interface ConfirmationData {
-  id: string; // L'ID du bénéficiaire
-  confirmationAppel: boolean;
-  confirmationEmail: boolean;
-}
+// incrémenter le step
+export const updateFormationStep = async (formationId: string) => {
+  if (!formationId) {
+    throw new Error("ID de formation requis");
+  }
 
+  try {
+    const response = await apiClient.put(`/formation/formation-draft/${formationId}`);
+    return response.data;
+  } catch (error) {
+    // Gestion des différents types d'erreurs
+    if (axios.isAxiosError(error)) {
+      // Erreurs HTTP spécifiques
+      if (error.response) {
+        // Le serveur a répondu avec un code d'erreur
+        switch (error.response.status) {
+          case 400:
+            throw new Error("Données de requête invalides: " + (error.response.data?.message || "ID de formation invalide"));
+          case 404:
+            throw new Error("Formation non trouvée: " + (error.response.data?.message || "Aucun brouillon de formation trouvé"));
+          case 403:
+            throw new Error("Accès non autorisé à cette formation");
+          default:
+            throw new Error(error.response.data?.message || "Erreur lors de la mise à jour de l'étape de formation");
+        }
+      } else if (error.request) {
+        // La requête a été faite mais pas de réponse reçue
+        throw new Error("Aucune réponse du serveur. Vérifiez votre connexion internet.");
+      }
+    }
+    
+    // Autres types d'erreurs
+    console.error("Erreur lors de la mise à jour de l'étape de formation:", error);
+    throw new Error("Erreur inattendue lors de la mise à jour de l'étape de formation");
+  }
+};
+export const validerFormation = async (formationId: string) => {
+  if (!formationId) {
+    throw new Error("ID de formation requis");
+  }
+  try {
+    const response = await apiClient.put(`/formation/valider-foramtion/${formationId}`);
+    return response.data;
+  } catch (error) {
+    // Gestion des différents types d'erreurs
+    if (axios.isAxiosError(error)) {
+      // Erreurs HTTP spécifiques
+      if (error.response) {
+        // Le serveur a répondu avec un code d'erreur
+        switch (error.response.status) {
+          case 400:
+            throw new Error("Données de requête invalides: " + (error.response.data?.message || "ID de formation invalide"));
+          case 404:
+            throw new Error("Formation non trouvée: " + (error.response.data?.message || "Aucun brouillon de formation trouvé"));
+          case 403:
+            throw new Error("Accès non autorisé à cette formation");
+          default:
+            throw new Error(error.response.data?.message || "Erreur lors de la validation de la formation");
+        }
+      } else if (error.request) {
+        // La requête a été faite mais pas de réponse reçue
+        throw new Error("Aucune réponse du serveur. Vérifiez votre connexion internet.");
+      }
+    }
+    
+    // Autres types d'erreurs
+    console.error("Erreur lors de la validation de la formation:", error);
+    throw new Error("Erreur inattendue lors de la validation de la formation");
+  }
+};
 export const updateBeneficiaireConfirmations = async (idFormation: string, confirmations: ConfirmationData[]) => {
   try {
     // Envoi de la requête avec l'ID de la formation dans l'URL et la liste des confirmations dans le corps
