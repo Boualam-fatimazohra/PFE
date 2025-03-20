@@ -4,7 +4,8 @@ import { Download, ChevronLeft, ChevronRight } from "lucide-react";
 import ParticipantSearchBar from "../sections/ParticipantSearchBar";
 import ParticipantsTable from "../sections/ParticipantsTable";
 import { BeneficiaireInscription} from "../types";
-
+import {exportBeneficiairesToExcel} from "../../../services/beneficiaireService";
+import { toast } from "react-toastify";
 interface FormStepThreeProps {
   searchQuery: string;
   setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
@@ -12,6 +13,7 @@ interface FormStepThreeProps {
   useIcon: boolean;
   beneficiairePreferences: Record<string, { appel: boolean; email: boolean }>;
   setBeneficiairePreferences: React.Dispatch<React.SetStateAction<Record<string, { appel: boolean; email: boolean }>>>;
+  formationId: string; // Nouvelle prop nécessaire
 }
 
 const FormStepThree: React.FC<FormStepThreeProps> = ({
@@ -20,9 +22,33 @@ const FormStepThree: React.FC<FormStepThreeProps> = ({
   participants,
   useIcon,
   beneficiairePreferences,
-  setBeneficiairePreferences
-
+  setBeneficiairePreferences,
+  formationId
 }) => {
+  const handleExportPresence = async () => {
+    try {
+      if (!formationId) {
+        toast.error('Aucune formation sélectionnée');
+        return;
+      }
+
+      const { blob, filename } = await exportBeneficiairesToExcel(formationId);
+      
+      // Création d'un lien temporaire pour le téléchargement
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      window.URL.revokeObjectURL(url);
+      link.remove();
+
+    } catch (error) {
+      toast.error(error.message || 'Erreur lors de l\'export');
+      console.error('Export error:', error);
+    }
+  };
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-8 w-full h-auto">
       <div className="space-y-6">
@@ -37,7 +63,10 @@ const FormStepThree: React.FC<FormStepThreeProps> = ({
         
         {/* Bouton Générer liste en dessous */}
         <div className="flex justify-end">
-          <button className="bg-gray-900 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+          <button 
+            onClick={handleExportPresence}
+            className="bg-gray-900 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-800 transition-colors"
+          >
             <Download size={20} />
             Générer liste présence
           </button>

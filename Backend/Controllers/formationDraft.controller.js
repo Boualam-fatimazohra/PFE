@@ -218,7 +218,49 @@ const createFormationDraft = async (req, res) => {
       });
     }
   };
+  const validerFormation = async (req, res) => {
+    try {
+      const { formationId } = req.params;
+  
+      // Validate if formationId is provided
+      if (!formationId) {
+        return res.status(400).json({
+          success: false,
+          message: "L'ID de formation est requis"
+        });
+      }
+  
+      // Find the FormationDraft by formation ID and update isDraft to false
+      const updatedDraft = await FormationDraft.findOneAndUpdate(
+        { formation: formationId },
+        { isDraft: false },
+        { new: true } // Return the updated document
+      );
+  
+      // Check if draft was found
+      if (!updatedDraft) {
+        return res.status(404).json({
+          success: false,
+          message: "Aucun brouillon de formation trouvé pour cet ID"
+        });
+      }
+  
+      return res.status(200).json({
+        success: true,
+        message: "Formation validée avec succès",
+        data: updatedDraft
+      });
+    } catch (error) {
+      console.error("Erreur lors de la validation de la formation:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Une erreur est survenue lors de la validation de la formation",
+        error: error.message
+      });
+    }
+  };
 module.exports = {
+  validerFormation, 
   getFormationStep,
   updateFormationStep,
   createFormationDraft,

@@ -6,90 +6,114 @@ const Evenement=require("../Models/evenement.model.js");
 const bcrypt = require('bcryptjs');
 const { Utilisateur } = require('../Models/utilisateur.model.js');
 const generateRandomPassword = require('../utils/generateRandomPassword.js');
+const { Entity } = require('../Models/entity.model.js'); 
+const {UtilisateurEntity} = require('../Models/utilisateurEntity.js'); 
 
 const createFormateur = async (req, res) => {
-    const { nom, prenom, email, numeroTelephone,coordinateur,manager} = req.body;
-    try {
-        // Vérification de l'existence de l'email
-        const existingUser = await Utilisateur.findOne({ email });
-        if (existingUser) {
-            return res.status(400).json({ message: "Cet email est déjà utilisé" });
-        }
-        // extraction du role de l'utilisateur
-        const userRole = req.user?.role;
-        console.log(userRole);
-        let assignedManager;
+  const { nom, prenom, email, numeroTelephone, coordinateur, manager, entityId } = req.body; // Ajoutez entityId
+  try {
+      // Vérification de l'existence de l'email
+      const existingUser = await Utilisateur.findOne({ email });
+      if (existingUser) {
+          return res.status(400).json({ message: "Cet email est déjà utilisé" });
+      }
 
-        if (!userRole) {
+      // Extraction du rôle de l'utilisateur
+      const userRole = req.user?.role;
+      console.log(userRole);
+      let assignedManager;
 
-            return res.status(403).json({ message: "Forbidden: Only Admins or Managers can create a Formateur (endpoint)" });
+      if (!userRole) {
+          return res.status(403).json({ message: "Forbidden: Only Admins or Managers can create a Formateur (endpoint)" });
+      } else if (userRole === "Manager") {
+          console.log("Le cas où le manager tente de créer un formateur");
+          // Trouver le document du manager en utilisant l'ID de l'utilisateur
+          const managerDoc = await Manager.findOne({ utilisateur: req.user.userId });
+          if (!managerDoc) {
+              return res.status(400).json({ message: "Manager not found" });
+          }
+          assignedManager = managerDoc._id;
+      } else {
+          // Vérifier si le manager est fourni lorsque l'admin crée un formateur
+          if (!manager) {
+              return res.status(400).json({ message: "Manager ID is required when Admin creates a Formateur" });
+          }
+          console.log("Le cas où l'admin tente de créer un formateur");
 
-        } else if (userRole === "Manager") {
-          console.log("le cas ou le mangaer qui tente de creer formateur");
-            // Find the manager document using the user ID
-            const managerDoc = await Manager.findOne({ utilisateur: req.user.userId });
-            
-            if (!managerDoc) {
-                return res.status(400).json({ message: "Manager not found" });
-            }
-            assignedManager = managerDoc._id;
-        } else {
-            // Verify if the provided manager exists when Admin is creating
-             if (!manager) {
-               return res.status(400).json({ message: "Manager ID is required when Admin creates a Formateur" });
-             }
-             console.log("le cas ou l'admin qui tente de creer formateur");
+          const managerDoc = await Manager.findById(manager);
+          if (!managerDoc) {
+              return res.status(400).json({ message: "Manager not found" });
+          }
+          assignedManager = managerDoc._id; // Utiliser l'ID du document Manager
+      }
 
-             const managerDoc = await Manager.findById(manager);
-            if (!managerDoc) {
-                return res.status(400).json({ message: "Manager not found" });
-            }
-            assignedManager = managerDoc._id; // Use the Manager document ID, not
-                   }
-        // Generate and hash a temporary password
-        const temporaryPassword = generateRandomPassword();
-        const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
-        // Create new user
-        const newUser = new Utilisateur({
-            nom,
-            prenom,
-            email,
-            numeroTelephone,
-            password: hashedPassword,
-            role: "Formateur",
-        });
-          const contenu =`<p>Bonjour,</p>
-                   <p>Votre mot de passe est : <b>${temporaryPassword}</b></p>
-                   <p>Merci de ne pas le partager.</p>`;
-        //await sendMail(email,contenu);
-        await newUser.save();
+      // Vérification si entityId est présent
+      if (!entityId) {
+          return res.status(400).json({ message: "L'ID de l'entité est requis" });
+      }
 
-        // Create Formateur linked to the new user
-        const newFormateur = new Formateur({
-            utilisateur: newUser._id,
-            manager: assignedManager, 
-            coordinateur
-        });
+      // Vérification si l'entité existe
+      const entity = await Entity.findById(entityId);
+      if (!entity) {
+          return res.status(400).json({ message: "L'entité spécifiée n'existe pas" });
+      }
 
-        await newFormateur.save();
-        console.log("Email envoyé");
+      // Générer et hacher un mot de passe temporaire
+      const temporaryPassword = generateRandomPassword();
+      const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
 
-        res.status(201).json({ 
-            message: "Formateur créé avec succès",
-            user: newFormateur,
-        });
+      // Créer un nouvel utilisateur
+      const newUser = new Utilisateur({
+          nom,
+          prenom,
+          email,
+          numeroTelephone,
+          password: hashedPassword,
+          role: "Formateur",
+      });
 
-    } catch (error) {
-        console.error("Erreur:", error);
-        // Rollback user creation if something fails
-        if (typeof newUser !== "undefined") {
-            await Utilisateur.deleteOne({ _id: newUser._id });
-        }
-        res.status(500).json({ 
-            message: "Erreur serveur",
-            error: error.message 
-        });
-    }
+      const contenu = `<p>Bonjour,</p>
+                      <p>Votre mot de passe est : <b>${temporaryPassword}</b></p>
+                      <p>Merci de ne pas le partager.</p>`;
+      // await sendMail(email, contenu);
+      await newUser.save();
+
+      // Créer un formateur lié au nouvel utilisateur
+      const newFormateur = new Formateur({
+          utilisateur: newUser._id,
+          manager: assignedManager,
+          coordinateur,
+      });
+
+      await newFormateur.save();
+
+      // Créer l'association UtilisateurEntity
+      const utilisateurEntity = new UtilisateurEntity({
+          id_utilisateur: newUser._id,
+          id_entity: entityId,
+      });
+
+      await utilisateurEntity.save();
+
+      console.log("Email envoyé");
+
+      res.status(201).json({
+          message: "Formateur créé avec succès",
+          user: newFormateur,
+          entity: entity,
+      });
+
+  } catch (error) {
+      console.error("Erreur:", error);
+      // Rollback de la création de l'utilisateur en cas d'échec
+      if (typeof newUser !== "undefined") {
+          await Utilisateur.deleteOne({ _id: newUser._id });
+      }
+      res.status(500).json({
+          message: "Erreur serveur",
+          error: error.message,
+      });
+  }
 };
 // debut :pour récuperer tout les formateurs sans exception
 const getFormateurs = async (req, res) => {
