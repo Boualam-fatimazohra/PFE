@@ -45,20 +45,20 @@ const Ecolecode = () => {
   const renderActionsRapides = () => {
     return (
       <div className="relative">
-        {/* Container principal - width adjusts based on open state */}
-        <div className={`bg-black text-white rounded-md overflow-hidden ${isOpen ? "w-64" : "w-48"}`}>
+        {/* Container principal with fixed width */}
+        <div className="w-[220px]">
           {/* Bouton principal */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="w-full bg-black text-white font-medium px-4 py-2 flex justify-between items-center"
+            className="w-full bg-black text-white font-medium px-4 py-2 flex justify-between items-center rounded-md"
           >
             <span>Actions Rapides</span>
             <ChevronDown size={16} />
           </button>
-  
+    
           {/* Options dropdown that appears when isOpen is true */}
           {isOpen && (
-            <div className="p-2 space-y-2">
+            <div className="absolute top-full left-0 right-0 p-2 space-y-2 bg-black rounded-b-md shadow-lg z-10">
               <button className="w-full flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 rounded-md">
                 <Plus size={16} className="mr-2" />
                 <span>Nouvelle Formation</span>
@@ -164,34 +164,35 @@ const Ecolecode = () => {
             </Link>
           </div>
         </div>
-         {/* Stats Cards */}
-         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 w-800">
-          {stats.map((stat, index) => (
-            <div key={index} className="bg-white p-4 rounded-[4px] border border-gray-200 flex items-start">
-              <div className="bg-[#FF79001A] p-3 rounded-full flex items-center justify-center mr-3">
-                {stat.icon}
+        {/* Stats Cards and Actions Rapides */}
+        <div className="flex items-start justify-between mb-6">
+          {/* Stats Cards in a grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-grow mr-4">
+            {stats.slice(0, 3).map((stat, index) => (
+              <div key={index} className="bg-white p-4 rounded-[4px] border border-gray-200 flex items-start">
+                <div className="bg-[#FF79001A] p-3 rounded-full flex items-center justify-center mr-3">
+                  {stat.icon}
+                </div>
+                <div>
+                  <p className="text-xl text-gray-500">{stat.title}</p>
+                  <p className="text-2xl font-bold">{stat.value}</p>
+                  <p className={`text-sm font-inter ${
+                    index < 1 ? "text-gray-500" : index === 2 ? "text-[#10B981]" : "text-[#10B981]"
+                  }`}>
+                    {stat.subtitle}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-xl text-gray-500">{stat.title}</p>
-                <p className="text-2xl font-bold">{stat.value}</p>
-                <p className={`text-sm font-inter ${
-                  index < 1 ? "text-gray-500" : index === 2 ? "text-[#10B981]" : "text-[#10B981]"
-                }`}>
-                  {stat.subtitle}
-                </p>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
           
-          {/* Replace your existing dropdown with the new one */}
-          {renderActionsRapides()}
+          {/* Actions Rapides */}
+          <div className="flex-shrink-0">
+            {renderActionsRapides()}
+          </div>
         </div>
-          
-
         {/* Main Tabs */}
         <Tabs defaultValue="formations" className="mb-6" onValueChange={setActiveTab}>
-         
-
           {/* Formations Tab Content */}
           <TabsContent value="formations" className="space-y-6">
            
