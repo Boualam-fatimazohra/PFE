@@ -709,6 +709,7 @@ const handleSubmit = async () => {
             useIcon={useIcon}
             beneficiairePreferences={beneficiairePreferences}
             setBeneficiairePreferences={setBeneficiairePreferences}
+            formationId={formationId}
           />
         );
       case 4:
