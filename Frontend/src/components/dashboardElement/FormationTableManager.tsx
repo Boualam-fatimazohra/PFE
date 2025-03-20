@@ -3,7 +3,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FormationItem } from "@/pages/types";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 
 export interface FormationTableItem {
@@ -26,73 +25,91 @@ interface FormationsTableProps {
 
 export const FormationsTable = ({
   formations = [
-    { _id: "1", title: "Atelier IA Générative en design", dateDebut: "2025-03-15", dateFin: "2025-03-20", status: "En Cours", formateur: "Mohamed Bikarrane", role: "Aadir", participants: "24/30", satisfaction: "75%", image: "/api/placeholder/60/60" },
+    { _id: "1", title: "Atelier IA Générative en design", dateDebut: "2025-03-15", dateFin: "2025-03-20", status: "En Cours", formateur: "Mohamed Bikarrane", role: "Agadir", participants: "24/30", satisfaction: "75%", image: "/api/placeholder/60/60" },
     { _id: "2", title: "AWS : Développement, déploiement et gestion", dateDebut: "2025-03-17", dateFin: "2025-03-25", status: "En Cours", formateur: "Mehdi Iddouche", role: "Agadir", participants: "24/30", satisfaction: "75%", image: "/api/placeholder/60/60" },
-    { _id: "3", title: "Maîtriser le développement d'applications natives avec Java", dateDebut: "2025-03-15", dateFin: "2025-03-30", status: "En Cours", formateur: "Aymen Hafsi", role: "Agadir", participants: "24/30", satisfaction: "75%", image: "/api/placeholder/60/60" },
-    { _id: "4", title: "Maîtriser le développement d'applications natives avec Java", dateDebut: "2025-03-15", dateFin: "2025-03-28", status: "En Cours", formateur: "Mohamed Bikarrane", role: "Agadir", participants: "24/30", satisfaction: "75%", image: "/api/placeholder/60/60" },
+    { _id: "3", title: "Maîtriser le développement d'applications natives avec Java.", dateDebut: "2025-03-15", dateFin: "2025-03-30", status: "En Cours", formateur: "Aymen Hafsi", role: "Rabat", participants: "24/30", satisfaction: "75%", image: "/api/placeholder/60/60" },
+    { _id: "4", title: "Maîtriser le développement d'applications natives avec Java.", dateDebut: "2025-03-15", dateFin: "2025-03-28", status: "En Cours", formateur: "Mohamed Bikarrane", role: "Agadir", participants: "24/30", satisfaction: "75%", image: "/api/placeholder/60/60" },
   ],
   onShowDetails
 }: FormationsTableProps) => {
-  const navigate = useNavigate(); // Utilisation de useNavigate pour la redirection
+  const navigate = useNavigate();
+    const [activeVille, setActiveVille] = React.useState<string>("Tous");
+  
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return `${date.getDate()} Mars ${date.getFullYear()}`;
-};
-
-
-  const renderStatusBadge = (status: string) => {
-    return (
-      <div className="bg-orange-100 text-orange-600 px-2 py-1 rounded text-sm inline-block">
-        En Cours
-      </div>
-    );
   };
 
-
   return (
-    <div className="w-full bg-white rounded-md shadow-sm border border-gray-200 p-4">
+    <div className="w-full bg-white rounded-md shadow-sm border border-gray-200 p-4" style={{ fontFamily: "Inter, sans-serif" }}>
       <div className="flex flex-col mb-4">
         <h2 className="text-xl font-bold mb-2">Formations Ecole du code</h2>
         <div className="flex items-end mt-4 space-x-2">
-  <div className="flex space-x-2">
-    <Badge className="bg-orange-500 text-white py-2 px-3 rounded-[4px]">En Cours</Badge>
-    <Badge className="bg-gray-200 text-gray-700 py-2 px-3 rounded-[4px]">À venir</Badge>
-    <Badge className="bg-gray-300 text-gray-700 py-2 px-3 rounded-[4px]">Terminée</Badge>
-    <Button size="sm" className="bg-transparent shadow-none p-0 flex items-center py-2 px-3">
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <path fillRule="evenodd" clipRule="evenodd" d="M18 2.5V4L11.5 10.5V18.5L8.5 15.5V10.5L2 4V2.5C2.00006 1.94774 2.44774 1.50006 3 1.5H17C17.5523 1.50006 17.9999 1.94774 18 2.5Z" fill="black"/>
-      </svg>
-      <span className="ml-2 text-black">Filtres</span>
-    </Button>
-  </div>
+          <div className="flex items-center gap-2 mb-4">
+                    <Button 
+                      variant={activeVille === "Tous" ? "default" : "outline"}
+                      className={`rounded-[4px] ${activeVille === "Tous" ? "bg-orange-500 text-white hover:bg-orange-600" : "bg-gray-200 text-gray-700 hover:bg-gray-300 border-none"}`}
+                      size="sm"
+                      onClick={() => setActiveVille("Tous")}
+                    >
+                      Tous
+                    </Button>
+                    <Button 
+                      variant={activeVille === "Rabat" ? "default" : "outline"}
+                      className={`rounded-[4px] ${activeVille === "Rabat" ? "bg-orange-500 text-white hover:bg-orange-600" : "bg-gray-200 text-gray-700 hover:bg-gray-300 border-none"}`}
+                      size="sm"
+                      onClick={() => setActiveVille("Rabat")}
+                    >
+                      Rabat
+                    </Button>
+                    <Button 
+                      variant={activeVille === "Agadir" ? "default" : "outline"}
+                      className={`rounded-[4px] ${activeVille === "Agadir" ? "bg-orange-500 text-white hover:bg-orange-600" : "bg-gray-200 text-gray-700 hover:bg-gray-300 border-none"}`}
+                      size="sm"
+                      onClick={() => setActiveVille("Agadir")}
+                    >
+                      Agadir
+                    </Button>
+                    <Button 
+                      variant={activeVille === "Casablanca" ? "default" : "outline"}
+                      className={`rounded-[4px] ${activeVille === "Casablanca" ? "bg-orange-500 text-white hover:bg-orange-600" : "bg-gray-200 text-gray-700 hover:bg-gray-300 border-none"}`}
+                      size="sm"
+                      onClick={() => setActiveVille("Casablanca")}
+                    >
+                      Casablanca
+                    </Button>
+                    <div className="mr-auto">
+                    <Button variant="ghost" className="text-[#333] flex items-center gap-2 font-bold rounded-[4px]">
+                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M0 3C0 2.44772 0.447715 2 1 2H19C19.5523 2 20 2.44772 20 3V5C20 5.26522 19.8946 5.51957 19.7071 5.70711L13 12.4142V19C13 19.5523 12.5523 20 12 20H8C7.44772 20 7 19.5523 7 19V12.4142L0.292893 5.70711C0.105357 5.51957 0 5.26522 0 5V3Z" fill="#000"/>
+                        </svg>
+                        Filtres
+                      </Button>
+                    </div>
+                  </div>
 
-  {/* Ajout d'un div qui prend tout l'espace disponible pour pousser le bouton à droite */}
-  <div className="flex-grow"></div>
+          <div className="flex-grow"></div>
 
-  <Button
-    className="bg-orange-500 hover:bg-orange-600 text-white"
-    onClick={() => navigate("/manager/GestionFormation")}
-  >
-    Découvrir
-  </Button>
-</div>
-
-
-
-
+          <Button
+            className="bg-orange-500 hover:bg-orange-600 text-white rounded-[4px]"
+            onClick={() => navigate("/manager/GestionFormation")}
+          >
+            Découvrir
+          </Button>
+        </div>
       </div>
 
       <div className="overflow-x-auto">
         <Table>
-          <TableHeader className="bg-gray-100 font-bold">
+          <TableHeader className="bg-gray-100">
             <TableRow>
-              <TableHead className="font-medium text-gray-600 font-bold">Titre Formation</TableHead>
-              <TableHead className="font-medium text-gray-600 font-bold">Formateur</TableHead>
-              <TableHead className="font-medium text-gray-600 font-bold">Date</TableHead>
-              <TableHead className="font-medium text-gray-600 font-bold">Status</TableHead>
-              <TableHead className="font-medium text-gray-600 font-bold">Participants</TableHead>
-              <TableHead className="font-medium text-gray-600 font-bold">Satisfaction</TableHead>
-              <TableHead className="font-medium text-gray-600 text-center font-bold">Action</TableHead>
+              <TableHead className="font-bold  font-inter text-black" style={{ width: '25%' }}>Titre Formation</TableHead>
+              <TableHead className="font-bold font-inter text-black" style={{ width: '20%' }}>Formateur</TableHead>
+              <TableHead className="font-bold font-inter text-black" style={{ width: '15%' }}>Date</TableHead>
+              <TableHead className="font-bold font-inter text-black" style={{ width: '10%' }}>Status</TableHead>
+              <TableHead className="font-bold font-inter text-black" style={{ width: '10%' }}>Participants</TableHead>
+              <TableHead className="font-bold font-inter text-black" style={{ width: '10%' }}>Satisfaction</TableHead>
+              <TableHead className="font-bold font-inter text-black text-center" style={{ width: '10%' }}>Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -100,47 +117,52 @@ export const FormationsTable = ({
               <TableRow key={formation._id}>
                 <TableCell>
                   <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="7" r="4"></circle>
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    </svg>
-                    </div>
-
-                    <span className="text-sm font-bold text-gray-600" style={{ fontFamily: "Inter", color: "#333" }}>{formation.title}</span>
+                    {formation.image ? (
+                      <img src={formation.image} alt="" className="w-8 h-8 rounded-full" />
+                    ) : (
+                      <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="7" r="4"></circle>
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        </svg>
+                      </div>
+                    )}
+                    <span className="text-sm font-bold text-gray-600">{formation.title}</span>
                   </div>
                 </TableCell>
                 <TableCell>
-                <div className="text-base font-bold text-gray-900" style={{ fontFamily: "Inter" }}>
-                  {formation.formateur}
-                </div>
-                <div
-                  className="bg-gray-200 text-gray-600 px-2 py-1 rounded-full text-sm font-medium"
-                  style={{ fontFamily: "Inter", display: "inline-block", marginTop: "4px" }}
-                >
-                  {formation.role}
-                </div>
-              </TableCell>
-
-
+                  <div className="text-base font-bold text-gray-900">
+                    {formation.formateur}
+                  </div>
+                  <div className="bg-gray-200 text-gray-600 px-2 py-1 rounded-full text-xs font-medium inline-block mt-1">
+                    {formation.role}
+                  </div>
+                </TableCell>
                 <TableCell>
-                  <div className="text-sm"style={{ fontFamily: "Inter" ,color :"#666"}}>
+                  <div className="text-sm text-gray-600">
                     {formatDate(formation.dateDebut)}
-                  
+                  </div>
+                  {formation.dateDebut !== formation.dateFin && (
+                    <div className="text-sm text-gray-600 mt-1">
+                      {formatDate(formation.dateFin)}
+                    </div>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <div className="bg-orange-100 text-orange-600 px-2 py-1 rounded-full text-sm inline-block whitespace-nowrap">
+                    En Cours
                   </div>
                 </TableCell>
                 <TableCell>
-                  {renderStatusBadge(formation.status)}
+                  <div className="text-sm font-bold">{formation.participants}</div>
                 </TableCell>
                 <TableCell>
-                    <div className="text-sm font-bold">
-                    {formation.participants}</div></TableCell>
-                <TableCell><div className="text-sm font-bold">{formation.satisfaction}</div></TableCell>
+                  <div className="text-sm font-bold">{formation.satisfaction}</div>
+                </TableCell>
                 <TableCell className="text-center">
                   <Button
-                    variant="outline"
                     size="sm"
-                    className="bg-black text-white hover:bg-gray-800"
+                    className="bg-black text-white hover:bg-gray-800 rounded-[4px]"
                     onClick={() => onShowDetails && onShowDetails(formation as FormationItem)}
                   >
                     Accéder
@@ -151,7 +173,6 @@ export const FormationsTable = ({
           </TableBody>
         </Table>
       </div>
-      
-    </div>
-  );
+    </div>
+  );
 };
