@@ -9,6 +9,8 @@ interface FormationItem {
   dateDebut: string;
   dateFin: string;
   lienInscription: string;
+  category?:string;
+  niveau?:string;
   tags: string;
   status?: "En Cours" | "Terminé" | "Avenir" | "Replanifier";
   image?: File | string; // include image url
