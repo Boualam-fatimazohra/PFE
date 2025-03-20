@@ -9,7 +9,8 @@ const {
   uploadBeneficiairesFromExcel,
   getBeneficiaireFormation,
   getNombreBeneficiairesParFormateur,
-  updateBeneficiaireConfirmations
+  updateBeneficiaireConfirmations,
+  exportBeneficiairesToExcel
 } = require("../Controllers/beneficiaire.controller");
 const upload = require("../utils/upload");
 const authenticated = require("../Middlewares/Authmiddleware.js");
@@ -37,4 +38,12 @@ router.delete("/deleteAll", deleteBeneficiaire);
 // pour l'id qui est passé dans la route il s'agit de l'id de la formation utilisé dans authorizeFormationAccess pour vérifier est ce que cette formation
 // appartient au formateur qui fait la requête
 router.post("/updateConfirmationBeneficiaire/:id",authenticated,RoleMiddleware("Formateur"),authorizeFormationAccess("update"),updateBeneficiaireConfirmations);
+
+// Route pour exporter les bénéficiaires d'une formation en Excel
+router.get("/export/:formationId", 
+  authenticated, 
+  RoleMiddleware("Admin", "Manager", "Formateur"), 
+  exportBeneficiairesToExcel
+);
+
 module.exports = router;
