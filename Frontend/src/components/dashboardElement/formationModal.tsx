@@ -42,7 +42,7 @@ const initialFormState: FormState = {
 const FormationModal: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { addNewFormation, createFormationDraft } = useFormations();
+  
   const formationFromState = location.state?.formation;
   const fromDraft = location.state?.fromDraft;
   // State
@@ -55,6 +55,7 @@ const FormationModal: React.FC = () => {
   const [dateDebut, setDateDebut] = useState<Date | null>(null);
   const [dateFin, setDateFin] = useState<Date | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const { addNewFormation, createFormationDraft, refreshFormations } = useFormations();
   const [processingResults, setProcessingResults] = useState<ProcessingResults | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
@@ -140,12 +141,12 @@ const FormationModal: React.FC = () => {
   // debut : enregistrement des confirmation appel/email : 
   const handleUpdateConfirmations = async () => {
     try {
-      // Vérifier si `formationId` est valide
+      // Vérifier si formationId est valide
       if (!formationId) {
         throw new Error('ID de formation manquant');
       }
   
-      // Transformation des données de `beneficiairePreferences`
+      // Transformation des données de beneficiairePreferences
       const confirmations = Object.keys(beneficiairePreferences).map((id) => {
         const { appel, email } = beneficiairePreferences[id];
         
@@ -429,72 +430,6 @@ const FormationModal: React.FC = () => {
             }
           }
           
-          console.log("OOOOW Uploaded Successfuly");
-          
-          // Fetch updated beneficiaires before moving to the next step
-          if (!hasError && formationId) {
-            try {
-              const data = await getBeneficiaireFormation(formationId);
-              const formattedData = Array.isArray(data) ? data : [data];
-              setInscriptions(formattedData);
-              
-              // Initialize preferences with the updated data
-              const initialPreferences = formattedData.reduce((acc, benef) => {
-                acc[benef._id] = { 
-                  appel: benef.confirmationAppel || false, 
-                  email: benef.confirmationEmail || false 
-                };
-                return acc;
-              }, {} as Record<string, { appel: boolean; email: boolean }>);
-              
-              setBeneficiairePreferences(initialPreferences);
-            } catch (err) {
-              console.error("Erreur lors de la récupération des données mises à jour:", err);
-            }
-          }
-          
-          // If successful, move to next step
-          if (!hasError) {
-            setCurrentStep(currentStep + 1);
-          }
-        } catch (error) {
-          console.error("Error processing beneficiaire files:", error);
-        } finally {
-          setIsSubmitting(false);
-        }
-      } else {
-        // No files to process, refresh the beneficiaires data anyway before proceeding
-        if (formationId) {
-          try {
-            const data = await getBeneficiaireFormation(formationId);
-            const formattedData = Array.isArray(data) ? data : [data];
-            setInscriptions(formattedData);
-            
-            // Initialize preferences
-            const initialPreferences = formattedData.reduce((acc, benef) => {
-              acc[benef._id] = { 
-                appel: benef.confirmationAppel || false, 
-                email: benef.confirmationEmail || false 
-              };
-              return acc;
-            }, {} as Record<string, { appel: boolean; email: boolean }>);
-            
-            setBeneficiairePreferences(initialPreferences);
-          } catch (err) {
-            console.error("Erreur lors de la récupération des données:", err);
-          }
-        }
-        
-        // Proceed to next step
-        setCurrentStep(currentStep + 1);
-      }
-    } else if (currentStep === 3) {
-      await handleUpdateConfirmations(); 
-      alert("changement des confirmation effecuter");
-      setCurrentStep(currentStep + 1);
-    } else if (currentStep < steps.length) {
-      // For other steps, just proceed to next step
-      setCurrentStep(currentStep + 1);
           // Proceed to next step
           setCurrentStep(currentStep + 1);
         }
@@ -512,27 +447,27 @@ const FormationModal: React.FC = () => {
   };
 
   // Form submission
-  const handleSubmit = async () => {
-    if (!validateForm()) {
-      return;
-    }
-    setIsSubmitting(true);
-    try {
-      await validerFormation(formationId);
-      // Si la validation réussit, afficher le message de succès
-      alert('Formation Steps créée avec succès , il n est plus draft!');
-      // Réinitialisation du formulaire
-      setFormState(initialFormState);
-      // setCurrentStep(1);
-      setFileList([]);
-      navigate("/formateur/mesformation");
-    } catch (error) {
-      // Gestion des erreurs
-      alert(`Erreur: ${error.message}`);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  // Dans FormationModal.tsx, fonction handleSubmit
+const handleSubmit = async () => {
+  if (!validateForm()) {
+    return;
+  }
+  setIsSubmitting(true);
+  try {
+    await validerFormation(formationId);
+    // Actualiser les formations après validation
+    await refreshFormations(); // Vous devriez appeler cette fonction du contexte
+    
+    // Puis réinitialiser et naviguer
+    setFormState(initialFormState);
+    setFileList([]);
+    navigate("/formateur/mesformation");
+  } catch (error) {
+    alert(`Erreur: ${error.message}`);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
   const handleSubmitFormation = async () => {
     if (!validateForm()) {
       return;
@@ -812,4 +747,4 @@ const FormationModal: React.FC = () => {
   );
 };
 
-export default FormationModal;
+export default FormationModal;

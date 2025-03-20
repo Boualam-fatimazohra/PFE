@@ -2,12 +2,9 @@ import axios from 'axios';
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getAllFormations as fetchFormations, createFormation as addFormation } from '../services/formationService';
 import { deleteFormation as apiDeleteFormation, updateFormation as ipUpdateFormation } from '../services/formationService';
-import {getNbrBeneficiairesParFormateur, getBeneficiaireFormation as fetchBeneficiaires ,  createFormationDraft as createFormationDraftService} from "../services/formationService";
-
+import { getNbrBeneficiairesParFormateur, getBeneficiaireFormation as fetchBeneficiaires, createFormationDraft as createFormationDraftService } from "../services/formationService";
 import { getAllFormationsManager as fetchAuthenticatedFormations } from "../services/formationService";
-// import { Formation, Beneficiaire, FormationResponse } from '@/components/formation-modal/types';
-import { Formation,FormationResponse } from '@/components/formation-modal/types';
-
+import { Formation, FormationResponse } from '@/components/formation-modal/types';
 
 interface Beneficiaire {
   _id?: string;
@@ -29,6 +26,7 @@ interface Beneficiaire {
   region?: string;
   categorieAge?: string;
 }
+
 interface BeneficiaireInscription {
   _id: string;
   confirmationAppel: boolean;
@@ -36,6 +34,7 @@ interface BeneficiaireInscription {
   formation: string;
   beneficiaire: Beneficiaire;
 }
+
 interface FormationContextType {
   formations: Formation[];
   filteredFormations: Formation[];
@@ -65,7 +64,7 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [nombreBeneficiaires, setNombreBeneficiaires] = useState<number | null>(null);
-
+  
   const fetchNombreBeneficiaires = async () => {
     try {
       setError(null);
@@ -94,7 +93,7 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
         ]);
         
         setFormations(formationsData);
-        console.log("formation de contexte",formationsData);
+        console.log("formation de contexte", formationsData);
         setNombreBeneficiaires(beneficiairesData.nombreBeneficiaires);
         setFilteredFormations(formationsData);
         setError(null);
@@ -116,8 +115,10 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
       setFormations(data);
       setFilteredFormations(data);
       setError(null);
+      return data;
     } catch (error) {
       setError('Failed to refresh formations');
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -137,17 +138,16 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
       throw error;
     }
   };
+
   const apiClient = axios.create({
     baseURL: 'http://localhost:5000',
     headers: { 'Content-Type': 'application/json' }
   });
 
-  // Fonction corrigée pour envoyer les liens d'évaluation aux bénéficiaires
+  // Fonction pour envoyer les liens d'évaluation aux bénéficiaires
   const apiSendEvaluationFormation = async (beneficiaryIds: string[], formationId: string) => {
     try {
-      // Correction: URL de l'API
       const response = await apiClient.post('/api/evaluation/sendLinkToBeneficiare', { beneficiaryIds, formationId });
-      
       return response.data;
     } catch (error) {
       // Si l'endpoint n'existe pas (404), utiliser la logique de mock pour le développement
@@ -225,7 +225,7 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
     setFilteredFormations(results);
   };
 
-  const getBeneficiaireFormation = async (id: string): Promise<Beneficiaire[]> => {
+  const getBeneficiaireFormation = async (id: string): Promise<BeneficiaireInscription[]> => {
     try {
       console.log("Récupération des bénéficiaires pour la formation:", id);
       return await fetchBeneficiaires(id);
@@ -269,8 +269,12 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
           isDraft: true,  // Set this explicitly
           currentStep: 2
         };
-        console.log("formatio Draft: ", formationWithDraft.isDraft);
+        
+        // Update both formations and filteredFormations with the new draft
         setFormations(prev => [...prev, formationWithDraft]);
+        setFilteredFormations(prev => [...prev, formationWithDraft]);
+        
+        console.log("formation Draft added to state:", formationWithDraft);
       }
       
       return newDraft;
@@ -300,6 +304,7 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
       throw error;
     }
   };
+
   return (
     <FormationContext.Provider value={{ 
       formations, 
@@ -317,7 +322,6 @@ export const FormationProvider: React.FC<FormationProviderProps> = ({ children }
       getAllFormationsManager,
       createFormationDraft
     }}>
-
       {children}
     </FormationContext.Provider>
   );
