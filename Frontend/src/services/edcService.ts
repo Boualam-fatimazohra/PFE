@@ -43,7 +43,7 @@ export const deleteEDC = async (id: string) => {
 
 export const getFormateursEdc = async () => {
   try {
-    const response = await apiClient.get('/edc/formateurs');
+    const response = await apiClient.get('/edc/getFormateurEDC');
     return response.data;
   } catch (error) {
     console.error('Error fetching EDC formateurs:', error);
@@ -53,7 +53,7 @@ export const getFormateursEdc = async () => {
 
 export const getFormationsEdc = async () => {
   try {
-    const response = await apiClient.get('/edc/formations');
+    const response = await apiClient.get('/edc/getFormationEDC');
     return response.data;
   } catch (error) {
     console.error('Error fetching EDC formations:', error);
@@ -63,7 +63,7 @@ export const getFormationsEdc = async () => {
 
 export const getBeneficiairesEdc = async () => {
   try {
-    const response = await apiClient.get('/edc/beneficiaires');
+    const response = await apiClient.get('/edc/getBeneficiairesEDC');
     return response.data;
   } catch (error) {
     console.error('Error fetching EDC beneficiaires:', error);

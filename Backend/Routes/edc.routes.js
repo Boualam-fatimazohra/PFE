@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { 
+const {
     getFormateursEdc,
     getFormationsEdc,
     getBeneficiairesEdc,
-    createEDC ,
+    createEDC,
     getAllEDCs,
     getEDCById
 } = require('../Controllers/edc.controller');
@@ -12,20 +12,20 @@ const {
 const authorizeRoles = require('../Middlewares/RoleMiddleware.js');
 const authenticated = require('../Middlewares/Authmiddleware.js');
 
+// POST/GET with specific routes should come BEFORE routes with parameters
+router.post('/', authenticated, authorizeRoles('Admin'), createEDC);
+router.get('/', authenticated, authorizeRoles('Admin'), getAllEDCs);
 
-router.post('/',authenticated,authorizeRoles('Admin'),createEDC);
-router.get('/',authenticated,authorizeRoles('Admin'), getAllEDCs);
-router.get('/:id',authenticated,authorizeRoles('Admin'),getEDCById);
+/*Get all (formateurs) of EDCs */
+router.get('/getFormateurEDC', getFormateursEdc);
 
-/*Get all  (formateurs) associated with a specific EDC */
-router.get('/getFormateurEDC/:edcIds', getFormateursEdc);
+/* Get all training sessions (formations) all EDC*/
+router.get('/getFormationEDC', getFormationsEdc);
 
-/* Get all training sessions (formations) associated with a specific EDC*/
-router.get('/getFormationEDC/:edcIds', getFormationsEdc);
+/* Get all beneficiaries enrolled in formations all EDC */
+router.get('/getBeneficiairesEDC', getBeneficiairesEdc);
 
-/* Get all beneficiaries enrolled in formations associated with a specific EDC */
-router.get('/getBeneficiairesEDC/:edcIds', getBeneficiairesEdc);
-
-
+// This route with parameter should come AFTER all other specific routes
+router.get('/:id', authenticated, authorizeRoles('Admin'), getEDCById);
 
 module.exports = router;
