@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const { 
     getAllFormateursEdc, 
     getAllFormationsEdc, 
-    getAllBeneficiairesFormationsEdc 
+    getAllBeneficiairesFormationsEdc,
 } = require('../utils/edcUtils');
 
 // Create a new EDC entity
@@ -82,62 +82,6 @@ const getEDCById = async (req, res) => {
   }
 };
 
-// Update an EDC
-/*const updateEDC = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { ville, specialite, nombreFormateurs, certifications, responsable, domaineFormation } = req.body;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid ID format" });
-    }
-
-    // Find the EDC first
-    const edc = await EDC.findById(id);
-    if (!edc) {
-      return res.status(404).json({ message: "EDC not found" });
-    }
-
-    // Create update objects for both EDC and Entity
-    const edcUpdateData = {};
-    if (specialite) edcUpdateData.specialite = specialite;
-    if (nombreFormateurs !== undefined) edcUpdateData.nombreFormateurs = nombreFormateurs;
-    if (certifications) edcUpdateData.certifications = certifications;
-    if (responsable) edcUpdateData.responsable = responsable;
-    if (domaineFormation) edcUpdateData.domaineFormation = domaineFormation;
-
-    // Update the EDC
-    const updatedEDC = await EDC.findByIdAndUpdate(
-      id,
-      edcUpdateData,
-      { new: true, runValidators: true }
-    );
-
-    // If ville is provided, update the related Entity
-    if (ville) {
-      await Entity.findByIdAndUpdate(
-        edc.entity,
-        { ville },
-        { runValidators: true }
-      );
-    }
-
-    // Fetch the complete updated EDC with Entity data
-    const completeUpdatedEDC = await EDC.findById(id).populate('entity');
-
-    res.status(200).json({
-      message: "EDC updated successfully",
-      edc: completeUpdatedEDC
-    });
-  } catch (error) {
-    console.error("Error updating EDC:", error);
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({ message: "Validation error", errors: error.errors });
-    }
-    res.status(500).json({ message: "Error updating EDC", error: error.message });
-  }
-};*/
-
 // Delete an EDC and its related Entity
 const deleteEDC = async (req, res) => {
   try {
@@ -168,26 +112,18 @@ const deleteEDC = async (req, res) => {
 
 const getFormateursEdc = async (req, res) => {
   try {
-      // Récupérer les edcIds depuis les paramètres d'URL
-      const { edcIds } = req.params;
-
-      // Vérifier si edcIds est présent
-      if (!edcIds) {
-          return res.status(400).json({
-              success: false,
-              message: "La liste des EDC IDs est requise"
-          });
-      }
-
-      // Convertir la chaîne de caractères en tableau
-      const edcIdArray = edcIds.split(',');
-
-      // Vérifier si edcIdArray est un tableau non vide
-      if (!Array.isArray(edcIdArray) || edcIdArray.length === 0) {
-          return res.status(400).json({
-              success: false,
-              message: "La liste des EDC IDs est invalide"
-          });
+    // Fetch all EDCs from the database
+      const allEdcs = await EDC.find({}).select('_id');
+      
+      // Extract EDC IDs into an array
+      const edcIdArray = allEdcs.map(edc => edc._id.toString());
+      
+      // Check if we found any EDCs
+      if (edcIdArray.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: "Aucun EDC trouvé dans la base de données"
+        });
       }
 
       // Récupérer les formateurs pour chaque EDC
@@ -208,26 +144,18 @@ const getFormateursEdc = async (req, res) => {
 
 const getFormationsEdc = async (req, res) => {
   try {
-      // Récupérer les edcIds depuis les paramètres d'URL
-      const { edcIds } = req.params;
-
-      // Vérifier si edcIds est présent
-      if (!edcIds) {
-          return res.status(400).json({
-              success: false,
-              message: "La liste des EDC IDs est requise"
-          });
-      }
-
-      // Convertir la chaîne de caractères en tableau
-      const edcIdArray = edcIds.split(',');
-
-      // Vérifier si edcIdArray est un tableau non vide
-      if (!Array.isArray(edcIdArray) || edcIdArray.length === 0) {
-          return res.status(400).json({
-              success: false,
-              message: "La liste des EDC IDs est invalide"
-          });
+    // Fetch all EDCs from the database
+      const allEdcs = await EDC.find({}).select('_id');
+      
+      // Extract EDC IDs into an array
+      const edcIdArray = allEdcs.map(edc => edc._id.toString());
+      
+      // Check if we found any EDCs
+      if (edcIdArray.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: "Aucun EDC trouvé dans la base de données"
+        });
       }
 
       // Récupérer les formateurs pour chaque EDC
@@ -251,26 +179,18 @@ const getFormationsEdc = async (req, res) => {
 
 const getBeneficiairesEdc = async (req, res) => {
   try {
-      // Récupérer les edcIds depuis les paramètres d'URL
-      const { edcIds } = req.params;
-
-      // Vérifier si edcIds est présent
-      if (!edcIds) {
-          return res.status(400).json({
-              success: false,
-              message: "La liste des EDC IDs est requise"
-          });
-      }
-
-      // Convertir la chaîne de caractères en tableau
-      const edcIdArray = edcIds.split(',');
-
-      // Vérifier si edcIdArray est un tableau non vide
-      if (!Array.isArray(edcIdArray) || edcIdArray.length === 0) {
-          return res.status(400).json({
-              success: false,
-              message: "La liste des EDC IDs est invalide"
-          });
+    // Fetch all EDCs from the database
+      const allEdcs = await EDC.find({}).select('_id');
+      
+      // Extract EDC IDs into an array
+      const edcIdArray = allEdcs.map(edc => edc._id.toString());
+      
+      // Check if we found any EDCs
+      if (edcIdArray.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: "Aucun EDC trouvé dans la base de données"
+        });
       }
 
       // Récupérer les formateurs pour chaque EDC
