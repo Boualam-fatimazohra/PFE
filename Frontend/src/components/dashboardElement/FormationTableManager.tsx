@@ -4,32 +4,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FormationItem } from "@/pages/types";
 import { useNavigate } from "react-router-dom";
-
-export interface FormationTableItem {
-  _id: string;
-  title: string;
-  dateDebut: string;
-  dateFin: string;
-  status: "En Cours" | "Avenir" | "Terminé" | "Replanifier";
-  formateur?: string;
-  role?: string;
-  participants?: string;
-  satisfaction?: string;
-  image?: string;
-}
+import {Formation} from "@/components/formation-modal/types"
 
 interface FormationsTableProps {
-  formations?: FormationTableItem[];
+  formations?: Formation[];
   onShowDetails?: (formation: FormationItem) => void;
 }
 
 export const FormationsTable = ({
-  formations = [
-    { _id: "1", title: "Atelier IA Générative en design", dateDebut: "2025-03-15", dateFin: "2025-03-20", status: "En Cours", formateur: "Mohamed Bikarrane", role: "Agadir", participants: "24/30", satisfaction: "75%", image: "/api/placeholder/60/60" },
-    { _id: "2", title: "AWS : Développement, déploiement et gestion", dateDebut: "2025-03-17", dateFin: "2025-03-25", status: "En Cours", formateur: "Mehdi Iddouche", role: "Agadir", participants: "24/30", satisfaction: "75%", image: "/api/placeholder/60/60" },
-    { _id: "3", title: "Maîtriser le développement d'applications natives avec Java.", dateDebut: "2025-03-15", dateFin: "2025-03-30", status: "En Cours", formateur: "Aymen Hafsi", role: "Rabat", participants: "24/30", satisfaction: "75%", image: "/api/placeholder/60/60" },
-    { _id: "4", title: "Maîtriser le développement d'applications natives avec Java.", dateDebut: "2025-03-15", dateFin: "2025-03-28", status: "En Cours", formateur: "Mohamed Bikarrane", role: "Agadir", participants: "24/30", satisfaction: "75%", image: "/api/placeholder/60/60" },
-  ],
+  formations = [],
   onShowDetails
 }: FormationsTableProps) => {
   const navigate = useNavigate();
@@ -127,7 +110,7 @@ export const FormationsTable = ({
                         </svg>
                       </div>
                     )}
-                    <span className="text-sm font-bold text-gray-600">{formation.title}</span>
+                    <span className="text-sm font-bold text-gray-600">{formation.nom}</span>
                   </div>
                 </TableCell>
                 <TableCell>
@@ -135,7 +118,7 @@ export const FormationsTable = ({
                     {formation.formateur}
                   </div>
                   <div className="bg-gray-200 text-gray-600 px-2 py-1 rounded-full text-xs font-medium inline-block mt-1">
-                    {formation.role}
+                    formateur
                   </div>
                 </TableCell>
                 <TableCell>
@@ -154,10 +137,10 @@ export const FormationsTable = ({
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="text-sm font-bold">{formation.participants}</div>
+                  <div className="text-sm font-bold">N/A</div>
                 </TableCell>
                 <TableCell>
-                  <div className="text-sm font-bold">{formation.satisfaction}</div>
+                  <div className="text-sm font-bold">N/A</div>
                 </TableCell>
                 <TableCell className="text-center">
                   <Button
