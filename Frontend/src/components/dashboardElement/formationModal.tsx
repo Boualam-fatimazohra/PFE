@@ -647,6 +647,7 @@ const handleSubmit = async () => {
           // Proceed to next step
           //setCurrentStep(currentStep + 1);
         }
+        alert("bénéficiaires enregistré avec succes");
       } 
        // Appel à updateFormationStep ici après succès de updateBeneficiaireConfirmations
       //  const response = await updateFormationStep(formationId);
