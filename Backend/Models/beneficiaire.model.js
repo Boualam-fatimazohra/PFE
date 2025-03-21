@@ -14,12 +14,12 @@ const beneficiaireSchema = new mongoose.Schema({
     specialite: {type:String,required:false},
     etablissement:{type:String,required:false},
     profession:{type:String,required:false},
-    situationProfessionnel:{type:String,required:false,enum:["Sans Emploi","Avec Emploi","Etudiant"]},
+    situationProfessionnel:{type:String,required:false,enum:["Sans Emploi","Employe","Etudiant"]},
     // est ce que le beneficiaire est blacklister ou pas 
     isBlack: { type: Boolean, default: false },
     // est ce qu'il a dépasse 3 formation ou pas 
     isSaturate: { type: Boolean, default: false },
-     nationalite: {type:String,required:false},
+    nationalite: {type:String,required:false},
      region:{type:String,required:false,enum:["Souss Massa","Draa Tafilalte","Oued Ed-Dahab"],default:"Souss Massa"},
     categorieAge:{type:String,required:false,enum:["Moin_15","Entre15_24","Entre25_34","Plus_34"],default:"Entre15_24"},
   }, { timestamps: true });
