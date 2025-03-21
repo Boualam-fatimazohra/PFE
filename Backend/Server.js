@@ -11,6 +11,7 @@ const managerRoutes = require("./Routes/manager.route.js");
 const evaluationRoutes = require("./Routes/evaluation.route.js");
 const evenementRoutes = require("./Routes/evenement.route.js");
 const notificationRoutes = require("./Routes/notification.route.js");
+const Presence=require("./Routes/presence.route.js")
 const entityRoutes = require("./Routes/entity.route.js");
 const edcRoutes = require("./Routes/edc.routes.js");
 
@@ -273,6 +274,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/entity", entityRoutes); 
 app.use("/api/edc",edcRoutes);
 app.use("/api", chatbotRoutes);
+app.use("/api/presence",Presence);
 // Middleware de gestion des erreurs
 app.use((err, req, res, next) => {
     console.error("Erreur serveur:", err);

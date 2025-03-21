@@ -674,7 +674,7 @@ const exportBeneficiairesToExcel = async (req, res) => {
         'Genre': b.genre || '',
         'Pays': b.pays || '',
         'Région': b.region || '',
-        'Date de naissance': b.dateNaissance ? new Date(b.dateNaissance).toLocaleDateString('fr-FR') : '',
+        'Date de naissance': b.categorieAge || '',
         'Catégorie d\'âge': b.categorieAge || '',
         'Situation professionnelle': b.situationProfessionnel || '',
         'Niveau d\'études': b.niveau || '',
@@ -765,6 +765,7 @@ const exportBeneficiairesToExcel = async (req, res) => {
     });
   }
 };
+
 
 // Export the functions for use in routes
 module.exports = {
