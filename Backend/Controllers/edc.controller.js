@@ -82,62 +82,6 @@ const getEDCById = async (req, res) => {
   }
 };
 
-// Update an EDC
-/*const updateEDC = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { ville, specialite, nombreFormateurs, certifications, responsable, domaineFormation } = req.body;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid ID format" });
-    }
-
-    // Find the EDC first
-    const edc = await EDC.findById(id);
-    if (!edc) {
-      return res.status(404).json({ message: "EDC not found" });
-    }
-
-    // Create update objects for both EDC and Entity
-    const edcUpdateData = {};
-    if (specialite) edcUpdateData.specialite = specialite;
-    if (nombreFormateurs !== undefined) edcUpdateData.nombreFormateurs = nombreFormateurs;
-    if (certifications) edcUpdateData.certifications = certifications;
-    if (responsable) edcUpdateData.responsable = responsable;
-    if (domaineFormation) edcUpdateData.domaineFormation = domaineFormation;
-
-    // Update the EDC
-    const updatedEDC = await EDC.findByIdAndUpdate(
-      id,
-      edcUpdateData,
-      { new: true, runValidators: true }
-    );
-
-    // If ville is provided, update the related Entity
-    if (ville) {
-      await Entity.findByIdAndUpdate(
-        edc.entity,
-        { ville },
-        { runValidators: true }
-      );
-    }
-
-    // Fetch the complete updated EDC with Entity data
-    const completeUpdatedEDC = await EDC.findById(id).populate('entity');
-
-    res.status(200).json({
-      message: "EDC updated successfully",
-      edc: completeUpdatedEDC
-    });
-  } catch (error) {
-    console.error("Error updating EDC:", error);
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({ message: "Validation error", errors: error.errors });
-    }
-    res.status(500).json({ message: "Error updating EDC", error: error.message });
-  }
-};*/
-
 // Delete an EDC and its related Entity
 const deleteEDC = async (req, res) => {
   try {
