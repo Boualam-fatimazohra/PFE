@@ -68,9 +68,10 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
         firstName: entry.beneficiaire.prenom,
         email: entry.beneficiaire.email,
         gender: entry.beneficiaire.genre,
-        situationProfessionnel: entry.beneficiaire.situationProfessionnel,
+        situationProfessionnel: entry.beneficiaire.profession,
         status: entry.confirmationEmail ? "present" as "present" : "absent" as "absent", // Cast explicite
       }));
+      console.log("participante from DetailsFormation",beneficiairesData);
       
       setParticipants(participantsData);
       
