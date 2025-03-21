@@ -12,6 +12,9 @@ import FormStepFour from '@/components/formation-modal/form-steps/FormStepFour';
 import FormNavigationButtons from '@/components/formation-modal/ui/FormNavigationButtons';
 import { updateBeneficiaireConfirmations,updateFormationStep,validerFormation} from '../../services/formationService';
 // Types and Styles
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 import { 
   FormState, 
   Step, 
@@ -310,7 +313,6 @@ const FormationModal: React.FC = () => {
       else if (currentStep === 3) {
         await handleUpdateConfirmations();
         setCurrentStep(currentStep + 1);
-        alert("changement des confirmation effecuter");
 
       }///debut
       else if (currentStep === 2) {
@@ -524,7 +526,8 @@ const handleSubmit = async () => {
       if (currentStep === 3) {
         await handleUpdateConfirmations();
         //setCurrentStep(currentStep + 1);
-        alert("changement des confirmation effecuter");
+        toast.success("changement des confirmation effecuter");
+
 
       }///debut
       else if (currentStep === 2) {
@@ -643,11 +646,11 @@ const handleSubmit = async () => {
               console.error("Erreur lors de la récupération des données:", err);
             }
           }
-          
           // Proceed to next step
           //setCurrentStep(currentStep + 1);
         }
-        alert("bénéficiaires enregistré avec succes");
+        toast.success("bénéficiaires enregistré avec succes");
+
       } 
        // Appel à updateFormationStep ici après succès de updateBeneficiaireConfirmations
       //  const response = await updateFormationStep(formationId);
