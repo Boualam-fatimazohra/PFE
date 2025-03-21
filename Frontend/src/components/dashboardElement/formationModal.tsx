@@ -437,6 +437,7 @@ const FormationModal: React.FC = () => {
        // Appel à updateFormationStep ici après succès de updateBeneficiaireConfirmations
        const response = await updateFormationStep(formationId);
        console.log(`Step updated to ${response} after confirmations update`);
+       
     }
   };
 
@@ -522,7 +523,7 @@ const handleSubmit = async () => {
     try {
       if (currentStep === 3) {
         await handleUpdateConfirmations();
-        setCurrentStep(currentStep + 1);
+        //setCurrentStep(currentStep + 1);
         alert("changement des confirmation effecuter");
 
       }///debut
@@ -644,14 +645,14 @@ const handleSubmit = async () => {
           }
           
           // Proceed to next step
-          setCurrentStep(currentStep + 1);
+          //setCurrentStep(currentStep + 1);
         }
       } 
        // Appel à updateFormationStep ici après succès de updateBeneficiaireConfirmations
-       const response = await updateFormationStep(formationId);
-       console.log(`Step updated to ${response} after confirmations update`);
-      console.log("Formation soumise comme Brouillon; ID de la formation:", formationId);
-      navigate("/formateur/mesformation");
+      //  const response = await updateFormationStep(formationId);
+      //  console.log(`Step updated to ${response} after confirmations update`);
+      // console.log("Formation soumise comme Brouillon; ID de la formation:", formationId);
+      // alert("modification enregistrer avec success");
     } catch (error) {
       console.error("Erreur lors de la soumission du brouillon :", error.message);
       alert(`Erreur : ${error.message}`); // Affiche une alerte si une erreur se produit
