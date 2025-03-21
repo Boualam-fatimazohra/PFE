@@ -149,3 +149,29 @@ export interface FormationDraftResponse {
   currentStep: number;
   // Add any other fields returned by the API
 }
+
+export interface Formateur {
+  _id?: string;
+  utilisateur?: {
+    nom: string;
+    prenom: string;
+    email: string;
+    numeroTelephone?: string;
+    role: string;
+  };
+  manager?: any;
+  coordinateur?: any;
+}
+
+export interface Entity {
+  _id?: string;
+  ville: string;
+  type: string;
+}
+
+export interface EDC {
+  _id?: string;
+  entity?: Entity;
+  createdAt?: string;
+  updatedAt?: string;
+}
