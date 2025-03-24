@@ -9,7 +9,7 @@ export interface Formation {
   tags: string; 
   categorie?: string;
   niveau?: string;
-  image?: File | string;
+  image?: string | File; 
   isDraft?: boolean;
   currentStep?: number;
   createdAt?: string;

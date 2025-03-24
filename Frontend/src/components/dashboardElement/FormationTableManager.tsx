@@ -100,8 +100,11 @@ export const FormationsTable = ({
               <TableRow key={formation._id}>
                 <TableCell>
                   <div className="flex items-center gap-3">
-                    {formation.image ? (
-                      <img src={formation.image} alt="" className="w-8 h-8 rounded-full" />
+                    {typeof formation.image === 'string' ? (
+                      <img 
+                        src={formation.image}
+                        className="w-8 h-8 rounded-full" 
+                      />
                     ) : (
                       <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
