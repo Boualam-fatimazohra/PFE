@@ -101,4 +101,5 @@ const MarquerPresence = async (req, res) => {
   }
 };
 
+
 module.exports = { MarquerPresence };
