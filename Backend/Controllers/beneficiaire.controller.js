@@ -4,13 +4,16 @@ const readExcelFile = require("../utils/excelReader");
 const XLSX = require("xlsx");
 const path = require("path");
 const fs = require("fs");
-const  BeneficiareFormation=require("../Models/beneficiairesFormation.js");
+const BeneficiaireFormation = require("../Models/beneficiairesFormation.js");
 const mongoose = require('mongoose');
 const Formateur=require("../Models/formateur.model");
 const {parseExcelFile} =require("../utils/excelUtils.js");
-const {getExistingBeneficiairesHashes, isDuplicateBeneficiaire }= require("../utils/existedBenef.js");
+const {getExistingBeneficiairesHashes }= require("../utils/existedBenef.js");
 const { hashBeneficiaire } = require("../utils/hashBenef");
-
+const Presence = require('../Models/presence.model.js');
+const { getBeneficiairesByFormation,
+    getPresencesByBeneficiaires,
+    getOtherFormationsByBeneficiaire }=require("../utils/BeneficiairePresence.js")
 const createBeneficiaire = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -490,7 +493,7 @@ const getBeneficiaireFormation = async (req, res) => {
     const formationId = new mongoose.Types.ObjectId(idFormation.toString());
 
     // Récupérer les bénéficiaires liés à la formation
-    const beneficiaires = await BeneficiareFormation.find({ formation: formationId })
+    const beneficiaires = await BeneficiaireFormation.find({ formation: formationId })
       .populate({
         path: "beneficiaire",
         model: "Beneficiaire", 
@@ -551,7 +554,7 @@ const getNombreBeneficiairesParFormateur = async (req, res) => {
     }
 
     const formationIds = formations.map(f => f._id);
-    const nombreBeneficiaires = await BeneficiareFormation.countDocuments({
+    const nombreBeneficiaires = await BeneficiaireFormation.countDocuments({
       formation: { $in: formationIds }
     });
 
@@ -766,6 +769,44 @@ const exportBeneficiairesToExcel = async (req, res) => {
   }
 };
 
+const getBeneficiairesWithPresence = async (req, res) => {
+  try {
+     const formationId = req.params.formationId;
+    console.log("ID Formation reçu :", formationId); // Ajoute cette ligne pour vérifier l'ID
+if (!mongoose.Types.ObjectId.isValid(formationId)) {
+  return res.status(400).json({ message: "ID de formation invalide" });
+}
+    // Étape 1 : Récupérer les bénéficiaires associés à la formation
+    const beneficiairesFormation = await getBeneficiairesByFormation(formationId);
+    console.log("Bénéficiaires Formation:", beneficiairesFormation);
+    const beneficiairesFormationIds = beneficiairesFormation.map(bf => bf._id);
+    
+    // Étape 2 : Récupérer les présences associées
+    const presences = await getPresencesByBeneficiaires(beneficiairesFormationIds);
+    
+    // Étape 3 : Construire la réponse
+    const result = await Promise.all(beneficiairesFormation.map(async (bf) => {
+    const autresFormations = await getOtherFormationsByBeneficiaire(bf.beneficiaire._id, formationId);
+      
+      return {
+        beneficiaire: bf.beneficiaire,
+        formationId: bf.formation,
+        presences: presences.filter(p => p.beneficiareFormation.toString() === bf._id.toString()),
+        autresFormations: autresFormations.map(f => f.formation),
+      };
+    }));
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Erreur lors de la récupération des données." });
+  }
+};
+
+
+
+
+
 
 // Export the functions for use in routes
 module.exports = {
@@ -778,5 +819,6 @@ module.exports = {
     getBeneficiaireFormation,
     getNombreBeneficiairesParFormateur,
     updateBeneficiaireConfirmations,
-    exportBeneficiairesToExcel
+    exportBeneficiairesToExcel,
+    getBeneficiairesWithPresence
 };

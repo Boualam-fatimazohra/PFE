@@ -18,7 +18,6 @@ interface DetailsFormationProps {
 const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetourClick }) => {
   const { getBeneficiaireFormation } = useFormations();
   const [isLoading, setIsLoading] = useState(false);
-  
   const [participantsPage, setParticipantsPage] = useState(1);
   const PARTICIPANTS_PER_PAGE = 11;
   const [lastUpdated, setLastUpdated] = useState(() => {
@@ -173,6 +172,7 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
       participants={participants}
       currentPage={participantsPage}
       itemsPerPage={PARTICIPANTS_PER_PAGE}
+      formation={formation}
     />
   </>
 )}
