@@ -10,7 +10,8 @@ const {
   getBeneficiaireFormation,
   getNombreBeneficiairesParFormateur,
   updateBeneficiaireConfirmations,
-  exportBeneficiairesToExcel
+  exportBeneficiairesToExcel,
+  getBeneficiairesWithPresence
 } = require("../Controllers/beneficiaire.controller");
 const upload = require("../utils/upload");
 const authenticated = require("../Middlewares/Authmiddleware.js");
@@ -45,5 +46,6 @@ router.get("/export/:formationId",
   RoleMiddleware("Admin", "Manager", "Formateur"), 
   exportBeneficiairesToExcel
 );
+router.get("/getBeneficiairesWithPresence/:formationId",authenticated,getBeneficiairesWithPresence);
 
 module.exports = router;

@@ -2,6 +2,7 @@ import * as React from "react";
 import { Printer, Search, FileDown } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { FormationItem } from "@/pages/types"; 
 
 interface Participant {
   date: string;
@@ -12,18 +13,21 @@ interface Participant {
   gender: string;
   situationProfessionnel: string;
   status: string;
+
 }
 
 interface ParticipantsSectionProps {
   participants: Participant[];
   currentPage: number;
   itemsPerPage?: number;
+  formation?:FormationItem;
 }
 
 const ParticipantsSection: React.FC<ParticipantsSectionProps> = ({ 
   participants,
   currentPage,
-  itemsPerPage = 11 
+  itemsPerPage = 11,
+  formation
 }) => {
   const [selectAll, setSelectAll] = React.useState(false);
   const [selectedParticipants, setSelectedParticipants] = React.useState<number[]>([]);
