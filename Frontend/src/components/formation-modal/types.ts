@@ -6,13 +6,26 @@ export interface Formation {
   description?: string;
   lienInscription: string;
   status?: string;
-  tags: string; // Decide whether this is required or optional
+  tags: string; 
   categorie?: string;
   niveau?: string;
   image?: File | string;
   isDraft?: boolean;
   currentStep?: number;
   createdAt?: string;
+  formateur?: {
+    _id: string;
+    utilisateur: {
+      _id: string;
+      nom: string;
+      prenom: string;
+      email: string;
+      numeroTelephone: string;
+      role: string;
+      createdAt: string;
+      updatedAt: string;
+    };
+  };
 }
 export interface FormationResponse {
   message: string;
