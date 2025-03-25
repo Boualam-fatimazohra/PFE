@@ -10,13 +10,20 @@ import { CustomPagination } from "../layout/CustomPagination";
 import { FormationItem, Participant, Document, StatMetric } from "@/pages/types"; 
 import { useFormations } from "@/contexts/FormationContext";
 import { BeneficiaireInscription } from "../formation-modal/types";
+import {getBeneficiairesWithPresence} from "../../services/beneficiaireService";
 interface DetailsFormationProps {
   formation: FormationItem;
   onRetourClick: () => void; 
 }
+interface BeneficiaireWithPresenceResponse {
+  beneficiaire: any; // Remplace "any" par le type exact du bénéficiaire
+  formationId: string;
+  presences: any[]; // Remplace "any" par le type exact de présence
+  autresFormations: string[]; // Liste des IDs des autres formations
+}
 
 const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetourClick }) => {
-  const { getBeneficiaireFormation } = useFormations();
+  // const { getBeneficiaireFormation } = useFormations();
   const [isLoading, setIsLoading] = useState(false);
   const [participantsPage, setParticipantsPage] = useState(1);
   const PARTICIPANTS_PER_PAGE = 11;
@@ -26,10 +33,10 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
   });
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [documents, setDocuments] = useState<Document[]>([]);
-  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [participants, setParticipants] = useState<BeneficiaireWithPresenceResponse[]>([]);
   const [statsMetrics, setStatsMetrics] = useState<StatMetric[]>([]);
-
-  // Format date and time for display
+ 
+  // Format date and time for display***
   function formatDateTime(date: Date) {
     const day = date.getDate().toString().padStart(2, '0');
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -57,22 +64,8 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
       ]);
       
       // Fetch participants from the API
-      const beneficiairesData = await getBeneficiaireFormation(formation.id);
-      
-      // Convert beneficiary data to participant format
-      const participantsData = beneficiairesData.map(entry => ({
-        date: "26/05/2024", // You may want to get this from the API data
-        time: "14h00-16h00", // You may want to get this from the API data
-        lastName: entry.beneficiaire.nom,
-        firstName: entry.beneficiaire.prenom,
-        email: entry.beneficiaire.email,
-        gender: entry.beneficiaire.genre,
-        situationProfessionnel: entry.beneficiaire.profession,
-        status: entry.confirmationEmail ? "present" as "present" : "absent" as "absent", // Cast explicite
-      }));
-      console.log("participante from DetailsFormation",beneficiairesData);
-      
-      setParticipants(participantsData);
+      const beneficiairesData = await getBeneficiairesWithPresence(formation.id);      
+      setParticipants(beneficiairesData);
       
       // Set your stats metrics (you might want to calculate these based on the data)
       setStatsMetrics([
@@ -168,12 +161,17 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
 ) : (
   <>
     {/* Your regular content */}
-    <ParticipantsSection
+    {/* <ParticipantsSection
       participants={participants}
       currentPage={participantsPage}
       itemsPerPage={PARTICIPANTS_PER_PAGE}
-      formation={formation}
-    />
+    /> */}
+    <ParticipantsSection
+  participants={participants}
+  currentPage={1}
+  formation={formation}
+  
+/>
   </>
 )}
         {/* Utilisation de CustomPagination pour naviguer entre les pages de participants */}
