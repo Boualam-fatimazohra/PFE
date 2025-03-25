@@ -12,12 +12,14 @@ import Ecolcode from "@/components/dashboardElement/Ecolcode";
 import GestionFormation from "@/components/dashboardElement/GestionFormationManager";
 import GestionFormateurManager from "@/components/dashboardElement/GestionFormateurManager";
 import GestionFormationManager from "@/components/dashboardElement/GestionFormationManager";
+import { EdcProvider } from "@/contexts/EdcContext";
 
 
 const ManagerRoutes = () => {
   return (
     <FormationProvider>
     <NotificationProvider>
+    <EdcProvider>
     <Routes>
       <Route path="/dashboardManager" element={<DashboardManager />} />
       <Route path="*" element={<NotFound />} />
@@ -30,6 +32,7 @@ const ManagerRoutes = () => {
           <Route path="/GestionFormation" element={<GestionFormationManager/>} />
 
     </Routes>
+    </EdcProvider>
     </NotificationProvider>
     </FormationProvider>
 

@@ -25,6 +25,7 @@ interface AuthContextType {
     email: string | null;
     codeVerified: boolean;
   };
+  isAuthenticated: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -45,6 +46,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(JSON.parse(storedUser));
     }
   }, []);
+
+  const isAuthenticated = (): boolean => {
+    return user !== null;
+  };
 
   const login = async (email: string, password: string) => {
     try {
@@ -111,7 +116,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         forgotPassword, 
         verifyResetCode, 
         resetPassword,
-        resetState
+        resetState,
+        isAuthenticated
       }}
     >
       {children}

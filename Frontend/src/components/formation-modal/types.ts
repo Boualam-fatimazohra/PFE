@@ -6,13 +6,26 @@ export interface Formation {
   description?: string;
   lienInscription: string;
   status?: string;
-  tags: string; // Decide whether this is required or optional
+  tags: string; 
   categorie?: string;
   niveau?: string;
   image?: File | string;
   isDraft?: boolean;
   currentStep?: number;
   createdAt?: string;
+  formateur?: {
+    _id: string;
+    utilisateur: {
+      _id: string;
+      nom: string;
+      prenom: string;
+      email: string;
+      numeroTelephone: string;
+      role: string;
+      createdAt: string;
+      updatedAt: string;
+    };
+  };
 }
 export interface FormationResponse {
   message: string;
@@ -148,4 +161,30 @@ export interface FormationDraftResponse {
   tags: string;
   currentStep: number;
   // Add any other fields returned by the API
+}
+
+export interface Formateur {
+  _id?: string;
+  utilisateur?: {
+    nom: string;
+    prenom: string;
+    email: string;
+    numeroTelephone?: string;
+    role: string;
+  };
+  manager?: any;
+  coordinateur?: any;
+}
+
+export interface Entity {
+  _id?: string;
+  ville: string;
+  type: string;
+}
+
+export interface EDC {
+  _id?: string;
+  entity?: Entity;
+  createdAt?: string;
+  updatedAt?: string;
 }

@@ -11,6 +11,8 @@ import { CustomPagination } from "@/components/layout/CustomPagination";
 import ModalEditFormation from "@/components/dashboardElement/ModalEditFormation";
 import FormationCard from "@/components/Formation/FormationCards";
 import { useFormations } from "../contexts/FormationContext";
+import "react-toastify/dist/ReactToastify.css";
+
 import {
   Select,
   SelectContent,
