@@ -101,7 +101,7 @@ export const FormationsTable = ({
                 <TableCell>
                   <div className="flex items-center gap-3">
                     {formation.image ? (
-                      <img src={formation.image} alt="" className="w-8 h-8 rounded-full" />
+                      <img src={formation.image as string} alt="" className="w-8 h-8 rounded-full" />
                     ) : (
                       <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -115,10 +115,10 @@ export const FormationsTable = ({
                 </TableCell>
                 <TableCell>
                   <div className="text-base font-bold text-gray-900">
-                    {formation.formateur}
+                    {formation.formateurName}
                   </div>
                   <div className="bg-gray-200 text-gray-600 px-2 py-1 rounded-full text-xs font-medium inline-block mt-1">
-                    formateur
+                    {formation.formateurCity}
                   </div>
                 </TableCell>
                 <TableCell>

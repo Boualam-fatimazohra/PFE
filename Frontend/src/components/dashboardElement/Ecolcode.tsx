@@ -121,16 +121,12 @@ const Ecolecode = () => {
         dateDebut: formation.dateDebut,
         dateFin: formation.dateFin,
         status: formation.status || "En Cours",
-        image: "/api/placeholder/60/60", // Default placeholder since real data might not have images
+        image: formation.image as string, // Default placeholder since real data might not have images
         formateur: formation.formateur?._id, // Extract formateur ID from the nested object
+        formateurCity: formation.entity?.ville,
         formateurName: formation.formateur ? `${formation.formateur.utilisateur.prenom} ${formation.formateur.utilisateur.nom}` : "", // Format formateur name
       }))
-    : [
-        { nom: "JavaScript Avancé", dateDebut: "2025-03-01", dateFin: "2025-03-15", status: "En Cours", image: "/api/placeholder/60/60" },
-        { nom: "React Fondamentaux", dateDebut: "2025-03-10", dateFin: "2025-03-25", status: "En Cours", image: "/api/placeholder/60/60" },
-        { nom: "Python Data Science", dateDebut: "2025-04-05", dateFin: "2025-04-20", status: "Avenir", image: "/api/placeholder/60/60" },
-        { nom: "UI/UX Bootcamp", dateDebut: "2025-02-10", dateFin: "2025-02-28", status: "Terminé", image: "/api/placeholder/60/60" },
-      ];
+    : [];
 
   const mappedFormations = formationData.map((formation, index) => ({
     _id: formation._id || index.toString(),
@@ -140,7 +136,8 @@ const Ecolecode = () => {
     dateFin: formation.dateFin,
     status: formation.status as "En Cours" | "Avenir" | "Terminé" | "Replanifier",
     image: formation.image,
-    formateur: formation.formateurName // Include formateur ID in the mapped formations
+    formateurName: formation.formateurName,
+    formateurCity: formation.formateurCity
   }));
 
   // Use edcFormateurs if available for FormateurList component, otherwise use static data
