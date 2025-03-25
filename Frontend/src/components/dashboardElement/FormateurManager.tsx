@@ -2,34 +2,16 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
+import { Formateur } from "../formation-modal/types";
 
-export interface FormateurItem {
-  id: string;
-  nom: string;
-  role: string;
-  ville: string;
-  disponible: boolean;
-  enFormation: boolean;
-}
 
 interface FormateurListProps {
-  formateurs?: FormateurItem[];
-  onAccederClick?: (formateur: FormateurItem) => void;
+  formateurs?: Formateur[];
+  onAccederClick?: (formateur: Formateur) => void;
 }
 
 export const FormateurList = ({
-  formateurs = [
-    { id: "1", nom: "Nom/Prénom", role: "Formateur", ville: "ODC Agadir", disponible: false, enFormation: true },
-    { id: "2", nom: "Nom/Prénom", role: "Formateur", ville: "ODC Rabat", disponible: true, enFormation: false },
-    { id: "3", nom: "Nom/Prénom", role: "Formateur", ville: "ODC Casablanca", disponible: false, enFormation: true },
-    { id: "4", nom: "Nom/Prénom", role: "Formateur", ville: "ODC Casablanca", disponible: false, enFormation: false },
-    { id: "5", nom: "Nom/Prénom", role: "Formateur", ville: "ODC Agadir", disponible: true, enFormation: false },
-    { id: "6", nom: "Nom/Prénom", role: "Formateur", ville: "ODC Rabat", disponible: true, enFormation: false },
-    { id: "7", nom: "Nom/Prénom", role: "Formateur", ville: "ODC Rabat", disponible: false, enFormation: false },
-    { id: "8", nom: "Nom/Prénom", role: "Formateur", ville: "ODC Rabat", disponible: false, enFormation: true },
-    { id: "9", nom: "Nom/Prénom", role: "Formateur", ville: "ODC Casablanca", disponible: true, enFormation: false },
-    { id: "10", nom: "Nom/Prénom", role: "Formateur", ville: "ODC Casablanca", disponible: true, enFormation: false },
-    { id: "11", nom: "Nom/Prénom", role: "Formateur", ville: "ODC Casablanca", disponible: true, enFormation: false },  ],
+  formateurs = [],
   onAccederClick
 }: FormateurListProps) => {
   const [activeFilter, setActiveFilter] = React.useState<string>("Tous");
@@ -41,7 +23,7 @@ export const FormateurList = ({
     
     // Filter by city if not "Tous"
     if (activeVille !== "Tous") {
-      result = result.filter(f => f.ville.includes(activeVille));
+      result = result.filter(f => f.entity.ville.includes(activeVille));
     }
     
     return result;
@@ -104,7 +86,7 @@ export const FormateurList = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredFormateurs.map((formateur) => (
-            <div key={formateur.id} className="border border-gray-300 rounded-[4px] p-4 flex flex-col font-inter">
+            <div key={formateur._id} className="border border-gray-300 rounded-[4px] p-4 flex flex-col font-inter">
               <div className="flex items-start mb-2">
                 <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mr-4">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -113,18 +95,18 @@ export const FormateurList = ({
                   </svg>
                 </div>
                 <div className="flex-grow">
-                  <div className="font-medium text-gray-900">{formateur.nom}</div>
-                  <div className="text-sm text-gray-500">{formateur.role} {formateur.ville}</div>
+                  <div className="font-medium text-gray-900">{formateur.utilisateur?.nom}</div>
+                  <div className="text-sm text-gray-500">{formateur.utilisateur?.role} {formateur.entity?.ville}</div>
                 </div>
-                {formateur.enFormation && (
+                {!formateur.isAvailable && (
                 <span
                   className="bg-orange-100 text-orange-400 px-3 py-1 rounded-full text-sm "
                 >
-                  En formation
+                  En formation 
                 </span>
               )}
 
-              {!formateur.enFormation && formateur.disponible && (
+              {formateur.isAvailable && (
                 <span
                   className="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-sm "
                 >
@@ -132,14 +114,6 @@ export const FormateurList = ({
                 </span>
               )}
 
-                  {!formateur.enFormation && !formateur.disponible && (
-                    <span
-                    className="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-sm "
-                  >
-                    Disponible
-                  </span>
-                  
-                  )}
               </div>
               <div className="flex justify-between items-center">
               <Button

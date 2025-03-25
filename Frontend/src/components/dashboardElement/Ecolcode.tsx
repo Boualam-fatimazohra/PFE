@@ -142,17 +142,8 @@ const Ecolecode = () => {
 
   // Use edcFormateurs if available for FormateurList component, otherwise use static data
   const formateurData = edcFormateurs && edcFormateurs.length > 0
-    ? edcFormateurs.map(formateur => ({
-        nom: `${formateur.utilisateur?.nom || ''} ${formateur.utilisateur?.prenom || ''}`,
-        formations: 10, // Default value since real data might not have these counts
-        beneficiaires: 150,
-        satisfaction: "4.8/5"
-      }))
-    : [
-        { nom: "Sophie Martin", formations: 12, beneficiaires: 184, satisfaction: "4.8/5" },
-        { nom: "Thomas Dubois", formations: 8, beneficiaires: 126, satisfaction: "4.7/5" },
-        { nom: "Amina Benali", formations: 10, beneficiaires: 152, satisfaction: "4.9/5" },
-      ];
+  ? edcFormateurs // Just use the original objects from the API
+  : [];
 
   // Keep the rest of the data as static
   const performanceData = [
