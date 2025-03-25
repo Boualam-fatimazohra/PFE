@@ -2,7 +2,6 @@ import * as React from "react";
 import { Printer, Search, FileDown } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { FormationItem } from "@/pages/types"; 
 
 interface Participant {
   date: string;
@@ -13,26 +12,30 @@ interface Participant {
   gender: string;
   situationProfessionnel: string;
   status: string;
-
+}
+interface BeneficiaireWithPresenceResponse {
+  beneficiaire: any; // Remplace "any" par le type exact du bénéficiaire
+  formationId: string;
+  presences: any[]; // Remplace "any" par le type exact de présence
+  autresFormations: string[]; // Liste des IDs des autres formations
 }
 
 interface ParticipantsSectionProps {
-  participants: Participant[];
+  participants: BeneficiaireWithPresenceResponse[];
   currentPage: number;
   itemsPerPage?: number;
-  formation?:FormationItem;
 }
 
-const ParticipantsSection: React.FC<ParticipantsSectionProps> = ({ 
+const ParticipantsSection:React.FC<ParticipantsSectionProps> = ({ 
   participants,
   currentPage,
-  itemsPerPage = 11,
-  formation
+  itemsPerPage = 11 
 }) => {
   const [selectAll, setSelectAll] = React.useState(false);
   const [selectedParticipants, setSelectedParticipants] = React.useState<number[]>([]);
   const [search, setSearch] = React.useState("");
- 
+  const [expandedParticipants, setExpandedParticipants] = React.useState<number[]>([]);
+
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const displayedParticipants = participants.slice(startIndex, endIndex);
@@ -56,7 +59,12 @@ const ParticipantsSection: React.FC<ParticipantsSectionProps> = ({
     setSelectedParticipants(newSelected);
     setSelectAll(newSelected.length === displayedParticipants.length);
   };
-
+  const toggleExpand = (index: number) => {
+    setExpandedParticipants((prev) =>
+      prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]
+    );
+  };
+  
 
   return (
     <div className="bg-white border border-[#DDD] p-6">
@@ -116,10 +124,10 @@ const ParticipantsSection: React.FC<ParticipantsSectionProps> = ({
                 onChange={handleSelectAll} 
               />
             </th>
-            <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Date & Heure</th>
-            <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Nom</th>
-            <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Prénom</th>
-            <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Email</th>
+            <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Nom Prenom</th>
+            <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">email</th>
+            <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Téléphone</th>
+            <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Specialité</th>
             <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Genre</th>
             <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Situation Profetionnelle</th>
             <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Status</th>
@@ -134,21 +142,20 @@ const ParticipantsSection: React.FC<ParticipantsSectionProps> = ({
                 checked={selectedParticipants.includes(index)} />
               </td>
               <td className="p-3 text-sm">
-                <div className="text-[#333]">{participant.date}</div>
-                <div className="text-[#666] text-xs">{participant.time}</div>
+                <div className="text-[#333]">{participant.beneficiaire.nom}</div>
+                <div className="text-[#666] text-xs">{participant.beneficiaire.prenom}</div>
               </td>
-              <td className="p-3 text-[#333] text-sm ">{participant.lastName}</td>
-              <td className="p-3 text-[#333] text-sm">{participant.firstName}</td>
-              <td className="p-3 text-[#333] text-sm">{participant.email}</td>
-              <td className="p-3 text-[#333] text-sm">{participant.gender}</td>
-              <td className="p-3 text-[#333] text-sm">{participant.situationProfessionnel}</td>
+              <td className="p-3 text-[#333] text-sm ">{participant.beneficiaire.email}</td>
+              <td className="p-3 text-[#333] text-sm">{participant.beneficiaire.telephone}</td>
+              <td className="p-3 text-[#333] text-sm">{participant.beneficiaire.specialite}</td>
+              <td className="p-3 text-[#333] text-sm">{participant.beneficiaire.genre}</td>
+              <td className="p-3 text-[#333] text-sm">{participant.beneficiaire.profession}</td>
               <td className="p-3 text-sm">
                 <span className={cn(
                   "font-medium",
-                  participant.status === "present" && "text-[#00C31F]",
-                  participant.status === "absent" && "text-[#FF4815]"
+                  participant.presences.isPresent? "text-[#00C31F]":"text-[#FF4815]",
                 )}>
-                  {participant.status === "present" ? "Présent (e)" : "Absent (e)"}
+                  {participant.presences.isPresent?"Présent (e)" : "Absent (e)"}
                 </span>
               </td>
               <td className="p-3">
@@ -170,5 +177,4 @@ const ParticipantsSection: React.FC<ParticipantsSectionProps> = ({
     </div>
   );
 };
-
 export default ParticipantsSection;

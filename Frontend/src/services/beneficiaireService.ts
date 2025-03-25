@@ -5,8 +5,23 @@ interface BeneficiaireExcelUploadResponse {
   nouveauxBeneficiaires: number;
   nouvellesInstances: number;
 }
-
-
+interface BeneficiaireWithPresenceResponse {
+  beneficiaire: any; // Remplace "any" par le type exact du bénéficiaire
+  formationId: string;
+  presences: any[]; // Remplace "any" par le type exact de présence
+  autresFormations: string[]; // Liste des IDs des autres formations
+}
+export const getBeneficiairesWithPresence = async (formationId: string): Promise<BeneficiaireWithPresenceResponse[]> => {
+  try {
+    const response = await apiClient.get(`/beneficiaires/getBeneficiairesWithPresence/${formationId}`);
+    
+    // La réponse contiendra la liste des bénéficiaires avec leurs présences et autres formations
+    return response.data;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des bénéficiaires avec leurs présences:', error);
+    throw error; // Propager l'erreur pour la gérer à un autre endroit si nécessaire
+  }
+};
 // la fct pour telecharger la liste des bénéficiaire sous forme excel
 export const exportBeneficiairesToExcel = async (formationId: string): Promise<any> => {
   try {
