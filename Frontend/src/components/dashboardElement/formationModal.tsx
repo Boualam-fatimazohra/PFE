@@ -12,6 +12,9 @@ import FormStepFour from '@/components/formation-modal/form-steps/FormStepFour';
 import FormNavigationButtons from '@/components/formation-modal/ui/FormNavigationButtons';
 import { updateBeneficiaireConfirmations,updateFormationStep,validerFormation} from '../../services/formationService';
 // Types and Styles
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 import { 
   FormState, 
   Step, 
@@ -310,7 +313,6 @@ const FormationModal: React.FC = () => {
       else if (currentStep === 3) {
         await handleUpdateConfirmations();
         setCurrentStep(currentStep + 1);
-        alert("changement des confirmation effecuter");
 
       }///debut
       else if (currentStep === 2) {
@@ -437,6 +439,7 @@ const FormationModal: React.FC = () => {
        // Appel à updateFormationStep ici après succès de updateBeneficiaireConfirmations
        const response = await updateFormationStep(formationId);
        console.log(`Step updated to ${response} after confirmations update`);
+       
     }
   };
 
@@ -522,8 +525,9 @@ const handleSubmit = async () => {
     try {
       if (currentStep === 3) {
         await handleUpdateConfirmations();
-        setCurrentStep(currentStep + 1);
-        alert("changement des confirmation effecuter");
+        //setCurrentStep(currentStep + 1);
+        toast.success("changement des confirmation effecuter");
+
 
       }///debut
       else if (currentStep === 2) {
@@ -642,16 +646,17 @@ const handleSubmit = async () => {
               console.error("Erreur lors de la récupération des données:", err);
             }
           }
-          
           // Proceed to next step
-          setCurrentStep(currentStep + 1);
+          //setCurrentStep(currentStep + 1);
         }
+        toast.success("bénéficiaires enregistré avec succes");
+
       } 
        // Appel à updateFormationStep ici après succès de updateBeneficiaireConfirmations
-       const response = await updateFormationStep(formationId);
-       console.log(`Step updated to ${response} after confirmations update`);
-      console.log("Formation soumise comme Brouillon; ID de la formation:", formationId);
-      navigate("/formateur/mesformation");
+      //  const response = await updateFormationStep(formationId);
+      //  console.log(`Step updated to ${response} after confirmations update`);
+      // console.log("Formation soumise comme Brouillon; ID de la formation:", formationId);
+      // alert("modification enregistrer avec success");
     } catch (error) {
       console.error("Erreur lors de la soumission du brouillon :", error.message);
       alert(`Erreur : ${error.message}`); // Affiche une alerte si une erreur se produit

@@ -9,7 +9,7 @@ import ParticipantsSection from "../Formation/ParticipantsSection";
 import { CustomPagination } from "../layout/CustomPagination";
 import { FormationItem, Participant, Document, StatMetric } from "@/pages/types"; 
 import { useFormations } from "@/contexts/FormationContext";
-
+import { BeneficiaireInscription } from "../formation-modal/types";
 interface DetailsFormationProps {
   formation: FormationItem;
   onRetourClick: () => void; 
@@ -18,7 +18,6 @@ interface DetailsFormationProps {
 const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetourClick }) => {
   const { getBeneficiaireFormation } = useFormations();
   const [isLoading, setIsLoading] = useState(false);
-
   const [participantsPage, setParticipantsPage] = useState(1);
   const PARTICIPANTS_PER_PAGE = 11;
   const [lastUpdated, setLastUpdated] = useState(() => {
@@ -68,9 +67,10 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
         firstName: entry.beneficiaire.prenom,
         email: entry.beneficiaire.email,
         gender: entry.beneficiaire.genre,
-        phone: entry.beneficiaire.telephone?.toString() || "",
+        situationProfessionnel: entry.beneficiaire.profession,
         status: entry.confirmationEmail ? "present" as "present" : "absent" as "absent", // Cast explicite
       }));
+      console.log("participante from DetailsFormation",beneficiairesData);
       
       setParticipants(participantsData);
       
@@ -161,10 +161,10 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
           <StatsSection metrics={statsMetrics} />
         </div>
         {isLoading ? (
-  <div className="flex justify-center py-8">
-    <RefreshCw size={24} className="animate-spin" />
-    <span className="ml-2">Chargement des données...</span>
-  </div>
+        <div className="flex justify-center py-8">
+          <RefreshCw size={24} className="animate-spin" />
+          <span className="ml-2">Chargement des données...</span>
+        </div>
 ) : (
   <>
     {/* Your regular content */}
@@ -172,22 +172,10 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
       participants={participants}
       currentPage={participantsPage}
       itemsPerPage={PARTICIPANTS_PER_PAGE}
+      formation={formation}
     />
-    
-    {/* Pagination */}
-    {totalParticipantsPages > 1 && (
-      <CustomPagination
-        currentPage={participantsPage}
-        totalPages={totalParticipantsPages}
-        onPageChange={setParticipantsPage}
-      />
-    )}
   </>
 )}
-
-        {/* Participants Section avec pagination externe */}
-      
-
         {/* Utilisation de CustomPagination pour naviguer entre les pages de participants */}
         {totalParticipantsPages > 1 && (
           <CustomPagination
