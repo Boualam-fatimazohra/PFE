@@ -16,30 +16,50 @@ const getAllFormateursEdc = async (edcIds) => {
   try {
     // Vérifier si edcIds est un tableau non vide
     if (!edcIds || !Array.isArray(edcIds) || edcIds.length === 0) {
-        throw new Error('La liste des EDC IDs est requise');
+      throw new Error('La liste des EDC IDs est requise');
     }
 
     // Trouver tous les EDCs correspondants
     const edcs = await EDC.find({ _id: { $in: edcIds } }).populate('entity');
     if (!edcs || edcs.length === 0) {
-        throw new Error('Aucun EDC trouvé');
+      throw new Error('Aucun EDC trouvé');
     }
 
     // Extraire les IDs des entités associées aux EDCs
     const entityIds = edcs.map(edc => edc.entity._id);
 
+    // Créer un mapping des entités pour un accès facile plus tard
+    const entityMap = {};
+    edcs.forEach(edc => {
+      entityMap[edc.entity._id.toString()] = edc.entity;
+    });
+
     // Trouver toutes les associations UtilisateurEntity pour ces entités
     const utilisateurEntities = await UtilisateurEntity.find({ id_entity: { $in: entityIds } });
+
+    // Créer un mapping utilisateur -> entité
+    const userToEntityMap = {};
+    utilisateurEntities.forEach(ue => {
+      userToEntityMap[ue.id_utilisateur.toString()] = entityMap[ue.id_entity.toString()];
+    });
 
     // Extraire les IDs des utilisateurs
     const userIds = utilisateurEntities.map(ue => ue.id_utilisateur);
 
     // Trouver tous les formateurs associés à ces utilisateurs
     const formateurs = await Formateur.find({ utilisateur: { $in: userIds } })
-        .populate('utilisateur', 'nom prenom email numeroTelephone role')
-        .populate('manager');
+      .populate('utilisateur', 'nom prenom email numeroTelephone role')
+      .populate('manager');
 
-    return formateurs;
+    // Ajouter l'information d'entité à chaque formateur
+    const formateursWithEntity = formateurs.map(formateur => {
+      const formateurObj = formateur.toObject();
+      const utilisateurId = formateur.utilisateur._id.toString();
+      formateurObj.entity = userToEntityMap[utilisateurId] || null;
+      return formateurObj;
+    });
+
+    return formateursWithEntity;
   } catch (error) {
     throw new Error(`Erreur lors de la récupération des formateurs: ${error.message}`);
   }
@@ -54,15 +74,39 @@ const getAllFormationsEdc = async (formateurs) => {
   try {
     // Extraire les IDs des formateurs
     const formateurIds = formateurs.map(formateur => formateur._id);
-
+    
+    // Extraire les IDs des utilisateurs liés aux formateurs
+    const utilisateurIds = formateurs.map(formateur => formateur.utilisateur);
+    
+    // Récupérer les relations utilisateur-entity
+    const utilisateurEntities = await UtilisateurEntity.find({
+      id_utilisateur: { $in: utilisateurIds }
+    }).populate('id_entity');
+    
+    // Créer un mapping des utilisateurs vers leurs entités
+    const utilisateurToEntityMap = {};
+    utilisateurEntities.forEach(ue => {
+      utilisateurToEntityMap[ue.id_utilisateur.toString()] = ue.id_entity;
+    });
+    
     // Trouver toutes les formations créées par ces formateurs
     const formations = await Formation.find({ formateur: { $in: formateurIds } })
-      .populate({ 
-        path: 'formateur', 
-        populate: { path: 'utilisateur' } 
+      .populate({
+        path: 'formateur',
+        populate: { 
+          path: 'utilisateur'
+        }
       });
-
-    return formations;
+    
+    // Ajouter manuellement les informations d'entité à chaque formation
+    const formationsWithEntity = formations.map(formation => {
+      const formationObj = formation.toObject();
+      const utilisateurId = formation.formateur.utilisateur._id.toString();
+      formationObj.entity = utilisateurToEntityMap[utilisateurId] || null;
+      return formationObj;
+    });
+    
+    return formationsWithEntity;
   } catch (error) {
     throw new Error(`Erreur lors de la récupération des formations: ${error.message}`);
   }
