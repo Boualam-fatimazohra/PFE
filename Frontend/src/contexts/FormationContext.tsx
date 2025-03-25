@@ -27,7 +27,7 @@ interface Beneficiaire {
   categorieAge?: string;
 }
 
-interface BeneficiaireInscription {
+interface BeneficiaireInscription{
   _id: string;
   confirmationAppel: boolean;
   confirmationEmail: boolean;

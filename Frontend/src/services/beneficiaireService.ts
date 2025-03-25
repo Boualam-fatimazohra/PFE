@@ -6,15 +6,9 @@ interface BeneficiaireExcelUploadResponse {
   nouvellesInstances: number;
 }
 
-/**
- * Upload beneficiaries from an Excel file and associate them with a formation
- * 
- * @param file - The Excel file containing beneficiary data
- * @param idFormation - The ID of the formation to associate beneficiaries with
- * @returns Response data containing upload results
- */
+
 // la fct pour telecharger la liste des bénéficiaire sous forme excel
-export const exportBeneficiairesToExcel = async (formationId: string): Promise<ExportResponse> => {
+export const exportBeneficiairesToExcel = async (formationId: string): Promise<any> => {
   try {
     const response = await apiClient.get(`/beneficiaires/export/${formationId}`, {
       responseType: 'blob', // Important pour la réception des fichiers binaires
