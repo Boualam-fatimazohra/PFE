@@ -13,11 +13,13 @@ import GestionFormation from "@/components/dashboardElement/GestionFormationMana
 import GestionFormateurManager from "@/components/dashboardElement/GestionFormateurManager";
 import GestionFormationManager from "@/components/dashboardElement/GestionFormationManager";
 import { EdcProvider } from "@/contexts/EdcContext";
+import { EvenementProvider } from "@/contexts/EvenementContext";
 
 
 const ManagerRoutes = () => {
   return (
     <FormationProvider>
+      <EvenementProvider>
     <NotificationProvider>
     <EdcProvider>
     <Routes>
@@ -34,6 +36,7 @@ const ManagerRoutes = () => {
     </Routes>
     </EdcProvider>
     </NotificationProvider>
+    </EvenementProvider>
     </FormationProvider>
 
   );

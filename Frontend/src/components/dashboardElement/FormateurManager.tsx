@@ -18,6 +18,11 @@ export const FormateurList = ({
   const [activeVille, setActiveVille] = React.useState<string>("Tous");
   const navigate = useNavigate();
 
+  const handleEmailClick = (email: string) => {
+    window.location.href = `mailto:${email}`;
+    // Alternative pour Outlook spécifiquement :
+    // window.open(`outlook:compose?to=${email}`, '_blank');
+  };
   const filteredFormateurs = React.useMemo(() => {
     let result = [...formateurs];
     
@@ -96,7 +101,7 @@ export const FormateurList = ({
                 </div>
                 <div className="flex-grow">
                   <div className="font-medium text-gray-900">{formateur.utilisateur?.nom}</div>
-                  <div className="text-sm text-gray-500">{formateur.utilisateur?.role} {formateur.entity?.ville}</div>
+                  <div className="text-sm text-gray-500">{formateur.utilisateur?.role} {formateur.entity?.type} {formateur.entity?.ville} </div>
                 </div>
                 {!formateur.isAvailable && (
                 <span
@@ -125,12 +130,15 @@ export const FormateurList = ({
                 Accéder
               </Button>
 
-                <button className="p-1">
+              <button 
+                className="p-1"
+                onClick={() => handleEmailClick(formateur.utilisateur?.email || '')}
+              >
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M0 0H16V16H0V0Z" stroke="#E5E7EB"/>
-                <path d="M2 3.5C1.725 3.5 1.5 3.725 1.5 4V4.69063L6.89062 9.11563C7.5375 9.64688 8.46562 9.64688 9.1125 9.11563L14.5 4.69063V4C14.5 3.725 14.275 3.5 14 3.5H2ZM1.5 6.63125V12C1.5 12.275 1.725 12.5 2 12.5H14C14.275 12.5 14.5 12.275 14.5 12V6.63125L10.0625 10.275C8.8625 11.2594 7.13438 11.2594 5.9375 10.275L1.5 6.63125ZM0 4C0 2.89688 0.896875 2 2 2H14C15.1031 2 16 2.89688 16 4V12C16 13.1031 15.1031 14 14 14H2C0.896875 14 0 13.1031 0 12V4Z" fill="black"/>
+                  <path d="M0 0H16V16H0V0Z" stroke="#E5E7EB"/>
+                  <path d="M2 3.5C1.725 3.5 1.5 3.725 1.5 4V4.69063L6.89062 9.11563C7.5375 9.64688 8.46562 9.64688 9.1125 9.11563L14.5 4.69063V4C14.5 3.725 14.275 3.5 14 3.5H2ZM1.5 6.63125V12C1.5 12.275 1.725 12.5 2 12.5H14C14.275 12.5 14.5 12.275 14.5 12V6.63125L10.0625 10.275C8.8625 11.2594 7.13438 11.2594 5.9375 10.275L1.5 6.63125ZM0 4C0 2.89688 0.896875 2 2 2H14C15.1031 2 16 2.89688 16 4V12C16 13.1031 15.1031 14 14 14H2C0.896875 14 0 13.1031 0 12V4Z" fill="black"/>
                 </svg>
-                </button>
+              </button>
               </div>
             </div>
           ))}
