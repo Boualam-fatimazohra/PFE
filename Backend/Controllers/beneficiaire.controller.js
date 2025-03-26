@@ -107,7 +107,7 @@ const createBeneficiaire = async (req, res) => {
     }
 
     // 9. Création de la relation
-    const newRelation = new BeneficiareFormation({
+    const newRelation = new BeneficiaireFormation({
       formation: idFormation,
       beneficiaire: savedBeneficiaire._id,
       confirmationAppel: false,
