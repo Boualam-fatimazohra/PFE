@@ -3,6 +3,7 @@ import * as React from 'react';
 import { useState, useRef } from "react";
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useFormations } from "../../contexts/FormationContext";
+
 // Components
 import StepIndicator from '@/components/formation-modal/StepIndicator';
 import FormStepOne from '@/components/formation-modal/form-steps/FormStepOne';
@@ -167,6 +168,8 @@ const FormationModal: React.FC = () => {
       // Vérification du résultat
       if (result.success) {
         console.log(result.message);
+        alert("changement des confirmation effecuter");
+
         
        
       } else {
@@ -249,7 +252,7 @@ const FormationModal: React.FC = () => {
   // Form validation
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    
+    const urlPattern = /^(https?:\/\/)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/;
     if (currentStep === 1) {
       if (!formState.title.trim()) {
         newErrors.title = "Le titre est obligatoire";
@@ -293,6 +296,9 @@ const FormationModal: React.FC = () => {
       
       if (!formState.registrationLink) {
         newErrors.registrationLink = "Le lien est obligatoire";
+      }
+      if(formState.registrationLink && !urlPattern.test(formState.registrationLink)) {
+        newErrors.registrationLink = "Veuillez entrer une URL valide.";
       }
     }
     
@@ -503,10 +509,8 @@ const handleSubmit = async () => {
           console.log(`Formation Created ID: ${result.data._id}`);
         } else {
           console.error("Could not find formation ID in result:", result);
-        }
-        
-        alert('Formation Successfully created as Draft!');
-        setCurrentStep(currentStep + 1);
+        }     
+     setCurrentStep(currentStep + 1);
       } catch (err) {
         console.error('Error creating formation draft:', err);
         alert('Erreur lors de la création de la formation en brouillon. Veuillez réessayer.');
@@ -526,7 +530,6 @@ const handleSubmit = async () => {
       if (currentStep === 3) {
         await handleUpdateConfirmations();
         //setCurrentStep(currentStep + 1);
-        toast.success("changement des confirmation effecuter");
 
 
       }///debut
