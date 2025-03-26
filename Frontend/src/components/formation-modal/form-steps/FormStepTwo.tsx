@@ -14,6 +14,8 @@ interface FormStepTwoProps {
   setFileList: React.Dispatch<React.SetStateAction<File[]>>;
   uploadedFiles: UploadedFile[];
   setUploadedFiles: React.Dispatch<React.SetStateAction<UploadedFile[]>>; 
+  hasPendingFiles: boolean;
+  setHasPendingFiles: React.Dispatch<React.SetStateAction<boolean>>;
   loading: boolean;
   processingResults: ProcessingResults | null;
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
@@ -29,7 +31,9 @@ const FormStepTwo: React.FC<FormStepTwoProps> = ({
   fileList,
   setFileList,
   uploadedFiles,
-  setUploadedFiles, 
+  setUploadedFiles,
+  hasPendingFiles,
+  setHasPendingFiles,
   loading,
   processingResults,
   setMessages,
@@ -200,6 +204,10 @@ const FormStepTwo: React.FC<FormStepTwoProps> = ({
           );
         } finally {
           setLoading(false);
+          if (files.length > 0) {
+            setHasPendingFiles(true);
+            // rest of your existing code...
+          }
         }
       }
     }
