@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 
 import { useNavigate } from "react-router-dom";
 import { Search } from 'lucide-react';
+<<<<<<< HEAD
 import { useEdc } from "@/contexts/EdcContext"; // Import the EdcContext hook
 
 // Define a Formateur interface to match the backend data structure
@@ -20,6 +21,10 @@ export interface Formateur {
     ville: string;
   };
 }
+=======
+import { useNavigate } from "react-router-dom";
+
+>>>>>>> 29febd1 (modification complit de dashboard manager)
 
 const GestionFormateurManager = () => {
   // Get formateurs data from EdcContext
@@ -54,6 +59,7 @@ const GestionFormateurManager = () => {
     : [
         { id: 1, nom: "Nom/Prénom", odc: "ODC Rabat", role: "Responsable Formateur ODC Rabat", depuis: "2023", actif: true },
         { id: 2, nom: "Nom/Prénom", odc: "ODC Rabat", role: "Responsable Formateur ODC Rabat", depuis: "2023", actif: true },
+<<<<<<< HEAD
         // ... other default entries
       ];
 
@@ -117,6 +123,36 @@ const GestionFormateurManager = () => {
             <button className="absolute right-2 top-1/2 transform -translate-y-1/2 text-orange-500">
               <Search size={20} />
             </button>
+=======
+        { id: 3, nom: "Nom/Prénom", odc: "ODC Rabat", role: "Responsable Formateur ODC Rabat", depuis: "2023", actif: true },
+        { id: 4, nom: "Nom/Prénom", odc: "ODC Rabat", role: "Responsable Formateur ODC Rabat", depuis: "2023", actif: true },
+        { id: 5, nom: "Nom/Prénom", odc: "ODC Rabat", role: "Responsable Formateur ODC Rabat", depuis: "2023", actif: true },
+        { id: 6, nom: "Nom/Prénom", odc: "ODC Rabat", role: "Responsable Formateur ODC Rabat", depuis: "2023", actif: true },
+        { id: 7, nom: "Nom/Prénom", odc: "ODC Rabat", role: "Responsable Formateur ODC Rabat", depuis: "2023", actif: true },
+        { id: 8, nom: "Nom/Prénom", odc: "ODC Rabat", role: "Responsable Formateur ODC Rabat", depuis: "2023", actif: true },
+      ]);
+      const navigate = useNavigate();
+
+      const handleRedirect = () => {
+        navigate("/manager/AjoutFormateur");
+      };
+      const handleEdit = (id) => {
+        navigate(`/manager/ModifieFormateur/${id}`);
+    };
+      return (
+        <div className="min-h-screen bg-white p-6">
+            <div className="max-w-7xl mx-auto">
+          <div className="flex justify-between items-center mb-4">
+          <h1 className="text-[28px] font-bold leading-[28px] text-black" >
+  Gestion des Formateurs</h1>
+          <button 
+          onClick={handleRedirect} 
+          className="bg-orange-500 text-white px-4 py-2 rounded flex items-center"
+        >
+          <span className="mr-2">+</span>
+          Ajouter un formateur
+        </button>
+>>>>>>> 29febd1 (modification complit de dashboard manager)
           </div>
           
           <select 
@@ -207,6 +243,38 @@ const GestionFormateurManager = () => {
             </div>
           ))}
         </div>
+<<<<<<< HEAD
+=======
+        <span className="bg-green-100 text-green-600 px-3 py-1 rounded-full text-xs font-medium">
+          Actif
+        </span>
+      </div>
+
+      {/* Informations */}
+      <div className="p-4 text-gray-700">
+        <div className="flex items-center mb-2">
+          <span className="text-gray-500 mr-5"><svg xmlns="http://www.w3.org/2000/svg" width="23" height="19" viewBox="0 0 23 19" fill="none"><g clip-path="url(#clip0_1171_1634)"><path d="M14.1163 0.0445867C13.5054 -0.137249 12.8693 0.230134 12.6932 0.860993L8.0932 17.486C7.91711 18.1169 8.27289 18.7737 8.88383 18.9555C9.49476 19.1374 10.1309 18.77 10.307 18.1391L14.907 1.51412C15.083 0.883259 14.7273 0.226423 14.1163 0.0445867ZM17.0129 4.50142C16.5637 4.96529 16.5637 5.71861 17.0129 6.18248L20.2221 9.50006L17.0093 12.8176C16.5601 13.2815 16.5601 14.0348 17.0093 14.4987C17.4585 14.9626 18.188 14.9626 18.6373 14.4987L22.6623 10.3424C23.1115 9.87857 23.1115 9.12525 22.6623 8.66138L18.6373 4.50513C18.188 4.04127 17.4585 4.04127 17.0093 4.50513L17.0129 4.50142ZM5.99086 4.50142C5.54164 4.03756 4.81211 4.03756 4.36289 4.50142L0.337891 8.65767C-0.111328 9.12154 -0.111328 9.87486 0.337891 10.3387L4.36289 14.495C4.81211 14.9588 5.54164 14.9588 5.99086 14.495C6.44008 14.0311 6.44008 13.2778 5.99086 12.8139L2.77805 9.50006L5.99086 6.18248C6.44008 5.71861 6.44008 4.96529 5.99086 4.50142Z" fill="black"/></g><defs><clipPath id="clip0_1171_1634"><path d="M0 0H23V19H0V0Z" fill="white"/></clipPath></defs></svg></span>
+          <p className="text-sm">{formateur.role}</p>
+        </div>
+        <div className="flex items-center mb-2">
+          <span className="text-gray-500 mr-5"><svg xmlns="http://www.w3.org/2000/svg" width="23" height="18" viewBox="0 0 16 18" fill="none"><g clip-path="url(#clip0_1171_1638)"><path d="M3.42857 1.125V2.25H1.71429C0.767857 2.25 0 3.00586 0 3.9375V5.625H16V3.9375C16 3.00586 15.2321 2.25 14.2857 2.25H12.5714V1.125C12.5714 0.502734 12.0607 0 11.4286 0C10.7964 0 10.2857 0.502734 10.2857 1.125V2.25H5.71429V1.125C5.71429 0.502734 5.20357 0 4.57143 0C3.93929 0 3.42857 0.502734 3.42857 1.125ZM16 6.75H0V16.3125C0 17.2441 0.767857 18 1.71429 18H14.2857C15.2321 18 16 17.2441 16 16.3125V6.75Z" fill="black"/></g><defs><clipPath id="clip0_1171_1638"><path d="M0 0H16V18H0V0Z" fill="white"/></clipPath></defs></svg></span>
+          <p className="text-sm">Depuis {formateur.depuis}</p>
+        </div>
+      </div>
+
+      {/* Boutons */}
+      <div className="flex border-t">
+        <button className="flex-1 py-2 text-center text-white bg-black text-sm flex items-center justify-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="15" viewBox="0 0 16 15" fill="none"><g clip-path="url(#clip0_1171_1644)"><path d="M7.87505 2.9375C6.09224 2.9375 4.62661 3.74688 3.50278 4.78867C2.45005 5.76758 1.72271 6.92969 1.35083 7.75C1.72271 8.57031 2.45005 9.73242 3.50005 10.7113C4.62661 11.7531 6.09224 12.5625 7.87505 12.5625C9.65786 12.5625 11.1235 11.7531 12.2473 10.7113C13.3 9.73242 14.0274 8.57031 14.3993 7.75C14.0274 6.92969 13.3 5.76758 12.25 4.78867C11.1235 3.74688 9.65786 2.9375 7.87505 2.9375ZM2.60864 3.82891C3.89653 2.63125 5.66567 1.625 7.87505 1.625C10.0844 1.625 11.8536 2.63125 13.1415 3.82891C14.4211 5.01836 15.277 6.4375 15.6844 7.41367C15.7747 7.62969 15.7747 7.87031 15.6844 8.08633C15.277 9.0625 14.4211 10.4844 13.1415 11.6711C11.8536 12.8687 10.0844 13.875 7.87505 13.875C5.66567 13.875 3.89653 12.8687 2.60864 11.6711C1.32896 10.4844 0.473096 9.0625 0.0684082 8.08633C-0.0218262 7.87031 -0.0218262 7.62969 0.0684082 7.41367C0.473096 6.4375 1.32896 5.01562 2.60864 3.82891ZM7.87505 9.9375C9.08364 9.9375 10.0625 8.95859 10.0625 7.75C10.0625 6.54141 9.08364 5.5625 7.87505 5.5625C7.85591 5.5625 7.8395 5.5625 7.82036 5.5625C7.85591 5.70195 7.87505 5.84961 7.87505 6C7.87505 6.96523 7.09028 7.75 6.12505 7.75C5.97466 7.75 5.827 7.73086 5.68755 7.69531C5.68755 7.71445 5.68755 7.73086 5.68755 7.75C5.68755 8.95859 6.66646 9.9375 7.87505 9.9375ZM7.87505 4.25C8.80331 4.25 9.69355 4.61875 10.3499 5.27513C11.0063 5.9315 11.375 6.82174 11.375 7.75C11.375 8.67826 11.0063 9.5685 10.3499 10.2249C9.69355 10.8813 8.80331 11.25 7.87505 11.25C6.94679 11.25 6.05655 10.8813 5.40018 10.2249C4.7438 9.5685 4.37505 8.67826 4.37505 7.75C4.37505 6.82174 4.7438 5.9315 5.40018 5.27513C6.05655 4.61875 6.94679 4.25 7.87505 4.25Z" fill="white"/></g><defs><clipPath id="clip0_1171_1644"><path d="M0 0.75H15.75V14.75H0V0.75Z" fill="white"/></clipPath></defs></svg>
+           Détails
+        </button>
+        <button 
+  onClick={() => handleEdit(formateur.id)} 
+  className="flex-1 py-2 text-center text-sm border-l flex items-center justify-center gap-2"
+>
+  Modifier
+</button>
+>>>>>>> 29febd1 (modification complit de dashboard manager)
       </div>
     </div>
   );
