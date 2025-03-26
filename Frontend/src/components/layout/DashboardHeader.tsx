@@ -113,6 +113,7 @@ export function DashboardHeader() {
   } else if (user?.role === "Manager") {
     navigationLinks = [
       { name: "Dashboard", path: "/manager/dashboardManager" },
+<<<<<<< HEAD
       { name: "Ecole du code", path: "/manager/Ecolcode" ,additionalPaths: [
         "/manager/GestionFormateurManager",
         "/manager/GestionFormation"
@@ -120,6 +121,12 @@ export function DashboardHeader() {
       { name: "Fablab Solidaire", path: "/manager/Fablab" },
       { name: "Orange Fab", path: "/page-link-3" },
       { name: "Coordination", path: "/page-link-3" },
+=======
+      { name: "Ecole du code", path: "/manager/Ecolcode" },
+      { name: "Fablab Solidaire", path: "/manager/FablabSolidaire" },
+      { name: "Orange Fab", path: "/manager/OrangeFab" },
+      { name: "Coordination", path: "/manager/Coordination" },
+>>>>>>> 29febd1 (modification complit de dashboard manager)
       { name: "Événements", path: "/page-link-3" },
 
     ];

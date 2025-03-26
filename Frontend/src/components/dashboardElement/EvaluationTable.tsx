@@ -11,6 +11,8 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import { Clipboard, Check, Loader2 } from "lucide-react";
 import { FormationTableItem } from "./FormationTable";
+import { useNavigate } from "react-router-dom";
+
 
 // Propriétés pour le composant EvaluationsTable
 interface EvaluationsTableProps {
@@ -35,6 +37,7 @@ const StatusBadge = ({ status }: { status: string }) => {
 };
 
 export const EvaluationsTable = ({ onGenerateLink }: EvaluationsTableProps) => {
+  const navigate = useNavigate();
   const { formations: contextFormations, loading } = useFormations();
   // Cast des formations du contexte au type FormationTableItem[]
   const formations = contextFormations as unknown as FormationTableItem[];
