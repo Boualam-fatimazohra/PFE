@@ -26,6 +26,7 @@ export interface Formation {
       updatedAt: string;
     };
   };
+  entity?: Entity;
 }
 export interface FormationResponse {
   message: string;
@@ -174,6 +175,8 @@ export interface Formateur {
   };
   manager?: any;
   coordinateur?: any;
+  entity?: Entity;
+  isAvailable?: boolean; 
 }
 
 export interface Entity {
