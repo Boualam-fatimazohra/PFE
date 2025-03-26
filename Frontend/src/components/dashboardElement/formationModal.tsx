@@ -218,12 +218,6 @@ const FormationModal: React.FC = () => {
 
           // Définir l'URL de prévisualisation
           setImagePreviewUrl(dataUrl);
-
-          setUploadedFiles(prev => [...prev, { 
-            name: file.name, 
-            data: dataUrl,
-            type: 'image'  // Mark this as an image type
-          }]);
         }
       };
 
