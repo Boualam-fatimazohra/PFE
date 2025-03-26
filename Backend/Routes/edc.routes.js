@@ -25,7 +25,7 @@ router.get('/getFormateurEDC',authenticated, authorizeRoles('Manager'),checkEnti
 router.get('/getFormationEDC',authenticated, authorizeRoles('Manager'), checkEntityAccess('EDC'), getFormationsEdc);
 
 /* Get all beneficiaries enrolled in formations all EDC */
-router.get('/getBeneficiairesEDC',checkEntityAccess('EDC'), getBeneficiairesEdc);
+router.get('/getBeneficiairesEDC',authenticated,authorizeRoles('Manager'), checkEntityAccess('EDC'), getBeneficiairesEdc);
 
 router.get('/:id', authenticated, authorizeRoles('Admin'), getEDCById);
 

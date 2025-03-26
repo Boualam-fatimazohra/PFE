@@ -107,7 +107,7 @@ const createBeneficiaire = async (req, res) => {
     }
 
     // 9. Création de la relation
-    const newRelation = new BeneficiareFormation({
+    const newRelation = new BeneficiaireFormation({
       formation: idFormation,
       beneficiaire: savedBeneficiaire._id,
       confirmationAppel: false,
@@ -425,7 +425,7 @@ const uploadBeneficiairesFromExcel = async (req, res) => {
     }
 
     // Vérifier si des bénéficiaires existent déjà avec cette formation
-    const formationsExistantes = await BeneficiareFormation.find({
+    const formationsExistantes = await BeneficiaireFormation.find({
       beneficiaire: { $in: existingBeneficiairesToUpdate },
       formation: idFormation
     }).select("beneficiaire");
@@ -457,7 +457,7 @@ const uploadBeneficiairesFromExcel = async (req, res) => {
       }
 
       if (nouvellesInstances.length > 0) {
-        await BeneficiareFormation.insertMany(nouvellesInstances, { session });
+        await BeneficiaireFormation.insertMany(nouvellesInstances, { session });
       }
 
       await session.commitTransaction();

@@ -19,16 +19,11 @@ export interface FormationItem {
   dateFin: string;
   status: "En Cours" | "Avenir" | "Terminé" | "Replanifier";
   image?: string;
-  formateur?: string; // Formateur ID
-  formateurName?: string; // Formatted formateur name
+  formateur?: string; 
+  formateurName?: string; 
 }
 
-import { EvaluationsTable } from "@/components/dashboardElement/EvaluationManager";
-import { LineChart, Line, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area } from "recharts";
-import { SearchBar } from "@/components/dashboardElement/SearchBar";
-import { Calendar, Users, ChevronRight, Search, Plus, BookOpen, Star, Calendar as CalendarIcon, PieChart, Award, Briefcase, User, X } from "lucide-react";
-import XAxis from "recharts/lib/cartesian/XAxis";
-import YAxis from "recharts/lib/cartesian/YAxis";
+import { Plus,  Calendar as User } from "lucide-react";
 import FormateurList from "@/components/dashboardElement/FormateurManager";
 
 // Define proper type for DatePicker props
@@ -56,14 +51,17 @@ const Ecolecode = () => {
     loading,
     error,
     fetchEdcFormations,
-    fetchEdcFormateurs
+    fetchEdcFormateurs,
+    fetchEdcBeneficiaires,
+    edcBeneficiairesCount
   } = useEdc();
 
   // Fetch formations and formateurs when the component mounts
   useEffect(() => {
     fetchEdcFormations();
     fetchEdcFormateurs();
-  }, [fetchEdcFormations, fetchEdcFormateurs]);
+    fetchEdcBeneficiaires(); // Ajoutez cette ligne
+  }, [fetchEdcFormations, fetchEdcFormateurs, fetchEdcBeneficiaires]);
 
   const [selectedTab, setSelectedTab] = useState("overview");
   const [year, setYear] = useState("2025");
@@ -121,16 +119,12 @@ const Ecolecode = () => {
         dateDebut: formation.dateDebut,
         dateFin: formation.dateFin,
         status: formation.status || "En Cours",
-        image: "/api/placeholder/60/60", // Default placeholder since real data might not have images
+        image: formation.image as string, // Default placeholder since real data might not have images
         formateur: formation.formateur?._id, // Extract formateur ID from the nested object
+        formateurCity: formation.entity?.ville,
         formateurName: formation.formateur ? `${formation.formateur.utilisateur.prenom} ${formation.formateur.utilisateur.nom}` : "", // Format formateur name
       }))
-    : [
-        { nom: "JavaScript Avancé", dateDebut: "2025-03-01", dateFin: "2025-03-15", status: "En Cours", image: "/api/placeholder/60/60" },
-        { nom: "React Fondamentaux", dateDebut: "2025-03-10", dateFin: "2025-03-25", status: "En Cours", image: "/api/placeholder/60/60" },
-        { nom: "Python Data Science", dateDebut: "2025-04-05", dateFin: "2025-04-20", status: "Avenir", image: "/api/placeholder/60/60" },
-        { nom: "UI/UX Bootcamp", dateDebut: "2025-02-10", dateFin: "2025-02-28", status: "Terminé", image: "/api/placeholder/60/60" },
-      ];
+    : [];
 
   const mappedFormations = formationData.map((formation, index) => ({
     _id: formation._id || index.toString(),
@@ -140,22 +134,14 @@ const Ecolecode = () => {
     dateFin: formation.dateFin,
     status: formation.status as "En Cours" | "Avenir" | "Terminé" | "Replanifier",
     image: formation.image,
-    formateur: formation.formateurName // Include formateur ID in the mapped formations
+    formateurName: formation.formateurName,
+    formateurCity: formation.formateurCity
   }));
 
   // Use edcFormateurs if available for FormateurList component, otherwise use static data
   const formateurData = edcFormateurs && edcFormateurs.length > 0
-    ? edcFormateurs.map(formateur => ({
-        nom: `${formateur.utilisateur?.nom || ''} ${formateur.utilisateur?.prenom || ''}`,
-        formations: 10, // Default value since real data might not have these counts
-        beneficiaires: 150,
-        satisfaction: "4.8/5"
-      }))
-    : [
-        { nom: "Sophie Martin", formations: 12, beneficiaires: 184, satisfaction: "4.8/5" },
-        { nom: "Thomas Dubois", formations: 8, beneficiaires: 126, satisfaction: "4.7/5" },
-        { nom: "Amina Benali", formations: 10, beneficiaires: 152, satisfaction: "4.9/5" },
-      ];
+  ? edcFormateurs // Just use the original objects from the API
+  : [];
 
   // Keep the rest of the data as static
   const performanceData = [
@@ -186,10 +172,15 @@ const Ecolecode = () => {
       subtitle: "sur 15 événements", 
       icon: <svg xmlns="http://www.w3.org/2000/svg" width="28" height="22" viewBox="0 0 28 22" fill="none"><g clip-path="url(#clip0_865_2094)"><path d="M13.7501 1.375C13.402 1.375 13.0583 1.43516 12.7317 1.55117L0.678957 5.90391C0.270754 6.0543 5.1035e-05 6.44102 5.1035e-05 6.875C5.1035e-05 7.30898 0.270754 7.6957 0.678957 7.84609L3.16685 8.74414C2.46216 9.85273 2.06255 11.1633 2.06255 12.5426V13.75C2.06255 14.9703 1.59849 16.2293 1.10435 17.2219C0.825051 17.7805 0.507082 18.3305 0.137551 18.8375C5.10365e-05 19.0223 -0.0386208 19.2629 0.0387229 19.482C0.116067 19.7012 0.296535 19.8645 0.519973 19.9203L3.26997 20.6078C3.45044 20.6551 3.6438 20.6207 3.80279 20.5219C3.96177 20.423 4.07349 20.2598 4.10786 20.075C4.47739 18.2359 4.29263 16.5859 4.01763 15.4043C3.88013 14.7941 3.69536 14.1711 3.43755 13.5996V12.5426C3.43755 11.2449 3.87583 10.0203 4.63638 9.04062C5.19068 8.37461 5.90825 7.8375 6.75044 7.50664L13.4965 4.85547C13.8489 4.71797 14.2485 4.88984 14.386 5.24219C14.5235 5.59453 14.3516 5.99414 13.9993 6.13164L7.25318 8.78281C6.72036 8.99336 6.252 9.31563 5.86958 9.71094L12.7274 12.1859C13.054 12.302 13.3977 12.3621 13.7458 12.3621C14.0938 12.3621 14.4376 12.302 14.7641 12.1859L26.8211 7.84609C27.2293 7.7 27.5 7.30898 27.5 6.875C27.5 6.44102 27.2293 6.0543 26.8211 5.90391L14.7684 1.55117C14.4418 1.43516 14.0981 1.375 13.7501 1.375ZM5.50005 17.5312C5.50005 19.048 9.19536 20.625 13.7501 20.625C18.3047 20.625 22 19.048 22 17.5312L21.3426 11.2836L15.2325 13.4922C14.7555 13.6641 14.2528 13.75 13.7501 13.75C13.2473 13.75 12.7403 13.6641 12.2676 13.4922L6.15747 11.2836L5.50005 17.5312Z" fill="#FF7900"/></g><defs><clipPath id="clip0_865_2094"><path d="M0 0H27.5V22H0V0Z" fill="white"/></clipPath></defs></svg>
     },
-    { 
+    {
       title: "Total Bénéficiaires", 
-      value: "89%", 
-      subtitle: "↑ +12% ce mois", 
+      value: edcBeneficiairesCount || 0, // Utilisez edcBeneficiairesCount au lieu de edcBeneficiaires?.length
+      subtitle: error ? "Erreur de chargement" : (
+        loading ? "Chargement..." : 
+        edcBeneficiairesCount > 0 ? 
+          `↑ +${Math.floor(edcBeneficiairesCount * 0.12)}% ce mois` : 
+          "Aucun bénéficiaire"
+      ),
       icon: <svg xmlns="http://www.w3.org/2000/svg" width="33" height="26" viewBox="0 0 33 26" fill="none"><g clip-path="url(#clip0_865_2062)"><path d="M7.3125 0C8.38994 0 9.42325 0.428012 10.1851 1.18988C10.947 1.95175 11.375 2.98506 11.375 4.0625C11.375 5.13994 10.947 6.17325 10.1851 6.93512C9.42325 7.69699 8.38994 8.125 7.3125 8.125C6.23506 8.125 5.20175 7.69699 4.43988 6.93512C3.67801 6.17325 3.25 5.13994 3.25 4.0625C3.25 2.98506 3.67801 1.95175 4.43988 1.18988C5.20175 0.428012 6.23506 0 7.3125 0ZM26 0C27.0774 0 28.1108 0.428012 28.8726 1.18988C29.6345 1.95175 30.0625 2.98506 30.0625 4.0625C30.0625 5.13994 29.6345 6.17325 28.8726 6.93512C28.1108 7.69699 27.0774 8.125 26 8.125C24.9226 8.125 23.8892 7.69699 23.1274 6.93512C22.3655 6.17325 21.9375 5.13994 21.9375 4.0625C21.9375 2.98506 22.3655 1.95175 23.1274 1.18988C23.8892 0.428012 24.9226 0 26 0ZM0 15.1684C0 12.1773 2.42734 9.75 5.41836 9.75H7.58672C8.39414 9.75 9.16094 9.92773 9.85156 10.2426C9.78555 10.6082 9.75508 10.9891 9.75508 11.375C9.75508 13.3148 10.6082 15.0566 11.9539 16.25C11.9437 16.25 11.9336 16.25 11.9184 16.25H1.08164C0.4875 16.25 0 15.7625 0 15.1684ZM20.5816 16.25C20.5715 16.25 20.5613 16.25 20.5461 16.25C21.8969 15.0566 22.7449 13.3148 22.7449 11.375C22.7449 10.9891 22.7094 10.6133 22.6484 10.2426C23.3391 9.92266 24.1059 9.75 24.9133 9.75H27.0816C30.0727 9.75 32.5 12.1773 32.5 15.1684C32.5 15.7676 32.0125 16.25 31.4184 16.25H20.5816ZM11.375 11.375C11.375 10.0821 11.8886 8.84209 12.8029 7.92785C13.7171 7.01361 14.9571 6.5 16.25 6.5C17.5429 6.5 18.7829 7.01361 19.6971 7.92785C20.6114 8.84209 21.125 10.0821 21.125 11.375C21.125 12.6679 20.6114 13.9079 19.6971 14.8221C18.7829 15.7364 17.5429 16.25 16.25 16.25C14.9571 16.25 13.7171 15.7364 12.8029 14.8221C11.8886 13.9079 11.375 12.6679 11.375 11.375ZM6.5 24.6441C6.5 20.9066 9.53164 17.875 13.2691 17.875H19.2309C22.9684 17.875 26 20.9066 26 24.6441C26 25.3906 25.3957 26 24.6441 26H7.85586C7.10938 26 6.5 25.3957 6.5 24.6441Z" fill="#FF7900"/></g><defs><clipPath id="clip0_865_2062"><path d="M0 0H32.5V26H0V0Z" fill="white"/></clipPath></defs></svg>
     },
     { 

@@ -11,6 +11,7 @@ interface EdcContextType {
   edcFormateurs: Formateur[];
   edcFormations: Formation[];
   edcBeneficiaires: Beneficiaire[];
+  edcBeneficiairesCount: number; // Ajoutez cette ligne
   loading: boolean;
   error: string | null;
   fetchEdcs: () => Promise<void>;
@@ -52,6 +53,7 @@ export const EdcProvider: React.FC<EdcProviderProps> = ({ children }) => {
   const [edcBeneficiaires, setEdcBeneficiaires] = useState<Beneficiaire[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [edcBeneficiairesCount, setEdcBeneficiairesCount] = useState<number>(0);
 
   // Fetch all EDCs
   const fetchEdcs = useCallback(async () => {
@@ -186,6 +188,7 @@ export const EdcProvider: React.FC<EdcProviderProps> = ({ children }) => {
       const data = await edcService.getBeneficiairesEdc();
       if (data && data.data) {
         setEdcBeneficiaires(data.data);
+        setEdcBeneficiairesCount(data.count || 0);
       }
       return data;
     } catch (err: any) {
@@ -211,6 +214,7 @@ export const EdcProvider: React.FC<EdcProviderProps> = ({ children }) => {
     edcFormateurs,
     edcFormations,
     edcBeneficiaires,
+    edcBeneficiairesCount, // Ajoutez cette ligne
     loading,
     error,
     fetchEdcs,

@@ -58,7 +58,7 @@ const CreatEvent = () => {
   const [selectedParticipants, setSelectedParticipants] = useState([]);
 
   const onRetourClick = () => {
-    navigate('/CalendrierManager');
+    navigate(-1);
   };
   
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
