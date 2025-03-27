@@ -36,6 +36,7 @@ const ParticipantsSection:React.FC<ParticipantsSectionProps> = ({
 }) => {
   const [selectAll, setSelectAll] = React.useState(false);
   const [selectedParticipants, setSelectedParticipants] = React.useState<number[]>([]);
+  const [attendanceState, setAttendanceState] = React.useState<Record<string, Record<string, boolean>>>({});
   const [search, setSearch] = React.useState("");
   const [expandedParticipants, setExpandedParticipants] = React.useState<number[]>([]);
 
@@ -88,14 +89,43 @@ const formationDays = React.useMemo(() => {
   return calculateFormationDays(formation.dateDebut, formation.dateFin || formation.dateDebut);
 }, [formation.dateDebut, formation.dateFin]);
 
-  const toggleAttendance = (participant: BeneficiaireWithPresenceResponse, day: Date) => {
-    // Here you would call an API to update the attendance
-    console.log(`Toggling attendance for ${participant.beneficiaire.nom} on ${day.toLocaleDateString()}`);
+const toggleAttendance = (participant: BeneficiaireWithPresenceResponse, day: Date) => {
+  const participantId = participant.beneficiaire._id;
+  const dayString = day.toISOString().split('T')[0]; // Get YYYY-MM-DD format
+  
+  setAttendanceState(prev => {
+    // Create nested structure if it doesn't exist
+    const participantAttendance = prev[participantId] || {};
     
-    // For now, just log the action
-    // In a real implementation, you would update the state and call an API
-    // to persist the changes
-  };
+    // Find existing attendance status from API data
+    const attendance = participant.presences.find(p => 
+      new Date(p.jour).toDateString() === day.toDateString()
+    );
+    
+    // Get current status - from our state if it exists, otherwise from API data
+    const currentStatus = participantAttendance[dayString] !== undefined 
+      ? participantAttendance[dayString] 
+      : (attendance?.isPresent || false);
+    
+    // Toggle the status
+    const newStatus = !currentStatus;
+    
+    // Log what's happening
+    console.log(`Toggling attendance for ${participant.beneficiaire.nom} on ${dayString} from ${currentStatus ? 'Present' : 'Absent'} to ${newStatus ? 'Present' : 'Absent'}`);
+    
+    // Return updated state
+    return {
+      ...prev,
+      [participantId]: {
+        ...participantAttendance,
+        [dayString]: newStatus
+      }
+    };
+  });
+  
+  // 3. Optional: Call API to update attendance
+  // updateAttendanceInDatabase(participant.beneficiaire._id, day, newStatus);
+};
 
   const handleSelectOne = (index: number) => {
     let newSelected = [...selectedParticipants];
@@ -224,12 +254,19 @@ const formationDays = React.useMemo(() => {
                 <div className="text-[#666] text-xs">{participant.beneficiaire.prenom}</div>
               </td>
 {formationDays.map((day, dayIdx) => {
+  const dayString = day.toISOString().split('T')[0];
+  const participantId = participant.beneficiaire._id;
+  
   // Find attendance record for this day and participant
   const attendance = participant.presences.find(p => 
     new Date(p.jour).toDateString() === day.toDateString()
   );
   
-  const isPresent = attendance?.isPresent || false;
+  // Check if we have a state override, otherwise use the API data
+  const hasStateOverride = attendanceState[participantId]?.[dayString] !== undefined;
+  const isPresent = hasStateOverride 
+    ? attendanceState[participantId][dayString]
+    : (attendance?.isPresent || false);
   
   return (
     <td key={dayIdx} className="p-3 text-center">
@@ -252,18 +289,18 @@ const formationDays = React.useMemo(() => {
               <td className="p-3 text-[#333] text-sm">{participant.beneficiaire.genre}</td>
               <td className="p-3 text-[#333] text-sm">{participant.beneficiaire.profession}</td>
               <td className="p-3 text-sm">
-  <span className={cn(
-    "font-medium",
-    // This needs to be fixed - presences is an array, not an object with isPresent property
-    participant.presences.length > 0 && participant.presences.some(p => p.isPresent) 
-      ? "text-[#00C31F]"
-      : "text-[#FF4815]"
-  )}>
-    {participant.presences.length > 0 && participant.presences.some(p => p.isPresent) 
-      ? "Présent (e)" 
-      : "Absent (e)"}
-  </span>
-</td>
+                <span className={cn(
+                  "font-medium",
+                  // This needs to be fixed - presences is an array, not an object with isPresent property
+                  participant.presences.length > 0 && participant.presences.some(p => p.isPresent) 
+                    ? "text-[#00C31F]"
+                    : "text-[#FF4815]"
+                )}>
+                  {participant.presences.length > 0 && participant.presences.some(p => p.isPresent) 
+                    ? "Présent (e)" 
+                    : "Absent (e)"}
+                </span>
+              </td>
               <td className="p-3">
                 <button className="flex items-center gap-2 text-sm text-[#333] font-bold">
                   Voir plus
