@@ -23,7 +23,7 @@ const FormStepThree: React.FC<FormStepThreeProps> = ({
   useIcon,
   beneficiairePreferences,
   setBeneficiairePreferences,
-  formationId
+  formationId,
 }) => {
   const handleExportPresence = async () => {
     try {
