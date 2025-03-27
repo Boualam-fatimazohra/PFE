@@ -11,7 +11,8 @@ const {
   getNombreBeneficiairesParFormateur,
   updateBeneficiaireConfirmations,
   exportBeneficiairesToExcel,
-  getBeneficiairesWithPresence
+  getBeneficiairesWithPresence,
+  exportBeneficiairesListToExcel
 } = require("../Controllers/beneficiaire.controller");
 const upload = require("../utils/upload");
 const authenticated = require("../Middlewares/Authmiddleware.js");
@@ -47,5 +48,6 @@ router.get("/export/:formationId",
   exportBeneficiairesToExcel
 );
 router.get("/getBeneficiairesWithPresence/:formationId",authenticated,getBeneficiairesWithPresence);
+router.post("/uploadList", upload.single("file"),exportBeneficiairesListToExcel);
 
 module.exports = router;
