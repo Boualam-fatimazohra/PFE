@@ -2,7 +2,7 @@ import * as React from "react";
 import { Printer, Search, FileDown } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
+import {exportBeneficiairesListToExcel } from "../../services/beneficiaireService";
 interface Participant {
   date: string;
   time: string;
@@ -65,7 +65,28 @@ const ParticipantsSection:React.FC<ParticipantsSectionProps> = ({
     );
   };
   
-
+  const handleExport = async () => {
+    try {
+      // Extraction des bénéficiaires depuis les participants
+      const beneficiaires = participants.map(p => p.beneficiaire);
+      
+      // Appel du service d'export
+      const { blob, filename } = await exportBeneficiairesListToExcel(beneficiaires);
+      
+      // Téléchargement automatique
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Export failed:', error);
+      // Ajoutez ici votre système de notifications (toast, alert, etc.)
+      alert(error.message || 'Erreur lors de l\'export');
+    }
+  };
   return (
     <div className="bg-white border border-[#DDD] p-6">
       <h2 className="text-2xl font-bold mb-6">Listes des participants</h2>
@@ -98,7 +119,9 @@ const ParticipantsSection:React.FC<ParticipantsSectionProps> = ({
         </Button>
 
         {/* Bouton Exporter */}
-        <Button variant="outline" className="border-[#FF7900] text-[#FF7900] flex items-center gap-2 text-sm mr-1">
+        <Button variant="outline"
+         className="border-[#FF7900] text-[#FF7900] flex items-center gap-2 text-sm mr-1"
+         onClick={handleExport}>
           Exporter
           <svg width="23" height="23" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path fill-rule="evenodd" clip-rule="evenodd" d="M17.0196 12.88V17.02H5.9796V12.88H3.6796V17.48C3.6796 18.4962 4.50339 19.32 5.5196 19.32H17.4796C18.4958 19.32 19.3196 18.4962 19.3196 17.48V12.88H17.0196ZM14.2596 10.58V5.06002C14.2596 4.69402 14.1142 4.34301 13.8554 4.08421C13.5966 3.82541 13.2456 3.68002 12.8796 3.68002H10.1196C9.35744 3.68002 8.7396 4.29787 8.7396 5.06002V10.58H5.9796L8.7396 13.3213L10.7794 15.3471C11.1725 15.7376 11.8267 15.7376 12.2198 15.3471L14.2596 13.3213L17.0196 10.58H14.2596Z" fill="#FF7900"/>

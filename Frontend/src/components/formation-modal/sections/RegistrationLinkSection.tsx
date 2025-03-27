@@ -13,11 +13,20 @@ const RegistrationLinkSection: React.FC<RegistrationLinkSectionProps> = ({
   setFormState,
   errors
 }) => {
+  const handleCreateLink = () => {
+    // Ouvre Google Forms dans un nouvel onglet
+    window.open('https://docs.google.com/forms', '_blank');
+  };
+
   return (
     <div className="rounded-none bg-white rounded-lg border border-gray-200 p-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-bold">Lien d'inscription</h2>
-        <button className="bg-black text-white px-6 py-2 text-sm w-32">
+        <button 
+          type="button"
+          onClick={handleCreateLink}
+          className="bg-black text-white px-6 py-2 text-sm w-32 hover:bg-gray-800 transition-colors"
+        >
           Créer un lien
         </button>
       </div>
@@ -29,14 +38,15 @@ const RegistrationLinkSection: React.FC<RegistrationLinkSectionProps> = ({
           type="url"
           value={formState.registrationLink}
           onChange={(e) => setFormState({ ...formState, registrationLink: e.target.value })}
-          className="rounded-none flex-1 p-2.5 border border-gray-300 rounded-lg"
+          className="rounded-none flex-1 p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           placeholder="https://"
+          pattern="https://.*"
+          required
         />
-        <button className="bg-gray-200 text-gray-700 px-6 py-2 text-sm w-32">
-          Ajouter
-        </button>
       </div>
-      {errors.registrationLink && <p className="mt-1 text-sm text-red-500">{errors.registrationLink}</p>}
+      {errors.registrationLink && (
+        <p className="mt-1 text-sm text-red-500">{errors.registrationLink}</p>
+      )}
     </div>
   );
 };

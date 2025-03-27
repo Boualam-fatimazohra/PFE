@@ -106,14 +106,17 @@ export function DashboardHeader() {
     navigationLinks = [
       { name: "Dashboard", path: "/formateur/dashboardFormateur" },
       { name: "Mes Formations", path: "/formateur/mesformation", additionalPaths: ["/formateur/formationModal"] },
-      { name: "Calendrier", path: "/formateur/CalendarView" },
+      { name: "Calendrier", path: "/formateur/CalendarView" , additionalPaths: ["/formateur/CreatEvent"]},
       { name: "Mes Bénéficiaires", path: "/formateur/BeneficiairesList" },
       { name: "Evaluation", path: "/formateur/EvaluationPages"},
     ];
   } else if (user?.role === "Manager") {
     navigationLinks = [
       { name: "Dashboard", path: "/manager/dashboardManager" },
-      { name: "Ecole du code", path: "/manager/Ecolcode" },
+      { name: "Ecole du code", path: "/manager/Ecolcode" ,additionalPaths: [
+        "/manager/GestionFormateurManager",
+        "/manager/GestionFormation"
+      ]  },
       { name: "Fablab Solidaire", path: "/manager/Fablab" },
       { name: "Orange Fab", path: "/page-link-3" },
       { name: "Coordination", path: "/page-link-3" },
