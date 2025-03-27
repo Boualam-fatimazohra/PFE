@@ -117,9 +117,9 @@ export function DashboardHeader() {
         "/manager/GestionFormateurManager",
         "/manager/GestionFormation"
       ]  },
-      { name: "Fablab Solidaire", path: "/manager/Fablab" },
-      { name: "Orange Fab", path: "/page-link-3" },
-      { name: "Coordination", path: "/page-link-3" },
+      { name: "Fablab Solidaire", path: "/manager/FablabSolidaire" },
+      { name: "Orange Fab", path: "/manager/OrangeFab" },
+      { name: "Coordination", path: "/manager/Coordination" },
       { name: "Événements", path: "/page-link-3" },
 
     ];

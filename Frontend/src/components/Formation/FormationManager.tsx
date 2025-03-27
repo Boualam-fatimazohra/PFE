@@ -4,6 +4,7 @@ import { CustomPagination } from "@/components/layout/CustomPagination";
 import { Search, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEdc } from "@/contexts/EdcContext"; // Import the EdcContext hook
+import { useNavigate } from "react-router-dom";
 
 // Default image as a base64 encoded placeholder
 const DEFAULT_IMAGE = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWlkWU1pZCBtZWV0Ij4KICAgIDxkZWZzPgogICAgICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZ3JhZCIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgICAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiNGM0YzRjM7c3RvcC1vcGFjaXR5OjEiIC8+CiAgICAgICAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3R5bGU9InN0b3AtY29sb3I6I0U2RTZFNjtzdG9wLW9wYWNpdHk6MSIgLz4KICAgICAgICA8L2xpbmVhckdyYWRpZW50PgogICAgPC9kZWZzPgogICAgPHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9InVybCgjZ3JhZCkiIC8+CiAgICA8dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSI0MCIgZmlsbD0iIzk5OSI+Tk8gSU1HPC90ZXh0Pgo8L3N2Zz4=";
@@ -29,6 +30,8 @@ interface Formation {
 }
 
 const FormationManager = () => {
+  const navigate = useNavigate();
+
   // Use the EdcContext to fetch formations
   const {
     edcFormations,
@@ -115,10 +118,14 @@ const FormationManager = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Gestion des Formations</h1>
         <div className="flex space-x-4">
-          <button className="bg-orange-500 text-white px-4 py-2 rounded">
-            Calendrier Formations
-          </button>
-          <button className="bg-black text-white px-4 py-2 rounded flex items-center">
+        <button 
+  className="bg-orange-500 text-white px-4 py-2 rounded"
+  onClick={() => navigate("/manager/GestionFormationManager")}
+>
+  Calendrier Formations
+</button>
+          <button className="bg-black text-white px-4 py-2 rounded flex items-center"   onClick={() => navigate("/manager/CreatEvent")}
+>
             <span className="mr-2">+</span>
             Créer un événement
           </button>
