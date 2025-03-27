@@ -3,7 +3,9 @@ import * as React from 'react';
 import { useState, useRef } from "react";
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useFormations } from "../../contexts/FormationContext";
-
+// Ajoutez ces imports en haut du fichier
+import Alert from '@mui/material/Alert';
+import Snackbar from '@mui/material/Snackbar';
 // Components
 import StepIndicator from '@/components/formation-modal/StepIndicator';
 import FormStepOne from '@/components/formation-modal/form-steps/FormStepOne';
@@ -44,6 +46,10 @@ const initialFormState: FormState = {
   tags: "",
 };
 const FormationModal: React.FC = () => {
+  // Ajoutez ces états dans le composant FormationModal
+const [alertOpen, setAlertOpen] = React.useState(false);
+const [alertMessage, setAlertMessage] = React.useState('');
+const [alertSeverity, setAlertSeverity] = React.useState<'success'|'error'|'warning'|'info'>('success');
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -64,15 +70,23 @@ const FormationModal: React.FC = () => {
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [hasPendingFiles, setHasPendingFiles] = useState<boolean>(false);
+  const [hasRegisterConfirmation,setHasResiterConfirmation] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [useIcon, setUseIcon] = useState<boolean>(true);
   const [formationId, setFormationId] = useState<string | null>(
     formationFromState?.id || null
   );
+
   const [inscriptions, setInscriptions] = React.useState<BeneficiaireInscription[]>([]);
   const [beneficiairePreferences, setBeneficiairePreferences] = useState<Record<string, { appel: boolean; email: boolean }>>({});
   console.log(beneficiairePreferences);
-  const { getBeneficiaireFormation } = useFormations();  
+  const { getBeneficiaireFormation } = useFormations(); 
+  // showAlert 
+  const showAlert = (message: string, severity: 'success'|'error'|'warning'|'info') => {
+    setAlertMessage(message);
+    setAlertSeverity(severity);
+    setAlertOpen(true);
+  }; 
   React.useEffect(() => {
     console.log("current Step : ",formationFromState?.currentStep )
     const fetchBeneficiaires = async () => {
@@ -165,15 +179,14 @@ const FormationModal: React.FC = () => {
   
       // Appel à l'API
       const result = await updateBeneficiaireConfirmations(formationId, confirmations);
-  
+      setHasResiterConfirmation(true);
+
       // Vérification du résultat
       if (result.success) {
+        setHasResiterConfirmation(true);
         console.log(result.message);
-        alert("changement des confirmation effecuter");
-
-        
-       
-      } else {
+        showAlert("Confirmations mises à jour avec succès", "success");
+            } else {
         throw new Error(result.message || 'Erreur inconnue lors de la mise à jour');
       }
   
@@ -189,7 +202,7 @@ const FormationModal: React.FC = () => {
       }
   
       // Ici tu pourrais également définir un état pour afficher des messages d'erreur dans l'UI
-      alert(`Une erreur est survenue : ${error.message}`);
+      showAlert(`Erreur: ${error.message}`, "error");
     }
   };
   // fin : enregistrement des confirmation appel/email : 
@@ -312,7 +325,7 @@ const FormationModal: React.FC = () => {
       // À ajouter si nécessaire
       } 
       else if (currentStep === 3) {
-        await handleUpdateConfirmations();
+        //await handleUpdateConfirmations();
         setCurrentStep(currentStep + 1);
 
       }///debut
@@ -385,14 +398,14 @@ const handleSubmit = async () => {
         if (result && result.data && result.data._id) {
           setFormationId(result.data._id);
           console.log(`Formation Created ID: ${result.data._id}`);
+          showAlert("formation draft est crée avec succès", "success");
         } else {
           console.error("Could not find formation ID in result:", result);
         }     
      setCurrentStep(currentStep + 1);
       } catch (err) {
         console.error('Error creating formation draft:', err);
-        alert('Erreur lors de la création de la formation en brouillon. Veuillez réessayer.');
-      }
+        showAlert('Erreur lors de la création de la formation en brouillon. Veuillez réessayer.', 'error');      }
     } catch (error) {
       console.error('Error submitting formation:', error);
       alert('Erreur lors de la création de la formation. Veuillez réessayer.');
@@ -407,8 +420,8 @@ const handleSubmit = async () => {
     try {
       if (currentStep === 3) {
         await handleUpdateConfirmations();
+        setHasResiterConfirmation(true);
         //setCurrentStep(currentStep + 1);
-
 
       }///debut
       else if (currentStep === 2) {
@@ -478,7 +491,7 @@ const handleSubmit = async () => {
             
             console.log("OOOOW Uploaded Successfuly");
             setHasPendingFiles(false);
-            toast.success("bénéficiaires enregistré avec succes");
+            showAlert("Bénéficiaires enregistrés avec succès", "success");
 
             // Fetch updated beneficiaires before moving to the next step
             if (!hasError && formationId) {
@@ -532,8 +545,6 @@ const handleSubmit = async () => {
           // Proceed to next step
           //setCurrentStep(currentStep + 1);
         }
-        toast.success("bénéficiaires enregistré avec succes");
-
       } 
        // Appel à updateFormationStep ici après succès de updateBeneficiaireConfirmations
       //  const response = await updateFormationStep(formationId);
@@ -542,8 +553,7 @@ const handleSubmit = async () => {
       // alert("modification enregistrer avec success");
     } catch (error) {
       console.error("Erreur lors de la soumission du brouillon :", error.message);
-      alert(`Erreur : ${error.message}`); // Affiche une alerte si une erreur se produit
-    }
+      showAlert(`Erreur: ${error.message}`, "error");    }
   };
 
   // Render current step content
@@ -634,6 +644,24 @@ const handleSubmit = async () => {
           isSubmitting={isSubmitting}
           hasPendingFiles={hasPendingFiles && currentStep === 2}
         />
+<Snackbar
+  open={alertOpen}
+  autoHideDuration={2000}
+  onClose={() => setAlertOpen(false)}
+  anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+>
+  <Alert 
+    severity={alertSeverity}
+    sx={{ 
+      width: '100%',
+      boxShadow: 3,
+      fontSize: '0.875rem',
+      '.MuiAlert-icon': { fontSize: '1.25rem' }
+    }}
+  >
+    {alertMessage}
+  </Alert>
+</Snackbar>
       </main>
     </>
   );
