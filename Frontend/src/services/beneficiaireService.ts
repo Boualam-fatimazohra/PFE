@@ -11,6 +11,43 @@ interface BeneficiaireWithPresenceResponse {
   presences: any[]; // Remplace "any" par le type exact de présence
   autresFormations: string[]; // Liste des IDs des autres formations
 }
+interface ExcelExportResponse {
+  blob: Blob;
+  filename: string;
+}
+export const exportBeneficiairesListToExcel = async (
+  beneficiaires: any[]
+): Promise<ExcelExportResponse> => {
+  try {
+    const response = await apiClient.post(
+      '/beneficiaires/uploadList', 
+      { 
+        beneficiaires: beneficiaires.map(b => ({ beneficiaire: b })) // Ajouter l'encapsulation
+      },
+      { responseType: 'blob' }
+    );
+
+    // Extraction du nom de fichier depuis les headers
+    const contentDisposition = response.headers['content-disposition'];
+    const filenameMatch = contentDisposition?.match(/filename="?(.+)"?/);
+    const filename = filenameMatch ? filenameMatch[1] : `beneficiaires_export_${Date.now()}.xlsx`;
+
+    return {
+      blob: new Blob([response.data], { type: response.headers['content-type'] }),
+      filename
+    };
+  } catch (error) {
+    // Gestion des erreurs JSON du serveur
+    if (error.response?.data instanceof Blob) {
+      const errorText = await new Response(error.response.data).text();
+      const errorData = JSON.parse(errorText);
+      throw new Error(errorData.message || 'Erreur lors de l\'export');
+    }
+
+    console.error('Erreur lors de l\'export:', error);
+    throw new Error('Erreur lors de la génération du fichier Excel');
+  }
+};
 export const getBeneficiairesWithPresence = async (formationId: string): Promise<BeneficiaireWithPresenceResponse[]> => {
   try {
     const response = await apiClient.get(`/beneficiaires/getBeneficiairesWithPresence/${formationId}`);

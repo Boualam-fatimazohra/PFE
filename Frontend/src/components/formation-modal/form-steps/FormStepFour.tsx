@@ -231,7 +231,7 @@ const FormStepFour: React.FC<FormStepFourProps> = ({
             <div className="md:col-span-2">
               <h4 className="text-sm font-medium text-gray-500 mb-1">Tags</h4>
               <div className="flex flex-wrap gap-2">
-                {formationData?.tags ? 
+                {formationData?.tags? 
                   formationData.tags.split(',').map((tag, index) => (
                     <span key={index} className="bg-gray-100 text-gray-700 px-2 py-1 rounded-md text-sm">
                       {tag.trim()}
