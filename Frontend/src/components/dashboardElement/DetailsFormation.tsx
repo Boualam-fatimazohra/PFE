@@ -66,6 +66,7 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
       // Fetch participants from the API
       const beneficiairesData = await getBeneficiairesWithPresence(formation.id);      
       setParticipants(beneficiairesData);
+      console.log("detail formation page : ",beneficiairesData);
       
       // Set your stats metrics (you might want to calculate these based on the data)
       setStatsMetrics([
