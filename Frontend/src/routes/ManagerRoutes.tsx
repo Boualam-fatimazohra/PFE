@@ -14,6 +14,13 @@ import GestionFormateurManager from "@/components/dashboardElement/GestionFormat
 import FormationManager from "@/components/Formation/FormationManager";
 import { EdcProvider } from "@/contexts/EdcContext";
 import { EvenementProvider } from "@/contexts/EvenementContext";
+import GestionFormationManager from "@/components/dashboardElement/GestionFormationManager";
+import FablabSolidaire from "@/components/dashboardElement/FablabSolidaire";
+import OrangeFab from "@/components/dashboardElement/OrangeFab";
+import Coordination from "@/components/dashboardElement/Coordination";
+import AjoutFormateur from "@/components/dashboardElement/AjoutFormateur";
+import ModifieFormateur from "@/components/dashboardElement/ModifieFormateur";
+import ListFormationManager from "@/components/dashboardElement/ListFormationManager";
 
 
 const ManagerRoutes = () => {
@@ -27,6 +34,12 @@ const ManagerRoutes = () => {
       <Route path="*" element={<NotFound />} />
           
           <Route path="/Ecolcode" element={<Ecolcode/>}/>
+          <Route path="/FablabSolidaire" element={<FablabSolidaire/>}/>
+          <Route path="/OrangeFab" element={<OrangeFab/>}/>
+          <Route path="/Coordination" element={<Coordination/>}/>
+          <Route path="/AjoutFormateur" element={<AjoutFormateur/>}/>
+          <Route path="/ModifieFormateur/:id" element={<ModifieFormateur />} />
+          <Route path="/ListFormationManager" element={<ListFormationManager/>}/>
 
           <Route path="/CalendrierManager" element={<CalendrierManager />} />
           <Route path="/CreatEvent" element={<CreatEvent />} />
