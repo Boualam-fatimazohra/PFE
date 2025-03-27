@@ -167,11 +167,10 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
       currentPage={participantsPage}
       itemsPerPage={PARTICIPANTS_PER_PAGE}
     /> */}
-    <ParticipantsSection
+<ParticipantsSection
   participants={participants}
   currentPage={1}
-  formation={formation}
-  
+  formation={formation} 
 />
   </>
 )}

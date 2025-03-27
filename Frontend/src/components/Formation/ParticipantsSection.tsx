@@ -3,6 +3,7 @@ import { Printer, Search, FileDown } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {exportBeneficiairesListToExcel } from "../../services/beneficiaireService";
+import { FormationItem } from "@/pages/types";
 interface Participant {
   date: string;
   time: string;
@@ -24,12 +25,14 @@ interface ParticipantsSectionProps {
   participants: BeneficiaireWithPresenceResponse[];
   currentPage: number;
   itemsPerPage?: number;
+  formation: FormationItem; 
 }
 
 const ParticipantsSection:React.FC<ParticipantsSectionProps> = ({ 
   participants,
   currentPage,
-  itemsPerPage = 11 
+  itemsPerPage = 11,
+  formation
 }) => {
   const [selectAll, setSelectAll] = React.useState(false);
   const [selectedParticipants, setSelectedParticipants] = React.useState<number[]>([]);
@@ -47,6 +50,51 @@ const ParticipantsSection:React.FC<ParticipantsSectionProps> = ({
       setSelectedParticipants(displayedParticipants.map((_, index) => index));
     }
     setSelectAll(!selectAll);
+  };
+
+  // calculate days of formation
+  const calculateFormationDays = (startDate: string, endDate: string) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    // Calculate the difference in days
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // +1 to include both start and end days
+    
+    // Generate an array of date objects for each day
+    const days = [];
+    for (let i = 0; i < diffDays; i++) {
+      const day = new Date(start);
+      day.setDate(start.getDate() + i);
+      days.push(day);
+    }
+    
+    return days;
+  };
+
+  // Calculate formation days
+// Calculate formation days
+const formationDays = React.useMemo(() => {
+  console.log("Formation dates in useMemo:", {
+    dateDebut: formation.dateDebut,
+    dateFin: formation.dateFin
+  });
+
+  if (!formation.dateDebut || !formation.dateFin) {
+    console.log("Using fallback for missing dates");
+    return [new Date()];
+  }
+  
+  return calculateFormationDays(formation.dateDebut, formation.dateFin || formation.dateDebut);
+}, [formation.dateDebut, formation.dateFin]);
+
+  const toggleAttendance = (participant: BeneficiaireWithPresenceResponse, day: Date) => {
+    // Here you would call an API to update the attendance
+    console.log(`Toggling attendance for ${participant.beneficiaire.nom} on ${day.toLocaleDateString()}`);
+    
+    // For now, just log the action
+    // In a real implementation, you would update the state and call an API
+    // to persist the changes
   };
 
   const handleSelectOne = (index: number) => {
@@ -87,6 +135,7 @@ const ParticipantsSection:React.FC<ParticipantsSectionProps> = ({
       alert(error.message || 'Erreur lors de l\'export');
     }
   };
+  
   return (
     <div className="bg-white border border-[#DDD] p-6">
       <h2 className="text-2xl font-bold mb-6">Listes des participants</h2>
@@ -148,6 +197,12 @@ const ParticipantsSection:React.FC<ParticipantsSectionProps> = ({
               />
             </th>
             <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Nom Prenom</th>
+              {/* Dynamic day columns */}
+  {formationDays.map((day, idx) => (
+    <th key={idx} className="p-3 text-center font-semibold text-[#333] text-sm font-bold">
+      {day.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}
+    </th>
+  ))}
             <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">email</th>
             <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Téléphone</th>
             <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Specialité</th>
@@ -168,19 +223,47 @@ const ParticipantsSection:React.FC<ParticipantsSectionProps> = ({
                 <div className="text-[#333]">{participant.beneficiaire.nom}</div>
                 <div className="text-[#666] text-xs">{participant.beneficiaire.prenom}</div>
               </td>
+{formationDays.map((day, dayIdx) => {
+  // Find attendance record for this day and participant
+  const attendance = participant.presences.find(p => 
+    new Date(p.jour).toDateString() === day.toDateString()
+  );
+  
+  const isPresent = attendance?.isPresent || false;
+  
+  return (
+    <td key={dayIdx} className="p-3 text-center">
+      <button
+        onClick={() => toggleAttendance(participant, day)}
+        className={`w-8 h-8 rounded-full ${
+          isPresent 
+            ? "bg-green-500 text-white" 
+            : "bg-red-500 text-white"
+        }`}
+      >
+        {isPresent ? "P" : "A"}
+      </button>
+    </td>
+  );
+})}
               <td className="p-3 text-[#333] text-sm ">{participant.beneficiaire.email}</td>
               <td className="p-3 text-[#333] text-sm">{participant.beneficiaire.telephone}</td>
               <td className="p-3 text-[#333] text-sm">{participant.beneficiaire.specialite}</td>
               <td className="p-3 text-[#333] text-sm">{participant.beneficiaire.genre}</td>
               <td className="p-3 text-[#333] text-sm">{participant.beneficiaire.profession}</td>
               <td className="p-3 text-sm">
-                <span className={cn(
-                  "font-medium",
-                  participant.presences.isPresent? "text-[#00C31F]":"text-[#FF4815]",
-                )}>
-                  {participant.presences.isPresent?"Présent (e)" : "Absent (e)"}
-                </span>
-              </td>
+  <span className={cn(
+    "font-medium",
+    // This needs to be fixed - presences is an array, not an object with isPresent property
+    participant.presences.length > 0 && participant.presences.some(p => p.isPresent) 
+      ? "text-[#00C31F]"
+      : "text-[#FF4815]"
+  )}>
+    {participant.presences.length > 0 && participant.presences.some(p => p.isPresent) 
+      ? "Présent (e)" 
+      : "Absent (e)"}
+  </span>
+</td>
               <td className="p-3">
                 <button className="flex items-center gap-2 text-sm text-[#333] font-bold">
                   Voir plus
