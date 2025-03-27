@@ -11,13 +11,15 @@ import { NotificationProvider } from "@/contexts/NotificationContext";
 import Ecolcode from "@/components/dashboardElement/Ecolcode";
 import GestionFormation from "@/components/dashboardElement/GestionFormationManager";
 import GestionFormateurManager from "@/components/dashboardElement/GestionFormateurManager";
-import GestionFormationManager from "@/components/dashboardElement/GestionFormationManager";
+import FormationManager from "@/components/Formation/FormationManager";
 import { EdcProvider } from "@/contexts/EdcContext";
+import { EvenementProvider } from "@/contexts/EvenementContext";
 
 
 const ManagerRoutes = () => {
   return (
     <FormationProvider>
+      <EvenementProvider>
     <NotificationProvider>
     <EdcProvider>
     <Routes>
@@ -29,11 +31,12 @@ const ManagerRoutes = () => {
           <Route path="/CalendrierManager" element={<CalendrierManager />} />
           <Route path="/CreatEvent" element={<CreatEvent />} />
           <Route path="/GestionFormateurManager" element={<GestionFormateurManager/>} />
-          <Route path="/GestionFormation" element={<GestionFormationManager/>} />
+          <Route path="/GestionFormation" element={<FormationManager/>} />
 
     </Routes>
     </EdcProvider>
     </NotificationProvider>
+    </EvenementProvider>
     </FormationProvider>
 
   );

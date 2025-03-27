@@ -235,7 +235,7 @@ const CalendarView = () => {
 
   const handleSelection = (type) => {
     if (type === "event") {
-      navigate("/CreatEvent");
+      navigate("/formateur/CreatEvent");
     } else if (type === "formation") {
       navigate("/formateur/formationModal");
     }

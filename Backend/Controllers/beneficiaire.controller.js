@@ -806,7 +806,6 @@ if (!mongoose.Types.ObjectId.isValid(formationId)) {
 const exportBeneficiairesListToExcel = async (req, res) => {
   try {
     const { beneficiaires } = req.body;
-
     // Validation de la liste en entrée
     if (!beneficiaires || !Array.isArray(beneficiaires) || beneficiaires.length === 0) {
       return res.status(400).json({
@@ -814,17 +813,13 @@ const exportBeneficiairesListToExcel = async (req, res) => {
         message: "Liste de bénéficiaires invalide ou vide"
       });
     }
-
     // Préparation des données pour Excel
     const workbook = XLSX.utils.book_new();
-    
     // Formatage des données avec exclusion des champs indésirables
     const excelData = beneficiaires.map(b => {
       const beneficiary = b.beneficiaire;
-      
       // Exclusion des champs __v, createdAt, updatedAt
-      const { __v, createdAt, updatedAt, ...cleanBenef } = beneficiary;
-      
+      const { _id , __v, createdAt, updatedAt, ...cleanBenef } = beneficiary;
       return {
         'Nom': cleanBenef.nom || '',
         'Prénom': cleanBenef.prenom || '',
@@ -841,10 +836,8 @@ const exportBeneficiairesListToExcel = async (req, res) => {
         'Saturé': cleanBenef.isSaturate ? 'Oui' : 'Non'
       };
     });
-
     // Création de la feuille de calcul
     const worksheet = XLSX.utils.json_to_sheet(excelData);
-    
     // Configuration des largeurs de colonnes
     const colWidths = [
       { wch: 15 }, // Nom
@@ -862,31 +855,23 @@ const exportBeneficiairesListToExcel = async (req, res) => {
       { wch: 12 }  // Saturé
     ];
     worksheet['!cols'] = colWidths;
-
     // Ajout de la feuille au classeur
     XLSX.utils.book_append_sheet(workbook, worksheet, "Beneficiaires");
-
     // Génération du nom de fichier
     const timestamp = Date.now();
     const fileName = `beneficiaires_export_${timestamp}.xlsx`;
-
     // Configuration de la réponse HTTP
     res.setHeader('Content-Type', 
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', 
       `attachment; filename="${fileName}"`);
-
     // Création d'un buffer et envoi direct
     const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
-    
     res.end(buffer);
-
     // Journalisation
     console.log(`[${new Date().toISOString()}] Export de ${beneficiaires.length} bénéficiaires`);
-
   } catch (error) {
     console.error(`[${new Date().toISOString()}] Erreur lors de l'export :`, error);
-    
     res.status(500).json({
       success: false,
       message: "Erreur lors de la génération du fichier Excel",
