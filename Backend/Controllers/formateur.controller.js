@@ -10,7 +10,23 @@ const { Entity } = require('../Models/entity.model.js');
 const {UtilisateurEntity} = require('../Models/utilisateurEntity.js'); 
 
 const createFormateur = async (req, res) => {
-  const { nom, prenom, email, numeroTelephone, coordinateur, manager, entityId } = req.body; // Ajoutez entityId
+  const { 
+    nom, 
+    prenom, 
+    email, 
+    numeroTelephone, 
+    coordinateur, 
+    manager, 
+    entityId,
+    // New attributes
+    specialite,
+    experience,
+    dateIntegration,
+    aPropos,
+    cv,
+    imageFormateur
+  } = req.body;
+  
   try {
       // Vérification de l'existence de l'email
       const existingUser = await Utilisateur.findOne({ email });
@@ -78,11 +94,18 @@ const createFormateur = async (req, res) => {
       // await sendMail(email, contenu);
       await newUser.save();
 
-      // Créer un formateur lié au nouvel utilisateur
+      // Créer un formateur lié au nouvel utilisateur avec les nouveaux attributs
       const newFormateur = new Formateur({
           utilisateur: newUser._id,
           manager: assignedManager,
           coordinateur,
+          // Ajout des nouveaux attributs
+          specialite,
+          experience,
+          dateIntegration: dateIntegration || Date.now(), // Utiliser la date fournie ou la date actuelle
+          aPropos,
+          cv,
+          imageFormateur
       });
 
       await newFormateur.save();
