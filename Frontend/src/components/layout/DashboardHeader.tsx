@@ -115,7 +115,8 @@ export function DashboardHeader() {
       { name: "Dashboard", path: "/manager/dashboardManager" },
       { name: "Ecole du code", path: "/manager/Ecolcode" ,additionalPaths: [
         "/manager/GestionFormateurManager",
-        "/manager/GestionFormation"
+        "/manager/GestionFormation",
+        "/manager/AjoutFormateur"
       ]  },
       { name: "Fablab Solidaire", path: "/manager/FablabSolidaire" },
       { name: "Orange Fab", path: "/manager/OrangeFab" },
