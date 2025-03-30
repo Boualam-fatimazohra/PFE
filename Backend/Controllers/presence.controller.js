@@ -4,24 +4,16 @@ const BeneficiaireFormation = require('../Models/beneficiairesFormation.js');
 // POST /api/presences
 const MarquerPresence = async (req, res) => {
   try {
-    const { presences, jour, periode } = req.body;
+    const { presences, jour } = req.body;
     
     // Validation des données reçues
-    if (!presences || !Array.isArray(presences) || !jour || !periode) {
+    if (!presences || !Array.isArray(presences) || !jour) {
       return res.status(400).json({ 
         success: false, 
         message: 'Données invalides. Veuillez fournir un tableau de présences, une date et une période.' 
       });
     }
     
-    // Vérification que la période est valide (Matin ou apresMidi)
-    if (periode !== 'Matin' && periode !== 'apresMidi') {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'La période doit être "Matin" ou "apresMidi".' 
-      });
-    }
-
     // Convertir la date si elle est reçue sous forme de string
     const jourDate = new Date(jour);
     if (isNaN(jourDate.getTime())) {
@@ -53,8 +45,7 @@ const MarquerPresence = async (req, res) => {
         jour: {
           $gte: new Date(jourDate.setHours(0, 0, 0, 0)),
           $lt: new Date(jourDate.setHours(23, 59, 59, 999))
-        },
-        periode
+        }
       });
 
       // Si la présence existe, mettre à jour, sinon créer
@@ -71,7 +62,6 @@ const MarquerPresence = async (req, res) => {
         const newPresence = new Presence({
           beneficiareFormation: beneficiareFormationId,
           jour: jourDate,
-          periode,
           isPresent
         });
         

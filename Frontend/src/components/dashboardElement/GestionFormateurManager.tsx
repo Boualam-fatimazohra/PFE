@@ -35,6 +35,9 @@ const GestionFormateurManager = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const [cityFilter, setCityFilter] = useState("");
   const navigate = useNavigate();
+  const handleEdit = (id) => {
+    navigate(`/manager/ModifieFormateur/${id}`);
+};
 
   // Fetch formateurs when the component mounts
   useEffect(() => {
@@ -97,7 +100,7 @@ const GestionFormateurManager = () => {
             Gestion des Formateurs
           </h1>
           <button 
-            onClick={() => navigate('/manager/CréerFormateur')}
+            onClick={() => navigate('/manager/AjoutFormateur')}
             className="bg-orange-500 text-white px-4 py-2 rounded flex items-center"
           >
             <span className="mr-2">+</span>
@@ -195,7 +198,8 @@ const GestionFormateurManager = () => {
                   </svg>
                   Détails
                 </button>
-                <button className="flex-1 py-2 text-center text-sm border-l flex items-center justify-center gap-2">
+                <button className="flex-1 py-2 text-center text-sm border-l flex items-center justify-center gap-2"       onClick={() => handleEdit(formateur.id)}  >
+
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="15" viewBox="0 0 14 15" fill="none">
                     <g clipPath="url(#clip0_1171_1650)">
                       <path d="M12.0586 2.36052L12.3895 2.69138C12.6465 2.94841 12.6465 3.36404 12.3895 3.61834L11.5938 4.41677L10.3332 3.15623L11.1289 2.36052C11.3859 2.10349 11.8016 2.10349 12.0559 2.36052H12.0586ZM5.73672 7.75544L9.40625 4.08318L10.6668 5.34373L6.99453 9.01326C6.91523 9.09255 6.8168 9.14998 6.71016 9.18005L5.11055 9.63669L5.56719 8.03709C5.59727 7.93044 5.65469 7.83201 5.73398 7.75271L5.73672 7.75544ZM10.202 1.43357L4.80703 6.82576C4.56914 7.06365 4.39687 7.35623 4.30664 7.67615L3.52461 10.4105C3.45898 10.6402 3.52187 10.8863 3.69141 11.0558C3.86094 11.2254 4.10703 11.2883 4.33672 11.2226L7.07109 10.4406C7.39375 10.3476 7.68633 10.1754 7.92148 9.94021L13.3164 4.54802C14.0848 3.77966 14.0848 2.53279 13.3164 1.76443L12.9855 1.43357C12.2172 0.66521 10.9703 0.66521 10.202 1.43357ZM2.40625 2.49998C1.07734 2.49998 0 3.57732 0 4.90623V12.3437C0 13.6726 1.07734 14.75 2.40625 14.75H9.84375C11.1727 14.75 12.25 13.6726 12.25 12.3437V9.28123C12.25 8.91755 11.9574 8.62498 11.5938 8.62498C11.2301 8.62498 10.9375 8.91755 10.9375 9.28123V12.3437C10.9375 12.948 10.448 13.4375 9.84375 13.4375H2.40625C1.80195 13.4375 1.3125 12.948 1.3125 12.3437V4.90623C1.3125 4.30193 1.80195 3.81248 2.40625 3.81248H5.46875C5.83242 3.81248 6.125 3.5199 6.125 3.15623C6.125 2.79255 5.83242 2.49998 5.46875 2.49998H2.40625Z" fill="black"/>

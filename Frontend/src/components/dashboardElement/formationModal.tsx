@@ -3,7 +3,9 @@ import * as React from 'react';
 import { useState, useRef } from "react";
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useFormations } from "../../contexts/FormationContext";
-
+// Ajoutez ces imports en haut du fichier
+import Alert from '@mui/material/Alert';
+import Snackbar from '@mui/material/Snackbar';
 // Components
 import StepIndicator from '@/components/formation-modal/StepIndicator';
 import FormStepOne from '@/components/formation-modal/form-steps/FormStepOne';
@@ -44,6 +46,10 @@ const initialFormState: FormState = {
   tags: "",
 };
 const FormationModal: React.FC = () => {
+  // Ajoutez ces états dans le composant FormationModal
+const [alertOpen, setAlertOpen] = React.useState(false);
+const [alertMessage, setAlertMessage] = React.useState('');
+const [alertSeverity, setAlertSeverity] = React.useState<'success'|'error'|'warning'|'info'>('success');
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -63,15 +69,24 @@ const FormationModal: React.FC = () => {
   const [processingResults, setProcessingResults] = useState<ProcessingResults | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [hasPendingFiles, setHasPendingFiles] = useState<boolean>(false);
+  const [hasRegisterConfirmation,setHasResiterConfirmation] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [useIcon, setUseIcon] = useState<boolean>(true);
   const [formationId, setFormationId] = useState<string | null>(
     formationFromState?.id || null
   );
+
   const [inscriptions, setInscriptions] = React.useState<BeneficiaireInscription[]>([]);
   const [beneficiairePreferences, setBeneficiairePreferences] = useState<Record<string, { appel: boolean; email: boolean }>>({});
   console.log(beneficiairePreferences);
-  const { getBeneficiaireFormation } = useFormations();  
+  const { getBeneficiaireFormation } = useFormations(); 
+  // showAlert 
+  const showAlert = (message: string, severity: 'success'|'error'|'warning'|'info') => {
+    setAlertMessage(message);
+    setAlertSeverity(severity);
+    setAlertOpen(true);
+  }; 
   React.useEffect(() => {
     console.log("current Step : ",formationFromState?.currentStep )
     const fetchBeneficiaires = async () => {
@@ -164,15 +179,14 @@ const FormationModal: React.FC = () => {
   
       // Appel à l'API
       const result = await updateBeneficiaireConfirmations(formationId, confirmations);
-  
+      setHasResiterConfirmation(true);
+
       // Vérification du résultat
       if (result.success) {
+        setHasResiterConfirmation(true);
         console.log(result.message);
-        alert("changement des confirmation effecuter");
-
-        
-       
-      } else {
+        showAlert("Confirmations mises à jour avec succès", "success");
+            } else {
         throw new Error(result.message || 'Erreur inconnue lors de la mise à jour');
       }
   
@@ -188,7 +202,7 @@ const FormationModal: React.FC = () => {
       }
   
       // Ici tu pourrais également définir un état pour afficher des messages d'erreur dans l'UI
-      alert(`Une erreur est survenue : ${error.message}`);
+      showAlert(`Erreur: ${error.message}`, "error");
     }
   };
   // fin : enregistrement des confirmation appel/email : 
@@ -221,12 +235,6 @@ const FormationModal: React.FC = () => {
 
           // Définir l'URL de prévisualisation
           setImagePreviewUrl(dataUrl);
-
-          setUploadedFiles(prev => [...prev, { 
-            name: file.name, 
-            data: dataUrl,
-            type: 'image'  // Mark this as an image type
-          }]);
         }
       };
 
@@ -317,131 +325,14 @@ const FormationModal: React.FC = () => {
       // À ajouter si nécessaire
       } 
       else if (currentStep === 3) {
-        await handleUpdateConfirmations();
+        //await handleUpdateConfirmations();
         setCurrentStep(currentStep + 1);
 
       }///debut
-      else if (currentStep === 2) {
-        // Process beneficiaires at step 2
-        if (!formationId) {
-          // Formation ID is needed for beneficiaire upload
-          setErrors(prevErrors => ({
-            ...prevErrors,
-            general: "Veuillez d'abord créer la formation avant de continuer"
-          }));
-          return;
-        }
-        
-        // Process files that have been uploaded but not processed yet
-        const filesToProcess = uploadedFiles.filter(file => 
-          file.status === 'uploaded' && file.uploadId && !file.processed
-        );
-        
-        if (filesToProcess.length > 0) {
-          setIsSubmitting(true);
-          setProcessingResults(null);
-          
-          try {
-            // Track results for each file
-            const results = [];
-            let hasError = false;
-            
-            for (const file of filesToProcess) {
-              try {
-                // Fetch file from URL to process
-                const response = await fetch(file.url);
-                const blob = await response.blob();
-                const fetchedFile = new File([blob], file.name, { 
-                  type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
-                });
-                
-                // Upload beneficiaires from Excel file
-                const result = await uploadBeneficiairesFromExcel(fetchedFile, formationId);
-                
-                // Add to results
-                results.push({
-                  fileName: file.name,
-                  success: true,
-                  nouveauxBeneficiaires: result.nouveauxBeneficiaires,
-                  nouvellesInstances: result.nouvellesInstances,
-                  message: result.message
-                });
-                
-                // Mark file as processed
-                setUploadedFiles(prev => 
-                  prev.map(f => 
-                    f.uploadId === file.uploadId 
-                      ? { ...f, processed: true } 
-                      : f
-                  )
-                );
-              } catch (error) {
-                console.error("erreur ****");
-                hasError = true;
-                results.push({
-                  fileName: file.name,
-                  success: false,
-                  message: error.message || "Une erreur est survenue lors du traitement du fichier"
-                });
-              }
-            }
-            
-            console.log("OOOOW Uploaded Successfuly");
-            
-            // Fetch updated beneficiaires before moving to the next step
-            if (!hasError && formationId) {
-              try {
-                const data = await getBeneficiaireFormation(formationId);
-                const formattedData = Array.isArray(data) ? data : [data];
-                setInscriptions(formattedData);
-                
-                // Initialize preferences with the updated data
-                const initialPreferences = formattedData.reduce((acc, benef) => {
-                  acc[benef._id] = { 
-                    appel: benef.confirmationAppel || false, 
-                    email: benef.confirmationEmail || false 
-                  };
-                  return acc;
-                }, {} as Record<string, { appel: boolean; email: boolean }>);
-                
-                setBeneficiairePreferences(initialPreferences);
-              } catch (err) {
-                console.error("Erreur lors de la récupération des données mises à jour:", err);
-              }
-            }
-            
-          } catch (error) {
-            console.error("Error processing beneficiaire files:", error);
-          } finally {
-            setIsSubmitting(false);
-          }
-        } else  {
-          // No files to process, refresh the beneficiaires data anyway before proceeding
-          if (formationId) {
-            try {
-              const data = await getBeneficiaireFormation(formationId);
-              const formattedData = Array.isArray(data) ? data : [data];
-              setInscriptions(formattedData);
-              
-              // Initialize preferences
-              const initialPreferences = formattedData.reduce((acc, benef) => {
-                acc[benef._id] = { 
-                  appel: benef.confirmationAppel || false, 
-                  email: benef.confirmationEmail || false 
-                };
-                return acc;
-              }, {} as Record<string, { appel: boolean; email: boolean }>);
-              
-              setBeneficiairePreferences(initialPreferences);
-            } catch (err) {
-              console.error("Erreur lors de la récupération des données:", err);
-            }
-          }
-          
-          // Proceed to next step
-          setCurrentStep(currentStep + 1);
-        }
-      } 
+      else if(currentStep === 2) {
+        // just move to next step
+        setCurrentStep(currentStep + 1);
+      }
        // Appel à updateFormationStep ici après succès de updateBeneficiaireConfirmations
        const response = await updateFormationStep(formationId);
        console.log(`Step updated to ${response} after confirmations update`);
@@ -507,14 +398,14 @@ const handleSubmit = async () => {
         if (result && result.data && result.data._id) {
           setFormationId(result.data._id);
           console.log(`Formation Created ID: ${result.data._id}`);
+          showAlert("formation draft est crée avec succès", "success");
         } else {
           console.error("Could not find formation ID in result:", result);
         }     
      setCurrentStep(currentStep + 1);
       } catch (err) {
         console.error('Error creating formation draft:', err);
-        alert('Erreur lors de la création de la formation en brouillon. Veuillez réessayer.');
-      }
+        showAlert('Erreur lors de la création de la formation en brouillon. Veuillez réessayer.', 'error');      }
     } catch (error) {
       console.error('Error submitting formation:', error);
       alert('Erreur lors de la création de la formation. Veuillez réessayer.');
@@ -529,8 +420,8 @@ const handleSubmit = async () => {
     try {
       if (currentStep === 3) {
         await handleUpdateConfirmations();
+        setHasResiterConfirmation(true);
         //setCurrentStep(currentStep + 1);
-
 
       }///debut
       else if (currentStep === 2) {
@@ -543,7 +434,7 @@ const handleSubmit = async () => {
           }));
           return;
         }
-        
+  
         // Process files that have been uploaded but not processed yet
         const filesToProcess = uploadedFiles.filter(file => 
           file.status === 'uploaded' && file.uploadId && !file.processed
@@ -599,7 +490,9 @@ const handleSubmit = async () => {
             }
             
             console.log("OOOOW Uploaded Successfuly");
-            
+            setHasPendingFiles(false);
+            showAlert("Bénéficiaires enregistrés avec succès", "success");
+
             // Fetch updated beneficiaires before moving to the next step
             if (!hasError && formationId) {
               try {
@@ -652,8 +545,6 @@ const handleSubmit = async () => {
           // Proceed to next step
           //setCurrentStep(currentStep + 1);
         }
-        toast.success("bénéficiaires enregistré avec succes");
-
       } 
        // Appel à updateFormationStep ici après succès de updateBeneficiaireConfirmations
       //  const response = await updateFormationStep(formationId);
@@ -662,8 +553,7 @@ const handleSubmit = async () => {
       // alert("modification enregistrer avec success");
     } catch (error) {
       console.error("Erreur lors de la soumission du brouillon :", error.message);
-      alert(`Erreur : ${error.message}`); // Affiche une alerte si une erreur se produit
-    }
+      showAlert(`Erreur: ${error.message}`, "error");    }
   };
 
   // Render current step content
@@ -696,7 +586,9 @@ const handleSubmit = async () => {
             fileList={fileList}
             setFileList={setFileList}
             uploadedFiles={uploadedFiles}
-            setUploadedFiles={setUploadedFiles} // Add this prop
+            setUploadedFiles={setUploadedFiles}
+            hasPendingFiles={hasPendingFiles}
+            setHasPendingFiles={setHasPendingFiles}
             loading={loading}
             processingResults={processingResults}
             setMessages={setMessages}
@@ -750,7 +642,26 @@ const handleSubmit = async () => {
           handleSubmit={handleSubmit}
           handleSubmitDraft={handleSubmitDraft}
           isSubmitting={isSubmitting}
+          hasPendingFiles={hasPendingFiles && currentStep === 2}
         />
+<Snackbar
+  open={alertOpen}
+  autoHideDuration={2000}
+  onClose={() => setAlertOpen(false)}
+  anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+>
+  <Alert 
+    severity={alertSeverity}
+    sx={{ 
+      width: '100%',
+      boxShadow: 3,
+      fontSize: '0.875rem',
+      '.MuiAlert-icon': { fontSize: '1.25rem' }
+    }}
+  >
+    {alertMessage}
+  </Alert>
+</Snackbar>
       </main>
     </>
   );

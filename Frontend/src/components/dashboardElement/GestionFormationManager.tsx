@@ -86,7 +86,7 @@ const staticEvents = [
   // ...autres événements statiques
 ];
 
-const GestionFormation = () => {
+const GestionFormationManager = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date(2025, 0, 1)); // January 2025
   const [currentView, setCurrentView] = useState('dayGridMonth'); // Default view is month
   const calendarRef = useRef(null);
@@ -132,7 +132,7 @@ const GestionFormation = () => {
   // Gestion de la sélection (événement ou formation)
   const handleSelection = () => {
     setOpen(false);
-    navigate("/CreatEvent");
+    navigate("/manager/CreatEvent");
   };
   
 
@@ -359,4 +359,4 @@ const GestionFormation = () => {
   );
 };
 
-export default GestionFormation;
+export default GestionFormationManager;
