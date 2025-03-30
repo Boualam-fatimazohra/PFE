@@ -2,12 +2,12 @@ const BeneficiaireFormation = require("../Models/beneficiairesFormation.js");
 const Presence = require("../Models/presence.model.js");
  const mongoose = require('mongoose');
  const getBeneficiairesByFormation = async (formationId) => {
-   return await BeneficiaireFormation.find({ formation: new mongoose.Types.ObjectId(formationId) })
+   return await BeneficiaireFormation.find({ formation: new mongoose.Types.ObjectId(formationId),
+    confirmationAppel: true,
+  confirmationEmail: true})
      .populate("beneficiaire") // Assure-toi que beneficiaire est bien peuplé
      .exec();
  };
- 
- 
  // Fonction pour récupérer les présences associées à une liste de bénéficiaires
  const getPresencesByBeneficiaires = async (beneficiairesFormationIds) => {
    return await Presence.find({ beneficiareFormation: { $in: beneficiairesFormationIds } });

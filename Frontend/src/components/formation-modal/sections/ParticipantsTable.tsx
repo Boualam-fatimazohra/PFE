@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Users } from "lucide-react";
+import { Users, ChevronDown } from "lucide-react";
 import { BeneficiaireInscription } from "../types";
 
 interface ParticipantsTableProps {
@@ -7,25 +7,28 @@ interface ParticipantsTableProps {
   useIcon: boolean;
   beneficiairePreferences: Record<string, { appel: boolean; email: boolean }>;
   setBeneficiairePreferences: React.Dispatch<React.SetStateAction<Record<string, { appel: boolean; email: boolean }>>>;
+  setHasRegisterConfirmation: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 const ParticipantsTable: React.FC<ParticipantsTableProps> = ({
   participants,
   useIcon,
   beneficiairePreferences,
-  setBeneficiairePreferences
+  setBeneficiairePreferences,
+  setHasRegisterConfirmation
 }) => {
   const isEmptyParticipants = !participants || participants.length === 0;
 
-  // Fonction pour basculer la valeur de confirmation
-  const toggleConfirmation = (participantId: string, type: "appel" | "email") => {
+  // Function to update confirmation status
+  const updateConfirmation = (participantId: string, type: "appel" | "email", value: boolean) => {
     setBeneficiairePreferences((prev) => ({
       ...prev,
       [participantId]: {
         ...prev[participantId],
-        [type]: !prev[participantId]?.[type],
+        [type]: value,
       },
     }));
+    setHasRegisterConfirmation(true);
   };
 
   return (
@@ -64,28 +67,45 @@ const ParticipantsTable: React.FC<ParticipantsTableProps> = ({
                 <td className="p-3">{participant.beneficiaire.genre || "N/A"}</td>
                 <td className="p-3">{participant.beneficiaire.telephone || "N/A"}</td>
 
-                {/* Confirmation Téléphone */}
-                <td className="p-3">
-                  <span
-                    onClick={() => toggleConfirmation(participant._id, "appel")}
-                    className={`font-semibold cursor-pointer ${
-                      beneficiairePreferences[participant._id]?.appel ? "text-green-500" : "text-red-500"
-                    }`}
-                  >
-                    {beneficiairePreferences[participant._id]?.appel ? "Confirmé" : "Non confirmé"}
-                  </span>
+                {/* Dropdown for Phone Confirmation */}
+                <td className="p-3 relative">
+                  <div className="relative w-32">
+                    <select
+                      value={beneficiairePreferences[participant._id]?.appel ? "confirmed" : "not-confirmed"}
+                      onChange={(e) => updateConfirmation(participant._id, "appel", e.target.value === "confirmed")}
+                      className={`w-full appearance-none px-2 py-1 rounded border text-sm font-semibold ${
+                        beneficiairePreferences[participant._id]?.appel 
+                          ? "text-green-600 border-green-500" 
+                          : "text-red-600 border-red-500"
+                      }`}
+                    >
+                      <option value="not-confirmed">Non confirmé</option>
+                      <option value="confirmed">Confirmé</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                      <ChevronDown size={16} />
+                    </div>
+                  </div>
                 </td>
-
-                {/* Confirmation Email */}
-                <td className="p-3">
-                  <span
-                    onClick={() => toggleConfirmation(participant._id, "email")}
-                    className={`font-semibold cursor-pointer ${
-                      beneficiairePreferences[participant._id]?.email ? "text-green-500" : "text-red-500"
-                    }`}
-                  >
-                    {beneficiairePreferences[participant._id]?.email ? "Confirmé" : "Non confirmé"}
-                  </span>
+                  {/*Dropdown*/}
+                <td className="p-3 relative">
+                  <div className="relative w-32">
+                    <select
+                      value={beneficiairePreferences[participant._id]?.email ? "confirmed" : "not-confirmed"}
+                      onChange={(e) => updateConfirmation(participant._id, "email", e.target.value === "confirmed")}
+                      className={`w-full appearance-none px-2 py-1 rounded border text-sm font-semibold ${
+                        beneficiairePreferences[participant._id]?.email 
+                          ? "text-green-600 border-green-500" 
+                          : "text-red-600 border-red-500"
+                      }`}
+                    >
+                      <option value="not-confirmed">Non confirmé</option>
+                      <option value="confirmed">Confirmé</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                      <ChevronDown size={16} />
+                    </div>
+                  </div>
                 </td>
               </tr>
             ))

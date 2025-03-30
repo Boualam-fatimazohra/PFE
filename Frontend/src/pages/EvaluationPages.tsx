@@ -14,7 +14,7 @@ import { CustomPagination } from "@/components/layout/CustomPagination";
 
 // Types
 interface Beneficiaire {
-  _id: any;
+  _id?: string;
   nom: string;
   prenom: string;
   email: string;
@@ -25,6 +25,13 @@ interface Beneficiaire {
   profession: string;
   isBlack: boolean;
   isSaturate: boolean;
+  dateNaissance?: string;
+  telephone?: number;
+  niveau?: string;
+  situationProfessionnel?: string;
+  nationalite?: string;
+  region?: string;
+  categorieAge?: string;
 }
 
 interface BeneficiairesListeProps {
@@ -66,7 +73,7 @@ const FormationsList = ({ formations, onAccessBeneficiaires }: FormationsListPro
       enCours: [] as FormationItem[],
       aVenir: [] as FormationItem[],
       autres: [] as FormationItem[]
-    };
+    };  
 
     formations.forEach(formation => {
       if (formation.status === "En Cours") {
@@ -223,7 +230,9 @@ const BeneficiairesTable: React.FC<BeneficiairesListeProps> = ({ formationId }) 
         setInscriptions(formattedData);
         
         // Extraire les bénéficiaires des inscriptions
-        const extractedBeneficiaires = formattedData.map(item => item.beneficiaire);
+        const extractedBeneficiaires = formattedData
+        .filter(item => item.confirmationEmail && item.confirmationAppel)
+        .map(item => item.beneficiaire);
         setBeneficiaires(extractedBeneficiaires);
         
         setError(null);

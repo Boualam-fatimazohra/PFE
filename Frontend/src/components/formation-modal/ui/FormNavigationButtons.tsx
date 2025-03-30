@@ -1,5 +1,6 @@
 // src/components/formation-modal/ui/FormNavigationButtons.tsx
 import * as React from "react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface FormNavigationButtonsProps {
   currentStep: number;
@@ -9,6 +10,8 @@ interface FormNavigationButtonsProps {
   handleSubmit: () => void;
   handleSubmitDraft: () => void;
   isSubmitting: boolean;
+  hasPendingFiles?: boolean;
+  hasRegisterConfirmation?:boolean;
 }
 
 const FormNavigationButtons: React.FC<FormNavigationButtonsProps> = ({
@@ -18,11 +21,14 @@ const FormNavigationButtons: React.FC<FormNavigationButtonsProps> = ({
   handleNext,
   handleSubmit,
   handleSubmitDraft,
-  isSubmitting
+  isSubmitting,
+  hasPendingFiles,
+  hasRegisterConfirmation
+
 }) => {
   return (
     <div className="flex justify-end mt-6 gap-4">
-      {currentStep > 1 && (
+      {currentStep > 2 && (
         <button
           type="button"
           onClick={handleBack}
@@ -43,14 +49,32 @@ const FormNavigationButtons: React.FC<FormNavigationButtonsProps> = ({
       )}
       
       {currentStep < totalSteps ? (
-        <button
-          type="button"
-          onClick={handleNext}
-          className="rounded-none px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
-          disabled={isSubmitting}
-        >
-          Suivant
-        </button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={handleNext}
+                className={`px-6 py-2 ${
+                  (currentStep === 2 && hasPendingFiles) || 
+                  (currentStep === 3 && hasRegisterConfirmation===false)
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-orange-500 hover:bg-orange-600"
+                } text-white rounded-lg`}
+                disabled={isSubmitting || (currentStep === 2 && hasPendingFiles)||
+                   (currentStep === 3 && hasRegisterConfirmation===false)}
+              >
+                {isSubmitting ? "En cours..." : "Suivant"}
+              </button>
+            </TooltipTrigger>
+            {currentStep === 2 && hasPendingFiles && (
+              <TooltipContent>
+                <p>Veuillez enregistrer vos fichiers en brouillon avant de continuer</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
+        
       ) : (
         <button
           type="button"

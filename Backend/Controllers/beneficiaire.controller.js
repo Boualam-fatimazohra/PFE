@@ -216,7 +216,7 @@ const deleteBeneficiaire = async (req, res) => {
     const beneficiaireIds = beneficiaires.map(b => b._id);
     
     // Supprimer toutes les instances liées dans BeneficiareFormation
-    await BeneficiareFormation.deleteMany({ beneficiaire: { $in: beneficiaireIds } });
+    await BeneficiaireFormation.deleteMany({ beneficiaire: { $in: beneficiaireIds } });
     
     // Ensuite, supprimer les bénéficiaires
     const result = await Beneficiaire.deleteMany({});
@@ -453,7 +453,7 @@ const uploadBeneficiairesFromExcel = async (req, res) => {
           confirmationAppel: false,
           confirmationEmail: false,
         }));
-        await BeneficiareFormation.insertMany(beneficiareFormations, { session });
+        await BeneficiaireFormation.insertMany(beneficiareFormations, { session });
       }
 
       if (nouvellesInstances.length > 0) {
@@ -596,7 +596,7 @@ const updateBeneficiaireConfirmations = async (req, res) => {
       };
       
       // Mettre à jour le document avec l'ID spécifié
-      const updated = await BeneficiareFormation.findByIdAndUpdate(
+      const updated = await BeneficiaireFormation.findByIdAndUpdate(
         item.id,
         { $set: updateData },
         { new: true } // Retourner le document mis à jour
@@ -650,7 +650,7 @@ const exportBeneficiairesToExcel = async (req, res) => {
     }
 
     // Récupération des relations formation-bénéficiaires
-    const beneficiaireRelations = await BeneficiareFormation.find({ 
+    const beneficiaireRelations = await BeneficiaireFormation.find({ 
       formation: formationId 
     }).populate('beneficiaire');
 
@@ -802,12 +802,83 @@ if (!mongoose.Types.ObjectId.isValid(formationId)) {
     res.status(500).json({ message: "Erreur lors de la récupération des données." });
   }
 };
-
-
-
-
-
-
+// export just les bénéficiaire récupérer  a partir du frontend  dans les étapes  : 
+const exportBeneficiairesListToExcel = async (req, res) => {
+  try {
+    const { beneficiaires } = req.body;
+    // Validation de la liste en entrée
+    if (!beneficiaires || !Array.isArray(beneficiaires) || beneficiaires.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Liste de bénéficiaires invalide ou vide"
+      });
+    }
+    // Préparation des données pour Excel
+    const workbook = XLSX.utils.book_new();
+    // Formatage des données avec exclusion des champs indésirables
+    const excelData = beneficiaires.map(b => {
+      const beneficiary = b.beneficiaire;
+      // Exclusion des champs __v, createdAt, updatedAt
+      const { _id , __v, createdAt, updatedAt, ...cleanBenef } = beneficiary;
+      return {
+        'Nom': cleanBenef.nom || '',
+        'Prénom': cleanBenef.prenom || '',
+        'Email': cleanBenef.email || '',
+        'Téléphone': cleanBenef.telephone || '',
+        'Genre': cleanBenef.genre || '',
+        'Pays': cleanBenef.pays || '',
+        'Spécialité': cleanBenef.specialite || '',
+        'Établissement': cleanBenef.etablissement || '',
+        'Profession': cleanBenef.profession || '',
+        'Région': cleanBenef.region || '',
+        'Catégorie d\'âge': cleanBenef.categorieAge || '',
+        'Liste noire': cleanBenef.isBlack ? 'Oui' : 'Non',
+        'Saturé': cleanBenef.isSaturate ? 'Oui' : 'Non'
+      };
+    });
+    // Création de la feuille de calcul
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    // Configuration des largeurs de colonnes
+    const colWidths = [
+      { wch: 15 }, // Nom
+      { wch: 15 }, // Prénom
+      { wch: 25 }, // Email
+      { wch: 15 }, // Téléphone
+      { wch: 10 }, // Genre
+      { wch: 15 }, // Pays
+      { wch: 20 }, // Spécialité
+      { wch: 20 }, // Établissement
+      { wch: 20 }, // Profession
+      { wch: 15 }, // Région
+      { wch: 15 }, // Catégorie d'âge
+      { wch: 12 }, // Liste noire
+      { wch: 12 }  // Saturé
+    ];
+    worksheet['!cols'] = colWidths;
+    // Ajout de la feuille au classeur
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Beneficiaires");
+    // Génération du nom de fichier
+    const timestamp = Date.now();
+    const fileName = `beneficiaires_export_${timestamp}.xlsx`;
+    // Configuration de la réponse HTTP
+    res.setHeader('Content-Type', 
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 
+      `attachment; filename="${fileName}"`);
+    // Création d'un buffer et envoi direct
+    const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+    res.end(buffer);
+    // Journalisation
+    console.log(`[${new Date().toISOString()}] Export de ${beneficiaires.length} bénéficiaires`);
+  } catch (error) {
+    console.error(`[${new Date().toISOString()}] Erreur lors de l'export :`, error);
+    res.status(500).json({
+      success: false,
+      message: "Erreur lors de la génération du fichier Excel",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
 // Export the functions for use in routes
 module.exports = {
     getAllBeneficiaires,
@@ -820,5 +891,6 @@ module.exports = {
     getNombreBeneficiairesParFormateur,
     updateBeneficiaireConfirmations,
     exportBeneficiairesToExcel,
-    getBeneficiairesWithPresence
+    getBeneficiairesWithPresence,
+    exportBeneficiairesListToExcel
 };
