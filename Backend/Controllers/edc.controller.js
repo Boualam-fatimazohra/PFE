@@ -14,7 +14,17 @@ const createEDC = async (req, res) => {
 
     // Validate required fields
     if (!ville) {
-      return res.status(400).json({ message: "Ville are required" });
+      return res.status(400).json({ message: "Ville is required" });
+    }
+
+    // Check if an entity with this ville already exists
+    const existingEntity = await Entity.findOne({ ville });
+    
+    if (existingEntity) {
+      return res.status(409).json({ 
+        message: "Une entité avec cette ville existe déjà",
+        existingEntity 
+      });
     }
 
     // First, create the base Entity
