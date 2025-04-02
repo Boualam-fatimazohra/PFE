@@ -5,6 +5,7 @@ import { Search, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEdc } from "@/contexts/EdcContext"; // Import the EdcContext hook
 import { useNavigate } from "react-router-dom";
+import LoadingSpinner from "../layout/LoadingSpinner";
 
 // Default image as a base64 encoded placeholder
 const DEFAULT_IMAGE = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWlkWU1pZCBtZWV0Ij4KICAgIDxkZWZzPgogICAgICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZ3JhZCIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgICAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiNGM0YzRjM7c3RvcC1vcGFjaXR5OjEiIC8+CiAgICAgICAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3R5bGU9InN0b3AtY29sb3I6I0U2RTZFNjtzdG9wLW9wYWNpdHk6MSIgLz4KICAgICAgICA8L2xpbmVhckdyYWRpZW50PgogICAgPC9kZWZzPgogICAgPHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9InVybCgjZ3JhZCkiIC8+CiAgICA8dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSI0MCIgZmlsbD0iIzk5OSI+Tk8gSU1HPC90ZXh0Pgo8L3N2Zz4=";
@@ -105,7 +106,7 @@ const FormationManager = () => {
 
   // Loading and error states
   if (loading) {
-    return <div className="text-center py-10">Chargement des formations...</div>;
+    return <LoadingSpinner />;
   }
 
   if (error) {

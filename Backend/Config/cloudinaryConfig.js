@@ -11,6 +11,30 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+const formateurStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: (req, file) => {
+    return {
+      folder: 'formateurs',
+      resource_type: file.mimetype.startsWith('image/') ? 'image' : 'raw',
+      allowed_formats: file.mimetype.startsWith('image/') 
+        ? ['jpg', 'jpeg', 'png'] 
+        : ['pdf', 'doc', 'docx'],
+      public_id: `formateur-${Date.now()}-${file.originalname.split('.')[0]}`
+    };
+  }
+});
+
+// Création du middleware multer
+const upload = multer({ 
+  storage: formateurStorage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  }
+});
+
+
+
 // Set up Cloudinary storage for images
 const imageStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
@@ -93,9 +117,11 @@ const getFolderResources = async (folderPath) => {
 module.exports = {
   cloudinary,
   uploadImage,
+  uploadFormateurFiles: upload,
   uploadExcel,
   uploadToCloudinary,
   deleteFromCloudinary,
   createFolder,
-  getFolderResources
+  getFolderResources,
+  multerUpload: upload
 };
