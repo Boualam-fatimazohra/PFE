@@ -5,6 +5,8 @@ const Manager = require('../Models/manager.model.js');
 const Notification = require('../Models/notification.model.js');
 const { cloudinary } = require('../Config/cloudinaryConfig.js');
 const FormationDraft = require('../Models/formationDraft.model'); // Assurez-vous d'importer le modèle
+const { determineFormationStatus } = require('../utils/formationUtils.js')
+
 
 //  debut : creation d'un formation par un formateur bien précis :
 const createFormation = async (req, res) => {
@@ -29,7 +31,6 @@ const createFormation = async (req, res) => {
       dateFin,
       description,
       lienInscription,
-      status,
       tags,
       categorie,
       niveau
@@ -41,6 +42,8 @@ const createFormation = async (req, res) => {
         message: "Le nom de la formation est obligatoire" 
       });
     }
+
+    const status = determineFormationStatus(dateDebut, dateFin);
 
     // 4. Récupérer l'image si elle est fournie
     // 5. Get image URL from Cloudinary (req.file is populated by multer)
