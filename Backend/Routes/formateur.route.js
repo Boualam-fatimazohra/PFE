@@ -3,13 +3,18 @@ const { createFormateur, getFormateurs, updateFormateur, deleteFormateur, getFor
 const authorizeRoles = require('../Middlewares/RoleMiddleware.js');
 const authenticated = require('../Middlewares/Authmiddleware.js');
 const authorizeOwnership = require('../Middlewares/OwnershipMiddleware.js');
+const {multerUpload} =require('../Config/cloudinaryConfig.js');
 const router = express.Router();
 
 router.post('/Addformateur', 
+    multerUpload.fields([
+        { name: 'cv', maxCount: 1 },
+        { name: 'imageFormateur', maxCount: 1 }
+      ]),
     authenticated, 
     authorizeRoles('Admin', 'Manager'), 
     createFormateur
-);
+  );
 
 router.get('/getFormateurs', 
     authenticated, 
