@@ -227,19 +227,19 @@ const toggleAttendance = (participant: BeneficiaireWithPresenceResponse, day: Da
               />
             </th>
             <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Nom Prenom</th>
-              {/* Dynamic day columns */}
-  {formationDays.map((day, idx) => (
-    <th key={idx} className="p-3 text-center font-semibold text-[#333] text-sm font-bold">
-      {day.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}
-    </th>
-  ))}
+
             <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">email</th>
             <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Téléphone</th>
             <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Specialité</th>
             <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Genre</th>
             <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Situation Profetionnelle</th>
             <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Status</th>
-            <th className="p-3 font-bold"></th>
+            {/* Dynamic day columns */}
+            {formationDays.map((day, idx) => (
+              <th key={idx} className="p-3 text-center font-semibold text-[#333] text-sm font-bold">
+                {day.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
@@ -253,36 +253,7 @@ const toggleAttendance = (participant: BeneficiaireWithPresenceResponse, day: Da
                 <div className="text-[#333]">{participant.beneficiaire.nom}</div>
                 <div className="text-[#666] text-xs">{participant.beneficiaire.prenom}</div>
               </td>
-{formationDays.map((day, dayIdx) => {
-  const dayString = day.toISOString().split('T')[0];
-  const participantId = participant.beneficiaire._id;
-  
-  // Find attendance record for this day and participant
-  const attendance = participant.presences.find(p => 
-    new Date(p.jour).toDateString() === day.toDateString()
-  );
-  
-  // Check if we have a state override, otherwise use the API data
-  const hasStateOverride = attendanceState[participantId]?.[dayString] !== undefined;
-  const isPresent = hasStateOverride 
-    ? attendanceState[participantId][dayString]
-    : (attendance?.isPresent || false);
-  
-  return (
-    <td key={dayIdx} className="p-3 text-center">
-      <button
-        onClick={() => toggleAttendance(participant, day)}
-        className={`w-8 h-8 rounded-full ${
-          isPresent 
-            ? "bg-green-500 text-white" 
-            : "bg-red-500 text-white"
-        }`}
-      >
-        {isPresent ? "P" : "A"}
-      </button>
-    </td>
-  );
-})}
+
               <td className="p-3 text-[#333] text-sm ">{participant.beneficiaire.email}</td>
               <td className="p-3 text-[#333] text-sm">{participant.beneficiaire.telephone}</td>
               <td className="p-3 text-[#333] text-sm">{participant.beneficiaire.specialite}</td>
@@ -301,18 +272,37 @@ const toggleAttendance = (participant: BeneficiaireWithPresenceResponse, day: Da
                     : "Absent (e)"}
                 </span>
               </td>
-              <td className="p-3">
-                <button className="flex items-center gap-2 text-sm text-[#333] font-bold">
-                  Voir plus
-                  <svg width="8" height="12" viewBox="0 0 8 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path fill-rule="evenodd" clip-rule="evenodd" d="M1.77778 12L8 6L1.77778 0L0 1.71343L4.44533 6L0 10.2849L1.77778 12Z" fill="black"/>
-                  <mask id="mask0_717_3240" maskUnits="userSpaceOnUse" x="0" y="0" width="8" height="12">
-                  <path fill-rule="evenodd" clip-rule="evenodd" d="M1.77778 12L8 6L1.77778 0L0 1.71343L4.44533 6L0 10.2849L1.77778 12Z" fill="white"/>
-                  </mask>
-                  <g mask="url(#mask0_717_3240)"> </g>
-                </svg>
-                </button>
-              </td>
+              
+              {formationDays.map((day, dayIdx) => {
+                const dayString = day.toISOString().split('T')[0];
+                const participantId = participant.beneficiaire._id;
+                
+                // Find attendance record for this day and participant
+                const attendance = participant.presences.find(p => 
+                  new Date(p.jour).toDateString() === day.toDateString()
+                );
+                
+                // Check if we have a state override, otherwise use the API data
+                const hasStateOverride = attendanceState[participantId]?.[dayString] !== undefined;
+                const isPresent = hasStateOverride 
+                  ? attendanceState[participantId][dayString]
+                  : (attendance?.isPresent || false);
+                
+                return (
+                  <td key={dayIdx} className="p-3 text-center">
+                    <button
+                      onClick={() => toggleAttendance(participant, day)}
+                      className={`w-8 h-8 rounded-full ${
+                        isPresent 
+                          ? "bg-green-500 text-white" 
+                          : "bg-red-500 text-white"
+                      }`}
+                    >
+                      {isPresent ? "P" : "A"}
+                    </button>
+                  </td>
+                );
+              })}
             </tr>
           ))}
         </tbody>
