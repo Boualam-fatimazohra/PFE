@@ -108,7 +108,7 @@ export function DashboardHeader() {
       { name: "Mes Formations", path: "/formateur/mesformation", additionalPaths: ["/formateur/formationModal"] },
       { name: "Calendrier", path: "/formateur/CalendarView" , additionalPaths: ["/formateur/CreatEvent"]},
       { name: "Mes Bénéficiaires", path: "/formateur/BeneficiairesList" },
-      { name: "Evaluation", path: "/formateur/EvaluationPages"},
+      { name: "Evaluation", path: "/formateur/EvaluationDashboard"},
     ];
   } else if (user?.role === "Manager") {
     navigationLinks = [
