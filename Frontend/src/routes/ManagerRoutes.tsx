@@ -20,6 +20,7 @@ import FablabSolidaire from "@/components/dashboardElement/FablabSolidaire";
 import OrangeFab from "@/components/dashboardElement/OrangeFab";
 import Coordination from "@/components/dashboardElement/Corrdination";
 import GestionFormationManager from "@/components/dashboardElement/GestionFormationManager";
+import { FormateurProvider } from "@/contexts/FormateurContext";
 
 
 const ManagerRoutes = () => {
@@ -28,6 +29,7 @@ const ManagerRoutes = () => {
       <EvenementProvider>
     <NotificationProvider>
     <EdcProvider>
+    <FormateurProvider> 
     <Routes>
       <Route path="/dashboardManager" element={<DashboardManager />} />
       <Route path="*" element={<NotFound />} />
@@ -50,6 +52,7 @@ const ManagerRoutes = () => {
 
 
     </Routes>
+    </FormateurProvider>
     </EdcProvider>
     </NotificationProvider>
     </EvenementProvider>
