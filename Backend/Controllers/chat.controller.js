@@ -445,6 +445,7 @@ const getChatWelcome = (req, res) => {
 
 // Contrôleur pour envoyer un message au chatbot
 const sendChatMessage = async (req, res) => {
+    console.log("====DEBUG POST CHAT ENHANCE LIST=========")
     try {
         const { message, fileContext = [], hideFromChat } = req.body;
         if (!message) {
