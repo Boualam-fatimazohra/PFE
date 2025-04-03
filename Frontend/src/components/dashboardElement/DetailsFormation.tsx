@@ -11,16 +11,13 @@ import { FormationItem, Participant, Document, StatMetric } from "@/pages/types"
 import { useFormations } from "@/contexts/FormationContext";
 import { BeneficiaireInscription } from "../formation-modal/types";
 import {getBeneficiairesWithPresence} from "../../services/beneficiaireService";
+import { BeneficiaireWithPresenceResponse } from "../formation-modal/types";
+
 interface DetailsFormationProps {
   formation: FormationItem;
   onRetourClick: () => void; 
 }
-interface BeneficiaireWithPresenceResponse {
-  beneficiaire: any; // Remplace "any" par le type exact du bénéficiaire
-  formationId: string;
-  presences: any[]; // Remplace "any" par le type exact de présence
-  autresFormations: string[]; // Liste des IDs des autres formations
-}
+
 
 const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetourClick }) => {
   // const { getBeneficiaireFormation } = useFormations();
