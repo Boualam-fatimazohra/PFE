@@ -39,11 +39,13 @@ export const createEvenement = async (eventData: {
   heureDebut: string;
   heureFin: string;
   titre: string;
+  participants: string[];
+  Parametre:string;
   description?: string;
   categorie?: string;
 }) => {
   try {
-    const response = await apiClient.post('/evenements', eventData);
+    const response = await apiClient.post('/evenement/addEvenement', eventData);
     return response.data;
   } catch (error) {
     console.error('Error creating event:', error);

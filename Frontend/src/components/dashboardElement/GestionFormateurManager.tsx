@@ -153,6 +153,8 @@ const GestionFormateurManager = () => {
             <option value="">Toutes les villes</option>
             <option value="rabat">Rabat</option>
             <option value="casablanca">Casablanca</option>
+            <option value="agadir">Agadir</option>
+
           </select>
         </div>
 
