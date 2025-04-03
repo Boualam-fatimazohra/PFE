@@ -4,22 +4,9 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {exportBeneficiairesListToExcel } from "../../services/beneficiaireService";
 import { FormationItem } from "@/pages/types";
-interface Participant {
-  date: string;
-  time: string;
-  lastName: string;
-  firstName: string;
-  email: string;
-  gender: string;
-  situationProfessionnel: string;
-  status: string;
-}
-interface BeneficiaireWithPresenceResponse {
-  beneficiaire: any; // Remplace "any" par le type exact du bénéficiaire
-  formationId: string;
-  presences: any[]; // Remplace "any" par le type exact de présence
-  autresFormations: string[]; // Liste des IDs des autres formations
-}
+import { Beneficiaire, PresenceData } from "../formation-modal/types";
+import { BeneficiaireWithPresenceResponse } from "../formation-modal/types";
+import { enregistrerPresences } from "@/services/presenceService";
 
 interface ParticipantsSectionProps {
   participants: BeneficiaireWithPresenceResponse[];
@@ -38,12 +25,66 @@ const ParticipantsSection:React.FC<ParticipantsSectionProps> = ({
   const [selectedParticipants, setSelectedParticipants] = React.useState<number[]>([]);
   const [attendanceState, setAttendanceState] = React.useState<Record<string, Record<string, boolean>>>({});
   const [search, setSearch] = React.useState("");
-  const [expandedParticipants, setExpandedParticipants] = React.useState<number[]>([]);
 
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const displayedParticipants = participants.slice(startIndex, endIndex);
 
+const [changedAttendance, setChangedAttendance] = React.useState<{
+  beneficiareFormationId: string;
+  jour: Date;
+  isPresent: boolean;
+}[]>([]);
+
+// Add this flag to track if there are unsaved changes
+const [hasUnsavedChanges, setHasUnsavedChanges] = React.useState(false);
+// tracking submission
+const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+// function to handle saving
+const handleSaveAttendance = async () => {
+  if (changedAttendance.length === 0) return;
+  
+  setIsSubmitting(true);
+  
+  try {
+    // Group changes by day for the API
+    const changesByDay = changedAttendance.reduce<Record<string, PresenceData[]>>((acc, change) => {
+      const dayString = change.jour.toISOString().split('T')[0];
+      if (!acc[dayString]) {
+        acc[dayString] = []; // Initialize as an empty array explicitly
+      }
+      acc[dayString].push({
+        beneficiareFormationId: change.beneficiareFormationId,
+        isPresent: change.isPresent
+      });
+      return acc;
+    }, {});
+    
+    // Send one request per day
+    const savePromises = Object.entries(changesByDay).map(([day, presences]) => {
+      // Make sure presences is properly typed as PresenceData[]
+      return enregistrerPresences({
+        jour: day,
+        presences: presences as PresenceData[] // Ensure correct typing
+      });
+    });
+    
+    // Rest of the function remains the same
+    const results = await Promise.all(savePromises);
+    console.log("Save results:", results);
+    
+    setChangedAttendance([]);
+    setHasUnsavedChanges(false);
+    
+    alert("Présences enregistrées avec succès");
+  } catch (error) {
+    console.error("Error saving attendance:", error);
+    alert(`Erreur lors de l'enregistrement des présences: ${error.message || 'Une erreur est survenue'}`);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
   const handleSelectAll = () => {
     if (selectAll) {
       setSelectedParticipants([]);
@@ -74,73 +115,94 @@ const ParticipantsSection:React.FC<ParticipantsSectionProps> = ({
   };
 
   // Calculate formation days
-// Calculate formation days
-const formationDays = React.useMemo(() => {
-  console.log("Formation dates in useMemo:", {
-    dateDebut: formation.dateDebut,
-    dateFin: formation.dateFin
-  });
+  const formationDays = React.useMemo(() => {
+    console.log("Formation dates in useMemo:", {
+      dateDebut: formation.dateDebut,
+      dateFin: formation.dateFin
+    });
 
-  if (!formation.dateDebut || !formation.dateFin) {
-    console.log("Using fallback for missing dates");
-    return [new Date()];
-  }
-  
-  return calculateFormationDays(formation.dateDebut, formation.dateFin || formation.dateDebut);
-}, [formation.dateDebut, formation.dateFin]);
-
-const toggleAttendance = (participant: BeneficiaireWithPresenceResponse, day: Date) => {
-  const participantId = participant.beneficiaire._id;
-  const dayString = day.toISOString().split('T')[0]; // Get YYYY-MM-DD format
-  
-  setAttendanceState(prev => {
-    // Create nested structure if it doesn't exist
-    const participantAttendance = prev[participantId] || {};
-    
-    // Find existing attendance status from API data
-    const attendance = participant.presences.find(p => 
-      new Date(p.jour).toDateString() === day.toDateString()
-    );
-    
-    // Get current status - from our state if it exists, otherwise from API data
-    const currentStatus = participantAttendance[dayString] !== undefined 
-      ? participantAttendance[dayString] 
-      : (attendance?.isPresent || false);
-    
-    // Toggle the status
-    const newStatus = !currentStatus;
-    
-    // Log what's happening
-    console.log(`Toggling attendance for ${participant.beneficiaire.nom} on ${dayString} from ${currentStatus ? 'Present' : 'Absent'} to ${newStatus ? 'Present' : 'Absent'}`);
-    
-    // Return updated state
-    return {
-      ...prev,
-      [participantId]: {
-        ...participantAttendance,
-        [dayString]: newStatus
-      }
-    };
-  });
-  
-  // 3. Optional: Call API to update attendance
-  // updateAttendanceInDatabase(participant.beneficiaire._id, day, newStatus);
-};
-
-  const handleSelectOne = (index: number) => {
-    let newSelected = [...selectedParticipants];
-    if (newSelected.includes(index)) {
-      newSelected = newSelected.filter(i => i !== index);
-    } else {
-      newSelected.push(index);
+    if (!formation.dateDebut || !formation.dateFin) {
+      console.log("Using fallback for missing dates");
+      return [new Date()];
     }
-    setSelectedParticipants(newSelected);
-    setSelectAll(newSelected.length === displayedParticipants.length);
-  };
-  const toggleExpand = (index: number) => {
-    setExpandedParticipants((prev) =>
-      prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]
-    );
+    
+    return calculateFormationDays(formation.dateDebut, formation.dateFin || formation.dateDebut);
+  }, [formation.dateDebut, formation.dateFin]);
+
+  const toggleAttendance = (participant: BeneficiaireWithPresenceResponse, day: Date) => {
+    const participantId = participant.beneficiaire._id;
+    const beneficiareFormationId = participant.beneficiaireFormationId; 
+    const dayString = day.toISOString().split('T')[0]; // Get YYYY-MM-DD format
+    
+    // Update attendance state (for UI display)
+    setAttendanceState(prev => {
+      // Create nested structure if it doesn't exist
+      const participantAttendance = prev[participantId] || {};
+      
+      // Find existing attendance status from API data
+      const attendance = participant.presences.find(p => 
+        new Date(p.jour).toDateString() === day.toDateString()
+      );
+      
+      // Get current status - from our state if it exists, otherwise from API data
+      const currentStatus = participantAttendance[dayString] !== undefined 
+        ? participantAttendance[dayString] 
+        : (attendance?.isPresent || false);
+      
+      // Toggle the status
+      const newStatus = !currentStatus;
+      
+      // Log what's happening
+      console.log(`Toggling attendance for ${participant.beneficiaire.nom} on ${dayString} from ${currentStatus ? 'Present' : 'Absent'} to ${newStatus ? 'Present' : 'Absent'}`);
+      
+      // Return updated state
+      return {
+        ...prev,
+        [participantId]: {
+          ...participantAttendance,
+          [dayString]: newStatus
+        }
+      };
+    });
+    
+    // Track that we have unsaved changes
+    setHasUnsavedChanges(true);
+    
+    // Add change to our tracking array for API submission
+    setChangedAttendance(prev => {
+      // Check if we already have a change for this participant and day
+      const existingIndex = prev.findIndex(
+        change => 
+          change.beneficiareFormationId === beneficiareFormationId && 
+          change.jour.toDateString() === day.toDateString()
+      );
+      
+      // Get the current status and new status
+      const currentStatus = attendanceState[participantId]?.[dayString];
+      const attendance = participant.presences.find(p => 
+        new Date(p.jour).toDateString() === day.toDateString()
+      );
+      const apiStatus = attendance?.isPresent || false;
+      const effectiveCurrentStatus = currentStatus !== undefined ? currentStatus : apiStatus;
+      const newStatus = !effectiveCurrentStatus;
+      
+      if (existingIndex >= 0) {
+        // Update existing change
+        const newChanges = [...prev];
+        newChanges[existingIndex].isPresent = newStatus;
+        return newChanges;
+      } else {
+        // Add new change
+        return [
+          ...prev,
+          {
+            beneficiareFormationId,
+            jour: day,
+            isPresent: newStatus
+          }
+        ];
+      }
+    });
   };
   
   const handleExport = async () => {
@@ -206,6 +268,27 @@ const toggleAttendance = (participant: BeneficiaireWithPresenceResponse, day: Da
           <path fill-rule="evenodd" clip-rule="evenodd" d="M17.0196 12.88V17.02H5.9796V12.88H3.6796V17.48C3.6796 18.4962 4.50339 19.32 5.5196 19.32H17.4796C18.4958 19.32 19.3196 18.4962 19.3196 17.48V12.88H17.0196ZM14.2596 10.58V5.06002C14.2596 4.69402 14.1142 4.34301 13.8554 4.08421C13.5966 3.82541 13.2456 3.68002 12.8796 3.68002H10.1196C9.35744 3.68002 8.7396 4.29787 8.7396 5.06002V10.58H5.9796L8.7396 13.3213L10.7794 15.3471C11.1725 15.7376 11.8267 15.7376 12.2198 15.3471L14.2596 13.3213L17.0196 10.58H14.2596Z" fill="#FF7900"/>
           </svg>
         </Button>
+        {/* Add this button at the bottom of your table or component */}
+        <div className="mt-6 flex justify-end">
+          <Button 
+            variant="default" 
+            className="bg-orange-500 text-white"
+            onClick={handleSaveAttendance}
+            disabled={!hasUnsavedChanges}
+          >
+            {isSubmitting ? (
+              <>
+                <span className="mr-2">Enregistrement...</span>
+                <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </>
+            ) : (
+              "Enregistrer les présences"
+            )}
+          </Button>
+        </div>
 
         {/* Bouton Imprimer */}
         <Button variant="ghost" className="p-2">
