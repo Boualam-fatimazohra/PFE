@@ -110,6 +110,8 @@ exports.createEvenement = async (req, res) => {
       titre: eventData.titre,
       description: eventData.description,
       categorie: eventData.categorie,
+      participants :eventData.participants,
+      Parametre : eventData.Parametre,
       createdBy: userId,
       organisateur: userId,
       isValidate: false // Requires manager approval
