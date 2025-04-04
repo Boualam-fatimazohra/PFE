@@ -28,7 +28,7 @@ interface FormationCardProps {
 }
  
 const FormationCard = ({ formation, onEdit, onDelete, onAccess }: FormationCardProps) => {
-  console.log("la formation recueille :", formation);
+  console.log("la formation recueille : ", JSON.stringify(formation, null, 2));
   const navigate = useNavigate();
   const handleContinueEditing = () => {
     navigate(`/formateur/formationModal`, {
