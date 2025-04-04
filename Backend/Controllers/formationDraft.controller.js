@@ -1,7 +1,9 @@
-const Formation = require('../Models/formation.model.js');
+const Formation = require('../Models/formation.model');
 const FormationDraft = require('../Models/formationDraft.model');
 const Formateur=require("../Models/formateur.model");
+const { determineFormationStatus } = require('../utils/formationUtils.js')
 const mongoose = require('mongoose');
+const {creerPresencesBeneficiaires } = require("../utils/BeneficiairePresence.js")
 // Récupérer les informations d'une FormationDraft par l'ID de formation
 const getFormationStep = async (req, res) => {
   try {
@@ -90,13 +92,17 @@ const createFormationDraft = async (req, res) => {
       // 3. Validation des données
       const { 
         nom,
-        currentStep // Extraction de currentStep
+        currentStep, // Extraction de currentStep
+        dateDebut,
+        dateFin
       } = req.body;
   
       if (!nom) {
         return res.status(400).json({ 
           message: "Le nom de la formation est obligatoire" 
         });
+      } else if(!dateDebut || !dateFin) {
+        return res.status(400).json({message: "date debut et date fin de formation est obligatoire"})
       }
   
       // 4. Gestion de currentStep avec valeur par défaut
@@ -109,7 +115,7 @@ const createFormationDraft = async (req, res) => {
         ...req.body,
         formateur: formateur._id,
         image: req.file?.path || null,
-        status: req.body.status || "Avenir"
+        status: determineFormationStatus(dateDebut, dateFin)
       });
   
       // 6. Création du brouillon avec transaction
@@ -244,11 +250,14 @@ const createFormationDraft = async (req, res) => {
           message: "Aucun brouillon de formation trouvé pour cet ID"
         });
       }
-  
+      const resultatPresences = await creerPresencesBeneficiaires(formationId);
+
       return res.status(200).json({
         success: true,
         message: "Formation validée avec succès",
-        data: updatedDraft
+        data: updatedDraft,
+        resultatsPresences: resultatPresences.success ? resultatPresences.resultats : null,
+        erreurPresences: !resultatPresences.success ? resultatPresences.error : null
       });
     } catch (error) {
       console.error("Erreur lors de la validation de la formation:", error);

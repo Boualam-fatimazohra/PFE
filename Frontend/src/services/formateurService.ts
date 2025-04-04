@@ -54,9 +54,13 @@ export const getFormateursByManager = async () => {
   }
 };
 
-export const createFormateur = async (formateurData: any) => {
+export const createFormateur = async (formateurData: FormData) => {
   try {
-    const response = await apiClient.post('/formateur/Addformateur', formateurData);
+    const response = await apiClient.post('/formateur/Addformateur', formateurData, {
+      headers: {
+        'Content-Type': 'multipart/form-data', // Important pour les fichiers
+      },
+    });
     return response.data;
   } catch (error) {
     console.error('Error creating formateur:', error);

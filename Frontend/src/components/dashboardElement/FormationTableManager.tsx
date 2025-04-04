@@ -23,8 +23,18 @@ export const FormationsTable = ({
   };
 
   const filteredFormations = React.useMemo(() => {
-    if (activeFilter === "Tous") return formations;
-    return formations.filter(formation => formation.status === activeFilter);
+    // First filter by status
+    const statusFiltered = activeFilter === "Tous" 
+      ? formations 
+      : formations.filter(formation => formation.status === activeFilter);
+    
+    // Then sort by date (most recent first)
+    const sortedFormations = [...statusFiltered].sort((a, b) => {
+      return new Date(b.dateDebut).getTime() - new Date(a.dateDebut).getTime();
+    });
+    
+    // Limit to 5 most recent formations
+    return sortedFormations.slice(0, 5);
   }, [formations, activeFilter]);
 
   const getStatusColor = (status: string) => {
@@ -115,75 +125,82 @@ export const FormationsTable = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-        {filteredFormations.map((formation) => (
-          <TableRow key={formation._id}>
-            <TableCell>
-              <div className="flex items-center gap-3">
-                {formation.image ? (
-                  <img 
-                    src={formation.image as string} 
-                    alt="" 
-                    className="w-12 h-12 rounded-md object-cover"
-                  />
-                ) : (
-                  <div className="w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="7" r="4"></circle>
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    </svg>
-                  </div>
-                )}
-                <span className="text-sm font-bold text-gray-600">{formation.nom}</span>
-              </div>
-            </TableCell>
-            <TableCell>
-              <div className="text-base font-bold text-gray-900">
-                {formation.formateurName}
-              </div>
-              <div className="bg-gray-200 text-gray-600 px-2 py-1 rounded-full text-xs font-medium inline-block mt-1">
-                {formation.formateurCity}
-              </div>
-            </TableCell>
-            <TableCell>
-              <div className="text-sm text-gray-600">
-                {formatDate(formation.dateDebut)}
-              </div>
-              {formation.dateFin ? (
-                formation.dateDebut !== formation.dateFin && (
-                  <div className="text-sm text-gray-600 mt-1">
-                    {formatDate(formation.dateFin)}
-                  </div>
-                )
-              ) : (
-                <div className="text-sm text-gray-600 mt-1">-</div>
-              )}
-            </TableCell>
-            <TableCell>
-              <div className={`px-3 py-1 rounded-full text-sm inline-flex items-center ${getStatusColor(formation.status)}`}>
-                {formation.status}
-              </div>
-            </TableCell>
-            <TableCell>
-              <div className="text-sm font-bold">N/A</div>
-            </TableCell>
-            <TableCell>
-              <div className="text-sm font-bold">N/A</div>
-            </TableCell>
-            <TableCell className="text-center">
-              <Button
-                size="sm"
-                className="bg-black text-white hover:bg-gray-800 rounded-[4px]"
-                onClick={() => onShowDetails && onShowDetails(formation as FormationItem)}
-              >
-                Accéder
-              </Button>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-     </Table> 
+            {filteredFormations.length > 0 ? (
+              filteredFormations.map((formation) => (
+                <TableRow key={formation._id}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      {formation.image ? (
+                        <img 
+                          src={formation.image as string} 
+                          alt="" 
+                          className="w-12 h-12 rounded-md object-cover"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center">
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="7" r="4"></circle>
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                          </svg>
+                        </div>
+                      )}
+                      <span className="text-sm font-bold text-gray-600">{formation.nom}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-base font-bold text-gray-900">
+                      {formation.formateurName}
+                    </div>
+                    <div className="bg-gray-200 text-gray-600 px-2 py-1 rounded-full text-xs font-medium inline-block mt-1">
+                      {formation.formateurCity}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm text-gray-600">
+                      {formatDate(formation.dateDebut)}
+                    </div>
+                    {formation.dateFin ? (
+                      formation.dateDebut !== formation.dateFin && (
+                        <div className="text-sm text-gray-600 mt-1">
+                          {formatDate(formation.dateFin)}
+                        </div>
+                      )
+                    ) : (
+                      <div className="text-sm text-gray-600 mt-1">-</div>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <div className={`px-3 py-1 rounded-full text-sm inline-flex items-center ${getStatusColor(formation.status)}`}>
+                      {formation.status}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm font-bold">N/A</div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm font-bold">N/A</div>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Button
+                      size="sm"
+                      className="bg-black text-white hover:bg-gray-800 rounded-[4px]"
+                      onClick={() => onShowDetails && onShowDetails(formation as FormationItem)}
+                    >
+                      Accéder
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-6 text-gray-500">
+                  Aucune formation trouvée pour ce filtre
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
-    </div>
-    
   );
 };
