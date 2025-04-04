@@ -175,8 +175,19 @@ export interface Formateur {
   };
   manager?: any;
   coordinateur?: any;
-  entity?: Entity;
   isAvailable?: boolean; 
+  odc?: string;
+  specialite?: string;
+  aPropos: string;
+  experience: string;
+  dateIntegration?: string;
+  actif: boolean;
+  entity?: {
+    type: string;
+    ville: string;
+  };
+  imageFormateur?: string;
+  cv: File | null;
 }
 
 export interface Entity {
