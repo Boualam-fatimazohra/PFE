@@ -14,7 +14,7 @@ const notificationRoutes = require("./Routes/notification.route.js");
 const Presence=require("./Routes/presence.route.js")
 const entityRoutes = require("./Routes/entity.route.js");
 const edcRoutes = require("./Routes/edc.routes.js");
-
+const certificationRoutes = require("./Routes/certification.route.js");
 const multer = require("multer");
 const fs = require("fs");
 const cookieParser = require("cookie-parser");
@@ -118,6 +118,7 @@ app.use("/api/entity", entityRoutes);
 app.use("/api/edc",edcRoutes);
 app.use("/api", chatbotRoutes);
 app.use("/api/presence",Presence);
+app.use("/api/certification", certificationRoutes);
 // Middleware de gestion des erreurs
 app.use((err, req, res, next) => {
     console.error("Erreur serveur:", err);
