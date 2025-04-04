@@ -11,7 +11,7 @@ export interface FormationItem {
     status: FormationStatus; 
     image?: string;
     dateDebut: string;
-    dateFin?: string;
+    dateFin: string;
 }
 export interface Participant {
   date: string;
