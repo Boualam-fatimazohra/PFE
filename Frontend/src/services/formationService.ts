@@ -218,21 +218,32 @@ export const createFormation = async (formationData: any) => {
   }
 };
 
-export const updateFormation = async (id: string, formationData: Partial<Formation>) => {
+export const updateFormation = async (id, formationData) => {
   try {
     // Check if there's an image file in the update data
     if (formationData.image instanceof File) {
       // Create FormData to handle file upload
       const formData = new FormData();
       
+      // Log what we're sending to the API
+      console.log("Preparing FormData for API with image file:");
+      
       // Append all fields to FormData
       Object.entries(formationData).forEach(([key, value]) => {
         if (key === 'image' && value instanceof File) {
+          console.log(`Adding file: ${key}, filename: ${value.name}`);
           formData.append('image', value);
         } else if (value !== undefined) {
+          console.log(`Adding field: ${key}, value: ${String(value)}`);
           formData.append(key, String(value));
         }
       });
+      
+      // Ensure title is explicitly added to FormData
+      if (!formData.has('title') && formationData.title) {
+        console.log(`Explicitly adding title: ${formationData.title}`);
+        formData.append('title', formationData.title);
+      }
       
       const response = await apiClient.put(`/formation/UpdateFormation/${id}`, formData, {
         headers: {
@@ -240,10 +251,20 @@ export const updateFormation = async (id: string, formationData: Partial<Formati
         }
       });
       
+      console.log("API Response:", response.data);
       return response.data;
     } else {
       // Regular JSON update if no file is involved
-      const response = await apiClient.put(`/formation/UpdateFormation/${id}`, formationData);
+      console.log("Sending JSON update to API:", formationData);
+      
+      // Ensure the title is included in the data being sent
+      const dataToSend = {
+        ...formationData,
+        title: formationData.nom  // Explicitly include title
+      };
+      
+      const response = await apiClient.put(`/formation/UpdateFormation/${id}`, dataToSend);
+      console.log("API Response:", response.data);
       return response.data;
     }
   } catch (error) {

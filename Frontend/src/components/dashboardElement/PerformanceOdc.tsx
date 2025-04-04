@@ -1,7 +1,14 @@
 import { LineChart, Line, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import * as React from "react";
 import { Button } from "../ui/button";
-
+import { useState } from "react";
+import { Check } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
 const PerformanceOdc = () => {
     const yValues = [0, 200, 400, 600, 800];
 
@@ -19,6 +26,19 @@ const PerformanceOdc = () => {
         { name: "Nov", blue: 580, green: 260, yellow: 50 },
         { name: "Dec", blue: 560, green: 280, yellow: 0 }
       ];
+      const [selectedItems, setSelectedItems] = useState<string[]>(["Ecole du code", "Fablab"]); // Éléments sélectionnés
+
+  const toggleSelection = (item: string) => {
+    setSelectedItems(prev =>
+      prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]
+    );
+  };
+
+  const options = [
+    { name: "Ecole du code", color: "bg-blue-500" },
+    { name: "Fablab", color: "bg-green-500" },
+    { name: "Orange Fab", color: "bg-yellow-500" }
+  ];
     
     return (
 <div className="bg-white p-4 rounded-[4px]   mb-6 w-[959px] h-[390px] border border-gray-200 ">
@@ -26,12 +46,34 @@ const PerformanceOdc = () => {
   <h2 className="font-bold text-2xl">Performance ODC</h2>
   
   <div className="flex items-center gap-4">
-    <Button variant="ghost" className="text-[#333] flex items-center gap-2 font-bold">
-      <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M0 3C0 2.44772 0.447715 2 1 2H19C19.5523 2 20 2.44772 20 3V5C20 5.26522 19.8946 5.51957 19.7071 5.70711L13 12.4142V19C13 19.5523 12.5523 20 12 20H8C7.44772 20 7 19.5523 7 19V12.4142L0.292893 5.70711C0.105357 5.51957 0 5.26522 0 5V3Z" fill="#000"/>
-      </svg>
-      Filtres
-    </Button>
+  <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="text-[#333] flex items-center gap-2 font-bold">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 3C0 2.44772 0.447715 2 1 2H19C19.5523 2 20 2.44772 20 3V5C20 5.26522 19.8946 5.51957 19.7071 5.70711L13 12.4142V19C13 19.5523 12.5523 20 12 20H8C7.44772 20 7 19.5523 7 19V12.4142L0.292893 5.70711C0.105357 5.51957 0 5.26522 0 5V3Z" fill="#000"/>
+          </svg>
+          Filtres
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-48">
+  {options.map((option) => (
+    <DropdownMenuItem key={option.name} onClick={() => toggleSelection(option.name)} className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        {/* Cercle coloré avec un point blanc au centre */}
+        <div className={`w-4 h-4 rounded-full flex items-center justify-center ${option.color}`}>
+          <div className="w-1 h-1 bg-white rounded-full"></div>
+        </div>
+        {option.name}
+      </div>
+      {selectedItems.includes(option.name) ? (
+        <Check className="bg-orange-500 text-white w-4 h-4  border rounded-[4px]" /> // Case cochée
+      ) : (
+        <div className="w-4 h-4 border rounded-[4px]" /> // Case vide
+      )}
+    </DropdownMenuItem>
+  ))}
+</DropdownMenuContent>
+    </DropdownMenu>
     
     <div className="border px-3 py-1 rounded flex items-center">
       Année 2025

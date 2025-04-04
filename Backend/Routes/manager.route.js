@@ -22,7 +22,7 @@ router.post("/",
 );
 router.get("/",
     authenticated,
-    authoriezeRoles('Admin'), 
+    authoriezeRoles('Admin',"Manager"), 
     getManagers
 );
 

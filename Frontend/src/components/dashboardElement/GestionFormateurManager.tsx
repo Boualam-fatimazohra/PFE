@@ -10,15 +10,19 @@ export interface Formateur {
   utilisateur: {
     prenom: string;
     nom: string;
+    email: string;
+    numeroTelephone?: string;
+    role: string;
   };
-  odc: string;
-  role: string;
-  dateIntegration: string; // Modifié
+  odc?: string;
+  specialite?: string;
+  dateIntegration?: string;
   actif: boolean;
   entity?: {
     ville: string;
   };
   imageFormateur?: string;
+  cv: File | null;
 }
 
 const Avatar = ({ imageUrl, name }: { imageUrl?: string | null, name: string }) => {
@@ -57,7 +61,7 @@ const GestionFormateurManager = () => {
   const [cityFilter, setCityFilter] = useState("");
   const navigate = useNavigate();
   
-  const handleEdit = (id) => {
+  const handleEdit = (id: string) => {
     navigate(`/manager/ModifieFormateur/${id}`);
   };
 
@@ -70,14 +74,14 @@ const GestionFormateurManager = () => {
         id: formateur._id,
         nom: `${formateur.utilisateur.prenom} ${formateur.utilisateur.nom}`,
         odc: formateur.entity?.ville || "ODC Rabat",
-        role: formateur.role || "Responsable Formateur",
-        depuis: formateur.dateIntegration ? new Date(formateur.dateIntegration).getFullYear().toString() : "2023", // Modifié
+        role: formateur.utilisateur.role || "Responsable Formateur",
+        depuis: formateur.dateIntegration ? new Date(formateur.dateIntegration).getFullYear().toString() : "2023",
         actif: formateur.actif !== false,
         image: formateur.imageFormateur || null,
       }))
     : [
-        { id: 1, nom: "Nom/Prénom", odc: "ODC Rabat", role: "Responsable Formateur ODC Rabat", depuis: "2023", actif: true, image: null },
-        { id: 2, nom: "Nom/Prénom", odc: "ODC Rabat", role: "Responsable Formateur ODC Rabat", depuis: "2023", actif: true, image: null },
+        { id: "1", nom: "Nom/Prénom", odc: "ODC Rabat", role: "Responsable Formateur ODC Rabat", depuis: "2023", actif: true, image: null },
+        { id: "2", nom: "Nom/Prénom", odc: "ODC Rabat", role: "Responsable Formateur ODC Rabat", depuis: "2023", actif: true, image: null },
       ];
 
   const filteredFormateurs = transformedFormateurs.filter(formateur => {
@@ -153,6 +157,8 @@ const GestionFormateurManager = () => {
             <option value="">Toutes les villes</option>
             <option value="rabat">Rabat</option>
             <option value="casablanca">Casablanca</option>
+            <option value="agadir">Agadir</option>
+
           </select>
         </div>
 
