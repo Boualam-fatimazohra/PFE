@@ -4,13 +4,14 @@ const {
   MarquerPresence
 } = require('../Controllers/presence.controller.js');
 const authorizeRoles = require('../Middlewares/RoleMiddleware.js');
- // Ajustez le chemin selon votre structure
+const authorizeFormationAccess = require('../Middlewares/FormationAccess.js');
 
 const router = express.Router();
-// Route to add a new formation (Protected route: Only authenticated users can access)
+
 router.post('/enregistrerPresence', 
     authenticated, 
     authorizeRoles('Formateur'),
+    authorizeFormationAccess('presence'), //TODO: --> add presence access logic in the middleware
     MarquerPresence
 );
 
