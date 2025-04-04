@@ -1,13 +1,10 @@
 const mongoose = require('mongoose');
 
 const certificationSchema = new mongoose.Schema({
-    formation: { 
-        type: mongoose.Schema.Types.ObjectId,
-         ref: "Formation",
-          required: true },
     beneficiaires:
-     [{ type: mongoose.Schema.Types.ObjectId,
-         ref: "Beneficiaire" }]
+    { type: mongoose.Schema.Types.ObjectId,
+         ref: "BeneficiareFormation" },
+    isDeserve:{type:Boolean,default:false},
   }, { timestamps: true });
   export const Certification = mongoose.model("Certification", certificationSchema);
   
