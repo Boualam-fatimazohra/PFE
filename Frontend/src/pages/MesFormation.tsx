@@ -32,7 +32,7 @@ interface FormationItem {
   status: "En Cours" | "Avenir" | "Terminé" | "Replanifier";
   image: string;
   dateDebut: string;
-  dateFin?: string;
+  dateFin: string;
   dateCreated?: string;
   description?: string;
 }
@@ -86,8 +86,8 @@ const MesFormations = () => {
         dateCreated: formation.createdAt ? new Date(formation.createdAt).toISOString() : new Date().toISOString(),
         isDraft:formation.isDraft,
         currentStep:formation.currentStep,
-        description: formation.description 
-
+        description: formation.description,
+        dateFin: formation.dateFin
       }));
       
       const sortedFormations = sortFormationsByStatus(mappedFormations);
