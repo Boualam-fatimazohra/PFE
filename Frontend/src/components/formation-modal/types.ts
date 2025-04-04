@@ -164,6 +164,36 @@ export interface FormationDraftResponse {
   // Add any other fields returned by the API
 }
 
+export interface BeneficiaireWithPresenceResponse {
+  beneficiaireFormationId: string;
+  beneficiaire: any; 
+  formationId: string;
+  presences: any[]; 
+  autresFormations: string[]; 
+}
+
+export interface PresenceData {
+  beneficiareFormationId: string;
+  isPresent: boolean;
+}
+
+export interface PresenceRequest {
+  jour: string | Date;
+  presences: PresenceData[];
+}
+
+export interface PresenceResult {
+  beneficiareFormationId: string;
+  success: boolean;
+  message: string;
+  presenceId?: string;
+}
+
+export interface PresenceResponse {
+  success: boolean;
+  message: string;
+  results: PresenceResult[];
+}
 export interface Formateur {
   _id?: string;
   utilisateur?: {

@@ -22,9 +22,13 @@ router.get('/getFormateurs',
     getFormateurs
 );
 
-router.put('/updateFormateur/:id', 
+router.put('/updateFormateur/:id',
+     multerUpload.fields([
+    { name: 'cv', maxCount: 1 },
+    { name: 'imageFormateur', maxCount: 1 }
+  ]),
     authenticated, 
-    authorizeRoles('Admin', 'Manager', 'Formateur'), 
+    authorizeRoles('Admin', 'Manager'), 
     authorizeOwnership('Formateur', "manager"),
     updateFormateur
 );
