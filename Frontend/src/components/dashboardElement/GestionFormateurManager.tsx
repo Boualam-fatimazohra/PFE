@@ -1,11 +1,10 @@
 import * as React from "react";
 import { useState, useEffect } from "react";
-
 import { useNavigate } from "react-router-dom";
 import { Search } from 'lucide-react';
-import { useEdc } from "@/contexts/EdcContext"; // Import the EdcContext hook
+import { useEdc } from "@/contexts/EdcContext";
+import LoadingSpinner from "../layout/LoadingSpinner";
 
-// Define a Formateur interface to match the backend data structure
 export interface Formateur {
   _id: string;
   utilisateur: {
@@ -14,15 +13,38 @@ export interface Formateur {
   };
   odc: string;
   role: string;
-  depuis: string;
+  dateIntegration: string; // Modifié
   actif: boolean;
   entity?: {
     ville: string;
   };
+  imageFormateur?: string;
 }
 
+const Avatar = ({ imageUrl, name }: { imageUrl?: string | null, name: string }) => {
+  if (imageUrl) {
+    return (
+      <img 
+        src={imageUrl} 
+        alt={name}
+        className="w-12 h-12 rounded-full object-cover"
+      />
+    );
+  }
+
+  const initials = name.split(' ')
+    .map(part => part[0])
+    .join('')
+    .toUpperCase();
+
+  return (
+    <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center">
+      <span className="text-gray-600 font-medium">{initials}</span>
+    </div>
+  );
+};
+
 const GestionFormateurManager = () => {
-  // Get formateurs data from EdcContext
   const {
     edcFormateurs,
     loading,
@@ -30,37 +52,34 @@ const GestionFormateurManager = () => {
     fetchEdcFormateurs
   } = useEdc();
 
-  // State for search and filtering
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [cityFilter, setCityFilter] = useState("");
   const navigate = useNavigate();
+  
   const handleEdit = (id) => {
     navigate(`/manager/ModifieFormateur/${id}`);
-};
+  };
 
-  // Fetch formateurs when the component mounts
   useEffect(() => {
     fetchEdcFormateurs();
   }, [fetchEdcFormateurs]);
 
-  // Transform and filter formateurs data
   const transformedFormateurs = edcFormateurs && edcFormateurs.length > 0
     ? edcFormateurs.map(formateur => ({
         id: formateur._id,
         nom: `${formateur.utilisateur.prenom} ${formateur.utilisateur.nom}`,
-        odc: formateur.entity?.ville || "ODC Rabat", // Fallback to default if no city
+        odc: formateur.entity?.ville || "ODC Rabat",
         role: formateur.role || "Responsable Formateur",
-        depuis: formateur.depuis || "2023",
-        actif: formateur.actif !== false, // Default to true if not specified
+        depuis: formateur.dateIntegration ? new Date(formateur.dateIntegration).getFullYear().toString() : "2023", // Modifié
+        actif: formateur.actif !== false,
+        image: formateur.imageFormateur || null,
       }))
     : [
-        { id: 1, nom: "Nom/Prénom", odc: "ODC Rabat", role: "Responsable Formateur ODC Rabat", depuis: "2023", actif: true },
-        { id: 2, nom: "Nom/Prénom", odc: "ODC Rabat", role: "Responsable Formateur ODC Rabat", depuis: "2023", actif: true },
-        // ... other default entries
+        { id: 1, nom: "Nom/Prénom", odc: "ODC Rabat", role: "Responsable Formateur ODC Rabat", depuis: "2023", actif: true, image: null },
+        { id: 2, nom: "Nom/Prénom", odc: "ODC Rabat", role: "Responsable Formateur ODC Rabat", depuis: "2023", actif: true, image: null },
       ];
 
-  // Filter formateurs based on search and filter criteria
   const filteredFormateurs = transformedFormateurs.filter(formateur => {
     const matchesSearch = formateur.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           formateur.odc.toLowerCase().includes(searchTerm.toLowerCase());
@@ -74,16 +93,10 @@ const GestionFormateurManager = () => {
     return matchesSearch && matchesStatus && matchesCity;
   });
 
-  // Render loading state
   if (loading) {
-    return (
-      <div className="min-h-screen bg-white p-6 flex items-center justify-center">
-        <p>Chargement des formateurs...</p>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
-  // Render error state
   if (error) {
     return (
       <div className="min-h-screen bg-white p-6 flex items-center justify-center">
@@ -140,19 +153,21 @@ const GestionFormateurManager = () => {
             <option value="">Toutes les villes</option>
             <option value="rabat">Rabat</option>
             <option value="casablanca">Casablanca</option>
+            <option value="agadir">Agadir</option>
+
           </select>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredFormateurs.map((formateur) => (
             <div key={formateur.id} className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
-              {/* En-tête avec avatar et statut */}
-              <div className="flex justify-between items-center p-4 ">
+              <div className="flex justify-between items-center p-4">
                 <div className="flex items-center">
-                  <div className="bg-gray-200 w-12 h-12 rounded-full flex items-center justify-center mr-3">
-                    <span className="text-gray-500 text-lg"></span>
-                  </div>
-                  <div>
+                  <Avatar 
+                    imageUrl={formateur.image} 
+                    name={formateur.nom} 
+                  />
+                  <div className="ml-3">
                     <h3 className="text-lg font-semibold text-gray-900">{formateur.nom}</h3>
                     <p className="text-sm text-gray-600">{formateur.odc}</p>
                   </div>
@@ -164,7 +179,6 @@ const GestionFormateurManager = () => {
                 </span>
               </div>
 
-              {/* Informations */}
               <div className="p-4 text-gray-700">
                 <div className="flex items-center mb-2">
                   <span className="text-gray-500 mr-5">
@@ -188,7 +202,6 @@ const GestionFormateurManager = () => {
                 </div>
               </div>
 
-              {/* Boutons */}
               <div className="flex border-t">
                 <button className="flex-1 py-2 text-center text-white bg-black text-sm flex items-center justify-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="15" viewBox="0 0 16 15" fill="none">
@@ -198,8 +211,10 @@ const GestionFormateurManager = () => {
                   </svg>
                   Détails
                 </button>
-                <button className="flex-1 py-2 text-center text-sm border-l flex items-center justify-center gap-2"       onClick={() => handleEdit(formateur.id)}  >
-
+                <button 
+                  className="flex-1 py-2 text-center text-sm border-l flex items-center justify-center gap-2"
+                  onClick={() => handleEdit(formateur.id)}
+                >
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="15" viewBox="0 0 14 15" fill="none">
                     <g clipPath="url(#clip0_1171_1650)">
                       <path d="M12.0586 2.36052L12.3895 2.69138C12.6465 2.94841 12.6465 3.36404 12.3895 3.61834L11.5938 4.41677L10.3332 3.15623L11.1289 2.36052C11.3859 2.10349 11.8016 2.10349 12.0559 2.36052H12.0586ZM5.73672 7.75544L9.40625 4.08318L10.6668 5.34373L6.99453 9.01326C6.91523 9.09255 6.8168 9.14998 6.71016 9.18005L5.11055 9.63669L5.56719 8.03709C5.59727 7.93044 5.65469 7.83201 5.73398 7.75271L5.73672 7.75544ZM10.202 1.43357L4.80703 6.82576C4.56914 7.06365 4.39687 7.35623 4.30664 7.67615L3.52461 10.4105C3.45898 10.6402 3.52187 10.8863 3.69141 11.0558C3.86094 11.2254 4.10703 11.2883 4.33672 11.2226L7.07109 10.4406C7.39375 10.3476 7.68633 10.1754 7.92148 9.94021L13.3164 4.54802C14.0848 3.77966 14.0848 2.53279 13.3164 1.76443L12.9855 1.43357C12.2172 0.66521 10.9703 0.66521 10.202 1.43357ZM2.40625 2.49998C1.07734 2.49998 0 3.57732 0 4.90623V12.3437C0 13.6726 1.07734 14.75 2.40625 14.75H9.84375C11.1727 14.75 12.25 13.6726 12.25 12.3437V9.28123C12.25 8.91755 11.9574 8.62498 11.5938 8.62498C11.2301 8.62498 10.9375 8.91755 10.9375 9.28123V12.3437C10.9375 12.948 10.448 13.4375 9.84375 13.4375H2.40625C1.80195 13.4375 1.3125 12.948 1.3125 12.3437V4.90623C1.3125 4.30193 1.80195 3.81248 2.40625 3.81248H5.46875C5.83242 3.81248 6.125 3.5199 6.125 3.15623C6.125 2.79255 5.83242 2.49998 5.46875 2.49998H2.40625Z" fill="black"/>

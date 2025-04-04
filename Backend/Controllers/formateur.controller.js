@@ -10,109 +10,157 @@ const { Entity } = require('../Models/entity.model.js');
 const {UtilisateurEntity} = require('../Models/utilisateurEntity.js'); 
 
 const createFormateur = async (req, res) => {
-  const { nom, prenom, email, numeroTelephone, coordinateur, manager, entityId } = req.body; // Ajoutez entityId
   try {
-      // Vérification de l'existence de l'email
-      const existingUser = await Utilisateur.findOne({ email });
-      if (existingUser) {
-          return res.status(400).json({ message: "Cet email est déjà utilisé" });
-      }
-
-      // Extraction du rôle de l'utilisateur
-      const userRole = req.user?.role;
-      console.log(userRole);
-      let assignedManager;
-
-      if (!userRole) {
-          return res.status(403).json({ message: "Forbidden: Only Admins or Managers can create a Formateur (endpoint)" });
-      } else if (userRole === "Manager") {
-          console.log("Le cas où le manager tente de créer un formateur");
-          // Trouver le document du manager en utilisant l'ID de l'utilisateur
-          const managerDoc = await Manager.findOne({ utilisateur: req.user.userId });
-          if (!managerDoc) {
-              return res.status(400).json({ message: "Manager not found" });
-          }
-          assignedManager = managerDoc._id;
-      } else {
-          // Vérifier si le manager est fourni lorsque l'admin crée un formateur
-          if (!manager) {
-              return res.status(400).json({ message: "Manager ID is required when Admin creates a Formateur" });
-          }
-          console.log("Le cas où l'admin tente de créer un formateur");
-
-          const managerDoc = await Manager.findById(manager);
-          if (!managerDoc) {
-              return res.status(400).json({ message: "Manager not found" });
-          }
-          assignedManager = managerDoc._id; // Utiliser l'ID du document Manager
-      }
-
-      // Vérification si entityId est présent
-      if (!entityId) {
-          return res.status(400).json({ message: "L'ID de l'entité est requis" });
-      }
-
-      // Vérification si l'entité existe
-      const entity = await Entity.findById(entityId);
-      if (!entity) {
-          return res.status(400).json({ message: "L'entité spécifiée n'existe pas" });
-      }
-
-      // Générer et hacher un mot de passe temporaire
-      const temporaryPassword = generateRandomPassword();
-      const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
-
-      // Créer un nouvel utilisateur
-      const newUser = new Utilisateur({
-          nom,
-          prenom,
-          email,
-          numeroTelephone,
-          password: hashedPassword,
-          role: "Formateur",
+    // Vérification des fichiers
+    if (!req.files || !req.files['imageFormateur'] || !req.files['cv']) {
+      return res.status(400).json({ 
+        success: false,
+        message: "L'image et le CV sont obligatoires" 
       });
+    }
 
-      const contenu = `<p>Bonjour,</p>
-                      <p>Votre mot de passe est : <b>${temporaryPassword}</b></p>
-                      <p>Merci de ne pas le partager.</p>`;
-      // await sendMail(email, contenu);
-      await newUser.save();
+    const {
+      nom,
+      prenom,
+      email,
+      numeroTelephone,
+      coordinateur,
+      manager,
+      entityId,
+      specialite,
+      experience,
+      dateIntegration,
+      aPropos
+    } = req.body;
 
-      // Créer un formateur lié au nouvel utilisateur
-      const newFormateur = new Formateur({
-          utilisateur: newUser._id,
-          manager: assignedManager,
-          coordinateur,
+    // Extraction de l'ID d'entité si format "id-ville"
+    let entityIdToUse = entityId;
+    if (typeof entityId === 'string' && entityId.includes('-')) {
+      entityIdToUse = entityId.split('-')[0];
+    }
+
+    // Vérification de l'existence de l'email
+    const existingUser = await Utilisateur.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Cet email est déjà utilisé" 
       });
+    }
 
-      await newFormateur.save();
+    // Gestion des autorisations par rôle
+    const userRole = req.user?.role;
+    let assignedManager;
 
-      // Créer l'association UtilisateurEntity
-      const utilisateurEntity = new UtilisateurEntity({
-          id_utilisateur: newUser._id,
-          id_entity: entityId,
+    if (!userRole) {
+      return res.status(403).json({ 
+        success: false,
+        message: "Accès refusé: Seuls les Admins ou Managers peuvent créer un Formateur" 
       });
+    } else if (userRole === "Manager") {
+      const managerDoc = await Manager.findOne({ utilisateur: req.user.userId });
+      if (!managerDoc) {
+        return res.status(400).json({ 
+          success: false,
+          message: "Manager non trouvé" 
+        });
+      }
+      assignedManager = managerDoc._id;
+    } else {
+      if (!manager) {
+        return res.status(400).json({ 
+          success: false,
+          message: "L'ID du Manager est obligatoire pour un Admin" 
+        });
+      }
+      const managerDoc = await Manager.findById(manager);
+      if (!managerDoc) {
+        return res.status(400).json({ 
+          success: false,
+          message: "Manager non trouvé" 
+        });
+      }
+      assignedManager = managerDoc._id;
+    }
 
-      await utilisateurEntity.save();
-
-      console.log("Email envoyé");
-
-      res.status(201).json({
-          message: "Formateur créé avec succès",
-          user: newFormateur,
-          entity: entity,
+    // Vérification de l'entité
+    const entity = await Entity.findById(entityIdToUse);
+    if (!entity) {
+      return res.status(400).json({ 
+        success: false,
+        message: "L'entité spécifiée n'existe pas" 
       });
+    }
 
+    // Génération du mot de passe temporaire
+    const temporaryPassword = generateRandomPassword();
+    const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
+
+    // Création du nouvel utilisateur
+    const newUser = new Utilisateur({
+      nom,
+      prenom,
+      email,
+      numeroTelephone,
+      password: hashedPassword,
+      role: "Formateur",
+    });
+
+    // Envoi de l'email avec le mot de passe temporaire
+    const contenu = `<p>Bonjour,</p>
+                   <p>Votre compte formateur a été créé avec succès.</p>
+                   <p>Votre mot de passe temporaire est : <b>${temporaryPassword}</b></p>
+                   <p>Merci de ne pas le partager et de le changer après votre première connexion.</p>`;
+    //await sendMail(email, "Création de votre compte formateur", contenu);
+    await newUser.save();
+
+    // Création du formateur avec les URLs des fichiers
+    const newFormateur = new Formateur({
+      utilisateur: newUser._id,
+      manager: assignedManager,
+      coordinateur,
+      specialite,
+      experience,
+      dateIntegration: dateIntegration || Date.now(),
+      aPropos,
+      cv: req.files['cv'][0].path,
+      imageFormateur: req.files['imageFormateur'][0].path
+    });
+
+    await newFormateur.save();
+
+    // Association utilisateur-entité
+    const utilisateurEntity = new UtilisateurEntity({
+      id_utilisateur: newUser._id,
+      id_entity: entityIdToUse,
+    });
+
+    await utilisateurEntity.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Formateur créé avec succès",
+      data: {
+        formateur: newFormateur,
+        temporaryPasswordSent: true
+      }
+    });
   } catch (error) {
-      console.error("Erreur:", error);
-      // Rollback de la création de l'utilisateur en cas d'échec
-      if (typeof newUser !== "undefined") {
-          await Utilisateur.deleteOne({ _id: newUser._id });
-      }
-      res.status(500).json({
-          message: "Erreur serveur",
-          error: error.message,
+    console.error("Erreur création formateur:", error);
+    
+    // Gestion spécifique des erreurs Multer
+    if (error.message.includes('Seuls les formats')) {
+      return res.status(400).json({
+        success: false,
+        message: error.message
       });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur",
+      error: error.message
+    });
   }
 };
 // debut :pour récuperer tout les formateurs sans exception

@@ -11,6 +11,7 @@ interface FormNavigationButtonsProps {
   handleSubmitDraft: () => void;
   isSubmitting: boolean;
   hasPendingFiles?: boolean;
+  hasRegisterConfirmation?:boolean;
 }
 
 const FormNavigationButtons: React.FC<FormNavigationButtonsProps> = ({
@@ -21,7 +22,9 @@ const FormNavigationButtons: React.FC<FormNavigationButtonsProps> = ({
   handleSubmit,
   handleSubmitDraft,
   isSubmitting,
-  hasPendingFiles
+  hasPendingFiles,
+  hasRegisterConfirmation
+
 }) => {
   return (
     <div className="flex justify-end mt-6 gap-4">
@@ -53,11 +56,13 @@ const FormNavigationButtons: React.FC<FormNavigationButtonsProps> = ({
                 type="button"
                 onClick={handleNext}
                 className={`px-6 py-2 ${
-                  currentStep === 2 && hasPendingFiles
+                  (currentStep === 2 && hasPendingFiles) || 
+                  (currentStep === 3 && hasRegisterConfirmation===false)
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-orange-500 hover:bg-orange-600"
                 } text-white rounded-lg`}
-                disabled={isSubmitting || (currentStep === 2 && hasPendingFiles)}
+                disabled={isSubmitting || (currentStep === 2 && hasPendingFiles)||
+                   (currentStep === 3 && hasRegisterConfirmation===false)}
               >
                 {isSubmitting ? "En cours..." : "Suivant"}
               </button>

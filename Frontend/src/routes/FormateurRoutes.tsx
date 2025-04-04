@@ -11,6 +11,8 @@ import EvaluationPages from "@/pages/EvaluationPages";
 import BeneficiairesList from "@/components/Formation/Beneficiaires";
 import CalendarView from "@/components/dashboardElement/CalendarView"
 import { EvenementProvider } from "@/contexts/EvenementContext";
+import EvaluationDashboard from "@/components/dashboardElement/EvaluationDashboard";
+import CreateEvaluationForm from "@/components/dashboardElement/creatEvaluation";
 const FormateurRoutes = () => {
   return (
     <FormationProvider>
@@ -19,11 +21,15 @@ const FormateurRoutes = () => {
       <Route path="dashboardFormateur" element={<DashboardFormateur />} />
       <Route path="mesformation" element={<MesFormations />} />
       <Route path="formationModal" element={< FormationModal/>} />
+      <Route path="EvaluationDashboard" element={< EvaluationDashboard/>} />
+
       <Route path="*" element={<NotFound />} />
       <Route path="BeneficiairesList"element={<BeneficiairesList/>}/>
       <Route path="EvaluationPages"element={<EvaluationPages/>}/>
       <Route path="CalendarView"element={<CalendarView/>}/>
       <Route path="CreatEvent"element={<CreatEvent/>}/>
+      <Route path="creatEvaluation"element={<CreateEvaluationForm/>}/>
+
 
     </Routes>
     </EvenementProvider>

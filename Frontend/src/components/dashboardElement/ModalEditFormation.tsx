@@ -4,7 +4,7 @@ import { useFormations } from "../../contexts/FormationContext";
 
 const ModalEditFormation = ({ formation, onClose }) => {
   // États pour les champs du formulaire
-  const [title, setTitle] = useState(formation?.title || "");
+  const [nom, setNom] = useState(formation?.nom|| "");
   const [description, setDescription] = useState(formation?.description || ""); 
   const [status, setStatus] = useState(formation?.status || "En Cours");
   const [image, setImage] = useState(formation?.image || null);
@@ -22,7 +22,7 @@ const ModalEditFormation = ({ formation, onClose }) => {
   useEffect(() => {
     if (formation) {
       console.log("Formation reçue :", formation);
-      setTitle(formation.title);
+      setNom(formation.title);
       setDescription(formation.description || ""); 
       setStatus(formation.status || "En Cours");
       setImage(formation.image || null);
@@ -32,16 +32,29 @@ const ModalEditFormation = ({ formation, onClose }) => {
 
   const handleSubmit = async () => {
     try {
+      // Assurez-vous que l'ID utilisé ici correspond à l'ID attendu dans le contexte
+      const formationId = formation.id || formation._id;
+      
+      // Créez l'objet de mise à jour
       const updatedFormation = {
         ...formation,
-        title: title,
+        nom: nom,
         description: description, 
         status: status,
-        image: image,
+        // Utilisez le fichier si disponible, sinon l'URL de l'image
+        image: fileObject || image,
       };
 
-      await updateFormation(formation.id, updatedFormation);
+      console.log("Données originales:", formation);
+      console.log("Données envoyées pour la mise à jour :", updatedFormation);
+      
+      // Appel à la fonction de mise à jour
+      await updateFormation(formationId, updatedFormation);
+      
+      // Rafraîchissement des données
       await refreshFormations();
+      
+      // Fermeture du modal
       onClose();
     } catch (error) {
       console.error("Error updating formation:", error);
@@ -132,8 +145,8 @@ const ModalEditFormation = ({ formation, onClose }) => {
         <input
           type="text"
           className="w-full px-3 py-2 border border-gray-300 rounded-[4px] mb-4 text-sm"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          value={nom}
+          onChange={(e) => setNom(e.target.value)}
           placeholder="AWS : Développement, déploiement et gestion"
         />
 

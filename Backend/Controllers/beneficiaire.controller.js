@@ -462,6 +462,7 @@ const uploadBeneficiairesFromExcel = async (req, res) => {
       }
 
       await session.commitTransaction();
+      console.log("les beneficiaires ajouté sont ",newBeneficiaires);
       res.status(200).json({
         message: "Traitement terminé avec succès",
         nouveauxBeneficiaires: newBeneficiaires.length,
