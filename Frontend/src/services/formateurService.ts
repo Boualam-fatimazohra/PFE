@@ -1,17 +1,27 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import apiClient from './apiClient';
 
-interface Formateur {
-  _id?: string;
-  utilisateur?: {
-    nom: string;
+export interface Formateur {
+  _id: string;
+  utilisateur: {
     prenom: string;
+    nom: string;
     email: string;
     numeroTelephone?: string;
     role: string;
   };
   manager?: string | any;
   coordinateur?: string | any;
+  // Champs existants conservés
+  odc?: string;
+  specialite?: string;
+  dateIntegration?: string;
+  actif: boolean;
+  entity?: {
+    ville: string;
+  };
+  imageFormateur?: string;
+  cv: File | null;
 }
 
 export const getAllFormateurs = async () => {
