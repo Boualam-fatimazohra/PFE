@@ -30,61 +30,107 @@ const ParticipantsSection:React.FC<ParticipantsSectionProps> = ({
   const endIndex = startIndex + itemsPerPage;
   const displayedParticipants = participants.slice(startIndex, endIndex);
 
-const [changedAttendance, setChangedAttendance] = React.useState<{
-  beneficiareFormationId: string;
-  jour: Date;
-  isPresent: boolean;
-}[]>([]);
+  const [changedAttendance, setChangedAttendance] = React.useState<{
+    beneficiareFormationId: string;
+    jour: Date;
+    isPresent: boolean;
+  }[]>([]);
 
-// Add this flag to track if there are unsaved changes
-const [hasUnsavedChanges, setHasUnsavedChanges] = React.useState(false);
-// tracking submission
-const [isSubmitting, setIsSubmitting] = React.useState(false);
+  // Add this flag to track if there are unsaved changes
+  const [hasUnsavedChanges, setHasUnsavedChanges] = React.useState(false);
+  // tracking submission
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-// function to handle saving
-const handleSaveAttendance = async () => {
-  if (changedAttendance.length === 0) return;
-  
-  setIsSubmitting(true);
-  
-  try {
-    // Group changes by day for the API
-    const changesByDay = changedAttendance.reduce<Record<string, PresenceData[]>>((acc, change) => {
-      const dayString = change.jour.toISOString().split('T')[0];
-      if (!acc[dayString]) {
-        acc[dayString] = []; // Initialize as an empty array explicitly
-      }
-      acc[dayString].push({
+  // function to handle saving
+  const handleSaveAttendance = async () => {
+    if (changedAttendance.length === 0) return;
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Log all changes before processing
+      console.log("All pending changes:", changedAttendance.map(change => ({
         beneficiareFormationId: change.beneficiareFormationId,
+        jour: change.jour.toISOString(),
         isPresent: change.isPresent
+      })));
+      
+      // Group changes by day for the API
+      const changesByDay = changedAttendance.reduce<Record<string, PresenceData[]>>((acc, change) => {
+        const dayString = change.jour.toISOString().split('T')[0];
+        if (!acc[dayString]) {
+          acc[dayString] = [];
+        }
+        
+        acc[dayString].push({
+          beneficiareFormationId: change.beneficiareFormationId,
+          isPresent: change.isPresent
+        });
+        
+        return acc;
+      }, {});
+      
+      // Log the grouped changes
+      console.log("Grouped changes by day:", changesByDay);
+      
+      // Send one request per day
+      const savePromises = Object.entries(changesByDay).map(([day, presences]) => {
+        console.log(`Saving ${presences.length} presence changes for day ${day}`);
+        
+        // Log specific presence changes
+        presences.forEach(p => {
+          console.log(`- Beneficiaire ${p.beneficiareFormationId}: ${p.isPresent ? 'Present' : 'Absent'}`);
+        });
+        
+        return enregistrerPresences({
+          jour: day,
+          presences: presences
+        });
       });
-      return acc;
-    }, {});
-    
-    // Send one request per day
-    const savePromises = Object.entries(changesByDay).map(([day, presences]) => {
-      // Make sure presences is properly typed as PresenceData[]
-      return enregistrerPresences({
-        jour: day,
-        presences: presences as PresenceData[] // Ensure correct typing
-      });
+      
+      const results = await Promise.all(savePromises);
+      // Log detailed API responses
+results.forEach((result, index) => {
+  console.log(`Response for API call ${index+1}:`, JSON.stringify(result, null, 2));
+  if (result.results) {
+    console.log("Individual change results:");
+    result.results.forEach(changeResult => {
+      console.log(`- Beneficiaire ${changeResult.beneficiareFormationId}: ${changeResult.success ? 'Success' : 'Failed'} - ${changeResult.message}`);
     });
-    
-    // Rest of the function remains the same
-    const results = await Promise.all(savePromises);
-    console.log("Save results:", results);
-    
-    setChangedAttendance([]);
-    setHasUnsavedChanges(false);
-    
-    alert("Présences enregistrées avec succès");
-  } catch (error) {
-    console.error("Error saving attendance:", error);
-    alert(`Erreur lors de l'enregistrement des présences: ${error.message || 'Une erreur est survenue'}`);
-  } finally {
-    setIsSubmitting(false);
   }
-};
+});
+      
+      // Check if all results were successful
+      const allSuccessful = results.every(result => result.success);
+      
+      if (allSuccessful) {
+        setChangedAttendance([]);
+        setHasUnsavedChanges(false);
+        alert("Présences enregistrées avec succès");
+        
+        // Add this: Reload participant data after successful save
+        await refreshParticipantsData();
+      } else {
+        // Find failed results and show details
+        const failedResults = results.filter(result => !result.success);
+        console.error("Failed save results:", failedResults);
+        alert(`Certaines présences n'ont pas pu être enregistrées. Veuillez réessayer.`);
+      }
+    } catch (error) {
+      console.error("Error saving attendance:", error);
+      
+      // More detailed error information
+      if (error.response) {
+        console.error("API response status:", error.response.status);
+        console.error("API response data:", error.response.data);
+      }
+      
+      alert(`Erreur lors de l'enregistrement des présences: ${error.message || 'Une erreur est survenue'}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleSelectAll = () => {
     if (selectAll) {
       setSelectedParticipants([]);
@@ -134,65 +180,53 @@ const handleSaveAttendance = async () => {
     const beneficiareFormationId = participant.beneficiaireFormationId; 
     const dayString = day.toISOString().split('T')[0]; // Get YYYY-MM-DD format
     
-    // Update attendance state (for UI display)
-    setAttendanceState(prev => {
-      // Create nested structure if it doesn't exist
-      const participantAttendance = prev[participantId] || {};
-      
-      // Find existing attendance status from API data
-      const attendance = participant.presences.find(p => 
-        new Date(p.jour).toDateString() === day.toDateString()
-      );
-      
-      // Get current status - from our state if it exists, otherwise from API data
-      const currentStatus = participantAttendance[dayString] !== undefined 
-        ? participantAttendance[dayString] 
-        : (attendance?.isPresent || false);
-      
-      // Toggle the status
-      const newStatus = !currentStatus;
-      
-      // Log what's happening
-      console.log(`Toggling attendance for ${participant.beneficiaire.nom} on ${dayString} from ${currentStatus ? 'Present' : 'Absent'} to ${newStatus ? 'Present' : 'Absent'}`);
-      
-      // Return updated state
-      return {
-        ...prev,
-        [participantId]: {
-          ...participantAttendance,
-          [dayString]: newStatus
-        }
-      };
-    });
+    // 1. First, determine the ACTUAL current status by checking:
+    // - Our local attendance state first (if we've changed it already)
+    // - If not in our state, check the API data (participant.presences)
+    const existingApiAttendance = participant.presences.find(p => 
+      new Date(p.jour).toDateString() === day.toDateString()
+    );
     
-    // Track that we have unsaved changes
-    setHasUnsavedChanges(true);
+    const currentStateValue = attendanceState[participantId]?.[dayString];
+    const apiValue = existingApiAttendance?.isPresent || false;
     
-    // Add change to our tracking array for API submission
+    // Use our state value if it exists, otherwise use the API value
+    const currentStatus = currentStateValue !== undefined ? currentStateValue : apiValue;
+    
+    // 2. Toggle to the new status
+    const newStatus = !currentStatus;
+    
+    console.log(`Toggling attendance for ${participant.beneficiaire.nom} on ${dayString}:`);
+    console.log(`- API status: ${apiValue ? 'Present' : 'Absent'}`);
+    console.log(`- Current state status: ${currentStateValue !== undefined ? (currentStateValue ? 'Present' : 'Absent') : 'Not set'}`);
+    console.log(`- Effective current status: ${currentStatus ? 'Present' : 'Absent'}`);
+    console.log(`- New status: ${newStatus ? 'Present' : 'Absent'}`);
+    
+    // 3. Update our UI state
+    setAttendanceState(prev => ({
+      ...prev,
+      [participantId]: {
+        ...(prev[participantId] || {}),
+        [dayString]: newStatus
+      }
+    }));
+    
+    // 4. Update our changed attendance tracking array
     setChangedAttendance(prev => {
-      // Check if we already have a change for this participant and day
+      // Try to find if we already have a pending change for this participant/day
       const existingIndex = prev.findIndex(
         change => 
           change.beneficiareFormationId === beneficiareFormationId && 
           change.jour.toDateString() === day.toDateString()
       );
       
-      // Get the current status and new status
-      const currentStatus = attendanceState[participantId]?.[dayString];
-      const attendance = participant.presences.find(p => 
-        new Date(p.jour).toDateString() === day.toDateString()
-      );
-      const apiStatus = attendance?.isPresent || false;
-      const effectiveCurrentStatus = currentStatus !== undefined ? currentStatus : apiStatus;
-      const newStatus = !effectiveCurrentStatus;
-      
       if (existingIndex >= 0) {
-        // Update existing change
+        // We already have a pending change, update it
         const newChanges = [...prev];
         newChanges[existingIndex].isPresent = newStatus;
         return newChanges;
       } else {
-        // Add new change
+        // Add a new change
         return [
           ...prev,
           {
@@ -203,6 +237,9 @@ const handleSaveAttendance = async () => {
         ];
       }
     });
+    
+    // Always mark that we have unsaved changes
+    setHasUnsavedChanges(true);
   };
   
   const handleExport = async () => {
