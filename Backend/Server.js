@@ -26,6 +26,7 @@ const http = require("http"); // Required for Socket.io
 const socketIo = require("socket.io"); // Socket.io library
 const chatbotRoutes = require("./Routes/chat.route.js");
 const beneficiaireFileRoutes = require('./Routes/beneficiaireFileUpload.route');
+const achatRoutes = require("./Routes/achat.route.js");
 
 
 dotenv.config();
@@ -122,6 +123,7 @@ app.use("/api/edc",edcRoutes);
 app.use("/api", chatbotRoutes);
 app.use("/api/presence",Presence);
 app.use("/api/certification", certificationRoutes);
+app.use("/api/achat", achatRoutes);
 // Middleware de gestion des erreurs
 app.use((err, req, res, next) => {
     console.error("Erreur serveur:", err);
