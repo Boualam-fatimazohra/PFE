@@ -1,84 +1,118 @@
 const Presence = require('../Models/presence.model.js');
 const BeneficiaireFormation = require('../Models/beneficiairesFormation.js');
+const Formation = require('../Models/formation.model.js');
 
 // POST /api/presences
 const MarquerPresence = async (req, res) => {
   try {
-    const { presences, jour } = req.body;
+    console.log("=========DEBUG PRESENCE CONTROLLER=========")
+    console.log('req.body: ' + req.body);
+    const { presences, jour, formationId } = req.body;
     
     // Validation des données reçues
-    if (!presences || !Array.isArray(presences) || !jour) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Données invalides. Veuillez fournir un tableau de présences, une date et une période.' 
+    if (!presences || !Array.isArray(presences) || !jour || !formationId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Données invalides. Veuillez fournir un tableau de présences, une date et l\'ID de la formation.'
+      });
+    }
+    
+    // Vérifier que la formation existe
+    const formation = await Formation.findById(formationId);
+    if (!formation) {
+      return res.status(404).json({
+        success: false,
+        message: 'Formation non trouvée.'
       });
     }
     
     // Convertir la date si elle est reçue sous forme de string
     const jourDate = new Date(jour);
     if (isNaN(jourDate.getTime())) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Format de date invalide.' 
+      return res.status(400).json({
+        success: false,
+        message: 'Format de date invalide.'
       });
     }
-
+    
+    // Extraire tous les IDs des bénéficiaires
+    const beneficiaryIds = presences.map(p => p.beneficiareFormationId);
+    
+    // Vérifier que tous les bénéficiaires existent et sont inscrits à cette formation
+    const beneficiaries = await BeneficiaireFormation.find({
+      _id: { $in: beneficiaryIds },
+      formation: formationId
+    });
+    
+    if (beneficiaries.length !== beneficiaryIds.length) {
+      return res.status(400).json({
+        success: false,
+        message: 'Un ou plusieurs bénéficiaires sont invalides ou ne sont pas inscrits à cette formation.'
+      });
+    }
+    
+    // Créer une plage de temps pour le jour spécifié (de minuit à 23:59:59)
+    const jourDebut = new Date(jourDate);
+    jourDebut.setHours(0, 0, 0, 0);
+    const jourFin = new Date(jourDate);
+    jourFin.setHours(23, 59, 59, 999);
+    
+    // Récupérer tous les enregistrements de présence existants pour ce jour et ces bénéficiaires
+    const existingPresences = await Presence.find({
+      beneficiareFormation: { $in: beneficiaryIds },
+      jour: {
+        $gte: jourDebut,
+        $lte: jourFin
+      }
+    });
+    
+    // Créer un map des présences existantes pour faciliter la recherche --> [beneFormationId] == presence->[benfForm, isPresent]
+    const presenceMap = {};
+    existingPresences.forEach(presence => {
+      presenceMap[presence.beneficiareFormation.toString()] = presence;
+    });
+    
+    // Préparer les opérations d'écriture en masse
+    const bulkOperations = [];
+    
     // Traiter chaque présence
-    const presenceResults = [];
     for (const presence of presences) {
       const { beneficiareFormationId, isPresent } = presence;
+      const existingPresence = presenceMap[beneficiareFormationId];
       
-      // Vérifier si le bénéficiaire existe dans cette formation
-      const beneficiareFormation = await BeneficiaireFormation.findById(beneficiareFormationId);
-      if (!beneficiareFormation) {
-        presenceResults.push({
-          beneficiareFormationId,
-          success: false,
-          message: 'Identifiant de bénéficiaire-formation invalide.'
-        });
-        continue;
-      }
-
-      // Vérifier si une présence existe déjà pour ce bénéficiaire à cette date et période
-      let presenceRecord = await Presence.findOne({
-        beneficiareFormation: beneficiareFormationId,
-        jour: {
-          $gte: new Date(jourDate.setHours(0, 0, 0, 0)),
-          $lt: new Date(jourDate.setHours(23, 59, 59, 999))
-        }
-      });
-
-      // Si la présence existe, mettre à jour, sinon créer
-      if (presenceRecord) {
-        presenceRecord.isPresent = isPresent;
-        await presenceRecord.save();
-        presenceResults.push({
-          beneficiareFormationId,
-          success: true,
-          message: 'Présence mise à jour avec succès.',
-          presenceId: presenceRecord._id
+      if (existingPresence) {
+        // Mettre à jour une présence existante
+        bulkOperations.push({
+          updateOne: {
+            filter: { _id: existingPresence._id },
+            update: { $set: { isPresent: isPresent } }
+          }
         });
       } else {
-        const newPresence = new Presence({
-          beneficiareFormation: beneficiareFormationId,
-          jour: jourDate,
-          isPresent
-        });
-        
-        const savedPresence = await newPresence.save();
-        presenceResults.push({
-          beneficiareFormationId,
-          success: true,
-          message: 'Présence enregistrée avec succès.',
-          presenceId: savedPresence._id
+        // Créer une nouvelle présence
+        bulkOperations.push({
+          insertOne: {
+            document: {
+              beneficiareFormation: beneficiareFormationId,
+              jour: jourDate,
+              isPresent: isPresent
+            }
+          }
         });
       }
     }
-
+    
+    // Exécuter toutes les opérations en une seule requête
+    const result = await Presence.bulkWrite(bulkOperations);
+    
     return res.status(200).json({
       success: true,
-      message: 'Traitement des présences terminé.',
-      results: presenceResults
+      message: 'Présences mises à jour avec succès.',
+      stats: {
+        modified: result.modifiedCount || 0,
+        inserted: result.insertedCount || 0,
+        total: presences.length
+      }
     });
     
   } catch (error) {
@@ -90,6 +124,5 @@ const MarquerPresence = async (req, res) => {
     });
   }
 };
-
 
 module.exports = { MarquerPresence };

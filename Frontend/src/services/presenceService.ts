@@ -1,30 +1,6 @@
 import axios from 'axios';
 import apiClient from './apiClient';
-
-// Interfaces pour les données de présence
-interface PresenceData {
-  beneficiareFormationId: string;
-  isPresent: boolean;
-}
-
-interface PresenceRequest {
-  jour: string | Date;
-  periode: 'Matin' | 'apresMidi';
-  presences: PresenceData[];
-}
-
-interface PresenceResult {
-  beneficiareFormationId: string;
-  success: boolean;
-  message: string;
-  presenceId?: string;
-}
-
-interface PresenceResponse {
-  success: boolean;
-  message: string;
-  results: PresenceResult[];
-}
+import { PresenceData, PresenceRequest, PresenceResult, PresenceResponse } from '@/components/formation-modal/types';
 
 /**
  * Enregistre les présences des bénéficiaires pour une date et période spécifiques
@@ -32,7 +8,7 @@ interface PresenceResponse {
  * @returns La réponse du serveur avec les résultats pour chaque bénéficiaire
  */
 export const enregistrerPresences = async (presenceData: PresenceRequest): Promise<PresenceResponse> => {
-  if (!presenceData.jour || !presenceData.periode || !presenceData.presences || presenceData.presences.length === 0) {
+  if (!presenceData.jour || !presenceData.presences || presenceData.presences.length === 0 || !presenceData.formationId) {
     throw new Error("Données de présence incomplètes");
   }
   try {

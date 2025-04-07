@@ -1,4 +1,6 @@
 export interface Formation {
+  formateurName: ReactNode;
+  formateurCity: ReactNode;
   _id?: string;
   nom: string;
   dateDebut: string;
@@ -164,6 +166,37 @@ export interface FormationDraftResponse {
   // Add any other fields returned by the API
 }
 
+export interface BeneficiaireWithPresenceResponse {
+  beneficiaireFormationId: string;
+  beneficiaire: any; 
+  formationId: string;
+  presences: any[]; 
+  autresFormations: string[]; 
+}
+
+export interface PresenceData {
+  beneficiareFormationId: string;
+  isPresent: boolean;
+}
+
+export interface PresenceRequest {
+  jour: string | Date;
+  presences: PresenceData[];
+  formationId: string; 
+}
+
+export interface PresenceResult {
+  beneficiareFormationId: string;
+  success: boolean;
+  message: string;
+  presenceId?: string;
+}
+
+export interface PresenceResponse {
+  success: boolean;
+  message: string;
+  results: PresenceResult[];
+}
 export interface Formateur {
   _id?: string;
   utilisateur?: {
@@ -175,8 +208,19 @@ export interface Formateur {
   };
   manager?: any;
   coordinateur?: any;
-  entity?: Entity;
   isAvailable?: boolean; 
+  odc?: string;
+  specialite?: string;
+  aPropos: string;
+  experience: string;
+  dateIntegration?: string;
+  actif: boolean;
+  entity?: {
+    type: string;
+    ville: string;
+  };
+  imageFormateur?: string;
+  cv: File | null;
 }
 
 export interface Entity {
