@@ -801,8 +801,7 @@ const getBeneficiairesWithPresence = async (req, res) => {
         autresFormations: autresFormations.map(f => f.formation),
       };
     }));
-    console.log("==== DEBUG BENEF FORMATION PRESENCE ========");
-    console.log(result);
+
     res.status(200).json(result);
   } catch (error) {
     console.error(error);

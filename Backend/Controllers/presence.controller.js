@@ -5,6 +5,8 @@ const Formation = require('../Models/formation.model.js');
 // POST /api/presences
 const MarquerPresence = async (req, res) => {
   try {
+    console.log("=========DEBUG PRESENCE CONTROLLER=========")
+    console.log('req.body: ' + req.body);
     const { presences, jour, formationId } = req.body;
     
     // Validation des données reçues

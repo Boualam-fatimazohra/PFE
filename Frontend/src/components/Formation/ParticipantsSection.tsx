@@ -48,6 +48,17 @@ const ParticipantsSection:React.FC<ParticipantsSectionProps> = ({
     setIsSubmitting(true);
     
     try {
+      // Debug the formation object
+      console.log("Formation object:", formation);
+      
+      // Make sure we have a valid formation ID
+      const formationId = formation._id || formation.id; // Try both common variations
+      
+      console.log("Formation ID to be used:", formationId);
+      
+      if (!formationId) {
+        throw new Error("Formation ID is missing");
+      }
       // Log all changes before processing
       console.log("All pending changes:", changedAttendance.map(change => ({
         beneficiareFormationId: change.beneficiareFormationId,
@@ -81,12 +92,12 @@ const ParticipantsSection:React.FC<ParticipantsSectionProps> = ({
         presences.forEach(p => {
           console.log(`- Beneficiaire ${p.beneficiareFormationId}: ${p.isPresent ? 'Present' : 'Absent'}`);
         });
-        
+        console.log("formationId: " + formation._id);
         // Updated to include formationId
         return enregistrerPresences({
           jour: day,
           presences: presences,
-          formationId: formation._id // Add the formation ID from props
+          formationId: formationId // Add the formation ID from props
         });
       });
       
