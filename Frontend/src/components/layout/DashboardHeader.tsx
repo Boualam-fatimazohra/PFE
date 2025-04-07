@@ -9,6 +9,7 @@ import NotificationBell from "../notification/NotificationBell";
 import { io } from "socket.io-client";
 import { toast } from "react-toastify";
 import axios from "axios";
+import { id } from "date-fns/locale";
 
 export function DashboardHeader() {
   const [user, setUser] = useState(null);
@@ -116,7 +117,8 @@ export function DashboardHeader() {
       { name: "Ecole du code", path: "/manager/Ecolcode" ,additionalPaths: [
         "/manager/GestionFormateurManager",
         "/manager/GestionFormation",
-        "/manager/AjoutFormateur"
+        "/manager/AjoutFormateur",
+        "/ModifieFormateur"
       ]  },
       { name: "Fablab Solidaire", path: "/manager/FablabSolidaire" },
       { name: "Orange Fab", path: "/manager/OrangeFab" },

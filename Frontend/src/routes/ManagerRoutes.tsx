@@ -21,6 +21,8 @@ import OrangeFab from "@/components/dashboardElement/OrangeFab";
 import Coordination from "@/components/dashboardElement/Corrdination";
 import GestionFormationManager from "@/components/dashboardElement/GestionFormationManager";
 import { FormateurProvider } from "@/contexts/FormateurContext";
+import UpdateFormateur from "@/components/dashboardElement/UpdateFormateur";
+import DetailFormateur from "@/components/dashboardElement/DetailFormateur";
 
 
 const ManagerRoutes = () => {
@@ -47,7 +49,10 @@ const ManagerRoutes = () => {
           <Route path="/GestionFormationManager" element={<GestionFormationManager/>} />
 
           <Route path="/AjoutFormateur" element={<AjoutFormateur/>} />
+          <Route path="/updateFormateur/:id" element={<UpdateFormateur/>} />
           <Route path="/ModifieFormateur/:id" element={<ModifieFormateur />} />
+          <Route path="/DetailFormateur/:id" element={<DetailFormateur />} />
+
 
 
 
