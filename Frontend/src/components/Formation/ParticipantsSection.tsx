@@ -48,6 +48,17 @@ const ParticipantsSection:React.FC<ParticipantsSectionProps> = ({
     setIsSubmitting(true);
     
     try {
+      // Debug the formation object
+      console.log("Formation object:", formation);
+      
+      // Make sure we have a valid formation ID
+      const formationId = formation._id || formation.id; // Try both common variations
+      
+      console.log("Formation ID to be used:", formationId);
+      
+      if (!formationId) {
+        throw new Error("Formation ID is missing");
+      }
       // Log all changes before processing
       console.log("All pending changes:", changedAttendance.map(change => ({
         beneficiareFormationId: change.beneficiareFormationId,
@@ -73,7 +84,7 @@ const ParticipantsSection:React.FC<ParticipantsSectionProps> = ({
       // Log the grouped changes
       console.log("Grouped changes by day:", changesByDay);
       
-      // Send one request per day
+      // Send one request per day - now including formationId
       const savePromises = Object.entries(changesByDay).map(([day, presences]) => {
         console.log(`Saving ${presences.length} presence changes for day ${day}`);
         
@@ -81,24 +92,27 @@ const ParticipantsSection:React.FC<ParticipantsSectionProps> = ({
         presences.forEach(p => {
           console.log(`- Beneficiaire ${p.beneficiareFormationId}: ${p.isPresent ? 'Present' : 'Absent'}`);
         });
-        
+        console.log("formationId: " + formation._id);
+        // Updated to include formationId
         return enregistrerPresences({
           jour: day,
-          presences: presences
+          presences: presences,
+          formationId: formationId // Add the formation ID from props
         });
       });
       
       const results = await Promise.all(savePromises);
+      
       // Log detailed API responses
-results.forEach((result, index) => {
-  console.log(`Response for API call ${index+1}:`, JSON.stringify(result, null, 2));
-  if (result.results) {
-    console.log("Individual change results:");
-    result.results.forEach(changeResult => {
-      console.log(`- Beneficiaire ${changeResult.beneficiareFormationId}: ${changeResult.success ? 'Success' : 'Failed'} - ${changeResult.message}`);
-    });
-  }
-});
+      results.forEach((result, index) => {
+        console.log(`Response for API call ${index+1}:`, JSON.stringify(result, null, 2));
+        if (result.results) {
+          console.log("Individual change results:");
+          result.results.forEach(changeResult => {
+            console.log(`- Beneficiaire ${changeResult.beneficiareFormationId}: ${changeResult.success ? 'Success' : 'Failed'} - ${changeResult.message}`);
+          });
+        }
+      });
       
       // Check if all results were successful
       const allSuccessful = results.every(result => result.success);
@@ -107,9 +121,6 @@ results.forEach((result, index) => {
         setChangedAttendance([]);
         setHasUnsavedChanges(false);
         alert("Présences enregistrées avec succès");
-        
-        // Add this: Reload participant data after successful save
-        await refreshParticipantsData();
       } else {
         // Find failed results and show details
         const failedResults = results.filter(result => !result.success);

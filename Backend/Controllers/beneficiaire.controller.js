@@ -794,7 +794,7 @@ const getBeneficiairesWithPresence = async (req, res) => {
     const autresFormations = await getOtherFormationsByBeneficiaire(bf.beneficiaire._id, formationId);
       
       return {
-        beneficiaireFormationId: bf.id,
+        beneficiaireFormationId: bf._id,
         beneficiaire: bf.beneficiaire,
         formationId: bf.formation,
         presences: presences.filter(p => p.beneficiareFormation.toString() === bf._id.toString()),
