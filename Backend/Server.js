@@ -15,7 +15,7 @@ const notificationRoutes = require("./Routes/notification.route.js");
 const Presence=require("./Routes/presence.route.js")
 const entityRoutes = require("./Routes/entity.route.js");
 const edcRoutes = require("./Routes/edc.routes.js");
-
+const certificationRoutes = require("./Routes/certification.route.js");
 const multer = require("multer");
 const fs = require("fs");
 const cookieParser = require("cookie-parser");
@@ -26,6 +26,7 @@ const http = require("http"); // Required for Socket.io
 const socketIo = require("socket.io"); // Socket.io library
 const chatbotRoutes = require("./Routes/chat.route.js");
 const beneficiaireFileRoutes = require('./Routes/beneficiaireFileUpload.route');
+const achatRoutes = require("./Routes/achat.route.js");
 
 
 dotenv.config();
@@ -121,6 +122,8 @@ app.use("/api/user", userRoutes);
 app.use("/api/edc",edcRoutes);
 app.use("/api", chatbotRoutes);
 app.use("/api/presence",Presence);
+app.use("/api/certification", certificationRoutes);
+app.use("/api/achat", achatRoutes);
 // Middleware de gestion des erreurs
 app.use((err, req, res, next) => {
     console.error("Erreur serveur:", err);
