@@ -1,8 +1,9 @@
-const Formation = require('../Models/formation.model.js');
+const Formation = require('../Models/formation.model');
 const FormationDraft = require('../Models/formationDraft.model');
 const Formateur=require("../Models/formateur.model");
 const { determineFormationStatus } = require('../utils/formationUtils.js')
 const mongoose = require('mongoose');
+const {creerPresencesBeneficiaires } = require("../utils/BeneficiairePresence.js")
 // Récupérer les informations d'une FormationDraft par l'ID de formation
 const getFormationStep = async (req, res) => {
   try {
@@ -249,11 +250,14 @@ const createFormationDraft = async (req, res) => {
           message: "Aucun brouillon de formation trouvé pour cet ID"
         });
       }
-  
+      const resultatPresences = await creerPresencesBeneficiaires(formationId);
+
       return res.status(200).json({
         success: true,
         message: "Formation validée avec succès",
-        data: updatedDraft
+        data: updatedDraft,
+        resultatsPresences: resultatPresences.success ? resultatPresences.resultats : null,
+        erreurPresences: !resultatPresences.success ? resultatPresences.error : null
       });
     } catch (error) {
       console.error("Erreur lors de la validation de la formation:", error);
