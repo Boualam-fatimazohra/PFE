@@ -28,6 +28,7 @@ const chatbotRoutes = require("./Routes/chat.route.js");
 const beneficiaireFileRoutes = require('./Routes/beneficiaireFileUpload.route');
 const achatRoutes = require("./Routes/achat.route.js");
 const encadrantRoutes = require("./Routes/encadrant.route.js");
+const fabRoutes = require("./Routes/fab.route.js");
 
 
 dotenv.config();
@@ -120,6 +121,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/entity", entityRoutes); 
 app.use("/api/user", userRoutes); 
 
+app.use("/api/fabs", fabRoutes);
 app.use("/api/encadrants", encadrantRoutes);
 
 app.use("/api/edc",edcRoutes);
