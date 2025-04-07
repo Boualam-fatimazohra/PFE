@@ -8,7 +8,7 @@ import { PresenceData, PresenceRequest, PresenceResult, PresenceResponse } from 
  * @returns La réponse du serveur avec les résultats pour chaque bénéficiaire
  */
 export const enregistrerPresences = async (presenceData: PresenceRequest): Promise<PresenceResponse> => {
-  if (!presenceData.jour || !presenceData.presences || presenceData.presences.length === 0) {
+  if (!presenceData.jour || !presenceData.presences || presenceData.presences.length === 0 || !presenceData.formationId) {
     throw new Error("Données de présence incomplètes");
   }
   try {

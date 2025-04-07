@@ -1,46 +1,47 @@
 const Manager  = require("../Models/manager.model");
 const { Utilisateur } = require("../Models/utilisateur.model");
 const Coordinateur = require("../Models/coordinateur.model");
-
+const bcrypt = require('bcryptjs');
 const createCoordinateur = async (req, res) => {
   try {
     const { utilisateurData, manager } = req.body;
+    
+    // Vérifier si manager existe
     const managerExists = await Manager.findById(manager);
     if (!managerExists) {
       return res.status(404).json({ message: "Manager not found" });
     }
-
-    // Destructure the utilisateur data from the request
-    const { firstName, lastName, email, phoneNumber, password, role } = utilisateurData;
-
-    // Check if the role is "Coordinateur"
-    if (role !== "Coordinateur") {
-      return res.status(400).json({ message: "Utilisateur role must be 'Coordinateur'" });
-    }
-
-    // Check if the utilisateur with the same email already exists
+    
+    // Destructurer les données utilisateur
+    const { nom, prenom, email, numeroTelephone, password } = utilisateurData;
+    
+    // Vérifier si un utilisateur avec le même email existe déjà
     const existingUtilisateur = await Utilisateur.findOne({ email });
     if (existingUtilisateur) {
       return res.status(400).json({ message: "Utilisateur with this email already exists" });
     }
-
-    // Create the utilisateur entry
+        const hashedPassword = await bcrypt.hash(password, 10);
+    // Créer l'entrée utilisateur avec le rôle "Coordinateur" fixe
     const newUtilisateur = new Utilisateur({
       nom,
       prenom,
       email,
       numeroTelephone,
-      password,
-      role
+      password : hashedPassword,
+      role: "Coordinateur" // Définir directement le rôle ici
     });
-
-    // Save the new utilisateur
+    
+    // Sauvegarder le nouvel utilisateur
     await newUtilisateur.save();
-
-    // Create the coordinateur entry with the utilisateur
-    const newCoordinateur = new Coordinateur({ utilisateur: newUtilisateur._id, manager });
+    
+    // Créer l'entrée coordinateur avec l'utilisateur
+    const newCoordinateur = new Coordinateur({ 
+      utilisateur: newUtilisateur._id, 
+      manager 
+    });
+    
     await newCoordinateur.save();
-
+    
     res.status(201).json({
       message: "Coordinateur created successfully",
       coordinateur: newCoordinateur,

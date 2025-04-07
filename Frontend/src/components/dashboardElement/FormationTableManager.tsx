@@ -144,31 +144,66 @@ export const FormationsTable = ({
                           </svg>
                         </div>
                       )}
-                      <span className="text-sm font-bold text-gray-600">{formation.nom}</span>
+<span
+  style={{
+    color: 'var(--Neutral-700, #333)',
+    fontFeatureSettings: "'dlig' on",
+    fontFamily: 'Inter',
+    fontSize: '16px',
+    fontStyle: 'normal',
+    fontWeight: 600,
+    lineHeight: '21px',
+  }}
+>
+  {formation.nom}
+</span>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="text-base font-bold text-gray-900">
-                      {formation.formateurName}
-                    </div>
-                    <div className="bg-gray-200 text-gray-600 px-2 py-1 rounded-full text-xs font-medium inline-block mt-1">
+                  <div
+                    style={{color: 'var(--Neutral-700, #333)',fontFeatureSettings: "'dlig' on",fontFamily: 'Inter',fontSize: '16px',fontStyle: 'normal',fontWeight: 600, lineHeight: '21px', }}>
+                        {formation.formateurName}
+                  </div>
+                    <div className="bg-gray-200 text-black px-2 py-1 rounded-full text-xs font-medium inline-block mt-1">
                       {formation.formateurCity}
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="text-sm text-gray-600">
-                      {formatDate(formation.dateDebut)}
-                    </div>
-                    {formation.dateFin ? (
-                      formation.dateDebut !== formation.dateFin && (
-                        <div className="text-sm text-gray-600 mt-1">
-                          {formatDate(formation.dateFin)}
-                        </div>
-                      )
-                    ) : (
-                      <div className="text-sm text-gray-600 mt-1">-</div>
-                    )}
-                  </TableCell>
+  <div
+    style={{
+      color: 'var(--Neutral-500, #666)',
+      fontFeatureSettings: "'dlig' on",
+      fontFamily: 'Inter',
+      fontSize: '16px',
+      fontStyle: 'normal',
+      fontWeight: 500,
+      lineHeight: '21px',
+    }}
+  >
+    {formatDate(formation.dateDebut)}
+  </div>
+
+  {formation.dateFin ? (
+    formation.dateDebut !== formation.dateFin && (
+      <div
+        style={{
+          marginTop: '4px',
+          color: 'var(--Neutral-500, #666)',
+          fontFeatureSettings: "'dlig' on",
+          fontFamily: 'Inter',
+          fontSize: '16px',
+          fontStyle: 'normal',
+          fontWeight: 500,
+          lineHeight: '21px',
+        }}
+      >
+        {formatDate(formation.dateFin)}
+      </div>
+    )
+  ) : (
+    <div
+      style={{marginTop: '4px',color: 'var(--Neutral-500, #666)',fontFeatureSettings: "'dlig' on",fontFamily: 'Inter',fontSize: '16px',fontStyle: 'normal',fontWeight: 500,lineHeight: '21px',}}> -
+    </div>)}</TableCell>
                   <TableCell>
                     <div className={`px-3 py-1 rounded-full text-sm inline-flex items-center ${getStatusColor(formation.status)}`}>
                       {formation.status}
@@ -181,13 +216,30 @@ export const FormationsTable = ({
                     <div className="text-sm font-bold">N/A</div>
                   </TableCell>
                   <TableCell className="text-center">
-                    <Button
-                      size="sm"
-                      className="bg-black text-white hover:bg-gray-800 rounded-[4px]"
-                      onClick={() => onShowDetails && onShowDetails(formation as FormationItem)}
-                    >
-                      Accéder
-                    </Button>
+                  <Button
+  size="sm"
+  className="bg-black text-white hover:bg-gray-800 rounded-[4px]"
+  style={{
+    overflow: 'hidden',
+    color: '#FFF',
+    textAlign: 'center',
+    fontFeatureSettings: "'dlig' on",
+    textOverflow: 'ellipsis',
+    fontFamily: 'Inter',
+    fontSize: '13px',
+    fontStyle: 'normal',
+    fontWeight: 500,
+    lineHeight: '21px',
+    display: '-webkit-box',
+    WebkitBoxOrient: 'vertical',
+    WebkitLineClamp: 1,
+    alignSelf: 'stretch',
+  }}
+  onClick={() => onShowDetails && onShowDetails(formation as FormationItem)}
+>
+  Accéder
+</Button>
+
                   </TableCell>
                 </TableRow>
               ))
