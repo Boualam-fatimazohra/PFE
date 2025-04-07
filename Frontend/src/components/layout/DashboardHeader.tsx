@@ -9,6 +9,7 @@ import NotificationBell from "../notification/NotificationBell";
 import { io } from "socket.io-client";
 import { toast } from "react-toastify";
 import axios from "axios";
+import { id } from "date-fns/locale";
 
 export function DashboardHeader() {
   const [user, setUser] = useState(null);
@@ -145,8 +146,7 @@ export function DashboardHeader() {
         hasDropdown: true,
         dropdownItems: [
           { name: "Gestion des Formateurs", path: "/manager/GestionFormateurManager" },
-          { name: "Gestion des Formations", path: "/manager/GestionFormation" },
-          { name: "Ajouter un Formateur", path: "/manager/AjoutFormateur" }
+          { name: "Gestion des Formations", path: "/manager/GestionFormation" }
         ]
       },
       { name: "Fablab Solidaire", path: "/manager/FablabSolidaire" },
