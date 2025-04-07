@@ -202,15 +202,58 @@ const getFormateurs = async (req, res) => {
 };
   // fin : pour récuperer les formateurs d'un manager
   const getFormateurById = async (req, res) => {
-    const id=req.params.id;
+    const id = req.params.id;
     try {
-      const formateur = await Formateur.findById(id).populate("utilisateur", "nom   prenom  email  role").populate("manager").populate("coordinateur");
-      if (!formateur) return res.status(404).json({ message: "Formateur non trouvé" });
-      res.status(200).json(formateur);
+        // 1. Récupérer le formateur avec les informations de base
+        const formateur = await Formateur.findById(id)
+            .populate({
+                path: "utilisateur",
+                select: "nom prenom email role numeroTelephone"
+            })
+            .populate("manager");
+
+        if (!formateur) {
+            return res.status(404).json({ message: "Formateur non trouvé" });
+        }
+
+        // 2. Récupérer l'entité associée à ce formateur
+        const utilisateurEntity = await UtilisateurEntity.findOne({
+            id_utilisateur: formateur.utilisateur._id
+        }).populate("id_entity");
+
+        // 3. Formater la réponse
+        const response = {
+            _id: formateur._id,
+            utilisateur: {
+                prenom: formateur.utilisateur.prenom,
+                nom: formateur.utilisateur.nom,
+                email: formateur.utilisateur.email,
+                telephone: formateur.utilisateur.numeroTelephone,
+                role: formateur.utilisateur.role
+            },
+            specialite: formateur.specialite,
+            experience: formateur.experience,
+            dateIntegration: formateur.dateIntegration,
+            actif: formateur.actif,
+            aPropos: formateur.aPropos,
+            entity: utilisateurEntity ? {
+                _id: utilisateurEntity.id_entity._id,
+                type: utilisateurEntity.id_entity.type,
+                ville: utilisateurEntity.id_entity.ville
+            } : null,
+            cv: formateur.cv,
+            imageFormateur: formateur.imageFormateur
+        };
+
+        res.status(200).json(response);
     } catch (error) {
-      res.status(500).json({ message: "Erreur serveur", error: error.message });
+        console.error("Erreur lors de la récupération du formateur:", error);
+        res.status(500).json({ 
+            message: "Erreur serveur", 
+            error: error.message 
+        });
     }
-  };
+};
 
   const updateFormateur = async (req, res) => {
     try {
