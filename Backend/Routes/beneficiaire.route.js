@@ -18,6 +18,8 @@ const upload = require("../utils/upload");
 const authenticated = require("../Middlewares/Authmiddleware.js");
 const RoleMiddleware = require("../Middlewares/RoleMiddleware.js");
 const authorizeFormationAccess=require("../Middlewares/FormationAccess.js");
+const { generateAndSendQRCode,verifyQRCode } = require("../Controllers/qrcode.controller.js");
+router.get("/getNbrBeneficiairesParFormateur",authenticated,RoleMiddleware("Formateur"), getNombreBeneficiairesParFormateur);
 
 // Get Benef for formateur
 router.get("/getNbrBeneficiairesParFormateur",
@@ -25,6 +27,7 @@ router.get("/getNbrBeneficiairesParFormateur",
   RoleMiddleware("Formateur"), 
   getNombreBeneficiairesParFormateur
 );
+
 
 // upload benef data from excel
 router.post("/upload", upload.single("file"), uploadBeneficiairesFromExcel);
@@ -79,7 +82,10 @@ router.get("/export/:formationId",
   exportBeneficiairesToExcel
 );
 
-// 
+router.post("/sendQRCode",generateAndSendQRCode);
+router.post("/verifyQRCode",verifyQRCode);
+
+
 router.get("/getBeneficiairesWithPresence/:formationId",
   authenticated,
   getBeneficiairesWithPresence

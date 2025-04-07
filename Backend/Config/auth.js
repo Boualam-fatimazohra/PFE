@@ -84,7 +84,7 @@ async function sendMail(destinataire, contenu) {
             from: "Ouissa Saloua <salouaouissa2002@gmail.com>",
             to: destinataire,
             subject: "Votre mot de passe",
-            text: contenu,
+            text: "teste",
             html: contenu,
         };
 
