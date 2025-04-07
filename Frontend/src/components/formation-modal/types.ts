@@ -1,4 +1,6 @@
 export interface Formation {
+  formateurName: ReactNode;
+  formateurCity: ReactNode;
   _id?: string;
   nom: string;
   dateDebut: string;
@@ -180,6 +182,7 @@ export interface PresenceData {
 export interface PresenceRequest {
   jour: string | Date;
   presences: PresenceData[];
+  formationId: string; 
 }
 
 export interface PresenceResult {

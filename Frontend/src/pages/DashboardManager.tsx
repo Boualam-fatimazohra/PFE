@@ -100,12 +100,7 @@ const DashboardManager = () => {
   <div className="flex items-center gap-x-4">
   <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="text-[#333] flex items-center gap-2 font-bold">
-          <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M0 3C0 2.44772 0.447715 2 1 2H19C19.5523 2 20 2.44772 20 3V5C20 5.26522 19.8946 5.51957 19.7071 5.70711L13 12.4142V19C13 19.5523 12.5523 20 12 20H8C7.44772 20 7 19.5523 7 19V12.4142L0.292893 5.70711C0.105357 5.51957 0 5.26522 0 5V3Z" fill="#000"/>
-          </svg>
-          Filtres
-        </Button>
+        
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-48">
   {options.map((option) => (

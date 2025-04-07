@@ -33,7 +33,7 @@ export interface Formateur {
   cvUrl?: string;
 }
 
-export const ModifieFormateur: React.FC = () => {
+export const UpdateFormateur: React.FC = () => {
   const { id } = useParams();
   const { edcs, fetchEdcs } = useEdc();
   const { updateFormateur, getFormateurById, loading } = useFormateur();
@@ -745,4 +745,4 @@ if (formateur.cv instanceof File) {
   );
 };
 
-export default ModifieFormateur;
+export default UpdateFormateur;
