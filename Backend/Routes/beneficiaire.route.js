@@ -18,7 +18,7 @@ const upload = require("../utils/upload");
 const authenticated = require("../Middlewares/Authmiddleware.js");
 const RoleMiddleware = require("../Middlewares/RoleMiddleware.js");
 const authorizeFormationAccess=require("../Middlewares/FormationAccess.js");
-
+const { generateAndSendQRCode,verifyQRCode } = require("../Controllers/qrcode.controller.js");
 router.get("/getNbrBeneficiairesParFormateur",authenticated,RoleMiddleware("Formateur"), getNombreBeneficiairesParFormateur);
 
 router.post("/upload", upload.single("file"), uploadBeneficiairesFromExcel);
@@ -49,5 +49,6 @@ router.get("/export/:formationId",
 );
 router.get("/getBeneficiairesWithPresence/:formationId",authenticated,getBeneficiairesWithPresence);
 router.post("/uploadList", upload.single("file"),exportBeneficiairesListToExcel);
-
+router.post("/sendQRCode",generateAndSendQRCode);
+router.post("/verifyQRCode",verifyQRCode);
 module.exports = router;
