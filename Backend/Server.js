@@ -27,6 +27,7 @@ const socketIo = require("socket.io"); // Socket.io library
 const chatbotRoutes = require("./Routes/chat.route.js");
 const beneficiaireFileRoutes = require('./Routes/beneficiaireFileUpload.route');
 const achatRoutes = require("./Routes/achat.route.js");
+const encadrantRoutes = require("./Routes/encadrant.route.js");
 
 
 dotenv.config();
@@ -118,6 +119,8 @@ app.use("/api/evenement", evenementRoutes);
 app.use("/api/notifications", notificationRoutes); 
 app.use("/api/entity", entityRoutes); 
 app.use("/api/user", userRoutes); 
+
+app.use("/api/encadrants", encadrantRoutes);
 
 app.use("/api/edc",edcRoutes);
 app.use("/api", chatbotRoutes);
