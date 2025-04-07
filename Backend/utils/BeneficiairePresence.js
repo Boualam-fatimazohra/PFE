@@ -50,7 +50,8 @@ const getBeneficiairesByFormation = async (formationId) => {
   }
   return jours;
 };
- const creerPresencesBeneficiaires = async (formationId) => {
+
+const creerPresencesBeneficiaires = async (formationId) => {
   try {
     // Trouver la formation pour obtenir les dates
     const formation = await Formation.findById(formationId);

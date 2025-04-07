@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useEdc } from "@/contexts/EdcContext"; // Import the EdcContext hook
+import { Check } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 
+} from "../components/ui/dropdown-menu";
 import { io } from 'socket.io-client';
 
 import { LineChart, Line, Tooltip, ResponsiveContainer,CartesianGrid, AreaChart, Area } from "recharts";
@@ -69,6 +76,19 @@ const DashboardManager = () => {
     { name: "Fablab", value: 12, subtitle: "Projets Maker", color: "bg-gray-100" },
     { name: "Orange Fab", value: "07", subtitle: "Startups", color: "bg-gray-100" },
   ];
+  const [selectedItems, setSelectedItems] = useState<string[]>(["Ecole du code", "Fablab"]); // Éléments sélectionnés
+
+  const toggleSelection = (item: string) => {
+    setSelectedItems(prev =>
+      prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]
+    );
+  };
+
+  const options = [
+    { name: "Ecole du code", color: "bg-blue-500" },
+    { name: "Fablab", color: "bg-green-500" },
+    { name: "Orange Fab", color: "bg-yellow-500" }
+  ];
   return (
       <div className="min-h-screen bg-white p-6">
         <div className="max-w-7xl mx-auto">
@@ -78,21 +98,29 @@ const DashboardManager = () => {
 
   {/* Conteneur pour aligner les éléments à droite */}
   <div className="flex items-center gap-x-4">
-  <Button variant="ghost" className="text-[#333] flex items-center gap-2 font-bold">
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 20 20"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M0 3C0 2.44772 0.447715 2 1 2H19C19.5523 2 20 2.44772 20 3V5C20 5.26522 19.8946 5.51957 19.7071 5.70711L13 12.4142V19C13 19.5523 12.5523 20 12 20H8C7.44772 20 7 19.5523 7 19V12.4142L0.292893 5.70711C0.105357 5.51957 0 5.26522 0 5V3Z"
-          fill="#000"
-        />
-      </svg>
-      Filtres
-    </Button>
+  <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-48">
+  {options.map((option) => (
+    <DropdownMenuItem key={option.name} onClick={() => toggleSelection(option.name)} className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        {/* Cercle coloré avec un point blanc au centre */}
+        <div className={`w-4 h-4 rounded-full flex items-center justify-center ${option.color}`}>
+          <div className="w-1 h-1 bg-white rounded-full"></div>
+        </div>
+        {option.name}
+      </div>
+      {selectedItems.includes(option.name) ? (
+        <Check className="bg-orange-500 text-white w-4 h-4  border rounded-[4px]" /> // Case cochée
+      ) : (
+        <div className="w-4 h-4 border rounded-[4px]" /> // Case vide
+      )}
+    </DropdownMenuItem>
+  ))}
+</DropdownMenuContent>
+    </DropdownMenu>
     {/* Select Box */}
     <div className="relative inline-flex items-center border border-gray-300 rounded px-2 py-1">
       

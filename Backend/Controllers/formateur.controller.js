@@ -202,44 +202,186 @@ const getFormateurs = async (req, res) => {
 };
   // fin : pour récuperer les formateurs d'un manager
   const getFormateurById = async (req, res) => {
-    const id=req.params.id;
+    const id = req.params.id;
     try {
-      const formateur = await Formateur.findById(id).populate("utilisateur", "nom   prenom  email  role").populate("manager").populate("coordinateur");
-      if (!formateur) return res.status(404).json({ message: "Formateur non trouvé" });
-      res.status(200).json(formateur);
+        // 1. Récupérer le formateur avec les informations de base
+        const formateur = await Formateur.findById(id)
+            .populate({
+                path: "utilisateur",
+                select: "nom prenom email role numeroTelephone"
+            })
+            .populate("manager");
+
+        if (!formateur) {
+            return res.status(404).json({ message: "Formateur non trouvé" });
+        }
+
+        // 2. Récupérer l'entité associée à ce formateur
+        const utilisateurEntity = await UtilisateurEntity.findOne({
+            id_utilisateur: formateur.utilisateur._id
+        }).populate("id_entity");
+
+        // 3. Formater la réponse
+        const response = {
+            _id: formateur._id,
+            utilisateur: {
+                prenom: formateur.utilisateur.prenom,
+                nom: formateur.utilisateur.nom,
+                email: formateur.utilisateur.email,
+                telephone: formateur.utilisateur.numeroTelephone,
+                role: formateur.utilisateur.role
+            },
+            specialite: formateur.specialite,
+            experience: formateur.experience,
+            dateIntegration: formateur.dateIntegration,
+            actif: formateur.actif,
+            aPropos: formateur.aPropos,
+            entity: utilisateurEntity ? {
+                _id: utilisateurEntity.id_entity._id,
+                type: utilisateurEntity.id_entity.type,
+                ville: utilisateurEntity.id_entity.ville
+            } : null,
+            cv: formateur.cv,
+            imageFormateur: formateur.imageFormateur
+        };
+
+        res.status(200).json(response);
     } catch (error) {
-      res.status(500).json({ message: "Erreur serveur", error: error.message });
+        console.error("Erreur lors de la récupération du formateur:", error);
+        res.status(500).json({ 
+            message: "Erreur serveur", 
+            error: error.message 
+        });
     }
-  };
+};
 
   const updateFormateur = async (req, res) => {
     try {
-      const { nom, prenom, email } = req.body;
+      const { 
+        nom, 
+        prenom, 
+        email,
+        numeroTelephone,
+        specialite,
+        experience,
+        dateIntegration,
+        aPropos,
+        entityId
+      } = req.body;
   
-      // Check if at least one field is provided
-      if (!nom && !prenom && !email) {
-        return res.status(400).json({ message: "At least one field is required for update." });
+      // Vérifier si au moins un champ est fourni
+      if (Object.keys(req.body).length === 0 && !req.files) {
+        return res.status(400).json({ 
+          success: false,
+          message: "Au moins un champ est requis pour la mise à jour" 
+        });
       }
   
-      // Find the Formateur by ID
+      // Trouver le formateur par ID
       const formateur = await Formateur.findById(req.params.id);
       if (!formateur) {
-        return res.status(404).json({ message: "Formateur non trouvé" });
+        return res.status(404).json({ 
+          success: false,
+          message: "Formateur non trouvé" 
+        });
       }
   
-      // Update the corresponding Utilisateur
-      const updatedUtilisateur = await Utilisateur.findByIdAndUpdate(
-        formateur.utilisateur, { nom,prenom, email },
-        { new: true, runValidators: true } // Ensure updated data is returned and validated
-      );
+      // Préparer les données à mettre à jour pour l'utilisateur
+      const utilisateurUpdateData = {};
+      if (nom) utilisateurUpdateData.nom = nom;
+      if (prenom) utilisateurUpdateData.prenom = prenom;
+      if (email) utilisateurUpdateData.email = email;
+      if (numeroTelephone) utilisateurUpdateData.numeroTelephone = numeroTelephone;
+  
+      // Mettre à jour l'utilisateur si des champs sont fournis
+      if (Object.keys(utilisateurUpdateData).length > 0) {
+        await Utilisateur.findByIdAndUpdate(
+          formateur.utilisateur,
+          utilisateurUpdateData,
+          { runValidators: true }
+        );
+      }
+  
+      // Préparer les données à mettre à jour pour le formateur
+      const formateurUpdateData = {};
+      if (specialite) formateurUpdateData.specialite = specialite;
+      if (experience) formateurUpdateData.experience = experience;
+      if (dateIntegration) formateurUpdateData.dateIntegration = dateIntegration;
+      if (aPropos) formateurUpdateData.aPropos = aPropos;
+  
+      // Traiter les fichiers s'ils sont fournis
+      if (req.files) {
+        if (req.files['imageFormateur']) {
+          formateurUpdateData.imageFormateur = req.files['imageFormateur'][0].path;
+        }
+        if (req.files['cv']) {
+          formateurUpdateData.cv = req.files['cv'][0].path;
+        }
+      }
+  
+      // Mettre à jour le formateur uniquement si des champs à modifier sont fournis
+      let updatedFormateur = formateur;
+      if (Object.keys(formateurUpdateData).length > 0) {
+        updatedFormateur = await Formateur.findByIdAndUpdate(
+          req.params.id,
+          formateurUpdateData,
+          { new: true, runValidators: true }
+        ).populate("utilisateur", "nom prenom email numeroTelephone role")
+         .populate("manager");
+      } else {
+        // Si aucun champ du formateur n'a été modifié, récupérer la version à jour
+        updatedFormateur = await Formateur.findById(req.params.id)
+          .populate("utilisateur", "nom prenom email numeroTelephone role")
+          .populate("manager");
+      }
+  
+      // Mettre à jour l'entité associée si nécessaire
+      if (entityId) {
+        // Extraction de l'ID d'entité si format "id-ville"
+        let entityIdToUse = entityId;
+        if (typeof entityId === 'string' && entityId.includes('-')) {
+          entityIdToUse = entityId.split('-')[0];
+        }
+  
+        // Vérifier si l'entité existe
+        const entity = await Entity.findById(entityIdToUse);
+        if (!entity) {
+          return res.status(400).json({ 
+            success: false,
+            message: "L'entité spécifiée n'existe pas" 
+          });
+        }
+  
+        // Mettre à jour ou créer l'association utilisateur-entité
+        await UtilisateurEntity.findOneAndUpdate(
+          { id_utilisateur: formateur.utilisateur },
+          { id_entity: entityIdToUse },
+          { upsert: true, new: true }
+        );
+      }
   
       res.status(200).json({
+        success: true,
         message: "Formateur mis à jour avec succès",
-        updatedUtilisateur
+        data: updatedFormateur
       });
   
     } catch (error) {
-      res.status(500).json({ message: "Erreur serveur", error: error.message });
+      console.error("Erreur mise à jour formateur:", error);
+      
+      // Gestion spécifique des erreurs Multer
+      if (error.message && error.message.includes('Seuls les formats')) {
+        return res.status(400).json({
+          success: false,
+          message: error.message
+        });
+      }
+  
+      res.status(500).json({
+        success: false,
+        message: "Erreur serveur",
+        error: error.message
+      });
     }
   };
   

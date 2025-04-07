@@ -3,6 +3,7 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const connectDB = require("./Config/config.js");
 const Auth = require("./Routes/auth.route.js");
+const userRoutes = require("./Routes/user.route.js")
 const formationRoutes = require("./Routes/formation.route.js");
 const formateurRoutes = require("./Routes/formateur.route.js");
 const beneficiaireRoutes = require("./Routes/beneficiaire.route.js");
@@ -116,6 +117,8 @@ app.use("/api/evaluation", evaluationRoutes);
 app.use("/api/evenement", evenementRoutes);
 app.use("/api/notifications", notificationRoutes); 
 app.use("/api/entity", entityRoutes); 
+app.use("/api/user", userRoutes); 
+
 app.use("/api/edc",edcRoutes);
 app.use("/api", chatbotRoutes);
 app.use("/api/presence",Presence);

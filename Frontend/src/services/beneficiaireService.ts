@@ -1,16 +1,12 @@
 import apiClient from '@/services/apiClient';
+import { BeneficiaireWithPresenceResponse } from '@/components/formation-modal/types';
 
 interface BeneficiaireExcelUploadResponse {
   message: string;
   nouveauxBeneficiaires: number;
   nouvellesInstances: number;
 }
-interface BeneficiaireWithPresenceResponse {
-  beneficiaire: any; // Remplace "any" par le type exact du bénéficiaire
-  formationId: string;
-  presences: any[]; // Remplace "any" par le type exact de présence
-  autresFormations: string[]; // Liste des IDs des autres formations
-}
+
 interface ExcelExportResponse {
   blob: Blob;
   filename: string;

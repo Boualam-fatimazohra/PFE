@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Upload, Trash2 } from 'lucide-react';
+import { Upload, Trash2, X } from 'lucide-react';
 import { useEdc } from "@/contexts/EdcContext";
 import { useFormateur } from "@/contexts/FormateurContext";
 
@@ -42,6 +42,7 @@ export const AjoutFormateur: React.FC = () => {
   const [cvName, setCvName] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const cvInputRef = useRef<HTMLInputElement>(null);
 
@@ -133,18 +134,23 @@ export const AjoutFormateur: React.FC = () => {
     setSubmitError(null);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
     setSubmitError(null);
     
     // Validation pour les fichiers
     if (!formateur.imageFormateur || !formateur.cv) {
       setSubmitError('Veuillez sélectionner une image et un CV');
-      setIsSubmitting(false);
       return;
     }
+    
+    // Afficher le popup de confirmation au lieu de soumettre directement
+    setShowConfirmModal(true);
+  };
   
+  const handleConfirmSubmit = async () => {
+    setIsSubmitting(true);
+    
     try {
       const formData = new FormData();
             
@@ -206,7 +212,7 @@ export const AjoutFormateur: React.FC = () => {
       const response = await addFormateur(formData);
       console.log('Formateur ajouté avec succès:', response);
       
-      resetForm();
+      // Redirection après ajout réussi
       window.location.href = '/manager/GestionFormateurManager';
       
     } catch (error: any) {
@@ -225,6 +231,7 @@ export const AjoutFormateur: React.FC = () => {
       setSubmitError(errorMessage);
     } finally {
       setIsSubmitting(false);
+      setShowConfirmModal(false);
     }
   };
   
@@ -275,6 +282,42 @@ export const AjoutFormateur: React.FC = () => {
           {submitError}
         </div>
       )}
+      
+      {showConfirmModal && (         
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="bg-white rounded-lg p-6 w-[600px]"> {/* Ici j'ai ajouté w-[600px] */}
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-semibold">Ajouter un formateur</h3>
+        <button 
+          onClick={() => setShowConfirmModal(false)} 
+          className="text-gray-500 hover:text-gray-700"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      
+      <p className="mb-6 text-[#666666]">All required fields are marked with <span className="text-sm font-bold font-inter text-[#CD3C14]">*</span> </p>      
+      <div className="flex justify-end space-x-3">
+        <button
+          onClick={() => setShowConfirmModal(false)}
+          className="px-4 py-2 bg-white border border-gray-300 rounded text-[#999999] hover:bg-gray-100"
+          >
+          Annuler
+        </button>
+        <button
+          type="button"
+          onClick={handleConfirmSubmit} 
+          className="px-4 py-2 bg-[#50BE87] text-white rounded hover:bg-[#50BE87]"
+          disabled={isSubmitting || loading}
+        >
+          {isSubmitting || loading ? 'Chargement...' : 'Confirmer'}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
       
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Informations personnelles */}
@@ -351,7 +394,6 @@ export const AjoutFormateur: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                 {edcs.map((edc) => {
-                  // Utilisez entity._id au lieu de _id dans la valeur
                   const uniqueValue = `${edc.entity._id}-${edc.entity.ville}`;
                   return (
                     <SelectItem 
@@ -559,9 +601,9 @@ export const AjoutFormateur: React.FC = () => {
           <Button 
             type="submit" 
             className="bg-orange-500 hover:bg-orange-600"
-            disabled={isSubmitting || loading}
+            disabled={loading}
           >
-            {isSubmitting || loading ? 'Chargement...' : 'Ajouter un formateur'}
+            Ajouter un formateur
           </Button>
         </div>
       </form>
