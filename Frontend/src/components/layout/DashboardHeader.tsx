@@ -1,6 +1,6 @@
-import { Bell, UserCircle, X, Sparkles } from "lucide-react";
+import { Bell, UserCircle, X, Sparkles, ChevronDown } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { logout } from "../../services/authServices";
 import Chatbot from "@/pages/Chatbot"; // Import the Chatbot component
 import NotificationButton from "../notification/NotificationButton";
@@ -14,9 +14,11 @@ export function DashboardHeader() {
   const [user, setUser] = useState(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
+  const [isEcoleCodeDropdownOpen, setIsEcoleCodeDropdownOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const [notifications, setNotifications] = useState([]);
+  const dropdownRef = useRef(null);
 
   useEffect(() => {
     // Fetch notifications
@@ -101,6 +103,30 @@ export function DashboardHeader() {
     );
   };
 
+  // Function to handle clicking on "Ecole du code" menu item
+  const handleEcoleCodeClick = (path) => {
+    navigate(path);
+    // Always close the dropdown when clicking an item
+    setIsEcoleCodeDropdownOpen(false);
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (isEcoleCodeDropdownOpen && dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsEcoleCodeDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('click', handleOutsideClick);
+    return () => document.removeEventListener('click', handleOutsideClick);
+  }, [isEcoleCodeDropdownOpen]);
+
+  // Cette partie a été modifiée pour ne pas montrer automatiquement le dropdown
+  useEffect(() => {
+    // On ne met pas de code ici pour afficher automatiquement le dropdown
+  }, [location.pathname]);
+
   let navigationLinks = [];
   if (user?.role === "Formateur") {
     navigationLinks = [
@@ -113,16 +139,20 @@ export function DashboardHeader() {
   } else if (user?.role === "Manager") {
     navigationLinks = [
       { name: "Dashboard", path: "/manager/dashboardManager" },
-      { name: "Ecole du code", path: "/manager/Ecolcode" ,additionalPaths: [
-        "/manager/GestionFormateurManager",
-        "/manager/GestionFormation",
-        "/manager/AjoutFormateur"
-      ]  },
+      { 
+        name: "Ecole du code", 
+        path: "/manager/Ecolcode",
+        hasDropdown: true,
+        dropdownItems: [
+          { name: "Gestion des Formateurs", path: "/manager/GestionFormateurManager" },
+          { name: "Gestion des Formations", path: "/manager/GestionFormation" },
+          { name: "Ajouter un Formateur", path: "/manager/AjoutFormateur" }
+        ]
+      },
       { name: "Fablab Solidaire", path: "/manager/FablabSolidaire" },
       { name: "Orange Fab", path: "/manager/OrangeFab" },
       { name: "Coordination", path: "/manager/Coordination" },
       { name: "Événements", path: "/page-link-3" },
-
     ];
   } else if (user?.role === "Coordinateur") {
     navigationLinks = [
@@ -152,6 +182,11 @@ export function DashboardHeader() {
       return true;
     }
 
+    // Check dropdown items if they exist
+    if (link.hasDropdown && link.dropdownItems) {
+      return link.dropdownItems.some(item => item.path === location.pathname);
+    }
+
     return false;
   };
 
@@ -162,6 +197,20 @@ export function DashboardHeader() {
            location.pathname === '/manager/dashboardManager' || 
            location.pathname === '/coordinateur/dashboardCoordinateur' || 
            location.pathname === '/technicien/dashboardTechnicien';
+  };
+
+  // Check if current page is Ecole du code or one of its sub-pages
+  const isOnEcoleCodePage = () => {
+    const ecoleCodeLink = navigationLinks.find(link => link.name === "Ecole du code");
+    if (!ecoleCodeLink) return false;
+    
+    if (location.pathname === ecoleCodeLink.path) return true;
+    
+    if (ecoleCodeLink.dropdownItems) {
+      return ecoleCodeLink.dropdownItems.some(item => item.path === location.pathname);
+    }
+    
+    return false;
   };
 
   return (
@@ -182,16 +231,65 @@ export function DashboardHeader() {
               {/* Navigation Links */}
               <nav className="flex items-center space-x-7 relative">
                 {navigationLinks.map((link, index) => (
-                  <Link
-                    key={index}
-                    to={link.path}
-                    className={`relative text-sm transition-colors font-medium ${
-                      isLinkActive(link)
-                        ? "text-orange-500 after:absolute after:bottom-[-22px] after:left-0 after:w-full after:h-[3px] after:bg-orange-500"
-                        : "text-gray-300 hover:text-orange-500"
-                    }`}>
-                    {link.name}
-                  </Link>
+                  <div key={index} className="relative ecole-code-dropdown" ref={link.hasDropdown ? dropdownRef : null}>
+                    {link.hasDropdown ? (
+                      <div>
+                        <Link
+                          to={link.path}
+                          className={`flex items-center relative text-sm transition-colors font-medium ${
+                            isLinkActive(link)
+                              ? "text-orange-500"
+                              : "text-gray-300 hover:text-orange-500"
+                          }`}
+                          onClick={(e) => {
+                            // Laisse la navigation se produire mais ouvre le dropdown
+                            e.preventDefault(); // On empêche la navigation par défaut
+                            navigate(link.path); // On navigue programmatiquement
+                            setIsEcoleCodeDropdownOpen(!isEcoleCodeDropdownOpen); // On bascule l'état du dropdown
+                          }}
+                        >
+                          {link.name}
+                          <ChevronDown className="ml-1 h-4 w-4" />
+                        </Link>
+                        
+                        {/* Le dropdown s'affiche seulement si isEcoleCodeDropdownOpen est true */}
+                        {isEcoleCodeDropdownOpen && (
+                          <div className="absolute top-full left-0 mt-1 w-48 bg-black border border-gray-700 rounded-md shadow-lg z-50">
+                            {link.dropdownItems.map((item, itemIndex) => (
+                              <Link
+                                key={itemIndex}
+                                to={item.path}
+                                className={`block px-4 py-2 text-sm ${
+                                  location.pathname === item.path 
+                                    ? "text-orange-500 bg-gray-900" 
+                                    : "text-gray-300 hover:bg-gray-800 hover:text-orange-500"
+                                }`}
+                                onClick={() => setIsEcoleCodeDropdownOpen(false)} // Ferme le dropdown lors du clic
+                              >
+                                {item.name}
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {/* Orange line for active link */}
+                        {isLinkActive(link) && (
+                          <div className="absolute bottom-[-22px] left-0 w-full h-[3px] bg-orange-500"></div>
+                        )}
+                      </div>
+                    ) : (
+                      <Link
+                        to={link.path}
+                        className={`relative text-sm transition-colors font-medium ${
+                          isLinkActive(link)
+                            ? "text-orange-500 after:absolute after:bottom-[-22px] after:left-0 after:w-full after:h-[3px] after:bg-orange-500"
+                            : "text-gray-300 hover:text-orange-500"
+                        }`}
+                      >
+                        {link.name}
+                      </Link>
+                    )}
+                  </div>
                 ))}
               </nav>
             </div>

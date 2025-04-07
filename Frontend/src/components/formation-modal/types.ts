@@ -1,4 +1,6 @@
 export interface Formation {
+  formateurName: ReactNode;
+  formateurCity: ReactNode;
   _id?: string;
   nom: string;
   dateDebut: string;
