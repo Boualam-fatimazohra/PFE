@@ -1,38 +1,185 @@
-import { useState } from 'react';
-import { Calendar, Eye, Lock, Plus, Check, X, ChevronRight, ChevronDown } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Calendar, Eye, Lock, Plus, Check, X, ChevronRight } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useFormations } from '@/contexts/FormationContext';
+import { getAllFormations } from '@/services/formationService';
+import { getBeneficiaireFormation } from '@/services/formationService'; // Importez la fonction
 
 const CreateEvaluationForm = () => {
   const navigate = useNavigate();
+  const { id } = useParams(); // Pour récupérer l'ID de la formation depuis l'URL
+  const [user, setUser] = useState(null);
   
   // State pour gérer les étapes
   const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // State pour les données du formulaire
   const [formData, setFormData] = useState({
-    title: "AWS : Développement, déploiement et gestion",
-    startDate: "25 Janvier 2025",
-    endDate: "29 Janvier 2025", 
+    title: "",
+    startDate: "",
+    endDate: "", 
     trainer: "",
-    participants: "25",
+    participants: "", // Nombre de participants sera stocké ici
     anonymousResponses: true,
     responseDeadline: false,
   });
 
-  const [participants, setParticipants] = useState([
-    {
-      id: 1,
-      date: '20/03/2025',
-      time: '09:30',
-      nom: 'Bakayoko',
-      prenom: 'Mohamed',
-      email: 'mohamed.bakayoko@gmail.com',
-      genre: 'Homme',
-      telephone: '0644343412',
-      confTel: true,
-      confEmail: false
+  const [participants, setParticipants] = useState([]);
+  
+  // Récupérer l'utilisateur depuis localStorage
+  useEffect(() => {
+    const userString = localStorage.getItem("user");
+    if (userString) {
+      try {
+        const userData = JSON.parse(userString);
+        setUser({
+          nom: userData.nom || "",
+          prenom: userData.prenom || "",
+          role: userData.role || "Formateur"
+        });
+      } catch (error) {
+        console.error("Erreur lors du parsing de user depuis localStorage", error);
+        setUser(null);
+      }
+    } else {
+      console.warn("Aucun utilisateur trouvé dans localStorage");
+      setUser(null);
     }
-  ]);
+  }, []);
+  
+  // Utiliser le contexte des formations
+  const { formations: contextFormations, loading: formationsLoading, getBeneficiaireFormation } = useFormations();
+
+  // Vérifier si nous avons des formations à afficher
+  const hasFormations = contextFormations && contextFormations.length > 0;
+
+  // Formater une date pour l'affichage
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('fr-FR', {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+    } catch (e) {
+      return dateString;
+    }
+  };
+
+  // Fonction pour récupérer les bénéficiaires et mettre à jour le nombre de participants
+  const fetchBeneficiaires = async (formationId) => {
+    try {
+      // Utiliser la fonction getBeneficiairesByFormation
+      const beneficiaires = await getBeneficiaireFormation(formationId);
+      
+      // Mettre à jour le nombre de participants
+      if (beneficiaires && Array.isArray(beneficiaires)) {
+        // Process beneficiaries as before
+        setFormData(prevData => ({
+          ...prevData,
+          participants: beneficiaires.length.toString()
+        }));
+        
+        // Formater les participants pour l'affichage dans le tableau
+        if (beneficiaires.length > 0) {
+          const formattedParticipants = beneficiaires.map(b => ({
+            id: b._id,
+            date: new Date().toLocaleDateString('fr-FR'),
+            time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+            nom: b.beneficiaire?.nom || '',
+            prenom: b.beneficiaire?.prenom || '',
+            email: b.beneficiaire?.email || '',
+            genre: b.beneficiaire?.genre || '',
+            telephone: b.beneficiaire?.telephone || '',
+            confTel: b.confirmationAppel || false,
+            confEmail: b.confirmationEmail || false
+          }));
+          
+          setParticipants(formattedParticipants);
+        } else {
+          setParticipants([]);
+        }
+      }
+    } catch (err) {
+     
+      console.error("Erreur lors de la récupération des bénéficiaires:", err);
+      setParticipants([]);
+      // Set participants to 0 in case of error
+      setFormData(prevData => ({
+        ...prevData,
+        participants: "0"
+      }));
+      // Ne pas écraser le nombre de participants en cas d'erreur
+    }
+  };
+
+  // Effet pour charger les données de la formation
+  useEffect(() => {
+    const fetchFormationData = async () => {
+      try {
+        setLoading(true);
+        // Vérifier si un ID est présent dans l'URL
+        const formationId = id;
+        
+        if (formationId) {
+          // Récupérer les détails de la formation
+          const formationDetails = await getAllFormations();
+          
+          // Mettre à jour le state avec les données récupérées
+          setFormData({
+            title: formationDetails.nom || "Formation sans titre",
+            startDate: formatDate(formationDetails.dateDebut) || "",
+            endDate: formatDate(formationDetails.dateFin) || "",
+            trainer: formationDetails.formateur?.nom || "",
+            participants: "0", // Initialisé à 0, sera mis à jour après récupération des bénéficiaires
+            anonymousResponses: true, // valeur par défaut
+            responseDeadline: false, // valeur par défaut
+          });
+          console.log("Formation details received:", formationDetails);
+
+          // Récupérer la liste des participants et mettre à jour le nombre
+          await fetchBeneficiaires(formationId);
+        }
+      } catch (err) {
+        console.error("Erreur lors du chargement des données de la formation:", err);
+        setError(err.message || "Une erreur est survenue lors du chargement des données");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFormationData();
+  }, [id]);
+
+  // Gérer le changement de formation sélectionnée
+  const handleFormationChange = async (formationTitle) => {
+    try {
+      // Trouver la formation correspondante dans le contexte
+      const selectedFormation = contextFormations.find(f => f.nom === formationTitle);
+      
+      if (selectedFormation) {
+        // Mettre à jour les champs du formulaire avec les données de la formation sélectionnée
+        setFormData({
+          ...formData,
+          title: formationTitle,
+          startDate: formatDate(selectedFormation.dateDebut) || "",
+          endDate: formatDate(selectedFormation.dateFin) || "",
+          participants: "0" // Sera mis à jour après récupération des bénéficiaires
+        });
+        
+        // Si la formation a un ID, récupérer également les participants
+        if (selectedFormation._id) {
+          await fetchBeneficiaires(selectedFormation._id);
+        }
+      }
+    } catch (err) {
+      console.error("Erreur lors du changement de formation:", err);
+    }
+  };
 
   // Gérer le changement d'étape
   const handleNext = () => {
@@ -47,6 +194,8 @@ const CreateEvaluationForm = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log('Formulaire soumis', formData);
+    // Ici vous pourriez ajouter la logique pour envoyer les données au serveur
+    navigate('/formateur/EvaluationDashboard');
   };
   
   const handleBack = () => {
@@ -54,9 +203,24 @@ const CreateEvaluationForm = () => {
     navigate('/formateur/EvaluationDashboard');
   };
   
+  // Afficher un état de chargement si les données sont en cours de chargement
+  if (loading || formationsLoading) {
+    return <div className="flex justify-center items-center h-screen">Chargement...</div>;
+  }
+
+  // Afficher une erreur si le chargement a échoué
+  if (error) {
+    return <div className="text-red-500 text-center">{error}</div>;
+  }
+
+  // Afficher un message si aucune formation n'est trouvée et qu'il n'y a pas d'ID dans l'URL
+  if (!hasFormations && !id) {
+    return <div className="text-center py-4 text-gray-500">Aucune formation disponible pour créer une évaluation</div>;
+  }
+  
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 bg-white">
-      {/* En-tête avec bouton Retour et titre - Ajusté pour correspondre à l'image */}
+      {/* En-tête avec bouton Retour et titre */}
       <div className="flex flex-col pb-2 mb-4">
         <button  
           type="button" 
@@ -89,9 +253,20 @@ const CreateEvaluationForm = () => {
                     <select 
                       className="w-full p-2 border border-gray-300 rounded appearance-none bg-white pr-8"
                       value={formData.title}
-                      onChange={(e) => setFormData({...formData, title: e.target.value})}
+                      onChange={(e) => {
+                        const selectedTitle = e.target.value;
+                        setFormData({...formData, title: selectedTitle});
+                        handleFormationChange(selectedTitle);
+                      }}
                     >
-                      <option value="AWS : Développement, déploiement et gestion">AWS : Développement, déploiement et gestion</option>
+                      <option value="">Sélectionnez une formation</option>
+                      
+                      {/* Afficher toutes les formations du contexte */}
+                      {contextFormations && contextFormations.map((formation) => (
+                        <option key={formation._id || formation._id} value={formation.nom || formation.nom}>
+                          {formation.nom || formation.nom}
+                        </option>
+                      ))}
                     </select>
                     <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                       <ChevronRight className="h-4 w-4 text-gray-500" />
@@ -99,7 +274,7 @@ const CreateEvaluationForm = () => {
                   </div>
                 </div>
 
-                {/* Dates de formation - Ajusté pour correspondre à l'image */}
+                {/* Dates de formation */}
                 <div className="flex space-x-4 mb-4">
                   <div className="w-1/2">
                     <label className="block text-sm font-medium mb-1">
@@ -110,7 +285,7 @@ const CreateEvaluationForm = () => {
                         type="text" 
                         className="w-full p-2 border border-gray-300 rounded pl-10" 
                         value={formData.startDate}
-                        onChange={(e) => setFormData({...formData, startDate: e.target.value})}
+                        readOnly
                       />
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Calendar className="h-4 w-4 text-gray-500" />
@@ -127,7 +302,7 @@ const CreateEvaluationForm = () => {
                         type="text" 
                         className="w-full p-2 border border-gray-300 rounded pl-10" 
                         value={formData.endDate}
-                        onChange={(e) => setFormData({...formData, endDate: e.target.value})}
+                        readOnly
                       />
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Calendar className="h-4 w-4 text-gray-500" />
@@ -145,8 +320,8 @@ const CreateEvaluationForm = () => {
                     type="text" 
                     className="w-full p-2 border border-gray-300 rounded" 
                     placeholder="Nom du formateur"
-                    value={formData.trainer}
-                    onChange={(e) => setFormData({...formData, trainer: e.target.value})}
+                    value={user ? `${user.nom} ${user.prenom}` : ""}
+                    readOnly
                   />
                 </div>
 
@@ -158,9 +333,9 @@ const CreateEvaluationForm = () => {
                   <input 
                     type="text" 
                     className="w-full p-2 border border-gray-300 rounded" 
-                    placeholder="25"
+                    placeholder="0"
                     value={formData.participants}
-                    onChange={(e) => setFormData({...formData, participants: e.target.value})}
+                    readOnly
                   />
                 </div>
               </div>
@@ -168,7 +343,7 @@ const CreateEvaluationForm = () => {
 
             {/* Paramètres de l'évaluation */}
             <div className="border border-gray-200 rounded-md mb-6">
-                <h2 className="font-bold bg-white p-4 ">Paramètres de l'Évaluation</h2>
+                <h2 className="font-bold bg-white p-4">Paramètres de l'Évaluation</h2>
               
               <div className="p-4">
                 {/* Anonymat des réponses */}
@@ -226,10 +401,10 @@ const CreateEvaluationForm = () => {
               <div className="bg-gray-50 p-4 border-b flex items-center justify-between">
                 <h2 className="font-medium">Questionnaire d'Évaluation</h2>
                 <div className="flex items-center">
-                  <button className="mr-2 text-gray-500">
+                  <button type="button" className="mr-2 text-gray-500">
                     <Eye className="h-5 w-5" />
                   </button>
-                  <button className="text-gray-500">
+                  <button type="button" className="text-gray-500">
                     <Plus className="h-5 w-5" />
                   </button>
                 </div>
@@ -241,6 +416,7 @@ const CreateEvaluationForm = () => {
               <button 
                 type="button" 
                 className="px-4 py-2 bg-gray-100 text-gray-800 rounded border"
+                onClick={handleBack}
               >
                 Retour
               </button>
@@ -282,41 +458,53 @@ const CreateEvaluationForm = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    <tr className="hover:bg-gray-50">
-                      <td className="p-3">
-                        <input type="checkbox" className="rounded" />
-                      </td>
-                      <td className="p-3">
-                        <div className="text-sm">20/03/2025</div>
-                        <div className="text-xs text-gray-500">09:30</div>
-                      </td>
-                      <td className="p-3 text-sm">Bakayoko</td>
-                      <td className="p-3 text-sm">Mohamed</td>
-                      <td className="p-3 text-sm">mohamed.bakayoko@gmail.com</td>
-                      <td className="p-3 text-sm">Homme</td>
-                      <td className="p-3 text-sm">0644343412</td>
-                      <td className="p-3">
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          Confirmé <Check className="h-3 w-3 ml-1" />
-                        </span>
-                      </td>
-                      <td className="p-3">
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                          En cours <X className="h-3 w-3 ml-1" />
-                        </span>
-                      </td>
-                      <td className="p-3">
-                        <button className="text-gray-400 hover:text-gray-600">
-                          <ChevronRight className="h-5 w-5" />
-                        </button>
-                      </td>
-                    </tr>
+                    {participants.length > 0 ? (
+                      participants.map((participant) => (
+                        <tr key={participant.id} className="hover:bg-gray-50">
+                          <td className="p-3">
+                            <input type="checkbox" className="rounded" />
+                          </td>
+                          <td className="p-3">
+                            <div className="text-sm">{participant.date}</div>
+                            <div className="text-xs text-gray-500">{participant.time}</div>
+                          </td>
+                          <td className="p-3 text-sm">{participant.nom}</td>
+                          <td className="p-3 text-sm">{participant.prenom}</td>
+                          <td className="p-3 text-sm">{participant.email}</td>
+                          <td className="p-3 text-sm">{participant.genre}</td>
+                          <td className="p-3 text-sm">{participant.telephone}</td>
+                          <td className="p-3">
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${participant.confTel ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                              {participant.confTel ? 'Confirmé ' : 'En cours '}
+                              {participant.confTel ? <Check className="h-3 w-3 ml-1" /> : <X className="h-3 w-3 ml-1" />}
+                            </span>
+                          </td>
+                          <td className="p-3">
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${participant.confEmail ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                              {participant.confEmail ? 'Confirmé ' : 'En cours '}
+                              {participant.confEmail ? <Check className="h-3 w-3 ml-1" /> : <X className="h-3 w-3 ml-1" />}
+                            </span>
+                          </td>
+                          <td className="p-3">
+                            <button type="button" className="text-gray-400 hover:text-gray-600">
+                              <ChevronRight className="h-5 w-5" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td  className="p-3 text-center text-gray-500">
+                          Aucun participant trouvé
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
               
               {/* Zone vide pour indiquer que le tableau peut contenir plus d'entrées */}
-              <div className="min-h-48"></div>
+              {participants.length === 0 && <div className="min-h-12"></div>}
             </div>
 
             {/* Boutons de navigation */}
@@ -332,7 +520,7 @@ const CreateEvaluationForm = () => {
                 type="submit" 
                 className="px-4 py-2 bg-orange-500 text-white rounded"
               >
-                Suivant
+                Enregistrer
               </button>
             </div>
           </div>
