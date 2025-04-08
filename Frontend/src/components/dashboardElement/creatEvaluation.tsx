@@ -73,18 +73,23 @@ const CreateEvaluationForm = () => {
   // Fonction pour récupérer les bénéficiaires et mettre à jour le nombre de participants
   const fetchBeneficiaires = async (formationId) => {
     try {
-      // Utiliser la fonction getBeneficiairesByFormation
+      setLoading(true);
+      console.log("Récupération des bénéficiaires pour la formation ID:", formationId);
+      
+      // Utiliser la fonction du contexte pour récupérer les bénéficiaires
       const beneficiaires = await getBeneficiaireFormation(formationId);
       
-      // Mettre à jour le nombre de participants
+      console.log("Bénéficiaires récupérés:", beneficiaires);
+      
+      // Vérifier que les bénéficiaires sont sous forme de tableau
       if (beneficiaires && Array.isArray(beneficiaires)) {
-        // Process beneficiaries as before
+        // Mettre à jour le nombre de participants
         setFormData(prevData => ({
           ...prevData,
           participants: beneficiaires.length.toString()
         }));
         
-        // Formater les participants pour l'affichage dans le tableau
+        // Formatter les participants pour l'affichage
         if (beneficiaires.length > 0) {
           const formattedParticipants = beneficiaires.map(b => ({
             id: b._id,
@@ -100,12 +105,16 @@ const CreateEvaluationForm = () => {
           }));
           
           setParticipants(formattedParticipants);
+          console.log("Participants formatés:", formattedParticipants);
         } else {
           setParticipants([]);
+          console.log("Aucun bénéficiaire trouvé pour cette formation");
         }
+      } else {
+        console.error("Les bénéficiaires récupérés ne sont pas un tableau:", beneficiaires);
+        setParticipants([]);
       }
     } catch (err) {
-     
       console.error("Erreur lors de la récupération des bénéficiaires:", err);
       setParticipants([]);
       // Set participants to 0 in case of error
@@ -113,7 +122,8 @@ const CreateEvaluationForm = () => {
         ...prevData,
         participants: "0"
       }));
-      // Ne pas écraser le nombre de participants en cas d'erreur
+    } finally {
+      setLoading(false);
     }
   };
 
