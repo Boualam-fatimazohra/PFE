@@ -1,92 +1,168 @@
 const Encadrant = require('../Models/encadrant.model');
+const { Entity } = require('../Models/entity.model');
 const { Utilisateur } = require('../Models/utilisateur.model');
+const { UtilisateurEntity } = require('../Models/utilisateurEntity');
 const mongoose = require('mongoose');
 
 /**
  * Create a new encadrant with a new utilisateur
  */
 const createEncadrant = async (req, res) => {
+  // Start a session for the transaction
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
-    const { 
-      nom, 
-      prenom, 
-      email, 
-      numeroTelephone, 
-      password, 
-      type, 
-      specialite, 
-      disponibilite 
+    const {
+      nom,
+      prenom,
+      email,
+      numeroTelephone,
+      password,
+      type,
+      specialite,
+      disponibilite,
+      entityId
     } = req.body;
 
     // Validate required fields
-    if (!nom || !prenom || !email || !password || !type) {
-      return res.status(400).json({ 
-        message: "nom, prenom, email, password, and type are required" 
+    if (!nom || !prenom || !email || !type) {
+      return res.status(400).json({
+        message: "nom, prenom, email, and type are required"
       });
     }
 
     // Verify valid type
     if (!['Interne', 'Externe'].includes(type)) {
-      return res.status(400).json({ 
-        message: "type must be either 'Interne' or 'Externe'" 
+      return res.status(400).json({
+        message: "type must be either 'Interne' or 'Externe'"
       });
     }
 
-    // Check if email already exists
-    const existingUser = await Utilisateur.findOne({ email });
-    if (existingUser) {
-      return res.status(409).json({ 
-        message: "Un utilisateur avec cet email existe déjà" 
+    // Validate entityId if provided
+    if (entityId && !mongoose.Types.ObjectId.isValid(entityId)) {
+      return res.status(400).json({
+        message: "Invalid entityId format"
       });
     }
 
-    // Hash password
-    const bcrypt = require('bcryptjs');
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Check if entity exists if entityId is provided
+    if (entityId) {
+      const entityExists = await Entity.findById(entityId).session(session);
+      if (!entityExists) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(404).json({
+          message: "Entity not found"
+        });
+      }
+    }
 
-    // Create new utilisateur
-    const newUtilisateur = new Utilisateur({
-      nom,
-      prenom,
-      email,
-      numeroTelephone,
-      password: hashedPassword,
-      role: "Encadrant" // Adding Encadrant as a role
-    });
+    // IDEMPOTENCY: Check if utilisateur with this email already exists
+    let utilisateur = await Utilisateur.findOne({ email }).session(session);
+    let isNewUser = false;
+    
+    if (!utilisateur) {
+      // Only hash password if we need to create a new user
+      const bcrypt = require('bcryptjs');
+      const hashedPassword = await bcrypt.hash(password, 10);
+      
+      // Create new utilisateur
+      utilisateur = new Utilisateur({
+        nom,
+        prenom,
+        email,
+        numeroTelephone,
+        password: hashedPassword,
+        role: "Encadrant"
+      });
+      
+      await utilisateur.save({ session });
+      isNewUser = true;
+    } else if (utilisateur.role !== "Encadrant") {
+      // If user exists but isn't an Encadrant, abort
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(409).json({
+        message: "Un utilisateur avec cet email existe déjà avec un rôle différent"
+      });
+    }
 
-    // Save the utilisateur first
-    await newUtilisateur.save();
+    // IDEMPOTENCY: Check if encadrant already exists for this utilisateur
+    let encadrant = await Encadrant.findOne({ utilisateur: utilisateur._id }).session(session);
+    let isNewEncadrant = false;
+    
+    if (!encadrant) {
+      // Create new encadrant linked to the utilisateur
+      encadrant = new Encadrant({
+        utilisateur: utilisateur._id,
+        type,
+        specialite,
+        disponibilite
+      });
+      
+      await encadrant.save({ session });
+      isNewEncadrant = true;
+    } else {
+      // If requested data differs from existing, update the encadrant
+      if (encadrant.type !== type || 
+          encadrant.specialite !== specialite || 
+          encadrant.disponibilite !== disponibilite) {
+        
+        encadrant.type = type;
+        encadrant.specialite = specialite;
+        encadrant.disponibilite = disponibilite;
+        await encadrant.save({ session });
+      }
+    }
 
-    // Create new encadrant linked to the new utilisateur
-    const newEncadrant = new Encadrant({
-      utilisateur: newUtilisateur._id,
-      type,
-      specialite,
-      disponibilite
-    });
+    // IDEMPOTENCY: Handle entity relationship
+    if (entityId) {
+      // Check if the relationship already exists
+      const existingRelation = await UtilisateurEntity.findOne({
+        id_utilisateur: utilisateur._id,
+        id_entity: entityId
+      }).session(session);
+      
+      if (!existingRelation) {
+        const newUtilisateurEntity = new UtilisateurEntity({
+          id_utilisateur: utilisateur._id,
+          id_entity: entityId,
+          date: new Date()
+        });
+        
+        await newUtilisateurEntity.save({ session });
+      }
+    }
 
-    // Save the encadrant
-    await newEncadrant.save();
+    // Commit the transaction
+    await session.commitTransaction();
+    session.endSession();
 
-    // Return the created encadrant with populated utilisateur details
-    const populatedEncadrant = await Encadrant.findById(newEncadrant._id)
+    // Return the encadrant with populated utilisateur details
+    const populatedEncadrant = await Encadrant.findById(encadrant._id)
       .populate('utilisateur', 'nom prenom email numeroTelephone');
 
-    res.status(201).json({
-      message: "Encadrant créé avec succès",
-      encadrant: populatedEncadrant
+    // Return appropriate status code based on whether we created or found existing
+    const statusCode = (isNewUser || isNewEncadrant) ? 201 : 200;
+    
+    res.status(statusCode).json({
+      message: isNewEncadrant 
+        ? "Encadrant créé avec succès" 
+        : "Encadrant existant récupéré ou mis à jour",
+      encadrant: populatedEncadrant,
+      entityAssigned: entityId ? true : false,
+      isNewRecord: isNewEncadrant
     });
   } catch (error) {
-    console.error("Erreur création encadrant:", error);
-    
-    // If utilisateur was created but encadrant creation failed, clean up
-    if (error.utilisateurId) {
-      await Utilisateur.findByIdAndDelete(error.utilisateurId);
-    }
-    
-    res.status(500).json({ 
-      message: "Erreur lors de la création de l'encadrant", 
-      error: error.message 
+    // If any error occurs, abort the transaction
+    await session.abortTransaction();
+    session.endSession();
+
+    console.error("Erreur création/récupération encadrant:", error);
+    res.status(500).json({
+      message: "Erreur lors de la création ou récupération de l'encadrant",
+      error: error.message
     });
   }
 };
