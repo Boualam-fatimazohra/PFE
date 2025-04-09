@@ -20,17 +20,17 @@ const authorizeRoleAndEntity = (allowedRoles, allowedEntities) => {
       // Convert inputs to arrays for consistent handling
       const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
       const entities = Array.isArray(allowedEntities) ? allowedEntities : [allowedEntities];
-      
-      // Check role authorization first
-      if (!roles.includes(role)) {
-        return res.status(403).json({ 
-          message: `Forbidden: Only ${roles.join(', ')} roles can access this resource`
-        });
-      }
 
       // If "Admin" role, bypass entity check
       if (role === "Admin") {
         return next();
+      }
+      
+      // Check role authorization first
+      if (!roles.includes(role)) {
+        return res.status(403).json({ 
+          message: `Forbidden: Only ${roles.join(', ')} roles can access this resource, you role is: ${role}`
+        });
       }
 
       // Check entity association

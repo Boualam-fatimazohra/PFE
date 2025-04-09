@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const authenticated = require('../Middlewares/Authmiddleware.js');
 const authorizeRoles = require('../Middlewares/RoleMiddleware.js');
+const authorizeRoleAndEntity = require('../Middlewares/authorizeRoleAndEntityMiddleware.js');
 
 const {
   createEncadrant,
@@ -11,7 +12,6 @@ const {
   deleteEncadrant
 } = require("../Controllers/encadrant.controller");
 
-// TODO------> Adjust Middleware (check Manager(Fab))
 
 /**
  * @route POST /api/encadrants
@@ -21,7 +21,8 @@ const {
 router.post(
   "/", 
   authenticated, 
-  authorizeRoles('Admin', 'Manager'), 
+  authorizeRoles('Admin', 'Manager'),
+  authorizeRoleAndEntity('Manager', 'Fab'),
   createEncadrant
 );
 

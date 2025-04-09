@@ -2,7 +2,8 @@ const express = require("express");
 const router = express.Router();
 const authenticated = require('../Middlewares/Authmiddleware.js');
 const authorizeRoles = require('../Middlewares/RoleMiddleware.js');
-const upload = require('../Middlewares/uploadMiddleware'); // For image upload // TODO ---> change later for cloudinary
+const { uploadFormationFabImage } = require('../Config/cloudinaryConfig.js');
+const authorizeRoleAndEntity = require('../Middlewares/authorizeRoleAndEntityMiddleware.js');
  
 const {
   createFormationBase,
@@ -14,8 +15,6 @@ const {
   removeEncadrantFromFormation,
 } = require("../Controllers/formationBase.controller");
 
-// TODO ---> Adjust middleware role (Manager Fab)
-
 /**
  * @route POST /api/formation-base
  * @desc Create a new formation base
@@ -25,7 +24,8 @@ router.post(
   "/", 
   authenticated, 
   authorizeRoles('Admin', 'Manager'),
-  upload.single("image"), // For image upload
+  authorizeRoleAndEntity('Manager', 'Fab'),
+  uploadFormationFabImage.single("image"),
   createFormationBase
 );
 
@@ -62,7 +62,7 @@ router.put(
   "/:id", 
   authenticated, 
   authorizeRoles('Admin', 'Manager'),
-  upload.single("image"), // For image upload
+  uploadFormationFabImage.single("image"),
   updateFormationBase
 );
 
