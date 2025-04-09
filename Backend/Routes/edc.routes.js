@@ -8,7 +8,8 @@ const {
     getBeneficiairesEdc,
     createEDC,
     getAllEDCs,
-    getEDCById
+    getEDCById,
+    deleteEDC
 } = require('../Controllers/edc.controller');
 
 const authorizeRoles = require('../Middlewares/RoleMiddleware.js');
@@ -17,6 +18,8 @@ const authenticated = require('../Middlewares/Authmiddleware.js');
 // POST/GET with specific routes should come BEFORE routes with parameters
 router.post('/', authenticated, authorizeRoles('Admin'), createEDC);
 router.get('/', authenticated, authorizeRoles('Admin', 'Manager'), getAllEDCs);
+
+router.delete('/deleteEDC/:id', authenticated, authorizeRoles('Admin'), deleteEDC);
 
 /*Get all (formateurs) of EDCs */
 router.get('/getFormateurEDC',authenticated, authorizeRoles('Manager'),checkEntityAccess('EDC'), getFormateursEdc);
