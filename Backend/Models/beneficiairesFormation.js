@@ -10,6 +10,8 @@ const beneficiareFormationSchema= new mongoose.Schema({
     evaluation:{ type: mongoose.Schema.Types.ObjectId,ref:"Evaluation",required:false},
     // token pour identifier le beneficiaire est ce qu'il a envoyer l'evaluation ou pas 
     token:{type:String,required:false,default:"null"},
+    // token stocké dans le QR code envoyer par email au bénéficiaire
+    qrCodeToken:{type:String,required:false,default:"null"},
     isSubmited: { type: Boolean, default:false } // pour vérifier est ce que l'evaluation est déja envoyer ou pas
   }, { timestamps: true });
 
