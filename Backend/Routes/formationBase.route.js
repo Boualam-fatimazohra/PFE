@@ -24,7 +24,7 @@ router.post(
   "/", 
   authenticated, 
   authorizeRoles('Admin', 'Manager'),
-  authorizeRoleAndEntity('Manager', 'Fab'),
+  authorizeRoleAndEntity(['Manager', 'Encadrant'], 'Fab'),
   uploadFormationFabImage.single("image"),
   createFormationBase
 );
@@ -37,7 +37,7 @@ router.post(
 router.get(
   "/", 
   authenticated, 
-  authorizeRoles('Admin', 'Manager', 'Formateur'),
+  authorizeRoles('Admin', 'Manager'),
   getAllFormationBases
 );
 
@@ -49,7 +49,7 @@ router.get(
 router.get(
   "/:id", 
   authenticated, 
-  authorizeRoles('Admin', 'Manager', 'Formateur'),
+  authorizeRoles('Admin', 'Manager'),
   getFormationBaseById
 );
 
@@ -75,6 +75,7 @@ router.delete(
   "/:id", 
   authenticated, 
   authorizeRoles('Admin', 'Manager'),
+  authorizeRoleAndEntity(['Manager', 'Encadrant'], 'Fab'),
   deleteFormationBase
 );
 
@@ -87,6 +88,7 @@ router.post(
   "/add-encadrant", 
   authenticated, 
   authorizeRoles('Admin', 'Manager'),
+  authorizeRoleAndEntity('Manager', 'Fab'),
   addEncadrantToFormation
 );
 
@@ -99,6 +101,7 @@ router.delete(
   "/:formationId/encadrant/:encadrantId", 
   authenticated, 
   authorizeRoles('Admin', 'Manager'),
+  authorizeRoleAndEntity('Manager', 'Fab'),
   removeEncadrantFromFormation
 );
 
