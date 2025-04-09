@@ -9,6 +9,8 @@ const {
 const authenticated=require("../Middlewares/Authmiddleware.js");
 const authorizeRoles = require('../Middlewares/RoleMiddleware.js');
 const {multerUpload} =require('../Config/cloudinaryConfig.js');
+const {createRapport}=require("../Controllers/rapport.controller.js");
+
 const router = express.Router();
 // les routes fonctionnels jusqu'a present
 
@@ -39,5 +41,5 @@ authorizeRoles('Admin','Manager')
 
 // Delete a Coordinateur
 router.delete("/:id", authenticated,authorizeRoles("Manager","Admin"),deleteCoordinateur);
-
+router.post("/createRapport",createRapport);
 module.exports = router;
