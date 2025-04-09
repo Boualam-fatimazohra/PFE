@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const authenticated = require('../Middlewares/Authmiddleware.js');
 const authorizeRoles = require('../Middlewares/RoleMiddleware.js');
+const authorizeRoleAndEntity = require('../Middlewares/authorizeRoleAndEntityMiddleware.js')
 
 const {
   createFab,
@@ -20,7 +21,7 @@ const {
 router.post(
   "/", 
   authenticated, 
-  authorizeRoles('Admin'), 
+  authorizeRoles('Admin'),
   createFab
 );
 
