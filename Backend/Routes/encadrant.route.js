@@ -46,7 +46,8 @@ router.get(
 router.get(
   "/:id", 
   authenticated, 
-  authorizeRoles('Admin', 'Manager', 'Formateur', 'Coordinateur'),
+  authorizeRoles('Admin', 'Manager'),
+  authorizeRoleAndEntity('Manager', 'Fab'),
   getEncadrantById
 );
 
@@ -59,6 +60,7 @@ router.put(
   "/:id", 
   authenticated, 
   authorizeRoles('Admin', 'Manager'),
+  authorizeRoleAndEntity('Manager', 'Fab'),
   updateEncadrant
 );
 
