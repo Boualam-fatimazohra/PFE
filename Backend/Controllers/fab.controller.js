@@ -16,6 +16,13 @@ const createFab = async (req, res) => {
       return res.status(400).json({ message: "Ville is required" });
     }
 
+    // Check if Entity with same ville and type "Fab" already exists
+    const existingEntity = await Entity.findOne({ ville: { $regex: `^${ville}$`, $options: 'i' }, type: "Fab" });
+
+    if (existingEntity) {
+      return res.status(400).json({ message: `A 'Fab' entity with ville '${ville}' already exists.` });
+    }
+
     // First, create the base Entity
     const entity = new Entity({
       ville,
