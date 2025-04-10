@@ -184,4 +184,5 @@ const verifierValiditeCertifications = async (req, res) => {
     }
   };
   
+  
   module.exports = { verifierValiditeCertifications, genererEtTelechargerCertificats };
