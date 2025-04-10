@@ -7,11 +7,11 @@ const formationBaseSchema = new mongoose.Schema({
   },
   dateDebut: { 
     type: Date, 
-    required: false 
+    required: true 
   },
   dateFin: { 
     type: Date, 
-    required: false 
+    required: true 
   },
   description: {
     type: String,

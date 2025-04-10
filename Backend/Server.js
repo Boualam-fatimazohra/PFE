@@ -30,6 +30,7 @@ const achatRoutes = require("./Routes/achat.route.js");
 const encadrantRoutes = require("./Routes/encadrant.route.js");
 const fabRoutes = require("./Routes/fab.route.js");
 const formationBaseRoutes = require('./Routes/formationBase.route.js');
+const formationFabRoutes = require('./Routes/formationFab.route.js');
 
 
 dotenv.config();
@@ -125,6 +126,7 @@ app.use("/api/user", userRoutes);
 app.use("/api/fabs", fabRoutes);
 app.use("/api/encadrants", encadrantRoutes);
 app.use("/api/formation-base", formationBaseRoutes);
+app.use("/api/formation-fabs", formationFabRoutes);
 
 app.use("/api/edc",edcRoutes);
 app.use("/api", chatbotRoutes);
