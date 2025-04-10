@@ -1,5 +1,38 @@
- const Formation = require("../Models/formation.model.js");
- const mongoose=require("mongoose");
+const Formation = require("../Models/formation.model.js");
+const mongoose=require("mongoose");
+const {UtilisateurEntity} = require("../Models/utilisateurEntity.js");
+const {Utilisateur} = require("../Models/utilisateur.model.js");
+const Formateur = require("../Models/formateur.model.js");
+const getFormateurIdsByEntities = async (entityIds) => {
+  try {
+    // 1. Trouver tous les utilisateurs liés aux entités spécifiées
+  const utilisateursEntities = await UtilisateurEntity.find({
+    id_entity: { $in: entityIds }
+  });
+
+  // De même pour le modèle Utilisateur
+  const userIds = utilisateursEntities.map(ue => ue.id_utilisateur);
+  const formateursUtilisateurs = await Utilisateur.find({
+    _id: { $in: userIds },
+    role: "Formateur"
+  });
+    // 4. Récupérer les IDs d'utilisateurs des formateurs
+    const formateurUtilisateurIds = formateursUtilisateurs.map(formateur => formateur._id);
+    
+    // 5. Trouver les documents Formateur correspondant à ces utilisateurs
+    const formateurs = await Formateur.find({
+      utilisateur: { $in: formateurUtilisateurIds }
+    });
+    
+    // 6. Extraire les IDs des formateurs (et non des utilisateurs)
+    const formateurIds = formateurs.map(formateur => formateur._id);
+    
+    return formateurIds;
+  } catch (error) {
+    console.error("Erreur lors de la récupération des formateurs:", error);
+    throw error;
+  }
+};
 const analyserBeneficiaires = (beneficiaires) => {
     // Nombre total de bénéficiaires
     const total = beneficiaires.length;
@@ -172,6 +205,5 @@ const getFormationsTermineesByFormateurs = async (formateurIds, dateDebut, dateF
       throw error;
     }
   };
-  
-  
-  module.exports = { analyserBeneficiaires ,getFormationsTermineesByFormateurs};
+
+module.exports = { analyserBeneficiaires ,getFormationsTermineesByFormateurs,getFormateurIdsByEntities};
