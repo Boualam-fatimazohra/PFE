@@ -14,6 +14,9 @@ export interface FormationItem {
     dateFin: string;
 }
 export interface Participant {
+  _id: any;
+  nom: any;
+  prenom: any;
   date: string;
   time: string;
   lastName: string;
