@@ -14,6 +14,7 @@ const getBeneficiairesByFormation = async (formationId) => {
   })
   .lean() // Convertir en objet JavaScript simple
   .exec();
+  console.log("resultat des béneficiaires retourné par getBenefciairesByFormation",results);
   
   return results;
 };
