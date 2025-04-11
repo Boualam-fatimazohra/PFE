@@ -11,7 +11,7 @@ interface EdcContextType {
   edcFormateurs: Formateur[];
   edcFormations: Formation[];
   edcBeneficiaires: Beneficiaire[];
-  edcBeneficiairesCount: number; // Ajoutez cette ligne
+  edcBeneficiairesCount: number;
   loading: boolean;
   error: string | null;
   fetchEdcs: () => Promise<void>;
@@ -21,6 +21,8 @@ interface EdcContextType {
   fetchEdcFormateurs: () => Promise<any>;
   fetchEdcFormations: () => Promise<any>;
   fetchEdcBeneficiaires: () => Promise<any>;
+  // Updated return type to match the implementation
+  fetchBeneficiairesCountByFormation: (formationId: string) => Promise<{ total: number, confirmed: number }>;
   setSelectedEdc: (edc: EDC | null) => void;
 }
 
@@ -51,10 +53,25 @@ export const EdcProvider: React.FC<EdcProviderProps> = ({ children }) => {
   const [edcFormateurs, setEdcFormateurs] = useState<Formateur[]>([]);
   const [edcFormations, setEdcFormations] = useState<Formation[]>([]);
   const [edcBeneficiaires, setEdcBeneficiaires] = useState<Beneficiaire[]>([]);
+  const [edcBeneficiairesCount, setEdcBeneficiairesCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [edcBeneficiairesCount, setEdcBeneficiairesCount] = useState<number>(0);
 
+  const fetchBeneficiairesCountByFormation = useCallback(async (id: string): Promise<{ total: number, confirmed: number }> => {
+    if (!isAuthenticated) return { total: 0, confirmed: 0 };
+    
+    try {
+      const data = await edcService.getNbrBeneficiairesByFormation(id);
+      return { 
+        total: data.count || 0, 
+        confirmed: data.confirmedCount || 0 
+      };
+    } catch (err: any) {
+      console.error(`Error fetching beneficiaries count for formation ${id}:`, err);
+      return { total: 0, confirmed: 0 };
+    }
+  }, [isAuthenticated]);
+  
   // Fetch all EDCs
   const fetchEdcs = useCallback(async () => {
     if (!isAuthenticated) return;
@@ -214,7 +231,7 @@ export const EdcProvider: React.FC<EdcProviderProps> = ({ children }) => {
     edcFormateurs,
     edcFormations,
     edcBeneficiaires,
-    edcBeneficiairesCount, // Ajoutez cette ligne
+    edcBeneficiairesCount,
     loading,
     error,
     fetchEdcs,
@@ -224,7 +241,8 @@ export const EdcProvider: React.FC<EdcProviderProps> = ({ children }) => {
     fetchEdcFormateurs,
     fetchEdcFormations,
     fetchEdcBeneficiaires,
-    setSelectedEdc
+    setSelectedEdc,
+    fetchBeneficiairesCountByFormation
   };
 
   return (
