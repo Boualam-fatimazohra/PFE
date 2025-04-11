@@ -28,8 +28,8 @@ const createFormationFab = async (req, res) => {
       tauxSatisfaction,
       lienInscription,
       
-      // Encadrant IDs for assignment
-      encadrants
+      // Single encadrant ID for assignment
+      encadrantId
     } = req.body;
 
     // Validate required fields
@@ -61,26 +61,21 @@ const createFormationFab = async (req, res) => {
 
     const savedFormationFab = await formationFab.save({ session });
 
-    // 3. Create encadrant assignments if provided
-    if (encadrants && Array.isArray(encadrants) && encadrants.length > 0) {
-      const assignmentPromises = encadrants.map(async (encadrantId) => {
-        // Validate encadrant ID
-        if (!mongoose.Types.ObjectId.isValid(encadrantId)) {
-          throw new Error(`Invalid encadrant ID format: ${encadrantId}`);
-        }
-        
-        // Create new assignment
-        const assignment = new EncadrantFormation({
-          encadrant: encadrantId,
-          formationBase: savedBaseFormation._id,
-          dateAssignment: new Date()
-        });
-        
-        return assignment.save({ session });
+    // 3. Assign a single encadrant if provided
+    if (encadrantId) {
+      // Validate encadrant ID
+      if (!mongoose.Types.ObjectId.isValid(encadrantId)) {
+        return res.status(400).json({ message: "Format d'ID d'encadrant invalide" });
+      }
+      
+      // Create the assignment
+      const assignment = new EncadrantFormation({
+        encadrant: encadrantId,
+        formationBase: savedBaseFormation._id,
+        dateAssignment: new Date()
       });
       
-      // Execute all assignment creations
-      await Promise.all(assignmentPromises);
+      await assignment.save({ session });
     }
 
     // Commit the transaction
@@ -91,8 +86,8 @@ const createFormationFab = async (req, res) => {
     const result = await FormationFab.findById(savedFormationFab._id)
       .populate('baseFormation');
 
-    // Fetch associated encadrants
-    const encadrantAssignments = await EncadrantFormation.find({
+    // Fetch associated encadrant (single)
+    const encadrantAssignment = encadrantId ? await EncadrantFormation.findOne({
       formationBase: savedBaseFormation._id
     }).populate({
       path: 'encadrant',
@@ -100,12 +95,12 @@ const createFormationFab = async (req, res) => {
         path: 'utilisateur',
         select: 'nom prenom email'
       }
-    });
+    }) : null;
 
     res.status(201).json({
       message: "Formation Fab créée avec succès",
       formationFab: result,
-      encadrants: encadrantAssignments
+      encadrant: encadrantAssignment
     });
   } catch (error) {
     // Abort transaction in case of error
@@ -119,7 +114,6 @@ const createFormationFab = async (req, res) => {
     });
   }
 };
-
 /**
  * Get all FormationFabs with populated references
  */
