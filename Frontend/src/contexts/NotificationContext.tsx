@@ -43,7 +43,8 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   const [socket, setSocket] = useState<Socket | null>(null);
   
   // Use the base URL but connect to the root for socket
-  const SOCKET_URL = import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://localhost:5000';
+  // const SOCKET_URL = import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://localhost:5000';
+  const SOCKET_URL = import.meta.env.MODE==="development"?import.meta.env.VITE_API_LINK || 'http://localhost:5000':'';
 
   // Use useCallback to memoize the fetchNotifications function
   const fetchNotifications = useCallback(async () => {

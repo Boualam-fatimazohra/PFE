@@ -18,16 +18,16 @@ export default function CourseEvaluations() {
   const [error, setError] = useState(null)
   const [studentCounts, setStudentCounts] = useState({})
   const navigate = useNavigate()
-
+  const url=import.meta.env.MODE==="development"?import.meta.env.VITE_API_LINK:'';
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true)
       try {
         const [coursesResponse, studentCountsResponse] = await Promise.all([
-          fetch(`${import.meta.env.VITE_API_LINK}/api/courses/GetFormationsOfMentor`, {
+          fetch(`${url}/api/courses/GetFormationsOfMentor`, {
             credentials: 'include'
           }),
-          fetch(`${import.meta.env.VITE_API_LINK}/api/evaluation/SubmitEvaluation`, {
+          fetch(`${url}/api/evaluation/SubmitEvaluation`, {
             credentials: 'include'
           })
         ])
