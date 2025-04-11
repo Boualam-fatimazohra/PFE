@@ -136,6 +136,7 @@ export function DashboardHeader() {
       { name: "Calendrier", path: "/formateur/CalendarView" , additionalPaths: ["/formateur/CreatEvent"]},
       { name: "Mes Bénéficiaires", path: "/formateur/BeneficiairesList" },
       { name: "Evaluation", path: "/formateur/EvaluationDashboard"},
+      {name :"envoi evaluation" , path:"/formateur/EvaluationPages"}
     ];
   } else if (user?.role === "Manager") {
     navigationLinks = [

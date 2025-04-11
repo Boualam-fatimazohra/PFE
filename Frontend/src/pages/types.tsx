@@ -15,6 +15,9 @@ export interface FormationItem {
     beneficiairesCount?:number;
 }
 export interface Participant {
+  _id: any;
+  nom: any;
+  prenom: any;
   date: string;
   time: string;
   lastName: string;

@@ -72,8 +72,76 @@ const SubmitEvaluation = async (req, res) => {
     res.status(500).json({ message: 'Erreur lors de la soumission de l\'évaluation', error: error.message });
   }
 };
-// fin fct : enregistrer la réponse du beneficiare
 
+// fin fct : enregistrer la réponse du beneficiare
+const createEvaluation = async (req, res) => {
+  try {
+    const { 
+      title,
+      formationId,
+      startDate,
+      endDate,
+      trainer,
+      participants,
+      anonymousResponses,
+      responseDeadline,
+      responseDeadlineDate,
+      beneficiaryIds
+    } = req.body;
+
+    // Validation des données requises
+    if (!title || !formationId) {
+      return res.status(400).json({ message: "Le titre et l'ID de formation sont requis" });
+    }
+
+    // Créer la nouvelle évaluation
+    const newEvaluation = new Evaluation({
+      formationTitle: title,
+      formation: formationId,
+      dateDebut: startDate,
+      dateFin: endDate,
+      formateur: trainer,
+      nombreParticipants: participants,
+      parametres: {
+        anonymousResponses,
+        responseDeadline,
+        responseDeadlineDate: responseDeadline ? responseDeadlineDate : null
+      },
+      statut: "créée", // statut initial
+      dateCreation: new Date()
+    });
+
+    await newEvaluation.save();
+
+    // Si des IDs de bénéficiaires sont fournis, mettre à jour leurs informations
+    if (beneficiaryIds && beneficiaryIds.length > 0) {
+      // Mettre à jour les documents BeneficiaireFormation pour lier à cette évaluation
+      await BeneficiareFormation.updateMany(
+        { 
+          beneficiaire: { $in: beneficiaryIds },
+          formation: formationId 
+        },
+        { 
+          $set: { 
+            evaluation: newEvaluation._id,
+            isSelected: true 
+          } 
+        }
+      );
+    }
+
+    res.status(201).json({ 
+      message: 'Évaluation créée avec succès', 
+      evaluation: newEvaluation 
+    });
+  } catch (error) {
+    console.error("Erreur lors de la création de l'évaluation:", error);
+    res.status(500).json({ 
+      message: "Erreur lors de la création de l'évaluation", 
+      error: error.message 
+    });
+  }
+};
 // debut fct: envoyer les liens d'evaluation aux beneficiares
 
 const sendEvaluationLinksToBeneficiaries = async (req, res) => {
@@ -151,5 +219,6 @@ const getLastEvaluation = async (req, res) => {
 module.exports = {
     getLastEvaluation,
     sendEvaluationLinksToBeneficiaries,
-    SubmitEvaluation
+    SubmitEvaluation,
+    createEvaluation
   };
