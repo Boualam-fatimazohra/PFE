@@ -27,14 +27,11 @@ const socketIo = require("socket.io"); // Socket.io library
 const chatbotRoutes = require("./Routes/chat.route.js");
 const beneficiaireFileRoutes = require('./Routes/beneficiaireFileUpload.route');
 const achatRoutes = require("./Routes/achat.route.js");
-
-
 dotenv.config();
 
 // Initialiser l'application Express d'abord
 const app = express();
 const PORT = process.env.PORT || 5000;
-
 // Create HTTP server for Socket.io
 const server = http.createServer(app);
 
@@ -130,7 +127,13 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: "Une erreur est survenue sur le serveur", message: process.env.NODE_ENV === 'development' ? err.message : undefined });
 });
 app.use('/api/beneficiaire-files', beneficiaireFileRoutes);
-
+if(process.env.NODE_ENV === 'production'){
+  app.use(express.static(path.join(__dirname, '../Frontend/dist')));
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, 'Frontend', 'dist', 'index.html'));
+  });
+  
+}
 // Démarrage du serveur (using server instance instead of app for Socket.io)
 server.listen(PORT, () => {
     console.log(`✅ Serveur démarré sur http://localhost:${PORT}`);
