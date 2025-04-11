@@ -8,8 +8,8 @@ const formationFabSchema = new mongoose.Schema({
   // Reference to the base formation
   baseFormation: { 
     type: mongoose.Schema.Types.ObjectId, 
-    ref: "FormationBase", 
-    required: true 
+    ref: "FormationBase",
+    required: true
   },
   
   status: { type: String, default: "Avenir", enum: ["En Cours", "Terminé", "Avenir", "Replanifier"] },

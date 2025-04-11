@@ -121,18 +121,21 @@ app.use("/api/evaluation", evaluationRoutes);
 app.use("/api/evenement", evenementRoutes);
 app.use("/api/notifications", notificationRoutes); 
 app.use("/api/entity", entityRoutes); 
-app.use("/api/user", userRoutes); 
+app.use("/api/user", userRoutes);
+app.use("/api/presence",Presence);
+app.use("/api/certification", certificationRoutes);
+app.use("/api/achat", achatRoutes);
 
+// Fab routes
 app.use("/api/fabs", fabRoutes);
 app.use("/api/encadrants", encadrantRoutes);
 app.use("/api/formation-base", formationBaseRoutes);
 app.use("/api/formation-fabs", formationFabRoutes);
 
+// Edc routes
 app.use("/api/edc",edcRoutes);
 app.use("/api", chatbotRoutes);
-app.use("/api/presence",Presence);
-app.use("/api/certification", certificationRoutes);
-app.use("/api/achat", achatRoutes);
+
 // Middleware de gestion des erreurs
 app.use((err, req, res, next) => {
     console.error("Erreur serveur:", err);
