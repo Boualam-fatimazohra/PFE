@@ -9,9 +9,159 @@ const {mongoose} = require('mongoose');
 const generateRandomPassword = require('../utils/generateRandomPassword.js');
 
 
+// const createCoordinateur = async (req, res) => {
+//    // Vérification des fichiers
+//     if (!req.files || !req.files['imageCoordinateur'] || !req.files['cv']) {
+//     return res.status(400).json({ 
+//       success: false,
+//       message: "L'image et le CV sont obligatoires" 
+//     });
+//   }
+//   try {
+//     const {
+//       nom,
+//       prenom,
+//       email,
+//       numeroTelephone,
+//       manager,
+//       entityId,
+//       specialite,
+//       experience,
+//       dateIntegration,
+//       aPropos
+//     } = req.body;
+//     // Vérification que l'ID est un ObjectId MongoDB valide
+//     if (!mongoose.Types.ObjectId.isValid(entityId)) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "L'ID d'entité fourni n'est pas un ID MongoDB valide"
+//       });
+//     }
+//     const existingUser = await Utilisateur.findOne({ email });
+//     if (existingUser) {
+//       return res.status(400).json({ 
+//         success: false,
+//         message: "Cet email est déjà utilisé" 
+//       });
+//     }
+
+//     // Gestion des autorisations par rôle
+//     const userRole = req.user?.role;
+//     let assignedManager;
+
+//     if (!userRole) {
+//       return res.status(403).json({ 
+//         success: false,
+//         message: "Accès refusé: Seuls les Admins ou Managers peuvent créer un Coordinateur" 
+//       });
+//     } else if (userRole === "Manager") {
+//       const managerDoc = await Manager.findOne({ utilisateur: req.user.userId });
+//       if (!managerDoc) {
+//         return res.status(400).json({ 
+//           success: false,
+//           message: "Manager non trouvé" 
+//         });
+//       }
+//       assignedManager = managerDoc._id;
+//     } else {
+//       if (!manager) {
+//         return res.status(400).json({ 
+//           success: false,
+//           message: "L'ID du Manager est obligatoire pour un Admin" 
+//         });
+//       }
+//       const managerDoc = await Manager.findById(manager);
+//       if (!managerDoc) {
+//         return res.status(400).json({ 
+//           success: false,
+//           message: "Manager non trouvé" 
+//         });
+//       }
+//       assignedManager = managerDoc._id;
+//     }
+
+//     // Vérification de l'entité
+//     const entity = await Entity.findById(entityId);
+//     if (!entity) {
+//       return res.status(400).json({ 
+//         success: false,
+//         message: "L'entité spécifiée n'existe pas" 
+//       });
+//     }
+
+//     // Génération du mot de passe temporaire
+//     const temporaryPassword = generateRandomPassword();
+//     const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
+
+//     // Création du nouvel utilisateur
+//     const newUser = new Utilisateur({
+//       nom,
+//       prenom,
+//       email,
+//       numeroTelephone,
+//       password: hashedPassword,
+//       role: "Coordinateur",
+//     });
+
+//     // Envoi de l'email avec le mot de passe temporaire
+//     const contenu = `<p>Bonjour,</p>
+//                    <p>Votre compte coordinateur a été créé avec succès.</p>
+//                    <p>Votre mot de passe temporaire est : <b>${temporaryPassword}</b></p>
+//                    <p>Merci de ne pas le partager et de le changer après votre première connexion.</p>`;
+    
+//     try {
+//       await sendMail(email, contenu);
+//       console.log(`Email envoyé à ${email} avec succès`);
+//     } catch (emailError) {
+//       console.error("Erreur lors de l'envoi de l'email:", emailError);
+//       // On continue malgré l'erreur d'envoi d'email
+//     }
+
+//     await newUser.save();
+
+//     // Création du coordinateur
+//     const newCoordinateur = new Coordinateur({
+//       utilisateur: newUser._id,
+//       manager: assignedManager,
+//       specialite,
+//       experience,
+//       dateIntegration: dateIntegration || Date.now(),
+//       aPropos,
+//       cv: req.files['cv'][0].path,
+//       imageCoordinateur: req.files['imageCoordinateur'][0].path
+//     });
+
+//     await newCoordinateur.save();
+
+//     // Association utilisateur-entité
+//     const utilisateurEntity = new UtilisateurEntity({
+//       id_utilisateur: newUser._id,
+//       id_entity: entityId,
+//     });
+
+//     await utilisateurEntity.save();
+
+//     res.status(201).json({
+//       success: true,
+//       message: "Coordinateur créé avec succès",
+//       data: {
+//         coordinateur: newCoordinateur,
+//         temporaryPasswordSent: true
+//       }
+//     });
+//   } catch (error) {
+//     console.error("Erreur création coordinateur:", error);
+    
+//     res.status(500).json({
+//       success: false,
+//       message: "Erreur serveur",
+//       error: error.message
+//     });
+//   }
+// };
 const createCoordinateur = async (req, res) => {
-   // Vérification des fichiers
-    if (!req.files || !req.files['imageCoordinateur'] || !req.files['cv']) {
+  // Vérification des fichiers
+  if (!req.files || !req.files['imageCoordinateur'] || !req.files['cv']) {
     return res.status(400).json({ 
       success: false,
       message: "L'image et le CV sont obligatoires" 
@@ -24,19 +174,21 @@ const createCoordinateur = async (req, res) => {
       email,
       numeroTelephone,
       manager,
-      entityId,
+      ville, // Remplace entityId par ville
       specialite,
       experience,
       dateIntegration,
       aPropos
     } = req.body;
-    // Vérification que l'ID est un ObjectId MongoDB valide
-    if (!mongoose.Types.ObjectId.isValid(entityId)) {
+    
+    // Vérification que la ville est fournie
+    if (!ville) {
       return res.status(400).json({
         success: false,
-        message: "L'ID d'entité fourni n'est pas un ID MongoDB valide"
+        message: "La ville est obligatoire"
       });
     }
+    
     const existingUser = await Utilisateur.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ 
@@ -80,12 +232,12 @@ const createCoordinateur = async (req, res) => {
       assignedManager = managerDoc._id;
     }
 
-    // Vérification de l'entité
-    const entity = await Entity.findById(entityId);
-    if (!entity) {
+    // Recherche des entités par ville
+    const entities = await Entity.find({ ville });
+    if (entities.length === 0) {
       return res.status(400).json({ 
         success: false,
-        message: "L'entité spécifiée n'existe pas" 
+        message: "Aucune entité trouvée pour cette ville" 
       });
     }
 
@@ -133,20 +285,24 @@ const createCoordinateur = async (req, res) => {
 
     await newCoordinateur.save();
 
-    // Association utilisateur-entité
-    const utilisateurEntity = new UtilisateurEntity({
-      id_utilisateur: newUser._id,
-      id_entity: entityId,
-    });
-
-    await utilisateurEntity.save();
+    // Association utilisateur-entités pour toutes les entités de la ville
+    const utilisateurEntities = [];
+    for (const entity of entities) {
+      const utilisateurEntity = new UtilisateurEntity({
+        id_utilisateur: newUser._id,
+        id_entity: entity._id,
+      });
+      await utilisateurEntity.save();
+      utilisateurEntities.push(utilisateurEntity);
+    }
 
     res.status(201).json({
       success: true,
-      message: "Coordinateur créé avec succès",
+      message: `Coordinateur créé avec succès et associé à ${entities.length} entité(s) dans la ville de ${ville}`,
       data: {
         coordinateur: newCoordinateur,
-        temporaryPasswordSent: true
+        temporaryPasswordSent: true,
+        entitiesCount: entities.length
       }
     });
   } catch (error) {
@@ -160,7 +316,9 @@ const createCoordinateur = async (req, res) => {
   }
 };
 
+
 //  debut : Récupérer un coordinateur par son ID (fonctionnel)
+
 const getCoordinateurById = async (req, res) => {
   try {
     const { id } = req.params;

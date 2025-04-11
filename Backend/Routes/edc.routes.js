@@ -9,7 +9,8 @@ const {
     createEDC,
     getAllEDCs,
     getEDCById,
-    deleteEDC
+    deleteEDC,
+    getNbrBeneficiairesByFormation
 } = require('../Controllers/edc.controller');
 
 const authorizeRoles = require('../Middlewares/RoleMiddleware.js');
@@ -29,6 +30,10 @@ router.get('/getFormationEDC',authenticated, authorizeRoles('Manager'), checkEnt
 
 /* Get all beneficiaries enrolled in formations all EDC */
 router.get('/getBeneficiairesEDC',authenticated,authorizeRoles('Manager'), checkEntityAccess('EDC'), getBeneficiairesEdc);
+
+
+/* Get  beneficiaries by formations id */
+router.get('/getNbrBeneficiairesByFormation/:id',authenticated,authorizeRoles('Manager'), checkEntityAccess('EDC'), getNbrBeneficiairesByFormation);
 
 router.get('/:id', authenticated, authorizeRoles('Admin'), getEDCById);
 

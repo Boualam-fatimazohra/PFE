@@ -221,24 +221,32 @@ const BeneficiairesTable: React.FC<BeneficiairesListeProps> = ({ formationId }) 
         setLoading(true);
         console.log("ID Formation envoyé:", formationId);
         
-        // Utiliser type assertion pour correspondre aux types attendus
-        const data = await getBeneficiaireFormation(formationId) as unknown as BeneficiaireInscription[];
-        console.log("Réponse API:", data);
+        // Supprimer le cast et laisser TypeScript inférer le type
+        const data = await getBeneficiaireFormation(formationId);
+        console.log("Réponse API complète:", data);
         
-        // Adapter pour gérer un tableau ou un objet unique
-        const formattedData: BeneficiaireInscription[] = Array.isArray(data) ? data : [data];
-        setInscriptions(formattedData);
+        // Vérifier la structure réelle des données
+        if (!data || !Array.isArray(data)) {
+          throw new Error("Format de données inattendu");
+        }
         
-        // Extraire les bénéficiaires des inscriptions
-        const extractedBeneficiaires = formattedData
-        .filter(item => item.confirmationEmail && item.confirmationAppel)
-        .map(item => item.beneficiaire);
+        setInscriptions(data);
+        
+        // Extraire les bénéficiaires - version plus sécurisée
+        const extractedBeneficiaires = data
+          //.filter(item => item.confirmationEmail && item.confirmationAppel) // à commenter temporairement
+          .map(item => ({
+            ...item.beneficiaire,
+            _id: item.beneficiaire._id || item._id // selon ce que renvoie l'API
+          }));
+        
+        console.log("Bénéficiaires extraits:", extractedBeneficiaires);
         setBeneficiaires(extractedBeneficiaires);
         
         setError(null);
       } catch (err) {
+        console.error("Erreur détaillée:", err);
         setError(err instanceof Error ? err.message : "Erreur de chargement");
-        console.error("Erreur complète:", err); 
       } finally {
         setLoading(false);
       }

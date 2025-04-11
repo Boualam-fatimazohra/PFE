@@ -70,3 +70,12 @@ export const getBeneficiairesEdc = async () => {
     throw error;
   }
 };
+export const getNbrBeneficiairesByFormation = async (id: string) => {
+  try {
+    const response = await apiClient.get(`/edc/getNbrBeneficiairesByFormation/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching number of beneficiaries for formation ${id}:`, error);
+    throw error;
+  }
+};

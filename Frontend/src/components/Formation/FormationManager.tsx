@@ -208,7 +208,7 @@ const FormationManager = () => {
                   <span className={cn(
                     "px-3 py-1 rounded-full text-xs font-medium",
                     formation.status === "En Cours" ? "bg-orange-100 text-orange-600" : 
-                    formation.status === "À venir" ? "bg-blue-100 text-blue-600" :
+                    formation.status === "À venir" ? "bg-[#F2E7FF] text-[#9C00C3]" :
                     "bg-green-100 text-green-600"
                   )}>
                     {formation.status}

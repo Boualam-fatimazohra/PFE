@@ -62,7 +62,7 @@ const createAchat = async (req, res) => {
       });
     }
 
-    //  Créer le nouvel achat
+    //  Créer la nouvel achat
     const nouvelAchat = new Achat({
       idCoordinateur: coordinateur._id,
       etatDemandeAchat,
@@ -94,7 +94,8 @@ const createAchat = async (req, res) => {
 // recupérer tout les achats du coordinateur connecté
 const getAllAchats = async (req, res) => {
   try {
-    const userId = req.user.userId;     // D'abord, trouver le coordinateur associé à cet utilisateur
+    const userId = req.user.userId;     
+    // D'abord, trouver le coordinateur associé à cet utilisateur
     const coordinateur = await Coordinateur.findOne({ utilisateur: userId });
     
      if (!coordinateur) {

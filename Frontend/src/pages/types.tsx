@@ -12,8 +12,12 @@ export interface FormationItem {
     image?: string;
     dateDebut: string;
     dateFin: string;
+    beneficiairesCount?:number;
 }
 export interface Participant {
+  _id: any;
+  nom: any;
+  prenom: any;
   date: string;
   time: string;
   lastName: string;
