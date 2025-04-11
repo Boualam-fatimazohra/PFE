@@ -13,7 +13,10 @@ const createFormateur = async (req, res) => {
   try {
     // Vérification des fichiers
     if (!req.files || !req.files['imageFormateur'] || !req.files['cv']) {
-      
+      return res.status(400).json({ 
+        success: false,
+        message: "L'image et le CV sont obligatoires" 
+      });
     }
 
     const {
@@ -21,7 +24,6 @@ const createFormateur = async (req, res) => {
       prenom,
       email,
       numeroTelephone,
-      password,
       coordinateur,
       manager,
       entityId,
@@ -92,7 +94,7 @@ const createFormateur = async (req, res) => {
 
     // Génération du mot de passe temporaire
     const temporaryPassword = generateRandomPassword();
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
 
     // Création du nouvel utilisateur
     const newUser = new Utilisateur({
@@ -120,7 +122,9 @@ const createFormateur = async (req, res) => {
       specialite,
       experience,
       dateIntegration: dateIntegration || Date.now(),
-      aPropos
+      aPropos,
+      cv: req.files['cv'][0].path,
+      imageFormateur: req.files['imageFormateur'][0].path
     });
 
     await newFormateur.save();

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { FormationItem } from "@/pages/types";
 import { useNavigate } from "react-router-dom";
 import { Formation } from "@/components/formation-modal/types"
+import { useEdc } from "@/contexts/EdcContext";
 
 interface FormationsTableProps {
   formations?: Formation[];
@@ -15,12 +16,74 @@ export const FormationsTable = ({
   onShowDetails
 }: FormationsTableProps) => {
   const navigate = useNavigate();
+  const { fetchBeneficiairesCountByFormation } = useEdc();
   const [activeFilter, setActiveFilter] = React.useState<string>("En Cours");
+  const [beneficiairesCounts, setBeneficiairesCounts] = React.useState<Record<string, { total: number, confirmed: number }>>({});
+  const [loadingCounts, setLoadingCounts] = React.useState<Record<string, boolean>>({});
+  
+  React.useEffect(() => {
+    const loadCounts = async () => {
+      const countsToLoad = formations.filter(f => 
+        f._id && !beneficiairesCounts[f._id]
+      );
+      
+      if (countsToLoad.length === 0) return;
+  
+      const newCounts: Record<string, { total: number, confirmed: number }> = {};
+      const newLoading: Record<string, boolean> = {};
+      
+      for (const formation of countsToLoad) {
+        if (!formation._id) continue;
+        
+        newLoading[formation._id] = true;
+        try {
+          // Now this matches the updated return type
+          const counts = await fetchBeneficiairesCountByFormation(formation._id);
+          newCounts[formation._id] = counts;
+        } catch (error) {
+          console.error(`Error loading count for formation ${formation._id}:`, error);
+          newCounts[formation._id] = { total: 0, confirmed: 0 };
+        } finally {
+          newLoading[formation._id] = false;
+        }
+      }
+      
+      setBeneficiairesCounts(prev => ({ ...prev, ...newCounts }));
+      setLoadingCounts(prev => ({ ...prev, ...newLoading }));
+    };
+  
+    loadCounts();
+  }, [formations, fetchBeneficiairesCountByFormation]);
+
   
   const formatDate = (dateString: string) => {
+    // Si la date est déjà au format JJ/MM/AAAA
+    if (dateString.includes('/')) {
+      const [jour, mois, annee] = dateString.split('/');
+      
+      // Tableau des noms de mois en français
+      const moisFrancais = [
+        'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+        'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+      ];
+      
+      // Le mois dans le format JJ/MM/AAAA est 1-indexé (1-12), mais l'index du tableau est 0-indexé
+      const moisIndex = parseInt(mois, 10) - 1;
+      const nomMois = moisFrancais[moisIndex];
+      
+      return `${jour} ${nomMois} ${annee}`;
+    }
+    
+    // Fallback au cas où la date serait dans un autre format
     const date = new Date(dateString);
-    return `${date.getDate()} Mars ${date.getFullYear()}`;
+    const moisFrancais = [
+      'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+      'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+    ];
+    return `${date.getDate()} ${moisFrancais[date.getMonth()]} ${date.getFullYear()}`;
   };
+
+
 
   const filteredFormations = React.useMemo(() => {
     // First filter by status
@@ -144,102 +207,110 @@ export const FormationsTable = ({
                           </svg>
                         </div>
                       )}
-<span
-  style={{
-    color: 'var(--Neutral-700, #333)',
-    fontFeatureSettings: "'dlig' on",
-    fontFamily: 'Inter',
-    fontSize: '16px',
-    fontStyle: 'normal',
-    fontWeight: 600,
-    lineHeight: '21px',
-  }}
->
-  {formation.nom}
-</span>
+                      <span
+                        style={{
+                          color: 'var(--Neutral-700, #333)',
+                          fontFeatureSettings: "'dlig' on",
+                          fontFamily: 'Inter',
+                          fontSize: '16px',
+                          fontStyle: 'normal',
+                          fontWeight: 600,
+                          lineHeight: '21px',
+                        }}
+                      >
+                        {formation.nom}
+                      </span>
                     </div>
                   </TableCell>
                   <TableCell>
-                  <div
-                    style={{color: 'var(--Neutral-700, #333)',fontFeatureSettings: "'dlig' on",fontFamily: 'Inter',fontSize: '16px',fontStyle: 'normal',fontWeight: 600, lineHeight: '21px', }}>
-                        {formation.formateurName}
-                  </div>
+                    <div
+                      style={{color: 'var(--Neutral-700, #333)',fontFeatureSettings: "'dlig' on",fontFamily: 'Inter',fontSize: '16px',fontStyle: 'normal',fontWeight: 600, lineHeight: '21px', }}>
+                          {formation.formateurName}
+                    </div>
                     <div className="bg-gray-200 text-black px-2 py-1 rounded-full text-xs font-medium inline-block mt-1">
                       {formation.formateurCity}
                     </div>
                   </TableCell>
                   <TableCell>
-  <div
-    style={{
-      color: 'var(--Neutral-500, #666)',
-      fontFeatureSettings: "'dlig' on",
-      fontFamily: 'Inter',
-      fontSize: '16px',
-      fontStyle: 'normal',
-      fontWeight: 500,
-      lineHeight: '21px',
-    }}
-  >
-    {formatDate(formation.dateDebut)}
-  </div>
+                    <div
+                      style={{
+                        color: 'var(--Neutral-500, #666)',
+                        fontFeatureSettings: "'dlig' on",
+                        fontFamily: 'Inter',
+                        fontSize: '16px',
+                        fontStyle: 'normal',
+                        fontWeight: 500,
+                        lineHeight: '21px',
+                      }}
+                    >
+                      {formatDate(formation.dateDebut)}
+                    </div>
 
-  {formation.dateFin ? (
-    formation.dateDebut !== formation.dateFin && (
-      <div
-        style={{
-          marginTop: '4px',
-          color: 'var(--Neutral-500, #666)',
-          fontFeatureSettings: "'dlig' on",
-          fontFamily: 'Inter',
-          fontSize: '16px',
-          fontStyle: 'normal',
-          fontWeight: 500,
-          lineHeight: '21px',
-        }}
-      >
-        {formatDate(formation.dateFin)}
-      </div>
-    )
-  ) : (
-    <div
-      style={{marginTop: '4px',color: 'var(--Neutral-500, #666)',fontFeatureSettings: "'dlig' on",fontFamily: 'Inter',fontSize: '16px',fontStyle: 'normal',fontWeight: 500,lineHeight: '21px',}}> -
-    </div>)}</TableCell>
+                    {formation.dateFin ? (
+                      formation.dateDebut !== formation.dateFin && (
+                        <div
+                          style={{
+                            marginTop: '4px',
+                            color: 'var(--Neutral-500, #666)',
+                            fontFeatureSettings: "'dlig' on",
+                            fontFamily: 'Inter',
+                            fontSize: '16px',
+                            fontStyle: 'normal',
+                            fontWeight: 500,
+                            lineHeight: '21px',
+                          }}
+                        >
+                          {formatDate(formation.dateFin)}
+                        </div>
+                      )
+                    ) : (
+                      <div
+                        style={{marginTop: '4px',color: 'var(--Neutral-500, #666)',fontFeatureSettings: "'dlig' on",fontFamily: 'Inter',fontSize: '16px',fontStyle: 'normal',fontWeight: 500,lineHeight: '21px',}}> -
+                      </div>)}
+                  </TableCell>
                   <TableCell>
                     <div className={`px-3 py-1 rounded-full text-sm inline-flex items-center ${getStatusColor(formation.status)}`}>
                       {formation.status}
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="text-sm font-bold">N/A</div>
+                    {loadingCounts[formation._id as string] ? (
+                      <div className="text-sm text-gray-500">Chargement...</div>
+                    ) : (
+                      <div className="text-sm font-bold">
+                        {beneficiairesCounts[formation._id as string] ? 
+                          `${beneficiairesCounts[formation._id as string].confirmed}/${beneficiairesCounts[formation._id as string].total}` : 
+                          '0/0'}
+                      </div>
+                    )}
                   </TableCell>
                   <TableCell>
                     <div className="text-sm font-bold">N/A</div>
                   </TableCell>
                   <TableCell className="text-center">
-                  <Button
-  size="sm"
-  className="bg-black text-white hover:bg-gray-800 rounded-[4px]"
-  style={{
-    overflow: 'hidden',
-    color: '#FFF',
-    textAlign: 'center',
-    fontFeatureSettings: "'dlig' on",
-    textOverflow: 'ellipsis',
-    fontFamily: 'Inter',
-    fontSize: '13px',
-    fontStyle: 'normal',
-    fontWeight: 500,
-    lineHeight: '21px',
-    display: '-webkit-box',
-    WebkitBoxOrient: 'vertical',
-    WebkitLineClamp: 1,
-    alignSelf: 'stretch',
-  }}
-  onClick={() => onShowDetails && onShowDetails(formation as FormationItem)}
->
-  Accéder
-</Button>
-
+                    <Button
+                      size="sm"
+                      className="bg-black text-white hover:bg-gray-800 rounded-[4px]"
+                      style={{
+                        overflow: 'hidden',
+                        color: '#FFF',
+                        textAlign: 'center',
+                        fontFeatureSettings: "'dlig' on",
+                        textOverflow: 'ellipsis',
+                        fontFamily: 'Inter',
+                        fontSize: '13px',
+                        fontStyle: 'normal',
+                        fontWeight: 500,
+                        lineHeight: '21px',
+                        display: '-webkit-box',
+                        WebkitBoxOrient: 'vertical',
+                        WebkitLineClamp: 1,
+                        alignSelf: 'stretch',
+                      }}
+                      onClick={() => onShowDetails && onShowDetails(formation as FormationItem)}
+                    >
+                      Accéder
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))
