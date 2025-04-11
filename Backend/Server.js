@@ -38,7 +38,7 @@ const server = http.createServer(app);
 // Initialize Socket.io
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:8080",
+    origin: process.env.CLIENT_URL,
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -77,7 +77,7 @@ app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(
     cors({
-        origin: "http://localhost:8080",
+        origin:process.env.CLIENT_URL,
         credentials: true,
         methods: "GET,POST,PUT,DELETE",
         allowedHeaders: "Content-Type,Authorization",
