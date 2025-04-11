@@ -6,7 +6,8 @@
   "scripts": {
     "test": "jest",
     "dev": "nodemon Backend/Server.js",
-    "start": "node Backend/Server.js"
+    "start": "node Backend/Server.js",
+    "builde":"npm install && npm install --prefix  frontend &&  npm run build --prefix frontend"
   },
   "repository": {
     "type": "git",
