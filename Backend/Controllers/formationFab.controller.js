@@ -1,5 +1,6 @@
 const FormationFab = require('../Models/formationFab.model');
 const FormationBase = require('../Models/formationBase.model');
+const EncadrantFormation = require('../Models/encadrantFormation.model');
 const mongoose = require('mongoose');
 
 /**
@@ -25,7 +26,10 @@ const createFormationFab = async (req, res) => {
       niveau,
       tags,
       tauxSatisfaction,
-      lienInscription
+      lienInscription,
+      
+      // Encadrant IDs for assignment
+      encadrants
     } = req.body;
 
     // Validate required fields
@@ -57,6 +61,28 @@ const createFormationFab = async (req, res) => {
 
     const savedFormationFab = await formationFab.save({ session });
 
+    // 3. Create encadrant assignments if provided
+    if (encadrants && Array.isArray(encadrants) && encadrants.length > 0) {
+      const assignmentPromises = encadrants.map(async (encadrantId) => {
+        // Validate encadrant ID
+        if (!mongoose.Types.ObjectId.isValid(encadrantId)) {
+          throw new Error(`Invalid encadrant ID format: ${encadrantId}`);
+        }
+        
+        // Create new assignment
+        const assignment = new EncadrantFormation({
+          encadrant: encadrantId,
+          formationBase: savedBaseFormation._id,
+          dateAssignment: new Date()
+        });
+        
+        return assignment.save({ session });
+      });
+      
+      // Execute all assignment creations
+      await Promise.all(assignmentPromises);
+    }
+
     // Commit the transaction
     await session.commitTransaction();
     session.endSession();
@@ -65,9 +91,21 @@ const createFormationFab = async (req, res) => {
     const result = await FormationFab.findById(savedFormationFab._id)
       .populate('baseFormation');
 
+    // Fetch associated encadrants
+    const encadrantAssignments = await EncadrantFormation.find({
+      formationBase: savedBaseFormation._id
+    }).populate({
+      path: 'encadrant',
+      populate: {
+        path: 'utilisateur',
+        select: 'nom prenom email'
+      }
+    });
+
     res.status(201).json({
       message: "Formation Fab créée avec succès",
-      formationFab: result
+      formationFab: result,
+      encadrants: encadrantAssignments
     });
   } catch (error) {
     // Abort transaction in case of error
