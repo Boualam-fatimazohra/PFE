@@ -34,11 +34,11 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 // Create HTTP server for Socket.io
 const server = http.createServer(app);
-
+const client=process.env.NODE_ENV==="development"?process.env.CLIENT_URL:"https://pfe-6ju9.onrender.com"
 // Initialize Socket.io
 const io = socketIo(server, {
   cors: {
-    origin: process.env.CLIENT_URL,
+    origin: client,
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -77,7 +77,7 @@ app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(
     cors({
-        origin:process.env.CLIENT_URL,
+        origin:client,
         credentials: true,
         methods: "GET,POST,PUT,DELETE",
         allowedHeaders: "Content-Type,Authorization",
@@ -136,5 +136,6 @@ if(process.env.NODE_ENV === 'production'){
 }
 // Démarrage du serveur (using server instance instead of app for Socket.io)
 server.listen(PORT, () => {
-    console.log(`✅ Serveur démarré sur http://localhost:${PORT}`);
+    // console.log(` Serveur démarré sur http://localhost:${PORT}`);
+    console.log("c'est bon serveur est démarré");
 });
