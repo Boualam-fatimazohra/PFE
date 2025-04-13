@@ -56,42 +56,52 @@ const FormStepTwo: React.FC<FormStepTwoProps> = ({
   // Accepted file formats
   const acceptedFormats = ['.xlsx', '.xls', '.csv'];
 
-    // Function to fetch files for a specific formation
-    const fetchFormationFiles = async (id: string) => {
-      try {
-        setLoading(true);
-        const files = await getFormationFiles(id);
-        
-        // Process fetched files to match your local state format
-        if (files && files.length > 0) {
-          // Update fileList with downloaded files
-          const downloadedFiles: File[] = [];
-          
-          // Update uploadedFiles with file information
-          const downloadedUploadedFiles: UploadedFile[] = files.map(file => ({
-            name: file.originalFilename,
-            data: file.cloudinaryUrl, // Use URL directly instead of data URI
-            type: 'participant-list',
-            status: 'uploaded',
-            uploadId: file._id,
-            url: file.cloudinaryUrl,
-            uploadDate: file.createdAt
-          }));
-          
-          setUploadedFiles(prev => [...prev, ...downloadedUploadedFiles]);
-        
-          console.log("Fetching Files Uploaded Successfuly")
-        } else {
-          // message when no files found
-          console.log("Fetching Files empty cloudinary for this formation");
-        }
-      } catch (error) {
-        console.error('Error fetching formation files:', error);
-        setFileError(`Erreur lors de la récupération des fichiers: ${error.message || 'Unknown error'}`);
-      } finally {
-        setLoading(false);
+// Function to fetch files for a specific formation
+const fetchFormationFiles = async (id: string) => {
+  try {
+    setLoading(true);
+    const files = await getFormationFiles(id);
+    
+    // Process fetched files to match your local state format
+    if (files && files.length > 0) {
+      // Create uploadedFiles objects from the fetched files
+      const downloadedUploadedFiles: UploadedFile[] = files.map(file => ({
+        name: file.originalFilename,
+        data: file.cloudinaryUrl, // Use URL directly instead of data URI
+        type: 'participant-list',
+        status: 'uploaded',
+        uploadId: file._id,
+        url: file.cloudinaryUrl,
+        uploadDate: file.createdAt
+      }));
+      
+      // Instead of appending, check for duplicates before updating
+      // Identify which files are already in the current state by uploadId
+      const existingUploadIds = uploadedFiles.map(file => file.uploadId);
+      
+      // Filter to only include files that aren't already in the list
+      const newFiles = downloadedUploadedFiles.filter(
+        file => file.uploadId && !existingUploadIds.includes(file.uploadId)
+      );
+      
+      // Only append new files to avoid duplicates
+      if (newFiles.length > 0) {
+        setUploadedFiles(prev => [...prev, ...newFiles]);
+        console.log(`Added ${newFiles.length} new files from server`);
+      } else {
+        console.log("No new files to add - all files already loaded");
       }
-    };
+    } else {
+      // message when no files found
+      console.log("Fetching Files empty cloudinary for this formation");
+    }
+  } catch (error) {
+    console.error('Error fetching formation files:', error);
+    setFileError(`Erreur lors de la récupération des fichiers: ${error.message || 'Unknown error'}`);
+  } finally {
+    setLoading(false);
+  }
+};
   
   // Enhanced file removal function
   const handleRemoveFile = (index: number) => {
