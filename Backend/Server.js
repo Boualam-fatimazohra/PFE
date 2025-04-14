@@ -27,6 +27,11 @@ const socketIo = require("socket.io"); // Socket.io library
 const chatbotRoutes = require("./Routes/chat.route.js");
 const beneficiaireFileRoutes = require('./Routes/beneficiaireFileUpload.route');
 const achatRoutes = require("./Routes/achat.route.js");
+const encadrantRoutes = require("./Routes/encadrant.route.js");
+const fabRoutes = require("./Routes/fab.route.js");
+const formationBaseRoutes = require('./Routes/formationBase.route.js');
+const formationFabRoutes = require('./Routes/formationFab.route.js');
+const encadrantFormationRoutes = require('./Routes/encadrantFormation.route.js');
 
 
 dotenv.config();
@@ -117,13 +122,22 @@ app.use('/api/evaluation', evaluationRoutes);
 app.use("/api/evenement", evenementRoutes);
 app.use("/api/notifications", notificationRoutes); 
 app.use("/api/entity", entityRoutes); 
-app.use("/api/user", userRoutes); 
-
-app.use("/api/edc",edcRoutes);
-app.use("/api", chatbotRoutes);
+app.use("/api/user", userRoutes);
 app.use("/api/presence",Presence);
 app.use("/api/certification", certificationRoutes);
 app.use("/api/achat", achatRoutes);
+
+// Fab routes
+app.use("/api/fabs", fabRoutes);
+app.use("/api/encadrants", encadrantRoutes);
+app.use("/api/formation-base", formationBaseRoutes);
+app.use("/api/formation-fabs", formationFabRoutes);
+app.use('/api/encadrant-formations', encadrantFormationRoutes);
+
+// Edc routes
+app.use("/api/edc",edcRoutes);
+app.use("/api", chatbotRoutes);
+
 // Middleware de gestion des erreurs
 app.use((err, req, res, next) => {
     console.error("Erreur serveur:", err);
