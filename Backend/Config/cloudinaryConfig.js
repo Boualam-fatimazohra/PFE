@@ -44,6 +44,17 @@ const imageStorage = new CloudinaryStorage({
     transformation: [{ width: 500, height: 500, crop: 'limit' }]
   }
 });
+const uploadImage = multer({ storage: imageStorage });
+
+const formationFabImageStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'formations-fab',
+    allowed_formats: ['jpg', 'jpeg', 'png'],
+    transformation: [{ width: 500, height: 500, crop: 'limit' }]
+  }
+});
+const uploadFormationFabImage = multer({ storage: imageStorage });
 
 // Set up Cloudinary storage for Excel files
 const excelStorage = new CloudinaryStorage({
@@ -57,9 +68,6 @@ const excelStorage = new CloudinaryStorage({
     allowed_formats: ['xlsx', 'xls', 'csv'], // Make sure these match your file types
   }
 });
-
-// Create multer upload middleware for images
-const uploadImage = multer({ storage: imageStorage });
 
 // Create multer upload middleware for Excel files
 const uploadExcel = multer({
@@ -117,6 +125,7 @@ const getFolderResources = async (folderPath) => {
 module.exports = {
   cloudinary,
   uploadImage,
+  uploadFormationFabImage,
   uploadFormateurFiles: upload,
   uploadExcel,
   uploadToCloudinary,
