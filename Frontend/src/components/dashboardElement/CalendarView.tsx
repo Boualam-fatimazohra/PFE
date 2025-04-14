@@ -303,7 +303,7 @@ const CalendarView = () => {
             year: 'numeric'
           }).format(currentDate);
         case 'timeGridWeek':
-          const startDate = calendarApi.view.currentStart;
+          { const startDate = calendarApi.view.currentStart;
           const endDate = calendarApi.view.currentEnd;
           const startFormatted = new Intl.DateTimeFormat('fr-FR', {
             day: 'numeric'
@@ -313,7 +313,7 @@ const CalendarView = () => {
             month: 'long',
             year: 'numeric'
           }).format(new Date(endDate.getTime() - 86400000)); // Subtract one day
-          return `${startFormatted} - ${endFormatted}`;
+          return `${startFormatted} - ${endFormatted}`; }
         case 'multiMonthYear':
           return new Intl.DateTimeFormat('fr-FR', {
             year: 'numeric'

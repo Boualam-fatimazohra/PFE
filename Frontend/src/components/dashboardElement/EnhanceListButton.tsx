@@ -46,7 +46,7 @@ const EnhanceListButton = ({
   const [results, setResults] = useState<ProcessingResults | null>(null);
 
   // API base URL with fallback mechanism
-  const API_BASE_URL = import.meta.env.VITE_API_LINK || 'http://localhost:5000';
+  const API_BASE_URL = import.meta.env.MODE==="development"?import.meta.env.VITE_API_LINK || 'http://localhost:5000':'';
 
   // Debug logging to help troubleshoot the issue
   useEffect(() => {
