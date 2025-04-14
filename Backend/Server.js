@@ -38,7 +38,7 @@ const client=process.env.NODE_ENV==="development"?process.env.CLIENT_URL:"https:
 // Initialize Socket.io
 const io = socketIo(server, {
   cors: {
-    origin: client,
+    origin: ["http://localhost:8080", "https://pfe-6ju9.onrender.com"],
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -77,8 +77,8 @@ app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(
     cors({
-        origin:client,
-        credentials: true,
+      origin: ["http://localhost:8080", "https://pfe-6ju9.onrender.com"],
+      credentials: true,
         methods: "GET,POST,PUT,DELETE",
         allowedHeaders: "Content-Type,Authorization",
     })
