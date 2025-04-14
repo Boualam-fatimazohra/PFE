@@ -27,21 +27,18 @@ const socketIo = require("socket.io"); // Socket.io library
 const chatbotRoutes = require("./Routes/chat.route.js");
 const beneficiaireFileRoutes = require('./Routes/beneficiaireFileUpload.route');
 const achatRoutes = require("./Routes/achat.route.js");
-
-
 dotenv.config();
 
 // Initialiser l'application Express d'abord
 const app = express();
 const PORT = process.env.PORT || 5000;
-
 // Create HTTP server for Socket.io
 const server = http.createServer(app);
-
+const client=process.env.NODE_ENV==="development"?process.env.CLIENT_URL:"https://pfe-6ju9.onrender.com"
 // Initialize Socket.io
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:8080",
+    origin: ["http://localhost:8080", "https://pfe-6ju9.onrender.com"],
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -80,8 +77,8 @@ app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(
     cors({
-        origin: "http://localhost:8080",
-        credentials: true,
+      origin: ["http://localhost:8080", "https://pfe-6ju9.onrender.com"],
+      credentials: true,
         methods: "GET,POST,PUT,DELETE",
         allowedHeaders: "Content-Type,Authorization",
     })
@@ -124,14 +121,22 @@ app.use("/api", chatbotRoutes);
 app.use("/api/presence",Presence);
 app.use("/api/certification", certificationRoutes);
 app.use("/api/achat", achatRoutes);
+
 // Middleware de gestion des erreurs
 app.use((err, req, res, next) => {
     console.error("Erreur serveur:", err);
     res.status(500).json({ error: "Une erreur est survenue sur le serveur", message: process.env.NODE_ENV === 'development' ? err.message : undefined });
 });
 app.use('/api/beneficiaire-files', beneficiaireFileRoutes);
-
+if(process.env.NODE_ENV === 'production'){
+  app.use(express.static(path.join(__dirname, '../Frontend/dist')));
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, 'Frontend', 'dist', 'index.html'));
+  });
+  
+}
 // Démarrage du serveur (using server instance instead of app for Socket.io)
 server.listen(PORT, () => {
-    console.log(`✅ Serveur démarré sur http://localhost:${PORT}`);
+    // console.log(` Serveur démarré sur http://localhost:${PORT}`);
+    console.log("c'est bon serveur est démarré");
 });
