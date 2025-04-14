@@ -121,6 +121,7 @@ app.use("/api", chatbotRoutes);
 app.use("/api/presence",Presence);
 app.use("/api/certification", certificationRoutes);
 app.use("/api/achat", achatRoutes);
+
 // Middleware de gestion des erreurs
 app.use((err, req, res, next) => {
     console.error("Erreur serveur:", err);
