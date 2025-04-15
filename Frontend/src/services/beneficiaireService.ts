@@ -182,6 +182,7 @@ export const getBeneficiairesByFormation = async (formationId: string) => {
  */
 export const updateReglementStatus = async (beneficiairesList: { id: string; confirmationReglementInterieur: boolean }[]): Promise<any> => {
   try {
+    console.log("Sending data:", { beneficiairesList });
     const response = await apiClient.put('/beneficiaires/reglement-status', {
       beneficiairesList
     });
