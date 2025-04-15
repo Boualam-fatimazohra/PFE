@@ -333,9 +333,10 @@ const [alertSeverity, setAlertSeverity] = React.useState<'success'|'error'|'warn
         // just move to next step
         setCurrentStep(currentStep + 1);
       }
-       // Appel à updateFormationStep ici après succès de updateBeneficiaireConfirmations
-       const response = await updateFormationStep(formationId);
-       console.log(`Step updated to ${response} after confirmations update`);
+
+      // TODO : this updateStep handling incrementation only (need to fix)
+       /*const response = await updateFormationStep(formationId);
+       console.log(`Step updated to ${response} after confirmations update`);*/
        
     }
   };
