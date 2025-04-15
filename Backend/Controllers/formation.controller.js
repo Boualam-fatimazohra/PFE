@@ -6,8 +6,8 @@ const Notification = require('../Models/notification.model.js');
 const { cloudinary } = require('../Config/cloudinaryConfig.js');
 const FormationDraft = require('../Models/formationDraft.model'); // Assurez-vous d'importer le modèle
 const { determineFormationStatus } = require('../utils/formationUtils.js')
-
-
+const BeneficiaireFormation = require("../Models/beneficiairesFormation.js");
+const mongoose=require("mongoose");
 //  debut : creation d'un formation par un formateur bien précis :
 const createFormation = async (req, res) => {
   console.log("Create Formation")
@@ -225,41 +225,112 @@ const UpdateFormation = async (req, res) => {
 };
 
 // Delete Formation by Id
+// const DeleteFormation = async (req, res) => {
+//   const { id } = req.params; 
+//   try {
+//     // Get the formation first to get the image URL
+//     const formation = await Formation.findById(id);
+    
+//     if (!formation) {
+//       return res.status(404).json({ message: 'Formation non trouvée avec l\'ID fourni.' });
+//     }
+    
+//     // If there's an image, delete it from Cloudinary
+//     if (formation.image) {
+//       // Extract the public_id from the Cloudinary URL
+//       const publicId = formation.image.split('/').pop().split('.')[0];
+      
+//       try {
+//         await cloudinary.uploader.destroy('formations/' + publicId);
+//       } catch (cloudinaryError) {
+//         console.error('Error deleting image from Cloudinary:', cloudinaryError);
+//         // Continue with deletion even if Cloudinary delete fails
+//       }
+//     }
+    
+//     // Delete the formation from the database
+//     await Formation.findByIdAndDelete(id);
+    
+//     res.status(200).json({ message: 'Formation supprimée avec succès.' });
+//   } catch (error) {
+//     res.status(500).json({
+//       message: 'Erreur lors de la suppression de la formation',
+//       error: error.message,
+//     });
+//   }
+// };
 const DeleteFormation = async (req, res) => {
-  const { id } = req.params; 
+  const { id } = req.params;
+  
+  // Démarrer une session pour la transaction
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  
   try {
-    // Get the formation first to get the image URL
-    const formation = await Formation.findById(id);
+    // Vérifier si l'ID est un ObjectId MongoDB valide
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'ID de formation invalide.' });
+    }
+    
+    // Récupérer la formation
+    const formation = await Formation.findById(id).session(session);
     
     if (!formation) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(404).json({ message: 'Formation non trouvée avec l\'ID fourni.' });
     }
     
-    // If there's an image, delete it from Cloudinary
+    // Supprimer les associations BeneficiareFormation
+    const beneficiareDeleteResult = await BeneficiaireFormation.deleteMany({ formation: id }).session(session);
+    console.log(`${beneficiareDeleteResult.deletedCount} associations formation-bénéficiaire supprimées`);
+    
+    // Supprimer l'image de Cloudinary si elle existe
     if (formation.image) {
-      // Extract the public_id from the Cloudinary URL
-      const publicId = formation.image.split('/').pop().split('.')[0];
-      
       try {
+        // Extraire le public_id de l'URL Cloudinary
+        const publicId = formation.image.split('/').pop().split('.')[0];
         await cloudinary.uploader.destroy('formations/' + publicId);
+        console.log(`Image supprimée de Cloudinary: ${publicId}`);
       } catch (cloudinaryError) {
-        console.error('Error deleting image from Cloudinary:', cloudinaryError);
-        // Continue with deletion even if Cloudinary delete fails
+        console.error('Erreur lors de la suppression de l\'image sur Cloudinary:', cloudinaryError);
+        // Ne pas arrêter le processus pour une erreur Cloudinary
       }
     }
     
-    // Delete the formation from the database
-    await Formation.findByIdAndDelete(id);
+    // Supprimer la formation
+    const deleteResult = await Formation.findByIdAndDelete(id).session(session);
     
-    res.status(200).json({ message: 'Formation supprimée avec succès.' });
+    if (!deleteResult) {
+      throw new Error('Échec de la suppression de la formation');
+    }
+    
+    // Valider la transaction
+    await session.commitTransaction();
+    session.endSession();
+    
+    return res.status(200).json({ 
+      message: 'Formation supprimée avec succès.',
+      details: {
+        formationId: id,
+        beneficiairesSupprimes: beneficiareDeleteResult.deletedCount
+      }
+    });
+    
   } catch (error) {
-    res.status(500).json({
+    // Annuler la transaction en cas d'erreur
+    await session.abortTransaction();
+    session.endSession();
+    
+    console.error('Erreur complète:', error);
+    
+    return res.status(500).json({
       message: 'Erreur lors de la suppression de la formation',
       error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };
-
 const getFormationsByManager = async (req, res) => {
   try {
     // 1. Get user ID from authentication
