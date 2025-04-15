@@ -174,3 +174,20 @@ export const getBeneficiairesByFormation = async (formationId: string) => {
     throw error;
   }
 };
+
+/**
+ * 
+ * @param beneficiairesList (id: beneficiaireFormation, boolean: confirme/non)
+ * @returns 
+ */
+export const updateReglementStatus = async (beneficiairesList: { id: string; confirmationReglementInterieur: boolean }[]): Promise<any> => {
+  try {
+    const response = await apiClient.put('/beneficiaires/reglement-status', {
+      beneficiairesList
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error updating règlement intérieur status:", error);
+    throw error;
+  }
+};

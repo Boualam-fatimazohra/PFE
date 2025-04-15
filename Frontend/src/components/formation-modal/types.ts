@@ -172,6 +172,8 @@ export interface BeneficiaireWithPresenceResponse {
   formationId: string;
   presences: any[]; 
   autresFormations: string[]; 
+  confirmationReglementInterieur?: boolean; // Match the backend property name
+  reglementStatus?: "confirmed" | "declined" | "pending";
 }
 
 export interface PresenceData {
