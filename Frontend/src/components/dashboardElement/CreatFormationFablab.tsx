@@ -3,13 +3,13 @@ import { useState, useRef, useEffect } from "react";
 import { Eye, Download, Trash2, PlusCircle, ChevronDown, ChevronLeft, ChevronRight, Search, Filter, Loader2 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import DatePicker from "react-datepicker";
+
 import "react-datepicker/dist/react-datepicker.css";
 import styled from "styled-components";
 import { createGlobalStyle } from "styled-components";
 import { fr } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
-import Select from "react-select";
-import { createEvenement } from '@/services/evenementService';
+import { createFormation } from '@/services/formationfabService';
 
 // Move styled-components GlobalStyle outside of component
 const GlobalStyle = createGlobalStyle`
@@ -142,81 +142,15 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
-// Improved participant fetch function with better error handling
-// Improved participant fetch function with proper handling of the API response structure
-const fetchParticipantOptions = async () => {
-  const fallbackOptions = [
-    { label: "Mohamed Bikarran", value: "645f3d789a123b456c7890de" },
-    { label: "Mehdi Iddouch", value: "645f3d789a123b456c7890df" },
-    { label: "Hamza Lambara", value: "645f3d789a123b456c7890e0" }
-  ];
-  
-  try {
-    // Add a timeout to prevent long-hanging requests
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
-    
-    const response = await fetch('http://localhost:5000/api/user/total-details', {
-      signal: controller.signal,
-      headers: {
-        'Accept': 'application/json'
-      },
-      credentials: 'include' // Include if you need to send cookies
-    });
-    
-    clearTimeout(timeoutId);
-    
-    // Check for non-200 responses first
-    if (!response.ok) {
-      console.error(`Server response error: ${response.status}`);
-      return fallbackOptions;
-    }
-    
-    // Check content type and handle HTML response properly
-    const contentType = response.headers.get('content-type');
-    if (!contentType || !contentType.includes('application/json')) {
-      console.error(`Expected JSON but got ${contentType || 'unknown content type'}`);
-      
-      if (contentType && contentType.includes('text/html')) {
-        console.warn("Received HTML response - this could indicate an authentication issue or server error");
-      }
-      
-      return fallbackOptions;
-    }
-    
-    const data = await response.json();
-    
-    // Handle the specific API response structure - extract the utilisateursDetails array
-    if (data && data.utilisateursDetails && Array.isArray(data.utilisateursDetails)) {
-      return data.utilisateursDetails.map(user => ({
-        label: `${user.prenom || ''} ${user.nom || ''}`.trim() || user.nomComplet || "Unnamed User",
-        value: user.id || user._id,
-        type: user.type // Keep this information if needed for filtering
-      }));
-    } else {
-      console.error("API did not return the expected structure:", data);
-      return fallbackOptions;
-    }
-    
-  } catch (error) {
-    if (error.name === 'AbortError') {
-      console.error("Fetch request timed out");
-    } else {
-      console.error("Failed to fetch participant options:", error);
-    }
-    
-    return fallbackOptions;
-  }
-};
-
 interface FormState {
   title: string;
   description: string;
   category: string;
   level: string;
-  imageFormation: File | string | null;  // Allow both File and string
   participants: string[];
-  Parametre: "Public" | "Priver";
+  imageFormation: File | string | null;
+  Niveau: "Débutant" | "Intermédiaire" | "Avancé" | "Expert" | "Moyen";
+  Parametre: "En Cours" | "Avenir" |"Replanifier" |"Terminé";
   registrationLink: string;
   dateDebut: string;
   dateFin: string;
@@ -230,29 +164,22 @@ interface UploadedFile {
   type: 'image' | 'participant-list';
 }
 
-interface ParticipantOption {
-  label: string;
-  value: string;
-  nom?: string;
-  prenom?: string;
-  type?: string;
-}
-
 const initialFormState: FormState = {
   title: "",
   description: "",
   category: "",
   level: "",
+  participants: [],
+  Niveau: "Débutant",
+  Parametre: "Avenir",
   imageFormation: null,
-  Parametre: "Public",
-  participants: [], 
   registrationLink: "",
   dateDebut: "",
   dateFin: "",
   tags: "",
 };
 
-const CreatEvent = () => {
+const CreatFormationFablab = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [formState, setFormState] = useState<FormState>(initialFormState);
@@ -264,12 +191,18 @@ const CreatEvent = () => {
   const [dateFin, setDateFin] = useState<Date | null>(null);
   const [dateDebut, setDateDebut] = useState<Date | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
-  const [selectedParticipants, setSelectedParticipants] = useState([]);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
-  const [participantOptions, setParticipantOptions] = useState<ParticipantOption[]>([]);
-  const [isLoadingParticipants, setIsLoadingParticipants] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const participantInputRef = useRef<HTMLInputElement>(null);
+  const [participantFile, setParticipantFile] = useState<File | null>(null);
+  const [participantFileName, setParticipantFileName] = useState<string | null>(null);
+
+  const handleParticipantButtonClick = () => {
+    if (participantInputRef.current) {
+      participantInputRef.current.click();
+    }
+  };
 
   const [userId, setUserId] = useState<string>("user-id-actuel"); // This would typically come from auth context
   
@@ -289,72 +222,45 @@ const CreatEvent = () => {
     setMongoose(mockMongoose);
   }, []);
 
-  // Effect to fetch participant options from the backend with retry logic
-  useEffect(() => {
-    let isMounted = true;
-    let retryCount = 0;
-    const maxRetries = 2;
-    
-    const loadParticipants = async () => {
-      if (!isMounted) return;
-      
-      setIsLoadingParticipants(true);
-      setApiError(null);
-      
-      try {
-        const options = await fetchParticipantOptions();
-        if (isMounted) {
-          setParticipantOptions(options);
-        }
-      } catch (error) {
-        console.error("Error loading participants:", error);
-        if (isMounted) {
-          setApiError("Failed to load participants. Using fallback data.");
-          // Set fallback options in case of error
-          setParticipantOptions([
-            { label: "Mohamed Bikarran", value: "645f3d789a123b456c7890de" },
-            { label: "Mehdi Iddouch", value: "645f3d789a123b456c7890df" },
-            { label: "Hamza Lambara", value: "645f3d789a123b456c7890e0" }
-          ]);
-          
-          // Implement retry logic
-          if (retryCount < maxRetries) {
-            retryCount++;
-            console.log(`Retrying participant fetch (${retryCount}/${maxRetries})...`);
-            setTimeout(loadParticipants, 2000); // Retry after 2 seconds
-          }
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoadingParticipants(false);
-        }
-      }
-    };
-
-    loadParticipants();
-    
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
   // Validate form before submission
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     
+    // Basic field validations
     if (!formState.title.trim()) newErrors.title = "Le titre est requis";
+    if (formState.title.trim().length < 5) newErrors.title = "Le titre doit contenir au moins 5 caractères";
+    
     if (!formState.description.trim()) newErrors.description = "La description est requise";
+    if (formState.description.trim().length < 20) newErrors.description = "La description doit contenir au moins 20 caractères";
+    
     if (!dateDebut) newErrors.dateDebut = "La date de début est requise";
     if (!dateFin) newErrors.dateFin = "La date de fin est requise";
+    
     if (dateDebut && dateFin && dateDebut > dateFin) {
       newErrors.dateFin = "La date de fin doit être postérieure à la date de début";
     }
+    
     if (!formState.category) newErrors.category = "La catégorie est requise";
+    if (!formState.Niveau) newErrors.Niveau = "Le niveau est requis";
+    
+    // Image validation (seulement jpeg, png, jpg autorisés)
+    if (!formState.imageFormation && !imagePreviewUrl) {
+      newErrors.imageFormation = "Une image est requise pour la formation";
+    } else if (formState.imageFormation instanceof File) {
+      const fileType = formState.imageFormation.type;
+      if (fileType !== 'image/jpeg' && fileType !== 'image/png' && fileType !== 'image/jpg') {
+        newErrors.imageFormation = "Seules les images JPG, JPEG et PNG sont acceptées";
+      }
+    }
     
     return newErrors;
   };
 
   const handleSubmit = async () => {
+    // Reset errors
+    setErrors({});
+    setApiError(null);
+    
     // Validate form
     const newErrors = validateForm();
     if (Object.keys(newErrors).length > 0) {
@@ -363,60 +269,53 @@ const CreatEvent = () => {
     }
     
     setIsSubmitting(true);
-    setApiError(null);
     
     try {
-      // Check if mongoose is available
-      if (!mongoose) {
-        throw new Error("Mongoose n'est pas disponible");
-      }
-  
+      // Format dates correctly for API
+      const formattedDateDebut = dateDebut ? dateDebut.toISOString() : '';
+      const formattedDateFin = dateFin ? dateFin.toISOString() : '';
+      
       // Prepare data for API
-      const eventData = {
-        titre: formState.title,
-        description: formState.description,
-        dateDebut: dateDebut,
-        dateFin: dateFin,
-        heureDebut: dateDebut?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || '',
-        heureFin: dateFin?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || '',
-        categorie: formState.category,
-        participants: formState.participants.map(participantId => mongoose.Types.ObjectId(participantId)),
-        Parametre: formState.Parametre,
-        image: formState.imageFormation,
-        createdBy: mongoose.Types.ObjectId(userId),
-      };
-  
-      // Adding image if exists
-      if (formState.imageFormation) {
-        // In a real app, you would upload the image to a server and get back a URL
-        // This is a simplified example
-        eventData.image = "image_url_placeholder";
+      const formData = new FormData();
+      
+      // Map frontend field names to backend expectations
+      formData.append('nom', formState.title);
+      formData.append('description', formState.description);
+      formData.append('dateDebut', formattedDateDebut);
+      formData.append('dateFin', formattedDateFin);
+      formData.append('status', formState.Parametre);
+      formData.append('categorie', formState.category);
+      formData.append('niveau', formState.Niveau);
+      
+      // Add image if exists - IMPORTANT - use the field name "image" to match the backend
+      if (formState.imageFormation instanceof File) {
+        formData.append('image', formState.imageFormation);
       }
       
-      // API call with timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      // Participants file est géré séparément car le backend ne supporte pas ce format
+      // Pour l'instant, désactivons cette fonctionnalité
       
-      const createdEvent = await createEvenement(eventData);
-      clearTimeout(timeoutId);
+      // Add registration link if exists
+      if (formState.registrationLink) {
+        formData.append('lienInscription', formState.registrationLink);
+      }
       
-      // Redirect or show success message
-      console.log('Événement créé:', createdEvent);
+      // Add tags if exists
+      if (formState.tags) {
+        formData.append('tags', formState.tags);
+      }
+      
+      // API call
+      const createdEvent = await createFormation(formData);
+      
+      console.log('Formation créée avec succès:', createdEvent);
+      
+      // Navigate to the events list
       navigate('/manager/Ecolcode');
       
-      
     } catch (error) {
-      console.error('Erreur lors de la création de l\'événement:', error);
-      
-      if (error.name === 'AbortError') {
-        setApiError("La requête a pris trop de temps. Veuillez réessayer.");
-      } else if (error.response) {
-        setApiError(`Erreur serveur: ${error.response.status} - ${error.response.data?.message || 'Message d\'erreur non disponible'}`);
-      } else {
-        setApiError("Erreur lors de la création de l'événement. Veuillez réessayer.");
-      }
-      
-      // Keep form data intact for retry
+      console.error('Erreur lors de la création de la formation:', error);
+      setApiError(error.message || "Erreur lors de la création de la formation. Vérifiez que tous les fichiers respectent les formats autorisés.");
     } finally {
       setIsSubmitting(false);
     }
@@ -426,9 +325,76 @@ const CreatEvent = () => {
     navigate(-1);
   };
   
+  type UploadedFile = {
+    name: string;
+    data: string; // base64 string
+    type: 'image' | 'pdf' | 'excel' | 'word' | 'other';
+  };
+  
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      const file = event.target.files[0];
+  
+      // Taille max : 2 Mo
+      if (file.size > 2 * 1024 * 1024) {
+        setErrors(prev => ({ ...prev, file: "Le fichier est trop volumineux. La taille maximum est de 2MB." }));
+        event.target.value = "";
+        return;
+      }
+  
+      setFormState(prevState => ({ ...prevState, uploadedFile: file }));
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.file;
+        return newErrors;
+      });
+  
+      const reader = new FileReader();
+  
+      reader.onload = (e) => {
+        if (e.target && e.target.result) {
+          const dataUrl = e.target.result as string;
+          const fileType = file.type;
+  
+          // Détection du type pour prévisualisation (facultatif)
+          let type: 'image' | 'pdf' | 'excel' | 'word' | 'other' = 'other';
+          if (fileType.includes('image')) type = 'image';
+          else if (fileType.includes('pdf')) type = 'pdf';
+          else if (fileType.includes('spreadsheet') || file.name.endsWith('.xls') || file.name.endsWith('.xlsx')) type = 'excel';
+          else if (fileType.includes('word') || file.name.endsWith('.doc') || file.name.endsWith('.docx')) type = 'word';
+  
+          setUploadedFiles(prev => [
+            ...prev.filter(f => f.type !== type), 
+            { 
+              name: file.name, 
+              data: dataUrl, 
+              type 
+            }
+          ]);
+  
+          // Si tu veux afficher une preview image uniquement
+          if (type === 'image') {
+            setImagePreviewUrl(dataUrl);
+          }
+        }
+      };
+  
+      reader.readAsDataURL(file);
+      event.target.value = "";
+    }
+  };
+  
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
       const file = event.target.files[0];
+
+      // Vérifier si le type de fichier est autorisé
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+      if (!allowedTypes.includes(file.type)) {
+        setErrors(prev => ({...prev, imageFormation: "Seuls les formats JPG, JPEG et PNG sont acceptés."}));
+        event.target.value = "";
+        return;
+      }
 
       if (file.size > 2 * 1024 * 1024) {
         setErrors(prev => ({...prev, imageFormation: "Le fichier est trop volumineux. La taille maximum est de 2MB."}));
@@ -467,6 +433,15 @@ const CreatEvent = () => {
     setUploadedFiles(prev => prev.filter(file => file.type !== 'image'));
   };
 
+  // Désactivé car le backend ne supporte pas ce format
+  const handleParticipantFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      alert("Le téléchargement de listes de participants n'est pas encore disponible. Veuillez contacter l'administrateur du système.");
+      event.target.value = "";
+      return;
+    }
+  };
+
   const levelOptions = [
     { label: "type1", value: "type1" },
     { label: "type2", value: "type2" },
@@ -474,14 +449,24 @@ const CreatEvent = () => {
   ];
   
   const categoryOptions = [
-    { label: "Meetings", value: "Meetings" },
+    { label: "Dev", value: "Dev" },
     { label: "type2", value: "type2" },
     { label: "type3", value: "type3" }
   ];
   
+  const NiveauOptions = [
+    { label: "Débutant", value: "Débutant" },
+    { label: "Intermédiaire", value: "Intermédiaire" },
+    { label: "Avancé", value: "Avancé" },
+    { label: "Expert", value: "Expert" },
+    { label: "Moyen", value: "Moyen" }
+  ];
+  
   const statusOptions = [
-    { label: "Public", value: "Public" },
-    { label: "Priver", value: "Priver" }
+    { label: "En Cours", value:  "En Cours" },
+    { label: "Avenir", value: "Avenir" },
+    { label: "Replanifier", value: "Replanifier" },
+    { label: "Terminé", value: "Terminé" }
   ];
   
   const handleImageButtonClick = () => {
@@ -507,7 +492,7 @@ const CreatEvent = () => {
         </div>
         
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-black mb-6">Créer un nouvel événement</h1>
+          <h1 className="text-2xl font-bold text-black mb-6">Créer une nouvelle formation</h1>
           <div className="flex space-x-2">
             <button 
               className="px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700"
@@ -553,7 +538,7 @@ const CreatEvent = () => {
         <div className="bg-white rounded-md border border-gray-200 p-6 w-full mb-6">
           <div className="mb-4">
             <label className="block text-sm font-bold text-black mb-1">
-              Titre de l'événement <span className="text-red-500">*</span>
+              Titre de Formation <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -564,7 +549,7 @@ const CreatEvent = () => {
                   setErrors({...errors, title: ''});
                 }
               }}
-              placeholder="Réunion équipe Orange Digital Center"
+              placeholder="Reparation telephone : gestion Reparation"
               className={`w-full p-2.5 border ${errors.title ? 'border-red-500' : 'border-gray-300'} rounded-md`}
             />
             {errors.title && <p className="mt-1 text-sm text-red-500">{errors.title}</p>}
@@ -582,7 +567,7 @@ const CreatEvent = () => {
                   setErrors({...errors, description: ''});
                 }
               }}
-              placeholder="Réunion de l'équipe du Centre Digital Orange : nous avons discuté en profondeur des projets en cours, en examinant les défis rencontrés et les succès obtenus."
+              placeholder="Formation en réparation de téléphones : nous avons exploré les différentes pannes courantes, appris à diagnostiquer les problèmes matériels et logiciels, et pratiqué les techniques de démontage et de remplacement de composants."
               className={`w-full p-2.5 border ${errors.description ? 'border-red-500' : 'border-gray-300'} rounded-md h-32`}
             />
             {errors.description && <p className="mt-1 text-sm text-red-500">{errors.description}</p>}
@@ -660,12 +645,12 @@ const CreatEvent = () => {
           <div className="grid md:grid-cols-3 gap-6 mb-4 max-w-7xl w-full">
             <div>
               <label className="block text-sm font-bold text-black mb-1">
-                Paramètres de l'événement <span className="text-red-500">*</span>
+              Status  <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <select
                   value={formState.Parametre}
-                  onChange={(e) => setFormState({ ...formState, Parametre: e.target.value as "Public" | "Priver"})}
+                  onChange={(e) => setFormState({ ...formState, Parametre: e.target.value as "En Cours" | "Avenir" |"Replanifier" |"Terminé"})}
                   className="w-full p-2.5 border border-gray-300 rounded-[4px] appearance-none"
                 >
                   {statusOptions.map((option) => (
@@ -701,40 +686,32 @@ const CreatEvent = () => {
             </div>
             <div>
               <label className="block text-sm font-bold text-black mb-1">
-                Participants <span className="text-red-500">*</span>
+                Niveau <span className="text-red-500">*</span>
               </label>
               <div className="relative">
-                {isLoadingParticipants ? (
-                  <div className="flex items-center p-2.5 border border-gray-300 rounded-[4px]">
-                    <Loader2 className="animate-spin mr-2" size={16} />
-                    <span>Chargement des participants...</span>
-                  </div>
-                ) : (
-                  <Select
-                    options={participantOptions}
-                    isMulti
-                    value={participantOptions.filter(option => 
-                      formState.participants.includes(option.value)
-                    )}
-                    onChange={(selectedOptions) => {
-                      const selected = selectedOptions || [];
-                      setFormState({
-                        ...formState,
-                        participants: selected.map(option => option.value)
-                      });
-                    }}
-                    className="w-full"
-                    classNamePrefix="select"
-                    placeholder="Sélectionnez les participants"
-                  />
-                )}
+                <select
+                  value={formState.Niveau}
+                  onChange={(e) => {
+                    const value = e.target.value as "Débutant" | "Intermédiaire" | "Avancé" | "Expert" | "Moyen";
+                    setFormState({ ...formState, Niveau: value });
+                  }}
+                  className="w-full p-2.5 border border-gray-300 rounded-[4px] appearance-none"
+                >
+                  <option value="">Sélectionnez un niveau</option>
+                  {NiveauOptions.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                  <ChevronDown size={20} className="text-gray-500" />
+                </div>
               </div>
               {errors.participants && <p className="mt-1 text-sm text-red-500">{errors.participants}</p>}
             </div>
           </div>  
           <div className="mb-4">
             <label className="block text-sm font-bold text-black mb-1">
-              Bannière de l'événement <span className="text-red-500">*</span>
+              Image de Formation <span className="text-red-500">*</span>
             </label>
             <div className="border-2 border-dashed border-gray-300 p-6 relative rounded-[4px]">
               {imagePreviewUrl ? (
@@ -791,45 +768,79 @@ const CreatEvent = () => {
               {errors.imageFormation && <p className="mt-1 text-sm text-red-500">{errors.imageFormation}</p>}
             </div>
           </div>
+          <div className="mb-4">
+  <label className="block text-sm font-bold text-black mb-1">
+    Liste des participant <span className="text-red-500">*</span>
+  </label>
+  <div className="border-2 border-dashed border-gray-300 p-6 relative rounded-[4px]">
+    {participantFileName ? (
+      <div className="flex items-center">
+        <span className="text-sm text-gray-700 truncate flex-1">{participantFileName}</span>
+        <button
+          onClick={() => { setParticipantFile(null); setParticipantFileName(null); }}
+          className="p-1 text-gray-600 hover:text-red-500 ml-2"
+        >
+          <Trash2 size={20} />
+        </button>
+      </div>
+    ) : (
+      <div className="flex flex-col items-center">
+        <input
+          type="file"
+          onChange={handleParticipantFileChange}
+          accept=".xls,.xlsx,.csv"
+          className="hidden"
+          ref={participantInputRef}
+        />
+        <button
+          onClick={handleParticipantButtonClick}
+          className="flex flex-col items-center cursor-pointer"
+          type="button"
+        >
+          <div className="w-12 h-12 mb-4 text-black">
+          <svg width="68" height="68" viewBox="0 0 68 68" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M29.75 38.25H38.25V21.25H51L34 4.25L17 21.25H29.75V38.25ZM42.5 28.6875V35.241L61.9608 42.5L34 52.9253L6.03925 42.5L25.5 35.241V28.6875L0 38.25V55.25L34 68L68 55.25V38.25L42.5 28.6875Z" fill="black"/>
+          </svg>
+          </div>
+          <p className="mt-2 text-sm text-gray-500">
+            Maximum file size: <strong>2 MB</strong>. Supported files: xls, xlsx, csv.
+          </p>
+          <span className="mt-3 border-2 border-black px-4 py-2 text-black font-bold text-sm">
+            Select a file
+          </span>
+        </button>
+      </div>
+    )}
+    {errors.participantFile && <p className="mt-1 text-sm text-red-500">{errors.participantFile}</p>}
+  </div>
+</div>
         </div>
         
         <div className="bg-white rounded-[4px] border border-gray-200 p-6 w-full mb-4">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-bold">Location</h2>
+            <label className="block text-lg font-bold text-black mb-1">
+            Lien d’inscription <span className="text-red-500">*</span>
+            </label>
             <button className="bg-black text-white px-6 py-2 rounded-[4px] text-sm font-medium">
               Ajouter un lien
             </button>
           </div>
 
-          <div className="flex items-center gap-3 mb-3">
-            <select className="border border-gray-300 rounded-[4px] p-2.5">
-              <option>Online</option>
-              <option>Présentiel</option>
-            </select>
-            <input
-              type="url"
-              className="flex-1 p-2.5 border border-gray-300 rounded-[4px]"
-              placeholder="https://"
-            />
-            <button className="bg-gray-200 text-gray-700 px-6 py-2.5 rounded-[4px] text-sm font-medium min-w-24">
-              Ajouter
-            </button>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <select className="border border-gray-300 rounded-[4px] p-2.5">
-              <option>Présentiel</option>
-              <option>Online</option>
-            </select>
-            <input
-              type="url"
-              className="flex-1 p-2.5 border border-gray-300 rounded-[4px]"
-              placeholder="https://"
-            />
-            <button className="bg-gray-200 text-gray-700 px-6 py-2.5 rounded-[4px] text-sm font-medium min-w-24">
-              Ajouter
-            </button>
-          </div>
+          <div className="flex flex-col gap-2 mb-3">
+          <label className="block text-sm font-bold text-black mb-1">
+          Insérer Lien <span className="text-red-500">*</span>
+            </label>
+  <div className="flex items-center gap-3">
+    <input
+      type="url"
+      className="flex-1 p-2.5 border border-gray-300 rounded-[4px]"
+      placeholder="https://"
+    />
+    <button className="bg-gray-200 text-gray-700 px-6 py-2.5 rounded-[4px] text-sm font-medium min-w-24">
+      Ajouter
+    </button>
+  </div>
+</div>
         </div>
         
         <div className="flex justify-end mt-6">
@@ -841,7 +852,7 @@ const CreatEvent = () => {
   {isSubmitting ? (
     <Loader2 className="animate-spin" />
   ) : (
-    "Publier l'événement"
+    "Enregistrer"
   )}
 </button>
         </div>
@@ -850,4 +861,4 @@ const CreatEvent = () => {
   );
 };
 
-export default CreatEvent;
+export default CreatFormationFablab;

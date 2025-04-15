@@ -2,114 +2,94 @@ const FormationFab = require('../Models/formationFab.model');
 const FormationBase = require('../Models/formationBase.model');
 const EncadrantFormation = require('../Models/encadrantFormation.model');
 const mongoose = require('mongoose');
+const validateFile = (file, allowedTypes, maxSize) => {
+  if (!file) return false;
+  if (file.size > maxSize) return false;
+  return allowedTypes.includes(file.mimetype);
+};
 
 /**
  * Create a new FormationFab
  * Creates both a FormationBase and links it to a FormationFab
  */
-const createFormationFab = async (req, res) => {
+ const createFormationFab = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const { 
-      // Base formation fields
-      nom, 
-      dateDebut, 
-      dateFin, 
-      description, 
-      image,
+    // Validation des fichiers
+    if (req.files) {
+      if (req.files.image && !validateFile(req.files.image[0], ['image/jpeg', 'image/png'], 2 * 1024 * 1024)) {
+        return res.status(400).json({ message: "L'image doit être un JPEG ou PNG de moins de 2MB" });
+      }
       
-      // FormationFab specific fields
+      if (req.files.participants && !validateFile(req.files.participants[0], ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'], 5 * 1024 * 1024)) {
+        return res.status(400).json({ message: "La liste des participants doit être un fichier Excel (.xlsx) de moins de 5MB" });
+      }
+    }
+
+    const { 
+      nom: title,
+      description,
+      dateDebut,
+      dateFin,
       status,
       categorie,
       niveau,
       tags,
-      tauxSatisfaction,
-      lienInscription,
-      
-      // Single encadrant ID for assignment
-      encadrantId
+      lienInscription: registrationLink
     } = req.body;
 
-    // Validate required fields
-    if (!nom || !dateDebut || !dateFin) {
-      return res.status(400).json({ message: "Le nom, dateDebut, dateFin de la formation est obligatoire" });
+    // Validation des champs requis
+    if (!title || !dateDebut || !dateFin || !status || !categorie || !niveau || !registrationLink) {
+      return res.status(400).json({ message: "Tous les champs obligatoires doivent être remplis" });
     }
 
-    // 1. Create the base formation
+    // 1. Créer la formation de base
     const formationBase = new FormationBase({
-      nom,
-      dateDebut: dateDebut,
-      dateFin: dateFin,
-      description: description || "Aucune description",
-      image: req.file ? req.file.path : image
+      nom: title,
+      dateDebut: new Date(dateDebut),
+      dateFin: new Date(dateFin),
+      description,
+      image: req.files?.image?.[0]?.path || null
     });
 
     const savedBaseFormation = await formationBase.save({ session });
 
-    // 2. Create the FormationFab that references the base
+    // 2. Créer la FormationFab
     const formationFab = new FormationFab({
       baseFormation: savedBaseFormation._id,
-      status: status || "Avenir",
-      categorie: categorie || "type1",
-      niveau: niveau || "type1",
+      status,
+      categorie,
+      niveau,
       tags: tags || "",
-      tauxSatisfaction: tauxSatisfaction || 0,
-      lienInscription: lienInscription || ""
+      tauxSatisfaction: 0, // Valeur par défaut
+      lienInscription: registrationLink
     });
 
     const savedFormationFab = await formationFab.save({ session });
 
-    // 3. Assign a single encadrant if provided
-    if (encadrantId) {
-      // Validate encadrant ID
-      if (!mongoose.Types.ObjectId.isValid(encadrantId)) {
-        return res.status(400).json({ message: "Format d'ID d'encadrant invalide" });
-      }
-      
-      // Create the assignment
-      const assignment = new EncadrantFormation({
-        encadrant: encadrantId,
-        formationBase: savedBaseFormation._id,
-        dateAssignment: new Date()
-      });
-      
-      await assignment.save({ session });
+    // 3. Traiter le fichier participants si présent
+    if (req.files?.participants) {
+      // Ici vous devriez ajouter la logique pour traiter le fichier Excel
+      // et créer les bénéficiaires associés à la formation
     }
 
-    // Commit the transaction
     await session.commitTransaction();
     session.endSession();
 
-    // Fetch fully populated result for response
-    const result = await FormationFab.findById(savedFormationFab._id)
-      .populate('baseFormation');
-
-    // Fetch associated encadrant (single)
-    const encadrantAssignment = encadrantId ? await EncadrantFormation.findOne({
-      formationBase: savedBaseFormation._id
-    }).populate({
-      path: 'encadrant',
-      populate: {
-        path: 'utilisateur',
-        select: 'nom prenom email'
-      }
-    }) : null;
-
     res.status(201).json({
-      message: "Formation Fab créée avec succès",
-      formationFab: result,
-      encadrant: encadrantAssignment
+      message: "Formation créée avec succès",
+      formation: await FormationFab.findById(savedFormationFab._id).populate('baseFormation')
     });
+
   } catch (error) {
-    // Abort transaction in case of error
     await session.abortTransaction();
     session.endSession();
-
-    console.error("Error creating formation fab:", error);
+    
+    console.error("Erreur:", error);
     res.status(500).json({ 
-      message: "Erreur lors de la création de la formation Fab", 
+      message: "Erreur serveur", 
       error: error.message 
     });
   }

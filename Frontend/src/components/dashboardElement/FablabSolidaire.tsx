@@ -422,13 +422,19 @@ const FablabSolidaire = () => {
       </div>
       Gestion des Consommables
     </a>
-    <a href="#" className="p-1.4 flex items-center bg-white text-black rounded-[4px] hover:bg-gray-100"style={{ padding: '0.40rem' }}>
-      <div className="mr-3 text-blue-500">
-      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="20" viewBox="0 0 18 20" fill="none">
+    <Link 
+  to="/manager/CalendrierFablab" 
+  className="p-1.4 flex items-center bg-white text-black rounded-[4px] hover:bg-gray-100"
+  style={{ padding: '0.40rem' }}
+>
+  <div className="mr-3 text-blue-500">
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="20" viewBox="0 0 18 20" fill="none">
 <path d="M3.85714 1.25V2.5H1.92857C0.863839 2.5 0 3.33984 0 4.375V6.25H18V4.375C18 3.33984 17.1362 2.5 16.0714 2.5H14.1429V1.25C14.1429 0.558594 13.5683 0 12.8571 0C12.146 0 11.5714 0.558594 11.5714 1.25V2.5H6.42857V1.25C6.42857 0.558594 5.85402 0 5.14286 0C4.4317 0 3.85714 0.558594 3.85714 1.25ZM18 7.5H0V18.125C0 19.1602 0.863839 20 1.92857 20H16.0714C17.1362 20 18 19.1602 18 18.125V7.5ZM9 9.6875C9.53438 9.6875 9.96429 10.1055 9.96429 10.625V12.8125H12.2143C12.7487 12.8125 13.1786 13.2305 13.1786 13.75C13.1786 14.2695 12.7487 14.6875 12.2143 14.6875H9.96429V16.875C9.96429 17.3945 9.53438 17.8125 9 17.8125C8.46562 17.8125 8.03571 17.3945 8.03571 16.875V14.6875H5.78571C5.25134 14.6875 4.82143 14.2695 4.82143 13.75C4.82143 13.2305 5.25134 12.8125 5.78571 12.8125H8.03571V10.625C8.03571 10.1055 8.46562 9.6875 9 9.6875Z" fill="black"/>
-</svg>      </div>
-      Planifier une formation
-    </a>
+</svg> 
+  </div>
+  Planifier une formation
+</Link>
+
   </div>
 </div>
 </div>

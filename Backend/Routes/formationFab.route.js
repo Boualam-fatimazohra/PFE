@@ -21,10 +21,13 @@ const {
  * @access Private - Admin, Manager
  */
 router.post(
-  "/", 
+  "/addEvenement", 
   authenticated, 
   authorizeRoles('Admin', 'Manager'), 
-  upload.single("image"),
+  upload.fields([
+    { name: 'image', maxCount: 1 },
+    { name: 'participants', maxCount: 1 }
+  ]),
   createFormationFab
 );
 

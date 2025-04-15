@@ -63,6 +63,7 @@ const App = () => (
                 {/* Routes publiques - Pas de protection */}
                 <Route path="/" element={<Index />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
+
                 <Route path="/verify-code" element={<VerifyPassword />} />
                 <Route path="/reset-password" element={<NewPassword />} />
                 <Route path="/ValidatePassword" element={<ValidatePassword />} />
