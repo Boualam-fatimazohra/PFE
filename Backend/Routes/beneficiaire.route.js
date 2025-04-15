@@ -12,13 +12,16 @@ const {
   updateBeneficiaireConfirmations,
   exportBeneficiairesToExcel,
   getBeneficiairesWithPresence,
-  exportBeneficiairesListToExcel
+  exportBeneficiairesListToExcel,
+  updateReglementStatus
 } = require("../Controllers/beneficiaire.controller");
 const upload = require("../utils/upload");
 const authenticated = require("../Middlewares/Authmiddleware.js");
 const RoleMiddleware = require("../Middlewares/RoleMiddleware.js");
 const authorizeFormationAccess=require("../Middlewares/FormationAccess.js");
 const { generateAndSendQRCode,verifyQRCode } = require("../Controllers/qrcode.controller.js");
+
+// get nombre beneficiaires par formateur
 router.get("/getNbrBeneficiairesParFormateur",authenticated,RoleMiddleware("Formateur"), getNombreBeneficiairesParFormateur);
 
 // Get Benef for formateur
@@ -43,23 +46,11 @@ router.get("/",
   getAllBeneficiaires
 );
 
-// Route to get a single Beneficiaire by ID (with Formation details)
-router.get("/:id", 
-  getBeneficiaireById
-);
-
 // Get benef By formation ID
 router.get("/getBeneficiaireByFormation/:id",
   authenticated,RoleMiddleware("Formateur"),
   authorizeFormationAccess("read"),
   getBeneficiaireFormation);
-
-// Route to update a Beneficiaire
-router.put("/:id",
-  authenticated,
-  RoleMiddleware("Formateur"),
-  updateBeneficiaire
-);
 
 // Route to delete a Beneficiaire
 router.delete("/deleteAll", 
@@ -91,9 +82,43 @@ router.get("/getBeneficiairesWithPresence/:formationId",
   getBeneficiairesWithPresence
 );
 
+// Route to update règlement intérieur status for multiple beneficiaires
+router.put(
+  '/reglement-status',
+  authenticated,
+  RoleMiddleware('Admin', 'Manager', 'Formateur'),
+  updateReglementStatus
+);
+
+// Test route for debugging
+router.put('/reglement-status-test', (req, res) => {
+  try {
+    res.status(200).json({
+      message: "Test successful",
+      received: req.body
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 router.post("/uploadList", 
   upload.single("file"),
   exportBeneficiairesListToExcel
 );
+
+// Route to get a single Beneficiaire by ID (with Formation details)
+router.get("/:id", 
+  getBeneficiaireById
+);
+
+// Route to update a Beneficiaire
+router.put("/:id",
+  authenticated,
+  RoleMiddleware("Formateur"),
+  updateBeneficiaire
+);
+
+
 
 module.exports = router;
