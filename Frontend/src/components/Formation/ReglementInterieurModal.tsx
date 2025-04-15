@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useState, useEffect } from "react";
-import { Check, AlertCircle, X, Filter, Download, ChevronDown, Search } from 'lucide-react';
+import { Check, AlertCircle, X, Filter, Download, Search } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -13,24 +13,19 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { toast } from "react-toastify";
+import { BeneficiaireWithPresenceResponse } from "../formation-modal/types";
+import { FormationItem } from "@/pages/types";
 
-interface Participant {
-  id: string;
-  date: string;
-  time: string;
-  lastName: string;
-  firstName: string;
-  email: string;
-  gender: string;
-  phone: string;
-  status: string;
-  reglementStatus?: "pending" | "confirmed" | "declined";
+// Enhanced participant type with string status for UI
+interface ParticipantWithStatus extends BeneficiaireWithPresenceResponse {
+  reglementStatus: "confirmed" | "declined" | "pending";
 }
 
 interface ReglementInterieurModalProps {
   isOpen: boolean;
   onClose: () => void;
-  participants: Participant[];
+  participants: ParticipantWithStatus[];
+  formation: FormationItem;
   onConfirmReglement: (participantIds: string[], action: "confirm" | "decline") => Promise<void>;
 }
 
@@ -38,13 +33,14 @@ const ReglementInterieurModal: React.FC<ReglementInterieurModalProps> = ({
   isOpen,
   onClose,
   participants,
+  formation,
   onConfirmReglement
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectAll, setSelectAll] = useState(false);
-  const [filteredParticipants, setFilteredParticipants] = useState<Participant[]>(participants);
+  const [filteredParticipants, setFilteredParticipants] = useState<ParticipantWithStatus[]>(participants);
 
   // Reset state when modal opens
   useEffect(() => {
@@ -64,9 +60,9 @@ const ReglementInterieurModal: React.FC<ReglementInterieurModalProps> = ({
       const query = searchQuery.toLowerCase().trim();
       const filtered = participants.filter(
         (p) =>
-          p.firstName.toLowerCase().includes(query) ||
-          p.lastName.toLowerCase().includes(query) ||
-          p.email.toLowerCase().includes(query)
+          p.beneficiaire.nom.toLowerCase().includes(query) ||
+          p.beneficiaire.prenom.toLowerCase().includes(query) ||
+          p.beneficiaire.email.toLowerCase().includes(query)
       );
       setFilteredParticipants(filtered);
     }
@@ -77,7 +73,7 @@ const ReglementInterieurModal: React.FC<ReglementInterieurModalProps> = ({
     if (selectAll) {
       setSelectedParticipants([]);
     } else {
-      setSelectedParticipants(filteredParticipants.map((p) => p.id));
+      setSelectedParticipants(filteredParticipants.map((p) => p.beneficiaireFormationId));
     }
     setSelectAll(!selectAll);
   };
@@ -129,7 +125,7 @@ const ReglementInterieurModal: React.FC<ReglementInterieurModalProps> = ({
   };
 
   // Get a visual status for a participant
-  const getStatusIndicator = (status?: string) => {
+  const getStatusIndicator = (status: "confirmed" | "declined" | "pending") => {
     if (status === "confirmed") {
       return (
         <div className="flex items-center text-green-600 font-medium">
@@ -153,18 +149,53 @@ const ReglementInterieurModal: React.FC<ReglementInterieurModalProps> = ({
       );
     }
   };
+  
+  // Check if the participant has any presence record
+  const hasPresenceRecord = (participant: ParticipantWithStatus): boolean => {
+    return participant.presences && participant.presences.length > 0;
+  };
+
+  // Calculate status counts
+  const confirmedCount = participants.filter(p => p.reglementStatus === "confirmed").length;
+  const pendingCount = participants.filter(p => p.reglementStatus === "pending").length;
+  const declinedCount = participants.filter(p => p.reglementStatus === "declined").length;
+  const totalCount = participants.length;
+  const confirmedPercentage = totalCount > 0 ? Math.round((confirmedCount / totalCount) * 100) : 0;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">
-            Règlement Intérieur - Confirmation des participants
+            Règlement Intérieur - {formation.title}
           </DialogTitle>
           <DialogDescription>
             Vérifiez que les participants ont pris connaissance et accepté le règlement intérieur.
           </DialogDescription>
         </DialogHeader>
+
+        {/* Statistics bar showing progress */}
+        <div className="bg-gray-100 p-3 rounded-md mb-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <span className="font-medium">Total:</span> {totalCount} participants
+            </div>
+            <div className="flex gap-4">
+              <span className="text-green-600 font-medium">
+                <Check className="w-4 h-4 inline mr-1" />
+                {confirmedCount} ({confirmedPercentage}%)
+              </span>
+              <span className="text-orange-600 font-medium">
+                <AlertCircle className="w-4 h-4 inline mr-1" />
+                {pendingCount}
+              </span>
+              <span className="text-red-600 font-medium">
+                <X className="w-4 h-4 inline mr-1" />
+                {declinedCount}
+              </span>
+            </div>
+          </div>
+        </div>
 
         <div className="flex items-center mb-4 gap-3">
           <div className="relative flex-grow mr-4">
@@ -213,26 +244,26 @@ const ReglementInterieurModal: React.FC<ReglementInterieurModalProps> = ({
               </tr>
             </thead>
             <tbody>
-              {filteredParticipants.map((participant, index) => (
-                <tr key={participant.id} className="border-t border-[#DDD] hover:bg-[#F5F5F5]">
+              {filteredParticipants.map((participant) => (
+                <tr key={participant.beneficiaireFormationId} className="border-t border-[#DDD] hover:bg-[#F5F5F5]">
                   <td className="p-3">
                     <input 
                       type="checkbox" 
                       className="border border-[#DDD] w-4 h-4"
-                      checked={selectedParticipants.includes(participant.id)}
-                      onChange={() => handleToggleParticipant(participant.id)}
+                      checked={selectedParticipants.includes(participant.beneficiaireFormationId)}
+                      onChange={() => handleToggleParticipant(participant.beneficiaireFormationId)}
+                      disabled={participant.reglementStatus === "confirmed"} // Optional: disable selection of already confirmed
                     />
                   </td>
-                  <td className="p-3 text-[#333] text-sm">{participant.lastName}</td>
-                  <td className="p-3 text-[#333] text-sm">{participant.firstName}</td>
-                  <td className="p-3 text-[#333] text-sm">{participant.email}</td>
+                  <td className="p-3 text-[#333] text-sm">{participant.beneficiaire.nom}</td>
+                  <td className="p-3 text-[#333] text-sm">{participant.beneficiaire.prenom}</td>
+                  <td className="p-3 text-[#333] text-sm">{participant.beneficiaire.email}</td>
                   <td className="p-3 text-sm">
                     <span className={cn(
                       "font-medium",
-                      participant.status === "present" && "text-[#00C31F]",
-                      participant.status === "absent" && "text-[#FF4815]"
+                      hasPresenceRecord(participant) ? "text-[#00C31F]" : "text-[#FF4815]"
                     )}>
-                      {participant.status === "present" ? "Présent(e)" : "Absent(e)"}
+                      {hasPresenceRecord(participant) ? "Présent(e)" : "Absent(e)"}
                     </span>
                   </td>
                   <td className="p-3 text-sm">
@@ -240,6 +271,13 @@ const ReglementInterieurModal: React.FC<ReglementInterieurModalProps> = ({
                   </td>
                 </tr>
               ))}
+              {filteredParticipants.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="p-4 text-center text-gray-500">
+                    Aucun participant trouvé
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -255,7 +293,7 @@ const ReglementInterieurModal: React.FC<ReglementInterieurModalProps> = ({
               disabled={isSubmitting || selectedParticipants.length === 0}
               className="border-red-500 text-red-500 hover:bg-red-50"
             >
-              Refuser
+              {isSubmitting ? "Traitement..." : "Refuser"}
             </Button>
             <Button
               variant="default"
@@ -263,7 +301,7 @@ const ReglementInterieurModal: React.FC<ReglementInterieurModalProps> = ({
               disabled={isSubmitting || selectedParticipants.length === 0}
               className="bg-[#FF7900] hover:bg-[#E56600]"
             >
-              Confirmer
+              {isSubmitting ? "Traitement..." : "Confirmer"}
             </Button>
             <DialogClose asChild>
               <Button variant="ghost">Fermer</Button>

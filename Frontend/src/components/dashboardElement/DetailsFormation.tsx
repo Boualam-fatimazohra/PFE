@@ -1,17 +1,14 @@
 import * as React from "react";
 import { useState, useEffect } from "react";
-import { RefreshCw, BookOpen, FileCheck } from "lucide-react";
+import { RefreshCw, FileCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import CourseHeader from "../Formation/CoursHeader";
-import { StatsCard } from "@/components/dashboardElement/StatsCard";
 import DocumentsSection from "../Formation/DocumentsSection";
 import StatsSection from "../Formation/StatsSection";
 import ParticipantsSection from "../Formation/ParticipantsSection";
 import { CustomPagination } from "../layout/CustomPagination";
-import { FormationItem, Participant, Document, StatMetric } from "@/pages/types"; 
-import { useFormations } from "@/contexts/FormationContext";
-import { BeneficiaireInscription } from "../formation-modal/types";
-import { getBeneficiairesWithPresence, updateBeneficiaireReglement } from "../../services/beneficiaireService";
+import { FormationItem, Document, StatMetric } from "@/pages/types"; 
+import { getBeneficiairesWithPresence, updateReglementStatus } from "../../services/beneficiaireService";
 import { BeneficiaireWithPresenceResponse } from "../formation-modal/types";
 import ReglementInterieurModal from "../Formation/ReglementInterieurModal";
 import { toast } from "react-toastify";
@@ -94,8 +91,9 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
       return;
     }
     
-    const confirmedCount = participantsData.filter(p => p.reglementStatus === "confirmed").length;
-    const pendingCount = participantsData.filter(p => !p.reglementStatus || p.reglementStatus === "pending").length;
+    const confirmedCount = participantsData.filter(p => p.confirmationReglementInterieur === true).length;
+    const pendingCount = participantsData.filter(p => p.confirmationReglementInterieur === undefined || p.confirmationReglementInterieur === null).length;
+    const declinedCount = participantsData.filter(p => p.confirmationReglementInterieur === false).length;
     
     // Calculate percentage
     const confirmedPercentage = Math.round((confirmedCount / total) * 100);
@@ -103,7 +101,7 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
     setStatsMetrics([
       { label: "Règlement accepté", value: `${confirmedPercentage}%` },
       { label: "En attente", value: pendingCount },
-      { label: "Heures", value: null },
+      { label: "Refusé", value: declinedCount },
     ]);
   };
 
@@ -134,45 +132,69 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
     setIsReglementModalOpen(true);
   };
 
-  // Handle règlement confirmation
+  // Handle règlement confirmation - updated to match the backend API
   const handleConfirmReglement = async (participantIds: string[], action: "confirm" | "decline") => {
     try {
-      // In a real application, call your API to update the règlement status
-      // For example:
-      // await updateBeneficiaireReglement(participantIds, formation.id, action);
+      // Prepare the data for the API call in the format expected by the backend
+      const beneficiairesList = participantIds.map(id => ({
+        id,
+        confirmationReglementInterieur: action === "confirm"
+      }));
       
-      // For now, let's update the local state
+      // Call the API to update the règlement status
+      await updateReglementStatus(beneficiairesList);
+      
+      // Update the local state to reflect the changes
       setParticipants(prev => 
         prev.map(participant => {
-          if (participantIds.includes(participant._id)) {
+          if (participantIds.includes(participant.beneficiaireFormationId)) {
             return {
               ...participant,
-              reglementStatus: action
+              confirmationReglementInterieur: action === "confirm"
             };
           }
           return participant;
         })
       );
       
-      // Update the stats after changing statuses
-      updateStatsMetrics(participants.map(participant => {
-        if (participantIds.includes(participant._id)) {
+      // Update stats metrics with the updated participants
+      const updatedParticipants = participants.map(participant => {
+        if (participantIds.includes(participant.beneficiaireFormationId)) {
           return {
             ...participant,
-            reglementStatus: action
+            confirmationReglementInterieur: action === "confirm"
           };
         }
         return participant;
-      }));
+      });
+      
+      updateStatsMetrics(updatedParticipants);
+      
+      // Show success message
+      toast.success(`Statut de règlement intérieur mis à jour avec succès`);
       
       return Promise.resolve();
     } catch (error) {
       console.error("Error updating règlement status:", error);
+      toast.error("Erreur lors de la mise à jour du statut de règlement");
       return Promise.reject(error);
     }
   };
 
   const totalParticipantsPages = Math.ceil(participants.length / PARTICIPANTS_PER_PAGE);
+
+  // Helper function to convert boolean to status string
+  const getReglementStatus = (status: boolean | undefined | null): "confirmed" | "declined" | "pending" => {
+    if (status === true) return "confirmed";
+    if (status === false) return "declined";
+    return "pending";
+  };
+
+  // Map participants to include the status string for the modal
+  const participantsWithStatusString = participants.map(participant => ({
+    ...participant,
+    reglementStatus: getReglementStatus(participant.confirmationReglementInterieur)
+  }));
 
   return (
     <div className="bg-white min-h-screen p-1 font-inter">
@@ -262,7 +284,7 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
         <ReglementInterieurModal
           isOpen={isReglementModalOpen}
           onClose={() => setIsReglementModalOpen(false)}
-          participants={participants}
+          participants={participantsWithStatusString}
           formation={formation}
           onConfirmReglement={handleConfirmReglement}
         />
