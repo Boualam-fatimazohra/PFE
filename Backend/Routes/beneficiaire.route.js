@@ -12,13 +12,16 @@ const {
   updateBeneficiaireConfirmations,
   exportBeneficiairesToExcel,
   getBeneficiairesWithPresence,
-  exportBeneficiairesListToExcel
+  exportBeneficiairesListToExcel,
+  updateReglementStatus
 } = require("../Controllers/beneficiaire.controller");
 const upload = require("../utils/upload");
 const authenticated = require("../Middlewares/Authmiddleware.js");
 const RoleMiddleware = require("../Middlewares/RoleMiddleware.js");
 const authorizeFormationAccess=require("../Middlewares/FormationAccess.js");
 const { generateAndSendQRCode,verifyQRCode } = require("../Controllers/qrcode.controller.js");
+
+// get nombre beneficiaires par formateur
 router.get("/getNbrBeneficiairesParFormateur",authenticated,RoleMiddleware("Formateur"), getNombreBeneficiairesParFormateur);
 
 // Get Benef for formateur
@@ -89,6 +92,14 @@ router.post("/verifyQRCode",verifyQRCode);
 router.get("/getBeneficiairesWithPresence/:formationId",
   authenticated,
   getBeneficiairesWithPresence
+);
+
+// Route to update règlement intérieur status for multiple beneficiaires
+router.put(
+  '/reglement-status',
+  authenticated,
+  RoleMiddleware('Admin', 'Manager', 'Formateur'),
+  updateReglementStatus
 );
 
 router.post("/uploadList", 
