@@ -158,10 +158,12 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
     return "pending";
   };
 
-  // Map participants to include the status string for the modal
+  // Make sure you're correctly mapping the boolean value to the status string
   const participantsWithStatusString = participants.map(participant => ({
     ...participant,
-    reglementStatus: getReglementStatus(participant.confirmationReglementInterieur)
+    reglementStatus: participant.confirmationReglementInterieur === true ? "confirmed" : 
+                    participant.confirmationReglementInterieur === false ? "declined" : 
+                    "pending"
   }));
 
   return (
