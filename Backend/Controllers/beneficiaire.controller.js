@@ -798,6 +798,7 @@ const getBeneficiairesWithPresence = async (req, res) => {
         beneficiaire: bf.beneficiaire,
         formationId: bf.formation,
         presences: presences.filter(p => p.beneficiareFormation.toString() === bf._id.toString()),
+        confirmationReglementInterieur: bf.confirmationReglementInterieur,
         autresFormations: autresFormations.map(f => f.formation),
       };
     }));
