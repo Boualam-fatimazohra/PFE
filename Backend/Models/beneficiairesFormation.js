@@ -12,7 +12,8 @@ const beneficiareFormationSchema= new mongoose.Schema({
     token:{type:String,required:false,default:"null"},
     // token stocké dans le QR code envoyer par email au bénéficiaire
     qrCodeToken:{type:String,required:false,default:"null"},
-    isSubmited: { type: Boolean, default:false } // pour vérifier est ce que l'evaluation est déja envoyer ou pas
+    isSubmited: { type: Boolean, default:false }, // pour vérifier est ce que l'evaluation est déja envoyer ou pas
+    confirmationReglementInterieur: { type: Boolean, default: false },
   }, { timestamps: true });
 
 module.exports = mongoose.model("BeneficiareFormation", beneficiareFormationSchema);
