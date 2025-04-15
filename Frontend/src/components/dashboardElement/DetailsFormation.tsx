@@ -30,7 +30,11 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [participants, setParticipants] = useState<BeneficiaireWithPresenceResponse[]>([]);
-  const [statsMetrics, setStatsMetrics] = useState<StatMetric[]>([]);
+  const [statsMetrics, setStatsMetrics] = useState<StatMetric[]>([
+    { label: "Taux de completion", value: null },
+    { label: "Taux Satisfaction", value: null },
+    { label: "Heures", value: null },
+  ]);
   
   // Règlement intérieur modal state
   const [isReglementModalOpen, setIsReglementModalOpen] = useState(false);
@@ -67,8 +71,12 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
       setParticipants(beneficiairesData);
       console.log("detail formation page : ", beneficiairesData);
       
-      // Calculate règlement stats
-      updateStatsMetrics(beneficiairesData);
+      // Keep original stats structure
+      setStatsMetrics([
+        { label: "Taux de completion", value: null },
+        { label: "Taux Satisfaction", value: null },
+        { label: "Heures", value: null },
+      ]);
       
     } catch (error) {
       console.error("Error loading formation data:", error);
@@ -76,33 +84,6 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Update stats metrics based on participants data
-  const updateStatsMetrics = (participantsData: BeneficiaireWithPresenceResponse[]) => {
-    // Calculate règlement status percentages
-    const total = participantsData.length;
-    if (total === 0) {
-      setStatsMetrics([
-        { label: "Taux de completion", value: null },
-        { label: "Taux Satisfaction", value: null },
-        { label: "Heures", value: null },
-      ]);
-      return;
-    }
-    
-    const confirmedCount = participantsData.filter(p => p.confirmationReglementInterieur === true).length;
-    const pendingCount = participantsData.filter(p => p.confirmationReglementInterieur === undefined || p.confirmationReglementInterieur === null).length;
-    const declinedCount = participantsData.filter(p => p.confirmationReglementInterieur === false).length;
-    
-    // Calculate percentage
-    const confirmedPercentage = Math.round((confirmedCount / total) * 100);
-    
-    setStatsMetrics([
-      { label: "Règlement accepté", value: `${confirmedPercentage}%` },
-      { label: "En attente", value: pendingCount },
-      { label: "Refusé", value: declinedCount },
-    ]);
   };
 
   const handleRefresh = async () => {
@@ -156,19 +137,6 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
           return participant;
         })
       );
-      
-      // Update stats metrics with the updated participants
-      const updatedParticipants = participants.map(participant => {
-        if (participantIds.includes(participant.beneficiaireFormationId)) {
-          return {
-            ...participant,
-            confirmationReglementInterieur: action === "confirm"
-          };
-        }
-        return participant;
-      });
-      
-      updateStatsMetrics(updatedParticipants);
       
       // Show success message
       toast.success(`Statut de règlement intérieur mis à jour avec succès`);
