@@ -798,6 +798,7 @@ const getBeneficiairesWithPresence = async (req, res) => {
         beneficiaire: bf.beneficiaire,
         formationId: bf.formation,
         presences: presences.filter(p => p.beneficiareFormation.toString() === bf._id.toString()),
+        confirmationReglementInterieur: bf.confirmationReglementInterieur,
         autresFormations: autresFormations.map(f => f.formation),
       };
     }));
@@ -886,6 +887,48 @@ const exportBeneficiairesListToExcel = async (req, res) => {
     });
   }
 };
+
+const updateReglementStatus = async (req, res) => {
+  console.log("===== TRIGGERED UPDATE REGLEMENT ENDPOINT! =====");
+  try {
+    console.log("===== DEBUG UPDATE REGLEMENT =====");
+    console.log("Body de la requête:", req.body);
+    const { beneficiairesList } = req.body;
+    
+    if (!beneficiairesList || !Array.isArray(beneficiairesList) || beneficiairesList.length === 0) {
+      return res.status(400).json({ 
+        message: "Une liste valide de bénéficiaires est requise" 
+      });
+    }
+
+    // Process each beneficiary update
+    const updatePromises = beneficiairesList.map(async (item) => {
+      if (!item.id || typeof item.confirmationReglementInterieur !== 'boolean') {
+        throw new Error(`Données invalides pour le bénéficiaire: ${JSON.stringify(item)}`);
+      }
+      
+      return BeneficiaireFormation.findByIdAndUpdate(
+        item.id,
+        { confirmationReglementInterieur: item.confirmationReglementInterieur },
+        { new: true }
+      );
+    });
+
+    const updatedBeneficiaires = await Promise.all(updatePromises);
+    
+    res.status(200).json({
+      message: "Statuts de règlement intérieur mis à jour avec succès",
+      updatedBeneficiaires
+    });
+  } catch (error) {
+    console.error("Erreur lors de la mise à jour des statuts de règlement:", error);
+    res.status(500).json({ 
+      message: "Erreur lors de la mise à jour des statuts de règlement", 
+      error: error.message 
+    });
+  }
+};
+
 // Export the functions for use in routes
 module.exports = {
     getAllBeneficiaires,
@@ -899,5 +942,6 @@ module.exports = {
     updateBeneficiaireConfirmations,
     exportBeneficiairesToExcel,
     getBeneficiairesWithPresence,
-    exportBeneficiairesListToExcel
+    exportBeneficiairesListToExcel,
+    updateReglementStatus
 };
