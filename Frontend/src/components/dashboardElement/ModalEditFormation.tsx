@@ -1,24 +1,27 @@
 import { useState, useEffect } from "react";
 import { Eye, Upload, Trash2 } from "lucide-react";
 import { useFormations } from "../../contexts/FormationContext";
+import DateSelectionSection from "../formation-modal/sections/DateSelectionSection";
+import { GlobalStyle} from '@/components/formation-modal/styles';
 
 const ModalEditFormation = ({ formation, onClose }) => {
+  console.log("la formation ressu",formation.dateDebut);
   // États pour les champs du formulaire
   const [nom, setNom] = useState(formation?.nom|| "");
   const [description, setDescription] = useState(formation?.description || ""); 
   const [status, setStatus] = useState(formation?.status || "En Cours");
   const [image, setImage] = useState(formation?.image || null);
   const [fileName, setFileName] = useState("");
+  const [dateDebut,setDateDebut]=useState(formation?.dateDebut);
+  const [dateFin,setDateFin]=useState(formation?.dateFin);
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [fileObject, setFileObject] = useState(null);
-
   const { updateFormation, refreshFormations } = useFormations();
-
+  
   const extractFileName = (imageUrl) => {
     if (!imageUrl) return "";
     return imageUrl.split("/").pop();
   };
-  
   useEffect(() => {
     if (formation) {
       console.log("Formation reçue :", formation);
@@ -27,6 +30,8 @@ const ModalEditFormation = ({ formation, onClose }) => {
       setStatus(formation.status || "En Cours");
       setImage(formation.image || null);
       setFileName(extractFileName(formation.image));
+      setDateDebut(formation.dateDebut);
+      setDateFin(formation.dateFin);
     }
   }, [formation]);
 
@@ -158,6 +163,7 @@ const ModalEditFormation = ({ formation, onClose }) => {
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Cette formation a pour objectif de fournir aux participants les connaissances et compétences nécessaires..."
         />
+        {/* Date */}
 
         {/* Statut */}
         <label className="block text-sm font-inter font-bold mb-1">Status <span className="text-[#F16E00]">*</span></label>
