@@ -12,7 +12,8 @@ import ModalEditFormation from "@/components/dashboardElement/ModalEditFormation
 import FormationCard from "@/components/Formation/FormationCards";
 import { useFormations } from "../contexts/FormationContext";
 import "react-toastify/dist/ReactToastify.css";
-
+import Alert from '@mui/material/Alert';
+import Snackbar from '@mui/material/Snackbar';
 import {
   Select,
   SelectContent,
@@ -25,6 +26,7 @@ import { FormationAvenir } from "@/pages/FormationAvenir";
 import FormationTerminer from "@/pages/FormationTerminer";
 import { Button } from "@/components/ui/button";
 import { toast } from "react-toastify";
+import * as React from "react";
 
 interface FormationItem {
   id: string;
@@ -52,6 +54,9 @@ const sortFormationsByStatus = (formations) => {
 
 const MesFormations = () => {
   const navigate = useNavigate();
+  const [alertOpen, setAlertOpen] = React.useState(false);
+  const [alertMessage, setAlertMessage] = React.useState('');
+  const [alertSeverity, setAlertSeverity] = React.useState<'success'|'error'|'warning'|'info'>('success');
   const { formations: contextFormations, loading, deleteFormation, error, searchFormations } = useFormations();
   const [sortOrder, setSortOrder] = useState<'recent' | 'oldest'>('recent');
   const [formations, setFormations] = useState<FormationItem[]>([]);
@@ -99,11 +104,11 @@ const MesFormations = () => {
     }
   }, [contextFormations, searchTerm, sortOrder]);
 
-  useEffect(() => {
-    if (error) {
-      toast.error(error);
-    }
-  }, [error]);
+  // useEffect(() => {
+  //   if (error) {
+  //     toast.error(error);
+  //   }
+  // }, [error]);
 
   const handleEditClick = (formation: FormationItem) => {
     setSelectedFormation(formation);
@@ -135,7 +140,11 @@ const MesFormations = () => {
     setIsSearching(false);
     setSearchResults([]);
   };
-
+  const showAlert = (message: string, severity: 'success'|'error'|'warning'|'info') => {
+    setAlertMessage(message);
+    setAlertSeverity(severity);
+    setAlertOpen(true);
+  };
   // Pagination settings
   const ITEMS_PER_PAGE = 9;
   const [currentPage, setCurrentPage] = useState(1);
@@ -160,7 +169,8 @@ const MesFormations = () => {
         setIsDeleting(true);
         await deleteFormation(formationToDelete);
         setFormationToDelete(null);
-        toast.success("Formation supprimée avec succès");
+        showAlert("Formation supprimée avec succès", "success");
+
       } catch (err) {
         console.error("Delete error:", err);
         let errorMessage = "Erreur lors de la suppression. Veuillez réessayer.";
@@ -183,7 +193,8 @@ const MesFormations = () => {
         } else if (err.request) {
           errorMessage = "Aucune réponse du serveur. Vérifiez votre connexion.";
         }
-        toast.error(errorMessage);
+        showAlert(errorMessage, "error");
+
       } finally {
         setIsDeleting(false);
       }
@@ -385,6 +396,24 @@ const MesFormations = () => {
             </>
           )}
         </div>
+        <Snackbar
+  open={alertOpen}
+  autoHideDuration={2000}
+  onClose={() => setAlertOpen(false)}
+  anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+>
+  <Alert 
+    severity={alertSeverity}
+    sx={{ 
+      width: '100%',
+      boxShadow: 3,
+      fontSize: '0.875rem',
+      '.MuiAlert-icon': { fontSize: '1.25rem' }
+    }}
+  >
+    {alertMessage}
+  </Alert>
+</Snackbar>
       </main>
       <Footer />
       {isModalOpen && (
