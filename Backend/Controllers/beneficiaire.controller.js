@@ -888,7 +888,10 @@ const exportBeneficiairesListToExcel = async (req, res) => {
 };
 
 const updateReglementStatus = async (req, res) => {
+  console.log("===== TRIGGERED UPDATE REGLEMENT ENDPOINT! =====");
   try {
+    console.log("===== DEBUG UPDATE REGLEMENT =====");
+    console.log("Body de la requête:", req.body);
     const { beneficiairesList } = req.body;
     
     if (!beneficiairesList || !Array.isArray(beneficiairesList) || beneficiairesList.length === 0) {
@@ -903,7 +906,7 @@ const updateReglementStatus = async (req, res) => {
         throw new Error(`Données invalides pour le bénéficiaire: ${JSON.stringify(item)}`);
       }
       
-      return BeneficiareFormation.findByIdAndUpdate(
+      return BeneficiaireFormation.findByIdAndUpdate(
         item.id,
         { confirmationReglementInterieur: item.confirmationReglementInterieur },
         { new: true }
