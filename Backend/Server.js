@@ -122,19 +122,25 @@ app.use("/api/presence",Presence);
 app.use("/api/certification", certificationRoutes);
 app.use("/api/achat", achatRoutes);
 
+app.use(express.static(path.join(__dirname, '../Frontend/dist')));
+
+// Cette route doit être la dernière route avant le middleware d'erreur
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../Frontend/dist/index.html'));
+});
 // Middleware de gestion des erreurs
 app.use((err, req, res, next) => {
     console.error("Erreur serveur:", err);
     res.status(500).json({ error: "Une erreur est survenue sur le serveur", message: process.env.NODE_ENV === 'development' ? err.message : undefined });
 });
 app.use('/api/beneficiaire-files', beneficiaireFileRoutes);
-if(process.env.NODE_ENV === 'production'){
-  app.use(express.static(path.join(__dirname, '../Frontend/dist')));
-  app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, 'Frontend', 'dist', 'index.html'));
-  });
+// if(process.env.NODE_ENV === 'production'){
+// app.use(express.static(path.join(__dirname, '../Frontend/dist')));
+// app.get('*', (req, res) => {
+//     res.sendFile(path.resolve(__dirname, 'Frontend', 'dist', 'index.html'));
+//   });
   
-}
+// }
 // Démarrage du serveur (using server instance instead of app for Socket.io)
 server.listen(PORT, () => {
     // console.log(` Serveur démarré sur http://localhost:${PORT}`);
