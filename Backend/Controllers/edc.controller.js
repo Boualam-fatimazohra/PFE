@@ -1,5 +1,7 @@
 const EDC = require('../Models/edc.model');
 const { Entity } = require('../Models/entity.model');
+const Formation = require('../Models/formation.model');
+const BeneficiareFormation = require('../Models/beneficiairesFormation');
 const mongoose = require('mongoose');
 const { 
     getAllFormateursEdc, 
@@ -152,6 +154,50 @@ const getFormateursEdc = async (req, res) => {
   }
 };
 
+const getNbrBeneficiairesByFormation = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Vérifier que la formation existe
+    const formation = await Formation.findById(id);
+    if (!formation) {
+      return res.status(404).json({
+        success: false,
+        message: "Formation non trouvée"
+      });
+    }
+    
+    // Compter le nombre total de bénéficiaires pour cette formation
+    const totalCount = await BeneficiareFormation.countDocuments({ formation: id });
+    
+    // Compter les bénéficiaires ayant confirmé par appel ET par email
+    const confirmedCount = await BeneficiareFormation.countDocuments({ 
+      formation: id, 
+      confirmationAppel: true,
+      confirmationEmail: true 
+    });
+    
+    res.status(200).json({
+      success: true,
+      count: totalCount,
+      confirmedCount: confirmedCount,
+      data: {
+        id: formation._id,
+        nom: formation.nom,
+        dateDebut: formation.dateDebut,
+        dateFin: formation.dateFin
+      }
+    });
+  } catch (error) {
+    console.error("Erreur lors de la récupération du nombre de bénéficiaires par formation:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+
 const getFormationsEdc = async (req, res) => {
   try {
     // Fetch all EDCs from the database
@@ -232,5 +278,6 @@ module.exports = {
   deleteEDC,
   getFormateursEdc,
   getFormationsEdc,
-  getBeneficiairesEdc
+  getBeneficiairesEdc,
+  getNbrBeneficiairesByFormation
 };

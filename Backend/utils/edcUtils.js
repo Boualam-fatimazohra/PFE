@@ -81,7 +81,7 @@ const getAllFormateursEdc = async (edcIds) => {
       
       // Determine availability based on active formations
       // You can customize this logic based on your business rules
-      formateurObj.isAvailable = activeFormations.length < 2; // For example, a formateur is available if they have less than 2 active formations
+      formateurObj.isAvailable = activeFormations.length == 0; // For example, a formateur is available if they have less than 2 active formations
       
       return formateurObj;
     });
