@@ -23,6 +23,9 @@ import GestionFormationManager from "@/components/dashboardElement/GestionFormat
 import { FormateurProvider } from "@/contexts/FormateurContext";
 import UpdateFormateur from "@/components/dashboardElement/UpdateFormateur";
 import DetailFormateur from "@/components/dashboardElement/DetailFormateur";
+import CalendrierFablab from "@/components/dashboardElement/CalendrierFabLab";
+import CreatFormationFablab from "@/components/dashboardElement/CreatFormationFablab";
+import TrainingHub from "@/pages/TrainingHub";
 
 
 const ManagerRoutes = () => {
@@ -47,6 +50,9 @@ const ManagerRoutes = () => {
           <Route path="/GestionFormateurManager" element={<GestionFormateurManager/>} />
           <Route path="/GestionFormation" element={<FormationManager/>} />
           <Route path="/GestionFormationManager" element={<GestionFormationManager/>} />
+          <Route path="CalendrierFablab"element={<CalendrierFablab/>}/>
+          <Route path="CreatFormationFablab"element={<CreatFormationFablab/>}/>
+          <Route path="/TrainingHub" element={<TrainingHub />} />
 
           <Route path="/AjoutFormateur" element={<AjoutFormateur/>} />
           <Route path="/updateFormateur/:id" element={<UpdateFormateur/>} />

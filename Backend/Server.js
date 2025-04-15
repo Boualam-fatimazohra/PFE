@@ -15,6 +15,7 @@ const notificationRoutes = require("./Routes/notification.route.js");
 const Presence=require("./Routes/presence.route.js")
 const entityRoutes = require("./Routes/entity.route.js");
 const edcRoutes = require("./Routes/edc.routes.js");
+const formationfab = require("./Routes/formationFab.route");
 const certificationRoutes = require("./Routes/certification.route.js");
 const multer = require("multer");
 const fs = require("fs");
@@ -51,6 +52,7 @@ const io = socketIo(server, {
     credentials: true
   }
 });
+
 
 // Make io accessible to routes
 app.set('io', io);
@@ -101,6 +103,7 @@ if (!fs.existsSync(uploadsDir)){
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
+
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Configuration du stockage multer
@@ -120,6 +123,7 @@ app.use("/api/managers", managerRoutes);
 app.use("/api/formateur", formateurRoutes);
 app.use('/api/evaluation', evaluationRoutes);
 app.use("/api/evenement", evenementRoutes);
+app.use("/api/formationfab",formationfab);
 app.use("/api/notifications", notificationRoutes); 
 app.use("/api/entity", entityRoutes); 
 app.use("/api/user", userRoutes);
