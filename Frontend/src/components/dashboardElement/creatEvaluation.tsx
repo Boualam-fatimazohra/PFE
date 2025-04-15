@@ -6,6 +6,9 @@ import { getAllFormations } from '@/services/formationService';
 import * as React from "react";
 import { sendEvaluationFormation } from "@/services/formationService";
 import axios from "axios";
+import { createEvaluation } from '@/services/evaluationService';
+import { useAuth } from '@/contexts/AuthContext'; // adapte le chemin
+
 
 // Types
 interface Beneficiaire {
@@ -65,6 +68,8 @@ interface ParticipantData {
 const CreateEvaluationForm = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const token  = useAuth(); // Move this here, at the top level
+
   const [user, setUser] = useState<{ nom: string; prenom: string; role: string } | null>(null);
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -72,6 +77,7 @@ const CreateEvaluationForm = () => {
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
   const [sendingLinks, setSendingLinks] = useState(false);
   const [search, setSearch] = React.useState("");
+
   const [selectAll, setSelectAll] = React.useState(false);
   const [currentPage, setCurrentPage] = React.useState(1);
   const itemsPerPage = 11;
@@ -162,6 +168,13 @@ const CreateEvaluationForm = () => {
     if (!dateString) return "";
     
     try {
+      // Si la date est déjà au format français (DD/MM/YYYY), la convertir
+      if (typeof dateString === 'string' && dateString.includes('/')) {
+        const [day, month, year] = dateString.split('/');
+        return `${day}/${month}/${year}`; // Retourne tel quel pour l'affichage
+      }
+      
+      // Pour les autres formats (Date JS ou ISO)
       const date = dateString instanceof Date ? dateString : new Date(dateString);
       if (isNaN(date.getTime())) {
         console.warn("Date invalide:", dateString);
@@ -177,6 +190,11 @@ const CreateEvaluationForm = () => {
       console.error("Erreur de formatage de date:", e, dateString);
       return "";
     }
+  };
+  const convertToISODate = (dateString: string) => {
+    if (!dateString) return "";
+    const [day, month, year] = dateString.split('/');
+    return `${year}-${month}-${day}`;
   };
 
   const fetchBeneficiaires = async (formationId: string) => {
@@ -310,11 +328,64 @@ const CreateEvaluationForm = () => {
     setStep(step - 1);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Formulaire soumis', formData);
+  // Dans votre composant creatEvaluation.tsx
+  // In your CreateEvaluationForm component
+
+// Dans le handleSubmit de CreateEvaluationForm.tsx, remplacez la portion existante par ce code:
+
+// Dans CreateEvaluationForm.tsx
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  
+  try {
+    setLoading(true);
+    
+    // Vérifier si des bénéficiaires sont sélectionnés
+    if (selectedParticipants.length === 0) {
+      // Vous pouvez soit afficher un avertissement
+      const confirmSend = window.confirm("Aucun bénéficiaire sélectionné. Voulez-vous tout de même créer l'évaluation?");
+      if (!confirmSend) {
+        setLoading(false);
+        return;
+      }
+    }
+    // Convertir les dates au format ISO avant envoi
+    const isoStartDate = convertToISODate(formData.startDate);
+    const isoEndDate = convertToISODate(formData.endDate);
+   
+    const evaluationData = {
+      title: formData.title,
+      formationId: formationId || '',
+      startDate: isoStartDate,
+      endDate: isoEndDate,
+      dateFin: isoEndDate,
+      trainer: user ? `${user.nom} ${user.prenom}` : '',
+      participants: parseInt(formData.participants, 10) || 0,
+      nombreParticipants: selectedParticipants.length || parseInt(formData.participants, 10) || 0,
+      anonymousResponses: formData.anonymousResponses,
+      responseDeadline: formData.responseDeadline,
+      responseDeadlineDate: formData.responseDeadline ? 
+        new Date(isoEndDate).toISOString() : undefined,
+      beneficiaryIds: selectedParticipants
+    };
+
+    console.log("Submitting evaluation data:", evaluationData);
+
+    // Ne pas passer le token comme second argument
+    const response = await createEvaluation(evaluationData);
+    console.log("Evaluation created successfully:", response);
+    
+    alert("Évaluation créée avec succès!");
     navigate('/formateur/EvaluationDashboard');
-  };
+  } catch (error) {
+    console.error("Submission error:", error);
+    setError(error instanceof Error ? error.message : "Une erreur inattendue s'est produite");
+    alert(`Erreur: ${error instanceof Error ? error.message : "Une erreur inattendue s'est produite"}`);
+  } finally {
+    setLoading(false);
+  }
+};
+
   
   const handleBack = () => {
     navigate('/formateur/EvaluationDashboard');
@@ -707,6 +778,7 @@ const CreateEvaluationForm = () => {
               <button 
                 type="submit" 
                 className="px-4 py-2 bg-orange-500 text-white rounded"
+
               >
                 Enregistrer
               </button>
