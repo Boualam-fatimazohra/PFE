@@ -417,13 +417,35 @@ const FablabSolidaire = () => {
   </div>
   Suivi des Projets
 </Link>
-    <a href="#" className=" flex items-center bg-white text-black rounded-[4px] hover:bg-gray-100" style={{ padding: '0.40rem' }}>
-      <div className="mr-3 text-blue-500">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="20" viewBox="0 0 24 20" fill="none">
+   
+    <Link 
+  to="/manager/GestionEncadrantFab" 
+  className="p-1.4 flex items-center bg-white text-black rounded-[4px] hover:bg-gray-100"
+  style={{ padding: '0.40rem' }}
+>
+  <div className="mr-3 text-blue-500">
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="20" viewBox="0 0 24 20" fill="none">
 <path d="M6 2.5C6 1.12109 7.07625 0 8.4 0H21.6C22.9238 0 24 1.12109 24 2.5V13.75C24 15.1289 22.9238 16.25 21.6 16.25H12.63C12.1875 15.2539 11.5087 14.3945 10.665 13.75H14.4V12.5C14.4 11.8086 14.9363 11.25 15.6 11.25H18C18.6638 11.25 19.2 11.8086 19.2 12.5V13.75H21.6V2.5H8.4V4.41797C7.695 3.99219 6.87375 3.75 6 3.75V2.5ZM6 5C6.47276 5 6.94089 5.097 7.37766 5.28545C7.81443 5.47391 8.21129 5.75013 8.54558 6.09835C8.87988 6.44657 9.14505 6.85997 9.32597 7.31494C9.50688 7.76991 9.6 8.25754 9.6 8.75C9.6 9.24246 9.50688 9.73009 9.32597 10.1851C9.14505 10.64 8.87988 11.0534 8.54558 11.4017C8.21129 11.7499 7.81443 12.0261 7.37766 12.2145C6.94089 12.403 6.47276 12.5 6 12.5C5.52724 12.5 5.05911 12.403 4.62234 12.2145C4.18557 12.0261 3.78871 11.7499 3.45442 11.4017C3.12012 11.0534 2.85495 10.64 2.67403 10.1851C2.49312 9.73009 2.4 9.24246 2.4 8.75C2.4 8.25754 2.49312 7.76991 2.67403 7.31494C2.85495 6.85997 3.12012 6.44657 3.45442 6.09835C3.78871 5.75013 4.18557 5.47391 4.62234 5.28545C5.05911 5.097 5.52724 5 6 5ZM4.99875 13.75H6.9975C9.76125 13.75 12 16.082 12 18.957C12 19.5312 11.5538 20 10.9987 20H1.00125C0.44625 20 0 19.5352 0 18.957C0 16.082 2.23875 13.75 4.99875 13.75Z" fill="black"/>
-</svg>      </div>
-      Gestion des Encadrants
-    </a>
+</svg> 
+  </div>
+  Gestion des Encadrants
+</Link>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     <a href="#" className="p-1.4 flex items-center bg-white text-black rounded-[4px] hover:bg-gray-100"style={{ padding: '0.40rem' }}>
       <div className="mr-3 text-blue-500">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">

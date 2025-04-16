@@ -28,6 +28,7 @@ import CreatFormationFablab from "@/components/dashboardElement/CreatFormationFa
 import TrainingHub from "@/pages/TrainingHub";
 import GestionProjetFab from "@/components/dashboardElement/GestionProjetFab";
 import GestionEquipement from "@/components/dashboardElement/GestionEquipementFab";
+import GestionEncadrantFab from "@/components/dashboardElement/GestionEncadrantFab";
 
 
 const ManagerRoutes = () => {
@@ -64,6 +65,7 @@ const ManagerRoutes = () => {
           <Route path="/updateFormateur/:id" element={<UpdateFormateur/>} />
           <Route path="/ModifieFormateur/:id" element={<ModifieFormateur />} />
           <Route path="/DetailFormateur/:id" element={<DetailFormateur />} />
+          <Route path="GestionEncadrantFab"element={<GestionEncadrantFab/>}/>
 
 
 
