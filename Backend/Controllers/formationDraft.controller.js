@@ -179,8 +179,8 @@ const createFormationDraft = async (req, res) => {
       
       // 4. Fetch all draft information for these formations
       const formationIds = formations.map(formation => formation._id);
-      const formationDrafts = await FormationDraft.find({ 
-        formation: { $in: formationIds } 
+      const formationDrafts = await FormationDraft.find({
+        formation: { $in: formationIds }
       });
       
       // 5. Create a map of draft information by formation ID
@@ -192,7 +192,10 @@ const createFormationDraft = async (req, res) => {
         };
       });
       
-      // 6. Merge formation data with draft information
+      // 6. Get current date for status calculation
+      const now = new Date();
+      
+      // 7. Merge formation data with draft information and calculate real-time status
       const formationsCompletes = formations.map(formation => {
         const formationObj = formation.toObject();
         
@@ -200,6 +203,23 @@ const createFormationDraft = async (req, res) => {
         if (formation.image && formation.imageType) {
           formationObj.image = `data:${formation.imageType};base64,${formation.image.toString("base64")}`;
         }
+        
+        // Calculate dynamic status based on dates
+        const dateDebut = formation.dateDebut ? new Date(formation.dateDebut) : null;
+        const dateFin = formation.dateFin ? new Date(formation.dateFin) : null;
+        
+        // Store original database status
+        formationObj.dbStatus = formation.status;
+        
+        // Calculate real-time status
+        if (dateFin && now > dateFin) {
+          formationObj.status = "Terminé";
+        } else if (dateDebut && now >= dateDebut && (!dateFin || now <= dateFin)) {
+          formationObj.status = "En Cours";
+        } else if (dateDebut && now < dateDebut) {
+          formationObj.status = "Avenir";
+        }
+        // If dates are missing, keep the original status
         
         // Add draft information if it exists
         const draftInfo = draftsMap[formation._id.toString()];
@@ -215,15 +235,17 @@ const createFormationDraft = async (req, res) => {
         return formationObj;
       });
       
-      // 7. Return complete formations
+      // 8. Return complete formations
       res.status(200).json(formationsCompletes);
     } catch (error) {
+      console.error("Error fetching formations with draft status:", error);
       res.status(500).json({
         message: "Erreur lors de la récupération des formations",
         error: error.message
       });
     }
   };
+
   const validerFormation = async (req, res) => {
     try {
       const { formationId } = req.params;
