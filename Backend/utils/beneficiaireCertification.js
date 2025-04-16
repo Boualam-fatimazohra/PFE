@@ -3,7 +3,7 @@
     const BeneficiareFormation = require('../Models/beneficiairesFormation.js');
     const {genererJoursFormation} = require("./BeneficiairePresence.js");
 
-    // const genererPDF = (beneficiaire, formation, outputPath) => {
+   
     //     return new Promise((resolve, reject) => {
     //         try {
     //         const doc = new PDFDocument({
@@ -194,7 +194,6 @@ const formatDate = (dateString) => {
     return date.toLocaleDateString('fr-FR', options);
   };
    
-    //     return new Promise((resolve, reject) => {
     //         try {
     //             const doc = new PDFDocument({
     //                 size: 'A4',
@@ -372,7 +371,7 @@ const formatDate = (dateString) => {
     //         }
     //     });
     // };
-    const genererPDF = (beneficiaire, formation, outputPath) => {
+const genererPDF = (beneficiaire, formation, outputPath) => {
         return new Promise((resolve, reject) => {
             try {
                 // Format rectangulaire comme l'image
@@ -512,13 +511,7 @@ const formatDate = (dateString) => {
                        .fontSize(14)
                        .fill('black')
                        .text('From the', contentX, 440);
-                    
-                    // Formatage des dates
-                    const formatDate = (dateString) => {
-                        const date = new Date(dateString);
-                        const options = { day: '2-digit', month: 'long', year: 'numeric' };
-                        return date.toLocaleDateString('fr-FR', options);
-                    };
+                
                     
                     doc.font('Helvetica-Oblique')
                        .fontSize(18)
