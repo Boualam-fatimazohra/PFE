@@ -10,7 +10,8 @@ const {
   updateAssignment,
   deleteAssignment,
   getFormationsByEncadrant,
-  getEncadrantsByFormation
+  getEncadrantsByFormation,
+  listFormationsWithEncadrants
 } = require("../Controllers/encadrantFormation.controller");
 
 /**
@@ -30,11 +31,17 @@ router.post(
  * @desc Get all assignments
  * @access Private - Admin, Manager, Formateur, Coordinateur
  */
-router.get(
+/*router.get(
   "/", 
   authenticated, 
   authorizeRoles('Admin', 'Manager', 'Formateur', 'Coordinateur'),
   getAllAssignments
+);*/
+router.get(
+  "/", 
+  authenticated, 
+  authorizeRoles('Admin', 'Manager', 'Formateur', 'Coordinateur'),
+  listFormationsWithEncadrants
 );
 
 /**
