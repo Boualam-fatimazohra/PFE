@@ -1,3 +1,4 @@
+const { sendMail } = require('../Config/auth.js');
 const Formateur = require("../Models/formateur.model.js");
 const Formation = require("../Models/formation.model.js");
 const Manager = require("../Models/manager.model.js");
@@ -111,7 +112,7 @@ const createFormateur = async (req, res) => {
                    <p>Votre compte formateur a été créé avec succès.</p>
                    <p>Votre mot de passe temporaire est : <b>${temporaryPassword}</b></p>
                    <p>Merci de ne pas le partager et de le changer après votre première connexion.</p>`;
-    //await sendMail(email, "Création de votre compte formateur", contenu);
+    await sendMail(email, contenu);
     await newUser.save();
 
     // Création du formateur avec les URLs des fichiers

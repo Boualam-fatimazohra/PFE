@@ -7,18 +7,18 @@ const mongoose = require('mongoose');
  * Create a new FormationFab
  * Creates both a FormationBase and links it to a FormationFab
  */
+
 const createFormationFab = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
-
+  
   try {
-    const { 
+    const {
       // Base formation fields
-      nom, 
-      dateDebut, 
-      dateFin, 
-      description, 
-      image,
+      nom,
+      dateDebut,
+      dateFin,
+      description,
       
       // FormationFab specific fields
       status,
@@ -31,23 +31,26 @@ const createFormationFab = async (req, res) => {
       // Single encadrant ID for assignment
       encadrantId
     } = req.body;
-
+    
     // Validate required fields
     if (!nom || !dateDebut || !dateFin) {
       return res.status(400).json({ message: "Le nom, dateDebut, dateFin de la formation est obligatoire" });
     }
-
+    
+    // Récupérer l'URL de l'image depuis le fichier téléchargé par multer
+    const imageUrl = req.file ? req.file.path : null;
+    
     // 1. Create the base formation
     const formationBase = new FormationBase({
       nom,
       dateDebut: dateDebut,
       dateFin: dateFin,
       description: description || "Aucune description",
-      image: req.file ? req.file.path : image
+      image: imageUrl // Utiliser l'URL de l'image téléchargée
     });
-
+    
     const savedBaseFormation = await formationBase.save({ session });
-
+    
     // 2. Create the FormationFab that references the base
     const formationFab = new FormationFab({
       baseFormation: savedBaseFormation._id,
@@ -58,9 +61,9 @@ const createFormationFab = async (req, res) => {
       tauxSatisfaction: tauxSatisfaction || 0,
       lienInscription: lienInscription || ""
     });
-
+    
     const savedFormationFab = await formationFab.save({ session });
-
+    
     // 3. Assign a single encadrant if provided
     if (encadrantId) {
       // Validate encadrant ID
@@ -77,15 +80,15 @@ const createFormationFab = async (req, res) => {
       
       await assignment.save({ session });
     }
-
+    
     // Commit the transaction
     await session.commitTransaction();
     session.endSession();
-
+    
     // Fetch fully populated result for response
     const result = await FormationFab.findById(savedFormationFab._id)
       .populate('baseFormation');
-
+    
     // Fetch associated encadrant (single)
     const encadrantAssignment = encadrantId ? await EncadrantFormation.findOne({
       formationBase: savedBaseFormation._id
@@ -96,7 +99,7 @@ const createFormationFab = async (req, res) => {
         select: 'nom prenom email'
       }
     }) : null;
-
+    
     res.status(201).json({
       message: "Formation Fab créée avec succès",
       formationFab: result,
@@ -106,11 +109,11 @@ const createFormationFab = async (req, res) => {
     // Abort transaction in case of error
     await session.abortTransaction();
     session.endSession();
-
+    
     console.error("Error creating formation fab:", error);
-    res.status(500).json({ 
-      message: "Erreur lors de la création de la formation Fab", 
-      error: error.message 
+    res.status(500).json({
+      message: "Erreur lors de la création de la formation Fab",
+      error: error.message
     });
   }
 };

@@ -23,6 +23,7 @@ import GestionFormationManager from "@/components/dashboardElement/GestionFormat
 import { FormateurProvider } from "@/contexts/FormateurContext";
 import UpdateFormateur from "@/components/dashboardElement/UpdateFormateur";
 import DetailFormateur from "@/components/dashboardElement/DetailFormateur";
+import { EncadrantFormationProvider } from "@/contexts/EncadrantFormationContext ";
 
 
 const ManagerRoutes = () => {
@@ -32,6 +33,7 @@ const ManagerRoutes = () => {
     <NotificationProvider>
     <EdcProvider>
     <FormateurProvider> 
+    <EncadrantFormationProvider>
     <Routes>
       <Route path="/dashboardManager" element={<DashboardManager />} />
       <Route path="*" element={<NotFound />} />
@@ -57,6 +59,7 @@ const ManagerRoutes = () => {
 
 
     </Routes>
+    </EncadrantFormationProvider>
     </FormateurProvider>
     </EdcProvider>
     </NotificationProvider>
