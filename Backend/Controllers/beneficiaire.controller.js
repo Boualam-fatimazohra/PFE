@@ -496,12 +496,16 @@ const getBeneficiaireFormation = async (req, res) => {
     const formationId = new mongoose.Types.ObjectId(idFormation.toString());
 
     // Récupérer les bénéficiaires liés à la formation
-    const beneficiaires = await BeneficiaireFormation.find({ formation: formationId })
+    const beneficiairesBrut = await BeneficiaireFormation.find({ formation: formationId })
       .populate({
         path: "beneficiaire",
         model: "Beneficiaire", 
       });
-
+      const beneficiaires = beneficiairesBrut.filter(b => 
+        b.confirmationEmail == true && 
+        b.confirmationAppel == true && 
+        b.confirmationReglementInterieur == true
+      );
     // Vérifier si on a trouvé des bénéficiaires
     if (!beneficiaires.length) {
       return res.status(404).json({ message: "Aucun bénéficiaire trouvé pour cette formation" });

@@ -396,7 +396,7 @@ const MesFormations = () => {
             </>
           )}
         </div>
-        <Snackbar
+<Snackbar
   open={alertOpen}
   autoHideDuration={2000}
   onClose={() => setAlertOpen(false)}

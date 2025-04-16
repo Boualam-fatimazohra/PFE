@@ -2,7 +2,9 @@ import * as React from "react";
 import { Search } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useFormations } from '../../contexts/FormationContext';
-
+import {telechargerCertificats} from '../../services/certificat';
+import Alert from '@mui/material/Alert';
+import Snackbar from '@mui/material/Snackbar';
 interface BeneficiairesListeProps {
   formationId: string;
 }
@@ -42,8 +44,7 @@ const BeneficiairesListe: React.FC<BeneficiairesListeProps> = ({ formationId }) 
   const [inscriptions, setInscriptions] = React.useState<BeneficiaireInscription[]>([]);
   const [search, setSearch] = React.useState("");
   const [selectAll, setSelectAll] = React.useState(false);
-  const [selectedBeneficiaires, setSelectedBeneficiaires] = React.useState<number[]>([]);
-  const [expandedRow, setExpandedRow] = React.useState<number | null>(null);
+  const [selectedBeneficiaires, setSelectedBeneficiaires] = React.useState<string[]>([]);  const [expandedRow, setExpandedRow] = React.useState<number | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [currentPage, setCurrentPage] = React.useState(1);
@@ -64,26 +65,45 @@ const BeneficiairesListe: React.FC<BeneficiairesListeProps> = ({ formationId }) 
   const endIndex = startIndex + itemsPerPage;
   const displayedBeneficiaires = filteredBeneficiaires.slice(startIndex, endIndex);
   const totalPages = Math.ceil(filteredBeneficiaires.length / itemsPerPage);
-
+const [alertOpen, setAlertOpen] = React.useState(false);
+  const [alertMessage, setAlertMessage] = React.useState('');
+  const [alertSeverity, setAlertSeverity] = React.useState<'success'|'error'|'warning'|'info'>('success');
+  
+  const showAlert = (message: string, severity: 'success'|'error'|'warning'|'info') => {
+    setAlertMessage(message);
+    setAlertSeverity(severity);
+    setAlertOpen(true);
+  };
   const handleSelectAll = () => {
-    if (selectAll) {
-      setSelectedBeneficiaires([]);
+    const displayedIds = displayedBeneficiaires.map(b => 
+      inscriptions[beneficiaires.findIndex(bf => bf._id === b._id)]._id
+    );
+    
+    const allSelected = displayedIds.every(id => selectedBeneficiaires.includes(id));
+    
+    if(allSelected) {
+      setSelectedBeneficiaires(prev => prev.filter(id => !displayedIds.includes(id)));
     } else {
-      setSelectedBeneficiaires(displayedBeneficiaires.map((_, index) => index));
+      setSelectedBeneficiaires(prev => [...new Set([...prev, ...displayedIds])]);
     }
-    setSelectAll(!selectAll);
   };
-
   const handleSelectOne = (index: number) => {
-    let newSelected = [...selectedBeneficiaires];
-    if (newSelected.includes(index)) {
-      newSelected = newSelected.filter(i => i !== index);
-    } else {
-      newSelected.push(index);
-    }
-    setSelectedBeneficiaires(newSelected);
-    setSelectAll(newSelected.length === displayedBeneficiaires.length);
+    const inscription = inscriptions[
+      beneficiaires.findIndex(b => b._id === displayedBeneficiaires[index]._id)
+    ];
+    
+    setSelectedBeneficiaires(prev => 
+      prev.includes(inscription._id) 
+        ? prev.filter(id => id !== inscription._id) 
+        : [...prev, inscription._id]
+    );
   };
+  const isAllSelected = displayedBeneficiaires.length > 0 && 
+  displayedBeneficiaires.every(b =>
+    selectedBeneficiaires.includes(
+      inscriptions[beneficiaires.findIndex(bf => bf._id === b._id)]._id
+    )
+  );
 
   // Fonctions de navigation pour la pagination
   const goToPage = (page: number) => {
@@ -108,7 +128,22 @@ const BeneficiairesListe: React.FC<BeneficiairesListeProps> = ({ formationId }) 
   const toggleRowExpansion = (index: number) => {
     setExpandedRow(expandedRow === index ? null : index);
   };
+  const handleGenererCertificats = async () => {
+    try {
+      if(selectedBeneficiaires.length === 0) {
+        showAlert('Veuillez sélectionner au moins un bénéficiaire', 'warning');
+        return;
+      }
   
+      await telechargerCertificats(selectedBeneficiaires);
+      showAlert('Téléchargement des certificats lancé avec succès', 'success');
+      
+    } catch (error: any) {
+      console.error('Erreur:', error);
+      const message = error?.response?.data?.error || error.message || 'Erreur inconnue';
+      showAlert(`Échec du téléchargement: ${message}`, 'error');
+    }
+  };
   React.useEffect(() => {
     const fetchBeneficiaires = async () => {
       try {
@@ -240,9 +275,16 @@ const BeneficiairesListe: React.FC<BeneficiairesListeProps> = ({ formationId }) 
           Filtres
         </Button>
 
-        <Button variant="outline" className="border-[#999999] text-[#999999] font-normal text-sm whitespace-nowrap mr-1">
-          Importer
-        </Button>
+        <Button 
+  variant="outline" 
+  className={`border-[#999999] text-[#999999] font-normal text-sm whitespace-nowrap mr-1 ${
+    selectedBeneficiaires.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
+  }`}
+  onClick={handleGenererCertificats}
+  disabled={selectedBeneficiaires.length === 0}
+>
+  Générer Certificats
+</Button>
 
         <Button variant="outline" className="border-[#FF7900] text-[#FF7900] flex items-center gap-2 text-sm mr-1">
           Exporter
@@ -262,12 +304,12 @@ const BeneficiairesListe: React.FC<BeneficiairesListeProps> = ({ formationId }) 
         <thead>
           <tr className="bg-[#F5F5F5]">
             <th className="p-3 text-left">
-              <input 
-                type="checkbox" 
-                className="border border-[#DDD] w-4 h-4" 
-                checked={selectAll} 
-                onChange={handleSelectAll} 
-              />
+            <input 
+  type="checkbox" 
+  className="border border-[#DDD] w-4 h-4" 
+  checked={isAllSelected}
+  onChange={handleSelectAll} 
+/>
             </th>
             <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Nom</th>
             <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Prénom</th>
@@ -283,12 +325,14 @@ const BeneficiairesListe: React.FC<BeneficiairesListeProps> = ({ formationId }) 
             <React.Fragment key={index}>
               <tr className="border-t border-[#DDD] hover:bg-[#F5F5F5]">
                 <td className="p-3">
-                  <input 
-                    type="checkbox" 
-                    className="border border-[#DDD] w-4 h-4"
-                    checked={selectedBeneficiaires.includes(index)}
-                    onChange={() => handleSelectOne(index)}
-                  />
+                <input 
+                  type="checkbox" 
+                  className="border border-[#DDD] w-4 h-4"
+                  checked={selectedBeneficiaires.includes(
+                  inscriptions[beneficiaires.findIndex(b => b._id === beneficiaire._id)]._id
+                  )}
+                  onChange={() => handleSelectOne(index)}
+/>
                 </td>
                 <td className="p-3 text-[#333] text-sm">{beneficiaire.nom || '-'}</td>
                 <td className="p-3 text-[#333] text-sm">{beneficiaire.prenom || '-'}</td>
@@ -426,6 +470,24 @@ const BeneficiairesListe: React.FC<BeneficiairesListeProps> = ({ formationId }) 
           </div>
         </div>
       )}
+    <Snackbar
+      open={alertOpen}
+      autoHideDuration={2000}
+      onClose={() => setAlertOpen(false)}
+      anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+    >
+      <Alert 
+        severity={alertSeverity}
+        sx={{ 
+          width: '100%',
+          boxShadow: 3,
+          fontSize: '0.875rem',
+          '.MuiAlert-icon': { fontSize: '1.25rem' }
+        }}
+      >
+        {alertMessage}
+      </Alert>
+    </Snackbar>
     </div>
   );
 };
