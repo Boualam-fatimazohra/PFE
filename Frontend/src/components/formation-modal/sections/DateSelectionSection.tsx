@@ -50,7 +50,7 @@ const DateSelectionSection: React.FC<DateSelectionSectionProps> = ({
             </div>
           </>
         </div>
-        {errors.dateDebut && <p className="mt-1 text-sm text-red-500">{errors.dateDebut}</p>}
+        {errors?.dateDebut && <p className="mt-1 text-sm text-red-500">{errors.dateDebut}</p>}
       </div>
       <div>
         <label className="block text-sm font-bold text-black mb-1">
@@ -79,7 +79,7 @@ const DateSelectionSection: React.FC<DateSelectionSectionProps> = ({
             </div>
           </>
         </div>
-        {errors.dateFin && <p className="mt-1 text-sm text-red-500">{errors.dateFin}</p>}
+        {errors?.dateFin && <p className="mt-1 text-sm text-red-500">{errors.dateFin}</p>}
       </div>
     </div>
   );

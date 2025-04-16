@@ -44,7 +44,8 @@ export default function EvaluationForm() {
   const [error, setError] = useState(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const API_URL = import.meta.env.VITE_API_LINK || "";
+  // const API_URL = import.meta.env.VITE_API_LINK || "";
+  const API_URL = import.meta.env.MODE==="development"?import.meta.env.VITE_API_LINK || 'http://localhost:5000':'';
 
   useEffect(() => {
     const fetchCourseDetails = async () => {
