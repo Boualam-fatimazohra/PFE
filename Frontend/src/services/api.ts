@@ -35,10 +35,11 @@ export const fetchFormations = async (): Promise<Formation[]> => {
 };
 
 // In api/services/api.js or wherever your addFormation function is defined
+const API_BASE_URL = import.meta.env.MODE==="development"?import.meta.env.VITE_API_LINK || 'http://localhost:5000':'';
 
 export const addFormation = async (formData) => {
   try {
-    const response = await fetch(`${import.meta.env.VITE_API_LINK}/api/formation/Addformation`, {
+    const response = await fetch(`${API_BASE_URL}/api/formation/Addformation`, {
       method: 'POST',
       body: formData, // Don't set Content-Type header for multipart/form-data
       credentials: 'include'

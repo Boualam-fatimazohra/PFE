@@ -9,6 +9,8 @@ import { BeneficiaireWithPresenceResponse } from "../formation-modal/types";
 import { enregistrerPresences } from "@/services/presenceService";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
+import Alert from '@mui/material/Alert';
+import Snackbar from '@mui/material/Snackbar';
 interface ParticipantsSectionProps {
   participants: BeneficiaireWithPresenceResponse[];
   currentPage: number;
@@ -60,7 +62,14 @@ const ParticipantsSection: React.FC<ParticipantsSectionProps> = ({
   const [hasUnsavedChanges, setHasUnsavedChanges] = React.useState(false);
   // tracking submission
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-
+const [alertOpen, setAlertOpen] = React.useState(false);
+  const [alertMessage, setAlertMessage] = React.useState('');
+  const [alertSeverity, setAlertSeverity] = React.useState<'success'|'error'|'warning'|'info'>('success');
+  const showAlert = (message: string, severity: 'success'|'error'|'warning'|'info') => {
+    setAlertMessage(message);
+    setAlertSeverity(severity);
+    setAlertOpen(true);
+  };
   // function to handle saving
   const handleSaveAttendance = async () => {
     if (changedAttendance.length === 0) return;
@@ -140,12 +149,14 @@ const ParticipantsSection: React.FC<ParticipantsSectionProps> = ({
       if (allSuccessful) {
         setChangedAttendance([]);
         setHasUnsavedChanges(false);
-        alert("Présences enregistrées avec succès");
+        showAlert("Présences enregistrées avec succès", "success");
+
       } else {
         // Find failed results and show details
         const failedResults = results.filter(result => !result.success);
         console.error("Failed save results:", failedResults);
-        alert(`Certaines présences n'ont pas pu être enregistrées. Veuillez réessayer.`);
+        showAlert("Certaines présences n'ont pas pu être enregistrées. Veuillez réessayer.", "success");
+
       }
     } catch (error) {
       console.error("Error saving attendance:", error);
@@ -525,6 +536,24 @@ const ParticipantsSection: React.FC<ParticipantsSectionProps> = ({
           )}
         </tbody>
       </table>
+<Snackbar
+  open={alertOpen}
+  autoHideDuration={2000}
+  onClose={() => setAlertOpen(false)}
+  anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+>
+  <Alert 
+    severity={alertSeverity}
+    sx={{ 
+      width: '100%',
+      boxShadow: 3,
+      fontSize: '0.875rem',
+      '.MuiAlert-icon': { fontSize: '1.25rem' }
+    }}
+  >
+    {alertMessage}
+  </Alert>
+</Snackbar>
     </div>
   );
 };

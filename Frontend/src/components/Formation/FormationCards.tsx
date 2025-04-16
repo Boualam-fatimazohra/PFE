@@ -36,7 +36,8 @@ const FormationCard = ({ formation, onEdit, onDelete, onAccess }: FormationCardP
         formation: formation,
         fromDraft: true
       }
-    });  };
+    }); 
+   };
   
   const getStatusClass = () => {
     switch (formation.status) {
