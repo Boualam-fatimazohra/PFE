@@ -5,33 +5,93 @@ const {Utilisateur} = require("../Models/utilisateur.model.js");
 const Formateur = require("../Models/formateur.model.js");
 const {getBeneficiairesByFormation} = require("../utils/BeneficiairePresence.js");
 const Excel = require("exceljs");
+// const getFormateurIdsByEntities = async (entityIds) => {
+//   try {
+//     // 1. Trouver tous les utilisateurs liés aux entités spécifiées
+//   const utilisateursEntities = await UtilisateurEntity.find({
+//     id_entity: { $in: entityIds }
+//   });
+
+//   // De même pour le modèle Utilisateur
+//   const userIds = utilisateursEntities.map(ue => ue.id_utilisateur);
+//   const formateursUtilisateurs = await Utilisateur.find({
+//     _id: { $in: userIds },
+//     role: "Formateur"
+//   });
+//     // 4. Récupérer les IDs d'utilisateurs des formateurs
+//     const formateurUtilisateurIds = formateursUtilisateurs.map(formateur => formateur._id);
+    
+//     // 5. Trouver les documents Formateur correspondant à ces utilisateurs
+//     const formateurs = await Formateur.find({
+//       utilisateur: { $in: formateurUtilisateurIds }
+//     });
+    
+//     // 6. Extraire les IDs des formateurs (et non des utilisateurs)
+//     const formateurIds = formateurs.map(formateur => formateur._id);
+    
+//     return formateurIds;
+//   } catch (error) {
+//     console.error("Erreur lors de la récupération des formateurs :",error);
+//     throw error;
+//   }
+// };
+
 const getFormateurIdsByEntities = async (entityIds) => {
   try {
-    // 1. Trouver tous les utilisateurs liés aux entités spécifiées
-  const utilisateursEntities = await UtilisateurEntity.find({
-    id_entity: { $in: entityIds }
-  });
-
-  // De même pour le modèle Utilisateur
-  const userIds = utilisateursEntities.map(ue => ue.id_utilisateur);
-  const formateursUtilisateurs = await Utilisateur.find({
-    _id: { $in: userIds },
-    role: "Formateur"
-  });
-    // 4. Récupérer les IDs d'utilisateurs des formateurs
-    const formateurUtilisateurIds = formateursUtilisateurs.map(formateur => formateur._id);
-    
-    // 5. Trouver les documents Formateur correspondant à ces utilisateurs
-    const formateurs = await Formateur.find({
-      utilisateur: { $in: formateurUtilisateurIds }
+    // 1. Trouver toutes les entités avec leurs types
+    const entities = await Entity.find({
+      _id: { $in: entityIds }
     });
     
-    // 6. Extraire les IDs des formateurs (et non des utilisateurs)
-    const formateurIds = formateurs.map(formateur => formateur._id);
+    // 2. Créer un mapping des IDs d'entités à leurs types
+    const entityTypeMap = {};
+    entities.forEach(entity => {
+      entityTypeMap[entity._id.toString()] = entity.type;
+    });
     
-    return formateurIds;
+    // 3. Trouver tous les utilisateurs liés aux entités spécifiées
+    const utilisateursEntities = await UtilisateurEntity.find({
+      id_entity: { $in: entityIds }
+    });
+    
+    // 4. Créer un mapping des utilisateurs aux entités auxquelles ils appartiennent
+    const userEntityMap = {};
+    utilisateursEntities.forEach(ue => {
+      userEntityMap[ue.id_utilisateur.toString()] = ue.id_entity.toString();
+    });
+    
+    // 5. Récupérer les IDs des utilisateurs
+    const userIds = utilisateursEntities.map(ue => ue.id_utilisateur);
+    
+    // 6. Trouver les utilisateurs qui sont formateurs
+    const formateursUtilisateurs = await Utilisateur.find({
+      _id: { $in: userIds },
+      role: "Formateur"
+    });
+    
+    // 7. Récupérer les IDs d'utilisateurs des formateurs
+    const formateurUtilisateurIds = formateursUtilisateurs.map(formateur => formateur._id);
+    
+    // 8. Trouver les documents Formateur correspondant à ces utilisateurs
+    const formateurs = await Formateur.find({
+      utilisateur: { $in: formateurUtilisateurIds }
+    }).populate('utilisateur');
+    
+    // 9. Construire un tableau d'objets avec les IDs des formateurs et les types d'entités
+    const formateursAvecTypes = formateurs.map(formateur => {
+      const userId = formateur.utilisateur._id.toString();
+      const entityId = userEntityMap[userId];
+      const entityType = entityTypeMap[entityId];
+      
+      return {
+        formateurId: formateur._id,
+        entityType: entityType
+      };
+    });
+    
+    return formateursAvecTypes;
   } catch (error) {
-    console.error("Erreur lors de la récupération des formateurs:", error);
+    console.error("Erreur lors de la récupération des formateurs :", error);
     throw error;
   }
 };
@@ -162,50 +222,110 @@ const analyserBeneficiaires = (beneficiaires) => {
       }
     };
   };
-const getFormationsTermineesByFormateurs = async (formateurIds, dateDebut, dateFin) => {
-    try {
-      // Valider les paramètres
-      if (!Array.isArray(formateurIds) || formateurIds.length === 0) {
-        throw new Error("La liste des IDs de formateurs est requise");
-      }
+// const getFormationsTermineesByFormateurs = async (formateurIds, dateDebut, dateFin) => {
+//     try {
+//       // Valider les paramètres
+//       if (!Array.isArray(formateurIds) || formateurIds.length === 0) {
+//         throw new Error("La liste des IDs de formateurs est requise");
+//       }
       
-      if (!(dateDebut instanceof Date) || isNaN(dateDebut.getTime())) {
-        throw new Error("Une date de début valide est requise");
-      }
+//       if (!(dateDebut instanceof Date) || isNaN(dateDebut.getTime())) {
+//         throw new Error("Une date de début valide est requise");
+//       }
       
-      if (!(dateFin instanceof Date) || isNaN(dateFin.getTime())) {
-        throw new Error("Une date de fin valide est requise");
-      }
+//       if (!(dateFin instanceof Date) || isNaN(dateFin.getTime())) {
+//         throw new Error("Une date de fin valide est requise");
+//       }
       
-      if (dateDebut > dateFin) {
-        throw new Error("La date de début doit être antérieure à la date de fin");
-      }
+//       if (dateDebut > dateFin) {
+//         throw new Error("La date de début doit être antérieure à la date de fin");
+//       }
       
-      // Convertir les IDs de formateurs en ObjectId
-      const formateursObjectIds = formateurIds.map(id => {
-        try {
-          return new mongoose.Types.ObjectId(id);
-        } catch (err) {
-          throw new Error(`ID de formateur invalide: ${id}`);
-        }
-      });
+//       // Convertir les IDs de formateurs en ObjectId
+//       const formateursObjectIds = formateurIds.map(id => {
+//         try {
+//           return new mongoose.Types.ObjectId(id);
+//         } catch (err) {
+//           throw new Error(`ID de formateur invalide: ${id}`);
+//         }
+//       });
       
-      // Récupérer les formations correspondant aux critères
-      const formations = await Formation.find({
-        formateur: { $in: formateursObjectIds },
-        status: "Terminé",
-        $and: [
-          { dateDebut: { $gte: dateDebut } },
-          { dateFin: { $lte: dateFin } }
-        ]
-      });
+//       // Récupérer les formations correspondant aux critères
+//       const formations = await Formation.find({
+//         formateur: { $in: formateursObjectIds },
+//         status: "Terminé",
+//         $and: [
+//           { dateDebut: { $gte: dateDebut } },
+//           { dateFin: { $lte: dateFin } }
+//         ]
+//       });
       
-      return formations;
-    } catch (error) {
-      console.error("Erreur lors de la récupération des formations:", error);
-      throw error;
+//       return formations;
+//     } catch (error) {
+//       console.error("Erreur lors de la récupération des formations:", error);
+//       throw error;
+//     }
+//   };
+const getFormationsTermineesByFormateurs = async (formateursAvecTypes, dateDebut, dateFin) => {
+  try {
+    // Valider les paramètres
+    if (!Array.isArray(formateursAvecTypes) || formateursAvecTypes.length === 0) {
+      throw new Error("La liste des formateurs avec leurs types d'entité est requise");
     }
-  };
+    
+    if (!(dateDebut instanceof Date) || isNaN(dateDebut.getTime())) {
+      throw new Error("Une date de début valide est requise");
+    }
+    
+    if (!(dateFin instanceof Date) || isNaN(dateFin.getTime())) {
+      throw new Error("Une date de fin valide est requise");
+    }
+    
+    if (dateDebut > dateFin) {
+      throw new Error("La date de début doit être antérieure à la date de fin");
+    }
+    
+    // Extraire les IDs de formateurs et créer un mapping formateurId -> entityType
+    const formateurIdTypeMap = {};
+    const formateurIds = formateursAvecTypes.map(item => {
+      formateurIdTypeMap[item.formateurId.toString()] = item.entityType;
+      return item.formateurId;
+    });
+    
+    // Convertir les IDs de formateurs en ObjectId
+    const formateursObjectIds = formateurIds.map(id => {
+      try {
+        return new mongoose.Types.ObjectId(id);
+      } catch (err) {
+        throw new Error(`ID de formateur invalide: ${id}`);
+      }
+    });
+    
+    // Récupérer les formations correspondant aux critères
+    const formations = await Formation.find({
+      formateur: { $in: formateursObjectIds },
+      status: "Terminé",
+      $and: [
+        { dateDebut: { $gte: dateDebut } },
+        { dateFin: { $lte: dateFin } }
+      ]
+    });
+    
+    // Ajouter le type d'entité à chaque formation
+    const formationsAvecTypes = formations.map(formation => {
+      const formateurId = formation.formateur.toString();
+      return {
+        ...formation.toObject(),  // Convertir le document Mongoose en objet simple
+        entityType: formateurIdTypeMap[formateurId]
+      };
+    });
+    
+    return formationsAvecTypes;
+  } catch (error) {
+    console.error("Erreur lors de la récupération des formations:", error);
+    throw error;
+  }
+};
 const genererRapportData = async (entityIds, dateDebut, dateFin) => {
     try {
       // Validation des entrées

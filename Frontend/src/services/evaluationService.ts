@@ -1,3 +1,4 @@
+// evaluationService.ts
 /* eslint-disable no-useless-catch */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from 'axios';
@@ -27,29 +28,56 @@ interface EvaluationResponse {
 }
 
 // Créer une évaluation
-export const createEvaluation = async (evaluationData: {
-  title: string;
-  formationId: string;
-  startDate?: string;
-  endDate?: string;
-  trainer?: string;
-  participants?: number;
-  anonymousResponses: boolean;
-  responseDeadline: boolean;
-  responseDeadlineDate?: string;
-  beneficiaryIds: string[];
-}): Promise<EvaluationResponse> => {
+// Dans evaluationService.ts
+export const createEvaluation = async (
+  evaluationData: {
+    title: string;
+    formationId: string;
+    startDate?: string;
+    endDate?: string;
+    trainer?: string;
+    participants?: number;
+    anonymousResponses: boolean;
+    responseDeadline: boolean;
+    responseDeadlineDate?: string;
+    beneficiaryIds: string[];
+  }
+): Promise<EvaluationResponse> => {
   try {
-    const response = await apiClient.post('/evaluation', evaluationData);
+    // Format data consistently with backend expectations
+    const formattedData = {
+      title: evaluationData.title,
+      formationId: evaluationData.formationId,
+      startDate: evaluationData.startDate,
+      endDate: evaluationData.endDate,
+      dateFin: evaluationData.endDate, // ajouté
+      trainer: evaluationData.trainer,
+      participants: evaluationData.participants,
+      nombreParticipants: evaluationData.participants, 
+      anonymousResponses: evaluationData.anonymousResponses,
+      responseDeadline: evaluationData.responseDeadline,
+      responseDeadlineDate: evaluationData.responseDeadlineDate,
+      beneficiaryIds: evaluationData.beneficiaryIds
+    };
+    
+    console.log("Sending evaluation data:", formattedData);
+    
+    // Utilise apiClient qui inclut déjà les cookies avec le token
+    const response = await apiClient.post(`/evaluation/CreatEvaluation`, formattedData);
+
     return response.data;
   } catch (error) {
+    console.error("API error details:", error);
     if (axios.isAxiosError(error)) {
       if (error.response) {
+        console.error("Server response error:", error.response.data);
         switch (error.response.status) {
           case 400:
             throw new Error("Données d'évaluation invalides: " + (error.response.data?.message || "Veuillez vérifier les champs requis"));
           case 401:
             throw new Error("Non autorisé: Veuillez vous connecter pour créer une évaluation");
+          case 500:
+            throw new Error("Erreur serveur: " + (error.response.data?.message || "Une erreur s'est produite sur le serveur"));
           default:
             throw new Error(error.response.data?.message || "Erreur lors de la création de l'évaluation");
         }
@@ -57,7 +85,6 @@ export const createEvaluation = async (evaluationData: {
         throw new Error("Aucune réponse du serveur. Vérifiez votre connexion internet.");
       }
     }
-    console.error("Erreur lors de la création de l'évaluation:", error);
     throw new Error("Erreur inattendue lors de la création de l'évaluation");
   }
 };
@@ -65,7 +92,7 @@ export const createEvaluation = async (evaluationData: {
 // Récupérer toutes les évaluations
 export const getAllEvaluations = async (): Promise<Evaluation[]> => {
   try {
-    const response = await apiClient.get('/evaluation');
+    const response = await apiClient.get('/evaluation/AllEvaluation');
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -195,19 +222,16 @@ export const getEvaluationsByFormation = async (formationId: string): Promise<Ev
 };
 
 // Envoyer une évaluation aux bénéficiaires
-
-
-// Dans formationService.ts
-const apiCliente = axios.create({
-  baseURL: 'http://localhost:5000',
-  headers: { 'Content-Type': 'application/json' }
-});
 export const sendEvaluationFormation = async (beneficiaryIds: string[], formationId: string) => {
   try {
-    const response = await apiCliente.post('/api/evaluation/sendLinkToBeneficiare', { beneficiaryIds, formationId });
+    // Utilisation de apiClient au lieu de apiCliente pour bénéficier de l'authentification par cookie
+    const response = await apiClient.post('/evaluation/sendLinkToBeneficiare', { beneficiaryIds, formationId });
     return response.data;
   } catch (error) {
     console.error("Error d'envoi de lien d'évaluation:", error);
+    if (axios.isAxiosError(error) && error.response) {
+      throw new Error(error.response.data?.message || "Erreur lors de l'envoi des liens d'évaluation");
+    }
     throw error;
   }
 };
@@ -236,5 +260,18 @@ export const getEvaluationStats = async (evaluationId: string): Promise<any> => 
     }
     console.error("Erreur lors de la récupération des statistiques d'évaluation:", error);
     throw new Error("Erreur inattendue lors de la récupération des statistiques");
+  }
+};
+
+
+
+export const getEvaluationFormateur = async () => {
+  try {
+    // Correction du double slash dans l'URL
+    const response = await apiClient.get('/evaluation/getEvaluationFormateur');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching evaluations:', error);
+    throw error;
   }
 };

@@ -6,6 +6,8 @@ const Notification = require('../Models/notification.model.js');
 const { cloudinary } = require('../Config/cloudinaryConfig.js');
 const FormationDraft = require('../Models/formationDraft.model'); // Assurez-vous d'importer le modèle
 const { determineFormationStatus } = require('../utils/formationUtils.js')
+const BeneficiaireFormation = require("../Models/beneficiairesFormation.js");
+const mongoose=require("mongoose");
 
 
 //  debut : creation d'un formation par un formateur bien précis :

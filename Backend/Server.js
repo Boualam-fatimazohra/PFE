@@ -15,6 +15,7 @@ const notificationRoutes = require("./Routes/notification.route.js");
 const Presence=require("./Routes/presence.route.js")
 const entityRoutes = require("./Routes/entity.route.js");
 const edcRoutes = require("./Routes/edc.routes.js");
+const formationfab = require("./Routes/formationFab.route");
 const certificationRoutes = require("./Routes/certification.route.js");
 const multer = require("multer");
 const fs = require("fs");
@@ -39,14 +40,13 @@ dotenv.config();
 // Initialiser l'application Express d'abord
 const app = express();
 const PORT = process.env.PORT || 5000;
-
 // Create HTTP server for Socket.io
 const server = http.createServer(app);
-
+const client=process.env.NODE_ENV==="development"?process.env.CLIENT_URL:"https://pfe-6ju9.onrender.com"
 // Initialize Socket.io
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:8080",
+    origin: ["http://localhost:8080", "https://pfe-6ju9.onrender.com"],
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -85,8 +85,8 @@ app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(
     cors({
-        origin: "http://localhost:8080",
-        credentials: true,
+      origin: ["http://localhost:8080", "https://pfe-6ju9.onrender.com"],
+      credentials: true,
         methods: "GET,POST,PUT,DELETE",
         allowedHeaders: "Content-Type,Authorization",
     })
@@ -120,6 +120,7 @@ app.use("/api/managers", managerRoutes);
 app.use("/api/formateur", formateurRoutes);
 app.use('/api/evaluation', evaluationRoutes);
 app.use("/api/evenement", evenementRoutes);
+app.use("/api/formationfab",formationfab);
 app.use("/api/notifications", notificationRoutes); 
 app.use("/api/entity", entityRoutes); 
 app.use("/api/user", userRoutes);
@@ -138,6 +139,12 @@ app.use('/api/encadrant-formations', encadrantFormationRoutes);
 app.use("/api/edc",edcRoutes);
 app.use("/api", chatbotRoutes);
 
+app.use(express.static(path.join(__dirname, '../Frontend/dist')));
+
+// Cette route  la dernière route avant le middleware d'erreur
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../Frontend/dist/index.html'));
+});
 // Middleware de gestion des erreurs
 app.use((err, req, res, next) => {
     console.error("Erreur serveur:", err);

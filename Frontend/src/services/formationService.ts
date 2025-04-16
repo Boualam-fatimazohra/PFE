@@ -275,7 +275,7 @@ export const updateFormation = async (id, formationData) => {
 
 export const deleteFormation = async (id: string) => {
   try {
-    const response = await apiClient.delete(`/formation/DeleteFormation/${id}`);
+    const response = await apiClient.delete(`/formation/formation-draft/${id}`);
     return response.data;
   } catch (error) {
     console.error(`Error deleting formation ${id}:`, error);

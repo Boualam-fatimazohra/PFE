@@ -26,3 +26,4 @@ const formationFabSchema = new mongoose.Schema({
 formationFabSchema.index({ baseFormation: 1 }, { unique: true });
 
 module.exports = mongoose.model("FormationFab", formationFabSchema);
+

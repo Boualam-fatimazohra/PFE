@@ -23,6 +23,12 @@ import GestionFormationManager from "@/components/dashboardElement/GestionFormat
 import { FormateurProvider } from "@/contexts/FormateurContext";
 import UpdateFormateur from "@/components/dashboardElement/UpdateFormateur";
 import DetailFormateur from "@/components/dashboardElement/DetailFormateur";
+import CalendrierFablab from "@/components/dashboardElement/CalendrierFabLab";
+import CreatFormationFablab from "@/components/dashboardElement/CreatFormationFablab";
+import TrainingHub from "@/pages/TrainingHub";
+import GestionProjetFab from "@/components/dashboardElement/GestionProjetFab";
+import GestionEquipement from "@/components/dashboardElement/GestionEquipementFab";
+import { EncadrantFormationProvider } from "@/contexts/EncadrantFormationContext ";
 
 
 const ManagerRoutes = () => {
@@ -32,6 +38,7 @@ const ManagerRoutes = () => {
     <NotificationProvider>
     <EdcProvider>
     <FormateurProvider> 
+    <EncadrantFormationProvider>
     <Routes>
       <Route path="/dashboardManager" element={<DashboardManager />} />
       <Route path="*" element={<NotFound />} />
@@ -40,6 +47,10 @@ const ManagerRoutes = () => {
           <Route path="/FablabSolidaire" element={<FablabSolidaire/>}/>
           <Route path="/OrangeFab" element={<OrangeFab/>}/>
           <Route path="/Coordination" element={<Coordination/>}/>
+          <Route path="/GestionProjetFab" element={<GestionProjetFab/>}/>
+          <Route path="/GestionEquipement" element={<GestionEquipement/>}/>
+
+
 
 
           <Route path="/CalendrierManager" element={<CalendrierManager />} />
@@ -47,6 +58,9 @@ const ManagerRoutes = () => {
           <Route path="/GestionFormateurManager" element={<GestionFormateurManager/>} />
           <Route path="/GestionFormation" element={<FormationManager/>} />
           <Route path="/GestionFormationManager" element={<GestionFormationManager/>} />
+          <Route path="CalendrierFablab"element={<CalendrierFablab/>}/>
+          <Route path="CreatFormationFablab"element={<CreatFormationFablab/>}/>
+          <Route path="/TrainingHub" element={<TrainingHub />} />
 
           <Route path="/AjoutFormateur" element={<AjoutFormateur/>} />
           <Route path="/updateFormateur/:id" element={<UpdateFormateur/>} />
@@ -57,6 +71,7 @@ const ManagerRoutes = () => {
 
 
     </Routes>
+    </EncadrantFormationProvider>
     </FormateurProvider>
     </EdcProvider>
     </NotificationProvider>

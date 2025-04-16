@@ -19,7 +19,7 @@ const {
   getAllFormationsWithDraftStatus,
   validerFormation
 } = require('../Controllers/formationDraft.controller'); // Ajustez le chemin selon votre structure
-
+const checkFormationDraft=require("../Middlewares/FormationDraft.js");
 const router = express.Router();
 // Route to add a new formation (Protected route: Only authenticated users can access)
 router.post('/Addformation', 
@@ -60,6 +60,12 @@ router.delete('/DeleteFormation/:id',
     authorizeFormationAccess('delete'),
     DeleteFormation
 );
+router.delete('/formation-draft/:id',
+    authenticated,
+    authorizeRoles("Admin","Manager","Formateur"),
+    checkFormationDraft,
+    DeleteFormation);
+
 
 // Route to update a formation by ID 
 router.put('/UpdateFormation/:id', 

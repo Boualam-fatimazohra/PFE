@@ -172,7 +172,7 @@ const BeneficiairesTable: React.FC<BeneficiairesListeProps> = ({ formationId }) 
   const handleSendLinks = async () => {
     if (selectedBeneficiaires.length === 0) {
       alert("Veuillez sélectionner au moins un bénéficiaire");
-      console.log("API Base URL:", import.meta.env.VITE_API_BASE_URL);
+      // console.log("API Base URL:", import.meta.env.VITE_API_BASE_URL);
 
       return;
     }

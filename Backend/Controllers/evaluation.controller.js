@@ -1,7 +1,8 @@
-const Evaluation = require("../Models/evaluation.model.js");
+const Evaluation = require("../Models/evaluation.model");
 const  BeneficiareFormation=require("../Models/beneficiairesFormation.js");
 const {sendEvaluationLinkWithToken}=require("../utils/sendEvaluationLinkWithToken.js");
 const Beneficiaire=require("../Models/beneficiaire.model");
+const Formateur  = require('../Models/formateur.model.js');
 const mongoose = require('mongoose');
 // debut fct : enregistrer la réponse du beneficiare
 const SubmitEvaluation = async (req, res) => {
@@ -15,6 +16,8 @@ const SubmitEvaluation = async (req, res) => {
     await beneficiaireFormation.save();
     const {
       formationTitle,
+      endDate,          // Ajoutez cette ligne
+      participants,     // Ajoutez cette ligne
       qualiteContenuFormation,
       utiliteCompetencesAcquises,
       alignementBesoinsProf,
@@ -36,6 +39,8 @@ const SubmitEvaluation = async (req, res) => {
     } = req.body;
 
     const newEvaluation = new Evaluation({
+      dateFin: endDate,
+      nombreParticipants: participants,
       formationTitle,
       contentEvaluation: {
         qualiteContenuFormation,
@@ -74,13 +79,23 @@ const SubmitEvaluation = async (req, res) => {
 };
 
 // fin fct : enregistrer la réponse du beneficiare
+// Dans evaluation.controller.js
 const createEvaluation = async (req, res) => {
   try {
-    const { 
+    // Récupérer l'ID de l'utilisateur depuis l'authentification
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ message: "Utilisateur non authentifié" });
+    }
+
+    // Extraire les données de la requête
+    const {
       title,
       formationId,
       startDate,
       endDate,
+      dateFin,
+      nombreParticipants,
       trainer,
       participants,
       anonymousResponses,
@@ -89,9 +104,15 @@ const createEvaluation = async (req, res) => {
       beneficiaryIds
     } = req.body;
 
-    // Validation des données requises
+    // Vérifier les champs obligatoires
     if (!title || !formationId) {
-      return res.status(400).json({ message: "Le titre et l'ID de formation sont requis" });
+      return res.status(400).json({ message: "Le titre et l'ID de la formation sont requis" });
+    }
+
+    // Trouver le formateur associé à cet utilisateur
+    const formateur = await Formateur.findOne({ utilisateur: userId });
+    if (!formateur) {
+      return res.status(404).json({ message: "Formateur non trouvé" });
     }
 
     // Créer la nouvelle évaluation
@@ -99,41 +120,42 @@ const createEvaluation = async (req, res) => {
       formationTitle: title,
       formation: formationId,
       dateDebut: startDate,
-      dateFin: endDate,
-      formateur: trainer,
-      nombreParticipants: participants,
+      dateFin: dateFin || endDate,
+      formateur: formateur._id,
+      nombreParticipants: nombreParticipants || participants || 0,
       parametres: {
-        anonymousResponses,
-        responseDeadline,
-        responseDeadlineDate: responseDeadline ? responseDeadlineDate : null
+        anonymousResponses: anonymousResponses || false,
+        responseDeadline: responseDeadline || false,
+        responseDeadlineDate: responseDeadlineDate || null
       },
-      statut: "créée", // statut initial
+      statut: "Créée",
       dateCreation: new Date()
     });
 
-    await newEvaluation.save();
+    // Sauvegarder l'évaluation
+    const savedEvaluation = await newEvaluation.save();
 
-    // Si des IDs de bénéficiaires sont fournis, mettre à jour leurs informations
+    // Si des bénéficiaires sont spécifiés, mettre à jour leurs documents
     if (beneficiaryIds && beneficiaryIds.length > 0) {
-      // Mettre à jour les documents BeneficiaireFormation pour lier à cette évaluation
       await BeneficiareFormation.updateMany(
         { 
           beneficiaire: { $in: beneficiaryIds },
-          formation: formationId 
+          formation: formationId
         },
         { 
           $set: { 
-            evaluation: newEvaluation._id,
-            isSelected: true 
-          } 
+            isSelected: true,
+            evaluation: savedEvaluation._id
+          }
         }
       );
     }
 
     res.status(201).json({ 
-      message: 'Évaluation créée avec succès', 
-      evaluation: newEvaluation 
+      message: "Évaluation créée avec succès", 
+      evaluation: savedEvaluation 
     });
+    
   } catch (error) {
     console.error("Erreur lors de la création de l'évaluation:", error);
     res.status(500).json({ 
@@ -216,9 +238,98 @@ const getLastEvaluation = async (req, res) => {
       res.status(500).json({ error: "Erreur lors de la récupération de l'évaluation" });
     }
   };  
+// Get all evaluations
+const getAllEvaluations = async (req, res) => {
+  try {
+    const evaluations = await Evaluation.find()
+      .sort({ dateCreation: -1 });
+    
+    res.status(200).json(evaluations);
+  } catch (error) {
+    console.error("Erreur lors de la récupération des évaluations:", error);
+    res.status(500).json({ 
+      message: "Erreur lors de la récupération des évaluations", 
+      error: error.message 
+    });
+  }
+};
+const deleteEvaluation = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Vérifier si l'ID est valide
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "ID d'évaluation invalide" });
+    }
+
+    // Supprimer l'évaluation
+    const deletedEvaluation = await Evaluation.findByIdAndDelete(id);
+
+    if (!deletedEvaluation) {
+      return res.status(404).json({ message: "Évaluation non trouvée" });
+    }
+
+    // Mettre à jour les BeneficiareFormation associés
+    await BeneficiareFormation.updateMany(
+      { evaluation: id },
+      { 
+        $unset: { evaluation: "" },
+        $set: { isSelected: false, token: null, isSubmited: false }
+      }
+    );
+
+    res.status(200).json({ message: "Évaluation supprimée avec succès" });
+  } catch (error) {
+    console.error("Erreur lors de la suppression de l'évaluation:", error);
+    res.status(500).json({ 
+      message: "Erreur lors de la suppression de l'évaluation", 
+      error: error.message 
+    });
+  }
+};
+
+const getEvaluationFormateur = async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ message: "Utilisateur non authentifié" });
+    }
+
+    const formateur = await Formateur.findOne({ utilisateur: userId });
+    if (!formateur) {
+      return res.status(404).json({ message: "Formateur non trouvé" });
+    }
+
+    // Utiliser populate pour obtenir les informations associées
+    const Evaluations = await Evaluation.find({ formateur: formateur._id })
+      .populate('formation')  // Obtenir les détails de la formation
+      .populate({
+        path: 'formation',
+        // Si vous avez besoin de gérer les bénéficiaires via formation
+        populate: {
+          path: 'beneficiaires',
+          model: 'BeneficiareFormation'
+        }
+      });
+
+    res.status(200).json(Evaluations);
+  } catch (error) {
+    res.status(500).json({ 
+      message: "Erreur lors de la récupération des évaluations",
+      error: error.message 
+    });
+  }
+};
+
+// N'oubliez pas d'ajouter ces fonctions à vos exports
+
 module.exports = {
     getLastEvaluation,
     sendEvaluationLinksToBeneficiaries,
     SubmitEvaluation,
+    getAllEvaluations,
+    getEvaluationFormateur,
+    deleteEvaluation,
     createEvaluation
+    
   };

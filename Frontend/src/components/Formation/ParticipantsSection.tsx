@@ -1,13 +1,16 @@
 import * as React from "react";
-import { Printer, Search, FileDown } from 'lucide-react';
+import { Printer, Search, FileDown, AlertCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import {exportBeneficiairesListToExcel } from "../../services/beneficiaireService";
+import { exportBeneficiairesListToExcel } from "../../services/beneficiaireService";
 import { FormationItem } from "@/pages/types";
 import { Beneficiaire, PresenceData } from "../formation-modal/types";
 import { BeneficiaireWithPresenceResponse } from "../formation-modal/types";
 import { enregistrerPresences } from "@/services/presenceService";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
+import Alert from '@mui/material/Alert';
+import Snackbar from '@mui/material/Snackbar';
 interface ParticipantsSectionProps {
   participants: BeneficiaireWithPresenceResponse[];
   currentPage: number;
@@ -15,7 +18,7 @@ interface ParticipantsSectionProps {
   formation: FormationItem; 
 }
 
-const ParticipantsSection:React.FC<ParticipantsSectionProps> = ({ 
+const ParticipantsSection: React.FC<ParticipantsSectionProps> = ({ 
   participants,
   currentPage,
   itemsPerPage = 11,
@@ -59,7 +62,14 @@ const ParticipantsSection:React.FC<ParticipantsSectionProps> = ({
   const [hasUnsavedChanges, setHasUnsavedChanges] = React.useState(false);
   // tracking submission
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-
+const [alertOpen, setAlertOpen] = React.useState(false);
+  const [alertMessage, setAlertMessage] = React.useState('');
+  const [alertSeverity, setAlertSeverity] = React.useState<'success'|'error'|'warning'|'info'>('success');
+  const showAlert = (message: string, severity: 'success'|'error'|'warning'|'info') => {
+    setAlertMessage(message);
+    setAlertSeverity(severity);
+    setAlertOpen(true);
+  };
   // function to handle saving
   const handleSaveAttendance = async () => {
     if (changedAttendance.length === 0) return;
@@ -139,12 +149,14 @@ const ParticipantsSection:React.FC<ParticipantsSectionProps> = ({
       if (allSuccessful) {
         setChangedAttendance([]);
         setHasUnsavedChanges(false);
-        alert("Présences enregistrées avec succès");
+        showAlert("Présences enregistrées avec succès", "success");
+
       } else {
         // Find failed results and show details
         const failedResults = results.filter(result => !result.success);
         console.error("Failed save results:", failedResults);
-        alert(`Certaines présences n'ont pas pu être enregistrées. Veuillez réessayer.`);
+        showAlert("Certaines présences n'ont pas pu être enregistrées. Veuillez réessayer.", "success");
+
       }
     } catch (error) {
       console.error("Error saving attendance:", error);
@@ -211,6 +223,12 @@ const ParticipantsSection:React.FC<ParticipantsSectionProps> = ({
   };
 
   const toggleAttendance = (participant: BeneficiaireWithPresenceResponse, day: Date) => {
+    // Check if participant has confirmed the règlement intérieur
+    // If not confirmed, don't allow toggling
+    if (participant.confirmationReglementInterieur !== true) {
+      return; // Early exit - don't toggle attendance
+    }
+    
     const participantId = participant.beneficiaire._id;
     const beneficiareFormationId = participant.beneficiaireFormationId; 
     const dayString = day.toISOString().split('T')[0]; // Get YYYY-MM-DD format
@@ -377,6 +395,16 @@ const ParticipantsSection:React.FC<ParticipantsSectionProps> = ({
         </div>
       )}
 
+      {/* Legend for règlement intérieur status */}
+      <div className="mb-4 p-3 bg-gray-50 rounded-md">
+        <p className="text-sm flex items-center">
+          <AlertCircle className="h-4 w-4 text-orange-500 mr-2" />
+          <span>
+            Les participants n'ayant pas confirmé le règlement intérieur ne peuvent pas être marqués présents.
+          </span>
+        </p>
+      </div>
+
       <table className="w-full border-collapse">
         <thead>
           <tr className="bg-[#F5F5F5]">
@@ -396,6 +424,7 @@ const ParticipantsSection:React.FC<ParticipantsSectionProps> = ({
             <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Genre</th>
             <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Situation Profetionnelle</th>
             <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Status</th>
+            <th className="p-3 text-left font-semibold text-[#333] text-sm font-bold">Règlement</th>
             {/* Dynamic day columns */}
             {formationDays.map((day, idx) => (
               <th key={idx} className="p-3 text-center font-semibold text-[#333] text-sm font-bold">
@@ -406,76 +435,125 @@ const ParticipantsSection:React.FC<ParticipantsSectionProps> = ({
         </thead>
         <tbody>
           {displayedParticipants.length > 0 ? (
-            displayedParticipants.map((participant, index) => (
-              <tr key={index} className="border-t border-[#DDD] hover:bg-[#F5F5F5]">
-                <td className="p-3">
-                  <input type="checkbox" className="border border-[#DDD] w-4 h-4"
-                  checked={selectedParticipants.includes(index)} />
-                </td>
-                <td className="p-3 text-sm">
-                  <div className="text-[#333]">{participant.beneficiaire.nom}</div>
-                  <div className="text-[#666] text-xs">{participant.beneficiaire.prenom}</div>
-                </td>
+            displayedParticipants.map((participant, index) => {
+              // Check if participant has confirmed the règlement intérieur
+              const hasConfirmedReglement = participant.confirmationReglementInterieur === true;
+              
+              return (
+                <tr key={index} className={`border-t border-[#DDD] hover:bg-[#F5F5F5] ${!hasConfirmedReglement ? 'bg-gray-50' : ''}`}>
+                  <td className="p-3">
+                    <input type="checkbox" className="border border-[#DDD] w-4 h-4"
+                    checked={selectedParticipants.includes(index)} />
+                  </td>
+                  <td className="p-3 text-sm">
+                    <div className="text-[#333]">{participant.beneficiaire.nom}</div>
+                    <div className="text-[#666] text-xs">{participant.beneficiaire.prenom}</div>
+                  </td>
 
-                <td className="p-3 text-[#333] text-sm ">{participant.beneficiaire.email}</td>
-                <td className="p-3 text-[#333] text-sm">{participant.beneficiaire.telephone}</td>
-                <td className="p-3 text-[#333] text-sm">{participant.beneficiaire.specialite}</td>
-                <td className="p-3 text-[#333] text-sm">{participant.beneficiaire.genre}</td>
-                <td className="p-3 text-[#333] text-sm">{participant.beneficiaire.profession}</td>
-                <td className="p-3 text-sm">
-                  <span className={cn(
-                    "font-medium",
-                    participant.presences.length > 0 && participant.presences.some(p => p.isPresent) 
-                      ? "text-[#00C31F]"
-                      : "text-[#FF4815]"
-                  )}>
-                    {participant.presences.length > 0 && participant.presences.some(p => p.isPresent) 
-                      ? "Présent (e)" 
-                      : "Absent (e)"}
-                  </span>
-                </td>
-                
-                {formationDays.map((day, dayIdx) => {
-                  const dayString = day.toISOString().split('T')[0];
-                  const participantId = participant.beneficiaire._id;
+                  <td className="p-3 text-[#333] text-sm ">{participant.beneficiaire.email}</td>
+                  <td className="p-3 text-[#333] text-sm">{participant.beneficiaire.telephone}</td>
+                  <td className="p-3 text-[#333] text-sm">{participant.beneficiaire.specialite}</td>
+                  <td className="p-3 text-[#333] text-sm">{participant.beneficiaire.genre}</td>
+                  <td className="p-3 text-[#333] text-sm">{participant.beneficiaire.profession}</td>
+                  <td className="p-3 text-sm">
+                    <span className={cn(
+                      "font-medium",
+                      participant.presences.length > 0 && participant.presences.some(p => p.isPresent) 
+                        ? "text-[#00C31F]"
+                        : "text-[#FF4815]"
+                    )}>
+                      {participant.presences.length > 0 && participant.presences.some(p => p.isPresent) 
+                        ? "Présent (e)" 
+                        : "Absent (e)"}
+                    </span>
+                  </td>
                   
-                  // Find attendance record for this day and participant
-                  const attendance = participant.presences.find(p => 
-                    new Date(p.jour).toDateString() === day.toDateString()
-                  );
+                  {/* Status of Règlement Intérieur */}
+                  <td className="p-3 text-sm">
+                    <span className={cn(
+                      "font-medium px-2 py-1 rounded-full text-xs",
+                      hasConfirmedReglement ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
+                    )}>
+                      {hasConfirmedReglement ? "Confirmé" : "En attente"}
+                    </span>
+                  </td>
                   
-                  // Check if we have a state override, otherwise use the API data
-                  const hasStateOverride = attendanceState[participantId]?.[dayString] !== undefined;
-                  const isPresent = hasStateOverride 
-                    ? attendanceState[participantId][dayString]
-                    : (attendance?.isPresent || false);
-                  
-                  return (
-                    <td key={dayIdx} className="p-3 text-center">
-                      <button
-                        onClick={() => toggleAttendance(participant, day)}
-                        className={`w-8 h-8 rounded-full ${
-                          isPresent 
-                            ? "bg-green-500 text-white" 
-                            : "bg-red-500 text-white"
-                        }`}
-                      >
-                        {isPresent ? "P" : "A"}
-                      </button>
-                    </td>
-                  );
-                })}
-              </tr>
-            ))
+                  {formationDays.map((day, dayIdx) => {
+                    const dayString = day.toISOString().split('T')[0];
+                    const participantId = participant.beneficiaire._id;
+                    
+                    // Find attendance record for this day and participant
+                    const attendance = participant.presences.find(p => 
+                      new Date(p.jour).toDateString() === day.toDateString()
+                    );
+                    
+                    // Check if we have a state override, otherwise use the API data
+                    const hasStateOverride = attendanceState[participantId]?.[dayString] !== undefined;
+                    const isPresent = hasStateOverride 
+                      ? attendanceState[participantId][dayString]
+                      : (attendance?.isPresent || false);
+                    
+                    return (
+                      <td key={dayIdx} className="p-3 text-center">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                onClick={() => toggleAttendance(participant, day)}
+                                className={`w-8 h-8 rounded-full ${
+                                  isPresent 
+                                    ? "bg-green-500 text-white" 
+                                    : "bg-red-500 text-white"
+                                } ${
+                                  !hasConfirmedReglement 
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : "hover:opacity-90"
+                                }`}
+                                disabled={!hasConfirmedReglement}
+                              >
+                                {isPresent ? "P" : "A"}
+                              </button>
+                            </TooltipTrigger>
+                            {!hasConfirmedReglement && (
+                              <TooltipContent>
+                                <p>Le participant doit confirmer le règlement intérieur</p>
+                              </TooltipContent>
+                            )}
+                          </Tooltip>
+                        </TooltipProvider>
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })
           ) : (
             <tr>
-              <td colSpan={8 + formationDays.length} className="p-6 text-center text-gray-500">
+              <td colSpan={9 + formationDays.length} className="p-6 text-center text-gray-500">
                 {search.trim() ? "Aucun participant ne correspond à votre recherche." : "Aucun participant disponible."}
               </td>
             </tr>
           )}
         </tbody>
       </table>
+<Snackbar
+  open={alertOpen}
+  autoHideDuration={2000}
+  onClose={() => setAlertOpen(false)}
+  anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+>
+  <Alert 
+    severity={alertSeverity}
+    sx={{ 
+      width: '100%',
+      boxShadow: 3,
+      fontSize: '0.875rem',
+      '.MuiAlert-icon': { fontSize: '1.25rem' }
+    }}
+  >
+    {alertMessage}
+  </Alert>
+</Snackbar>
     </div>
   );
 };

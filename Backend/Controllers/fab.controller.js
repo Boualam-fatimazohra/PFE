@@ -1,6 +1,9 @@
 const Fab = require('../Models/fab.model');
 const { Entity } = require('../Models/entity.model');
 const mongoose = require('mongoose');
+const fabLabUtils = require('../utils/fabLabUtils');
+const FormationFab = require('../Models/formationFab.model');
+
 
 /**
  * Create a new Fab entity
@@ -189,13 +192,25 @@ const getFabStats = async (req, res) => {
       return res.status(404).json({ message: "Fab not found" });
     }
 
-    // Placeholder for gathering statistics
-    // In a real implementation, you would query related collections here
+    // Get formateurs associated with this Fab
+    const formateurs = await fabLabUtils.getAllEncadrantsFab(id);
+    
+    // Get all formations for this Fab
+    const allFormations = await fabLabUtils.getAllFormationsFab(id);
+    
+    // Get active formations (status = "En Cours")
+    const activeFormations = await fabLabUtils.getAllFormationsFab(id, { status: "En Cours" });
+    
+    // Get all beneficiaires for this Fab
+    const beneficiaires = await fabLabUtils.getAllBeneficiairesFormationsFab(id);
+
+    // Gather statistics
     const stats = {
-      totalFormateurs: 0, // To be implemented: count formateurs associated with this Fab
-      totalFormations: 0, // To be implemented: count formations associated with this Fab
-      totalBeneficiaires: 0, // To be implemented: count beneficiaires associated with this Fab
-      activeFormations: 0 // To be implemented: count active formations
+      totalEncadrants: formateurs.length,
+      totalFormations: allFormations.length,
+      totalBeneficiaires: beneficiaires.length,
+      activeFormations: activeFormations.length,
+        
     };
 
     res.status(200).json({
@@ -207,6 +222,121 @@ const getFabStats = async (req, res) => {
     res.status(500).json({ message: "Error fetching Fab statistics", error: error.message });
   }
 };
+const getFormationsFab = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid Fab ID format" });
+    }
+    
+    // Find the Fab first to verify it exists
+    const fab = await Fab.findById(id);
+    if (!fab) {
+      return res.status(404).json({ message: "Fab not found" });
+    }
+    
+    // Extract query parameters for filtering
+    const { status, categorie, niveau, sortBy, sortOrder } = req.query;
+    
+    // Build filter object based on query parameters
+    const filters = {};
+    if (status) filters.status = status;
+    if (categorie) filters.categorie = categorie;
+    if (niveau) filters.niveau = niveau;
+    
+    // Get formations with optional filters
+    let formations = await fabLabUtils.getAllFormationsFab(id, filters);
+    
+    // Handle sorting if specified
+    if (sortBy) {
+      const order = sortOrder === 'desc' ? -1 : 1;
+      
+      // Sort based on the requested field
+      // Note: If sortBy refers to a field in baseFormation, we need to handle it differently
+      if (sortBy.startsWith('baseFormation.')) {
+        const baseField = sortBy.split('.')[1];
+        formations.sort((a, b) => {
+          if (a.baseFormation && b.baseFormation) {
+            return a.baseFormation[baseField] > b.baseFormation[baseField] ? order : -order;
+          }
+          return 0;
+        });
+      } else {
+        formations.sort((a, b) => a[sortBy] > b[sortBy] ? order : -order);
+      }
+    }
+    
+    res.status(200).json({
+      count: formations.length,
+      formations: formations
+    });
+  } catch (error) {
+    console.error("Error fetching Fab formations:", error);
+    res.status(500).json({ message: "Error fetching Fab formations", error: error.message });
+  }
+};
+
+/**
+ * Get the number of beneficiaries in a Fab lab
+ * @route GET /api/fabs/:id/beneficiaires/count
+ */
+const getNbrBenificiairesFab = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid Fab ID format" });
+    }
+    
+    // Find the Fab first to verify it exists
+    const fab = await Fab.findById(id);
+    if (!fab) {
+      return res.status(404).json({ message: "Fab not found" });
+    }
+    
+    // Extract query parameters for filtering by formation
+    const { formationId } = req.query;
+    
+    // Get all beneficiaries for this Fab, optionally filtered by formation
+    const beneficiaires = await fabLabUtils.getAllBeneficiairesFormationsFab(
+      id, 
+      formationId && mongoose.Types.ObjectId.isValid(formationId) ? formationId : null
+    );
+    
+    // Get formations for context
+    const formations = await fabLabUtils.getAllFormationsFab(id);
+    
+    // Count beneficiaries by formation (if detailed information is needed)
+    const beneficiairesByFormation = [];
+    
+    if (formations.length > 0) {
+      // This would need to be implemented based on your actual data model
+      // For each formation, count its beneficiaries
+      for (const formation of formations) {
+        if (formation.baseFormation) {
+          const formationBeneficiaires = await fabLabUtils.getAllBeneficiairesFormationsFab(
+            id, formation._id
+          );
+          
+          beneficiairesByFormation.push({
+            formationId: formation._id,
+            formationName: formation.baseFormation.nom,
+            count: formationBeneficiaires.length
+          });
+        }
+      }
+    }
+    
+    res.status(200).json({
+      totalBeneficiaires: beneficiaires.length,
+      formationBreakdown: beneficiairesByFormation
+    });
+  } catch (error) {
+    console.error("Error counting Fab beneficiaries:", error);
+    res.status(500).json({ message: "Error counting Fab beneficiaries", error: error.message });
+  }
+};
 
 module.exports = {
   createFab,
@@ -214,5 +344,7 @@ module.exports = {
   getFabById,
   updateFab,
   deleteFab,
-  getFabStats
+  getFabStats,
+  getNbrBenificiairesFab,
+  getFormationsFab
 };

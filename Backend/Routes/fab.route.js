@@ -79,7 +79,7 @@ router.delete(
  * @access Private - Admin, Manager
  */
 router.get(
-  "/:id/stats", 
+  "/stats/:id", 
   authenticated, 
   authorizeRoles('Admin', 'Manager'),
   getFabStats

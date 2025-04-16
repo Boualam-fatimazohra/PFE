@@ -13,6 +13,7 @@ import CalendarView from "@/components/dashboardElement/CalendarView"
 import { EvenementProvider } from "@/contexts/EvenementContext";
 import EvaluationDashboard from "@/components/dashboardElement/EvaluationDashboard";
 import CreateEvaluationForm from "@/components/dashboardElement/creatEvaluation";
+import TrainingHub from "@/pages/TrainingHub";
 const FormateurRoutes = () => {
   return (
     <FormationProvider>
@@ -22,6 +23,7 @@ const FormateurRoutes = () => {
       <Route path="mesformation" element={<MesFormations />} />
       <Route path="formationModal" element={< FormationModal/>} />
       <Route path="EvaluationDashboard" element={< EvaluationDashboard/>} />
+      <Route path="/TrainingHub" element={<TrainingHub />} />
 
       <Route path="*" element={<NotFound />} />
       <Route path="BeneficiairesList"element={<BeneficiairesList/>}/>

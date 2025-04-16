@@ -1,30 +1,11 @@
 import { useState } from "react";
-import { Calendar, Users, Printer, Cpu, BookOpen, Wrench } from "lucide-react";
-import { useEvenement } from "@/contexts/EvenementContext";
+import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { height } from "@mui/system";
-import { Link, useNavigate } from "react-router-dom";
+import FormationsFablab from "./FormationsFablab";
+import ProjetsFablab from "./ProjetsFablab";
 
 // Static Data Models
-interface Formation {
-  image: string;
-  titre: string;
-  encadrant: string;
-  ville : string;
-  datedebut: string;
-  datefin:string;
-  status: 'En Cours' | 'À venir' | 'Terminée';
-  participants: string;
-}
-
-interface Projet {
-  id: string;
-  titre: string;
-  image: string;
-  status: 'En Cours' | 'À venir' | 'Terminée';
-  participants: number;
-  progress: number;
-}
 
 interface Equipement {
   id: string;
@@ -35,164 +16,21 @@ interface Equipement {
 
 
 const FablabSolidaire = () => {
-  const [formationFilter, setFormationFilter] = useState('En cours');
-  const [projetFilter, setProjetFilter] = useState('En cours');
-  const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
-  const projetsPerPage = 4; // Nombre de projets par page
-  const indexOfLastProjet = currentPage * projetsPerPage;
-  const indexOfFirstProjet = indexOfLastProjet - projetsPerPage;
-  
-  // Fonction pour changer de page
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
-  
-
-  // Données statiques
-  const formations: Formation[] = [
-    { 
-      image:"https://s3-alpha-sig.figma.com/img/5ad0/64a0/4ee203edabf0bc43cd0ce02e3edbd95b?Expires=1744588800&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=BF~48qHiygqJXcRl4Z97IwDpVmTzzdTciiPJmcfwf9jU-hHMKbHjn2jkq2igjft~E1gNFlC7rZkSG94yJ-Ln~YbcVLdxSWefi8~h8DdE-GITOZvS0fITeo53u~lIzWwzuWpaZBFisS54ANhdO3r1ekKsfu56CLqorx39SSLCwCxM3UrKyksVMH-DQ4c6MRtrwxBuhu4f5WTfOd80guPutxd8z96oAEdvBPCd6DtSuvN-vLJk98X5LWYlD7L5FCgu7v9WJGLeFjH6lXliRMJt9fzH0fKOcuKTwsGCh~i~qniG0TMxeOfEbUVu2-a57qbmraTJG89UvotJdd92Er~8GA__",      titre: "Atelier Découpe Laser et développement", 
-      encadrant: "Oussama Paul", 
-      ville:"Agadir",
-      datedebut: "15 Mars 2025", 
-      datefin:"-",
-      status: "En Cours",
-      participants: "24/30"
-    },
-    { 
-      image:"https://s3-alpha-sig.figma.com/img/5ad0/64a0/4ee203edabf0bc43cd0ce02e3edbd95b?Expires=1744588800&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=BF~48qHiygqJXcRl4Z97IwDpVmTzzdTciiPJmcfwf9jU-hHMKbHjn2jkq2igjft~E1gNFlC7rZkSG94yJ-Ln~YbcVLdxSWefi8~h8DdE-GITOZvS0fITeo53u~lIzWwzuWpaZBFisS54ANhdO3r1ekKsfu56CLqorx39SSLCwCxM3UrKyksVMH-DQ4c6MRtrwxBuhu4f5WTfOd80guPutxd8z96oAEdvBPCd6DtSuvN-vLJk98X5LWYlD7L5FCgu7v9WJGLeFjH6lXliRMJt9fzH0fKOcuKTwsGCh~i~qniG0TMxeOfEbUVu2-a57qbmraTJG89UvotJdd92Er~8GA__", 
-      titre: "Atelier Découpe Laser et développement", 
-      encadrant: "Oussama Paul", 
-      ville:"Agadir",
-      datedebut: "15 Mars 2025", 
-      datefin:"-",
-      status: "En Cours",
-      participants: "24/30"
-    },
-    { 
-      image:"https://s3-alpha-sig.figma.com/img/5ad0/64a0/4ee203edabf0bc43cd0ce02e3edbd95b?Expires=1744588800&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=BF~48qHiygqJXcRl4Z97IwDpVmTzzdTciiPJmcfwf9jU-hHMKbHjn2jkq2igjft~E1gNFlC7rZkSG94yJ-Ln~YbcVLdxSWefi8~h8DdE-GITOZvS0fITeo53u~lIzWwzuWpaZBFisS54ANhdO3r1ekKsfu56CLqorx39SSLCwCxM3UrKyksVMH-DQ4c6MRtrwxBuhu4f5WTfOd80guPutxd8z96oAEdvBPCd6DtSuvN-vLJk98X5LWYlD7L5FCgu7v9WJGLeFjH6lXliRMJt9fzH0fKOcuKTwsGCh~i~qniG0TMxeOfEbUVu2-a57qbmraTJG89UvotJdd92Er~8GA__", 
-      titre: "Atelier Découpe Laser et développement", 
-      encadrant: "Oussama Paul", 
-      ville:"Agadir",
-      datedebut: "15 Mars 2025",
-      datefin:"-",
-      status: "En Cours",
-      participants: "24/30"
-    }
-    
-  ];
-
-  const projets: Projet[] = [
-    { 
-      id: "1", 
-      titre: "Projet AI Robot", 
-      image:"https://s3-alpha-sig.figma.com/img/242f/7d20/1b67d698f3b227d4459533493b267b9a?Expires=1744588800&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=DSqobCR8epEIf3ccI-GNVC2fVDwdIMSlsYN1r4DQ0ENhdEuAj9RYkk02tcs7w7CXD74niOMmQrbPZpUusJf-8FPc5MrjnvFH747242-pd1T-tyBrf0jQut40AzzhtIjfuV2Y49b7rTaG3ask7eanWTIcuPlG90NqCOvI~4UcCkQMZfE09rkoGeM072341ojTrQASqjjw6zel2zFELy36ClMBKDulvUBqtT~ekPpz-NlW2ER168iUE~KG5QrPf9jvG90RWNnGgnefHDB~k5zoed-bKK8s-XeqSM6hfjojH-Pd5-1LatcnOYJfTGfjXb75OiD4Jax2qlLMjxhJaiyapQ__",
-      status: "En Cours",
-      participants: 5,
-      progress: 75
-    },
-    { 
-      id: "2", 
-      titre: "Projet Farm Boot", 
-      image: "https://s3-alpha-sig.figma.com/img/f6fe/6f5b/86516e02f50a234d6140a881f8b431cb?Expires=1744588800&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=DHnb3vKDaltaBg6zZWJd6cp7nCskm-vouaE8OFmPBCnVaQ~WDHJEGux1LVqGEAklKrBHmm7q9HTFP6DQ5Y3eIfFzJlVAiPFmd5Zk-~gEbCBPMXrU78LYURuT9NGGUIRGPfkrWiMHntBmqgxUgA4X7WADIbzudZjZHNzMaLjNnuNy12pDG0u1MX1Iq7MD0n3EsoLu-bxHyRdLDVAOVvMjyoso1iekzyWQxuie40may6PSkHv9VHn9XyPIEiOOvR9FBl7JRWaetz-X-pPek-D~26MwaSa-tmRfurMFOAvE0WLy4Tf2tKOCdYIPXn~snrwip26nnNMIbNx-C2O1XxgkyA__", 
-      status: "En Cours",
-      participants: 3,
-      progress: 91
-    },
-    { 
-      id: "3", 
-      titre: "Projet Atlas ODC", 
-      image: "https://s3-alpha-sig.figma.com/img/3c3c/e55d/c05d5f1f93c0227f40ae6209b0abe810?Expires=1744588800&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=rrJ3ztJSY9bbJYZToIFxHuKd9AoZkUaLqyGvMbDJcCROowVLXD8U2wZIrM7PCZCNAcS0WPtxa61SZm07sC23QLbfPNHAaFw-o-Y~d2CEx1L8jnogQvSWPNgf0rmOJw6g-EUduCtg~0soctjPvSmEM8mTRZq6H8EFwNAlkwAhqM8HwB3VoJjc71v18Ee4-N4WLNhhTyeRokIQft3tog8LStB4DLx6dkeW0HtTiJYeFjiMyc6al4tw-VCgJ69t7BRCoycCHupibs0Fcm5V0pLO5hXMBmwFGOdXESbyvV72KDb~6GUpNt2O5j18gEL5U56SN5kO4tlfsezQH1CbQBHSFg__", 
-      status: "En Cours",
-      participants: 9,
-      progress: 17
-    },
-    { 
-      id: "4", 
-      titre: "Projet Aerok", 
-      image: "https://s3-alpha-sig.figma.com/img/a86a/ff57/1852d502bc5a8bdff7d9c5e8234900f6?Expires=1744588800&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=ZLRpSyMVpgSLsf4JPxzgtlJf8FQu1K6TR6~yODp49uEApbgCBYDYT1L97rx3GospMMPZpZQ6G0Fb3gEVccf9WTY93mJTeVVWEoKVowr5O7XcbXgQhHUmQJ6Aj3dUo6ruY7LwSVTXXq8cJAOshhe1GwjvO-4KAoF1MUxBLbn0OaLdKPF2P6UWaNpypLeqyMDp1L7NYkmBQ5E4qBPdq4p~Vxpy1sHa0w2xM~XN3SC5p7Np2P77jkFwcQ~O~SgbUgZj5spcoDSIRGGT9TvnjhfaBKRfAi7bupxZG0GiGjXgMDY2naPhYhMhBAgv7ec9RgiZjXtVpTWlF-aCDD81tmI32w__", 
-      status: "En Cours",
-      participants: 5,
-      progress: 65
-    },
-    { 
-      id: "5", 
-      titre: "Projet Aerok", 
-      image: "https://s3-alpha-sig.figma.com/img/a86a/ff57/1852d502bc5a8bdff7d9c5e8234900f6?Expires=1744588800&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=ZLRpSyMVpgSLsf4JPxzgtlJf8FQu1K6TR6~yODp49uEApbgCBYDYT1L97rx3GospMMPZpZQ6G0Fb3gEVccf9WTY93mJTeVVWEoKVowr5O7XcbXgQhHUmQJ6Aj3dUo6ruY7LwSVTXXq8cJAOshhe1GwjvO-4KAoF1MUxBLbn0OaLdKPF2P6UWaNpypLeqyMDp1L7NYkmBQ5E4qBPdq4p~Vxpy1sHa0w2xM~XN3SC5p7Np2P77jkFwcQ~O~SgbUgZj5spcoDSIRGGT9TvnjhfaBKRfAi7bupxZG0GiGjXgMDY2naPhYhMhBAgv7ec9RgiZjXtVpTWlF-aCDD81tmI32w__", 
-      status: "En Cours",
-      participants: 5,
-      progress: 65
-    },
-    { 
-      id: "6", 
-      titre: "Projet Aerok", 
-      image: "https://s3-alpha-sig.figma.com/img/a86a/ff57/1852d502bc5a8bdff7d9c5e8234900f6?Expires=1744588800&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=ZLRpSyMVpgSLsf4JPxzgtlJf8FQu1K6TR6~yODp49uEApbgCBYDYT1L97rx3GospMMPZpZQ6G0Fb3gEVccf9WTY93mJTeVVWEoKVowr5O7XcbXgQhHUmQJ6Aj3dUo6ruY7LwSVTXXq8cJAOshhe1GwjvO-4KAoF1MUxBLbn0OaLdKPF2P6UWaNpypLeqyMDp1L7NYkmBQ5E4qBPdq4p~Vxpy1sHa0w2xM~XN3SC5p7Np2P77jkFwcQ~O~SgbUgZj5spcoDSIRGGT9TvnjhfaBKRfAi7bupxZG0GiGjXgMDY2naPhYhMhBAgv7ec9RgiZjXtVpTWlF-aCDD81tmI32w__", 
-      status: "En Cours",
-      participants: 5,
-      progress: 65
-    },
-    { 
-      id: "7", 
-      titre: "Projet Aerok", 
-      image: "https://s3-alpha-sig.figma.com/img/a86a/ff57/1852d502bc5a8bdff7d9c5e8234900f6?Expires=1744588800&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=ZLRpSyMVpgSLsf4JPxzgtlJf8FQu1K6TR6~yODp49uEApbgCBYDYT1L97rx3GospMMPZpZQ6G0Fb3gEVccf9WTY93mJTeVVWEoKVowr5O7XcbXgQhHUmQJ6Aj3dUo6ruY7LwSVTXXq8cJAOshhe1GwjvO-4KAoF1MUxBLbn0OaLdKPF2P6UWaNpypLeqyMDp1L7NYkmBQ5E4qBPdq4p~Vxpy1sHa0w2xM~XN3SC5p7Np2P77jkFwcQ~O~SgbUgZj5spcoDSIRGGT9TvnjhfaBKRfAi7bupxZG0GiGjXgMDY2naPhYhMhBAgv7ec9RgiZjXtVpTWlF-aCDD81tmI32w__", 
-      status: "En Cours",
-      participants: 5,
-      progress: 65
-    }
-  ];
-  const currentProjets = projets.slice(indexOfFirstProjet, indexOfLastProjet);
-
-  const { eventsCountByRole, loading, error, fetchEventsCountByRole } = useEvenement();
 
   const stats = [
     { title: "Participants actifs", value: 210, icon: <svg xmlns="http://www.w3.org/2000/svg" width="33" height="26" viewBox="0 0 33 26" fill="none"><g clip-path="url(#clip0_865_2062)"><path d="M7.3125 0C8.38994 0 9.42325 0.428012 10.1851 1.18988C10.947 1.95175 11.375 2.98506 11.375 4.0625C11.375 5.13994 10.947 6.17325 10.1851 6.93512C9.42325 7.69699 8.38994 8.125 7.3125 8.125C6.23506 8.125 5.20175 7.69699 4.43988 6.93512C3.67801 6.17325 3.25 5.13994 3.25 4.0625C3.25 2.98506 3.67801 1.95175 4.43988 1.18988C5.20175 0.428012 6.23506 0 7.3125 0ZM26 0C27.0774 0 28.1108 0.428012 28.8726 1.18988C29.6345 1.95175 30.0625 2.98506 30.0625 4.0625C30.0625 5.13994 29.6345 6.17325 28.8726 6.93512C28.1108 7.69699 27.0774 8.125 26 8.125C24.9226 8.125 23.8892 7.69699 23.1274 6.93512C22.3655 6.17325 21.9375 5.13994 21.9375 4.0625C21.9375 2.98506 22.3655 1.95175 23.1274 1.18988C23.8892 0.428012 24.9226 0 26 0ZM0 15.1684C0 12.1773 2.42734 9.75 5.41836 9.75H7.58672C8.39414 9.75 9.16094 9.92773 9.85156 10.2426C9.78555 10.6082 9.75508 10.9891 9.75508 11.375C9.75508 13.3148 10.6082 15.0566 11.9539 16.25C11.9437 16.25 11.9336 16.25 11.9184 16.25H1.08164C0.4875 16.25 0 15.7625 0 15.1684ZM20.5816 16.25C20.5715 16.25 20.5613 16.25 20.5461 16.25C21.8969 15.0566 22.7449 13.3148 22.7449 11.375C22.7449 10.9891 22.7094 10.6133 22.6484 10.2426C23.3391 9.92266 24.1059 9.75 24.9133 9.75H27.0816C30.0727 9.75 32.5 12.1773 32.5 15.1684C32.5 15.7676 32.0125 16.25 31.4184 16.25H20.5816ZM11.375 11.375C11.375 10.0821 11.8886 8.84209 12.8029 7.92785C13.7171 7.01361 14.9571 6.5 16.25 6.5C17.5429 6.5 18.7829 7.01361 19.6971 7.92785C20.6114 8.84209 21.125 10.0821 21.125 11.375C21.125 12.6679 20.6114 13.9079 19.6971 14.8221C18.7829 15.7364 17.5429 16.25 16.25 16.25C14.9571 16.25 13.7171 15.7364 12.8029 14.8221C11.8886 13.9079 11.375 12.6679 11.375 11.375ZM6.5 24.6441C6.5 20.9066 9.53164 17.875 13.2691 17.875H19.2309C22.9684 17.875 26 20.9066 26 24.6441C26 25.3906 25.3957 26 24.6441 26H7.85586C7.10938 26 6.5 25.3957 6.5 24.6441Z" fill="#FF7900"/></g><defs><clipPath id="clip0_865_2062"><path d="M0 0H32.5V26H0V0Z" fill="white"/></clipPath></defs></svg> },
     { title: "Projets en Cours", value: 10, icon: (<svg xmlns="http://www.w3.org/2000/svg" width="33" height="26" viewBox="0 0 62 62" fill="none"><mask id="mask0_1488_2668" maskUnits="userSpaceOnUse" x="0" y="0" width="62" height="62"><rect width="62" height="62" rx="31" fill="#CCCCCC" /></mask><g mask="url(#mask0_1488_2668)"><rect width="62" height="62" rx="31" fill="#FFF2E6" /><g transform="translate(30, 30) scale(1.9) translate(-30, -30)"><path d="M38.5 41.5C39.1 39.5 40.2 37.5 41.2 35.5C41.5 35 41.8 34.5 42.1 34C43.3 32 44 29.8 44 27.5C44 22 39.7 17.5 34.5 17.5C29.3 17.5 25 22 25 27.5C25 29.8 25.7 32 26.9 34C27.2 34.5 27.5 35 27.8 35.5C28.8 37.5 29.8 39.5 30.4 41.5H38.5V41.5ZM34.5 49C37 49 39.1 46.8 39.1 44.3V43.4H29.9V44.3C29.9 46.8 32 49 34.5 49ZM29.9 27.5C29.9 28 29.5 28.5 29 28.5C28.5 28.5 28.1 28 28.1 27.5C28.1 24 30.8 21.5 34.5 21.5C35 21.5 35.4 22 35.4 22.5C35.4 23 35 23.5 34.5 23.5C32 23.5 29.9 25.6 29.9 27.5Z" fill="#FF7900"/></g></g></svg>)},
     { title: "Ateliers Planifiés", value: 9, icon: <svg xmlns="http://www.w3.org/2000/svg" width="28" height="22" viewBox="0 0 22 22" fill="none"><g clip-path="url(#clip0_865_2094)"><path d="M13.7501 1.375C13.402 1.375 13.0583 1.43516 12.7317 1.55117L0.678957 5.90391C0.270754 6.0543 5.1035e-05 6.44102 5.1035e-05 6.875C5.1035e-05 7.30898 0.270754 7.6957 0.678957 7.84609L3.16685 8.74414C2.46216 9.85273 2.06255 11.1633 2.06255 12.5426V13.75C2.06255 14.9703 1.59849 16.2293 1.10435 17.2219C0.825051 17.7805 0.507082 18.3305 0.137551 18.8375C5.10365e-05 19.0223 -0.0386208 19.2629 0.0387229 19.482C0.116067 19.7012 0.296535 19.8645 0.519973 19.9203L3.26997 20.6078C3.45044 20.6551 3.6438 20.6207 3.80279 20.5219C3.96177 20.423 4.07349 20.2598 4.10786 20.075C4.47739 18.2359 4.29263 16.5859 4.01763 15.4043C3.88013 14.7941 3.69536 14.1711 3.43755 13.5996V12.5426C3.43755 11.2449 3.87583 10.0203 4.63638 9.04062C5.19068 8.37461 5.90825 7.8375 6.75044 7.50664L13.4965 4.85547C13.8489 4.71797 14.2485 4.88984 14.386 5.24219C14.5235 5.59453 14.3516 5.99414 13.9993 6.13164L7.25318 8.78281C6.72036 8.99336 6.252 9.31563 5.86958 9.71094L12.7274 12.1859C13.054 12.302 13.3977 12.3621 13.7458 12.3621C14.0938 12.3621 14.4376 12.302 14.7641 12.1859L26.8211 7.84609C27.2293 7.7 27.5 7.30898 27.5 6.875C27.5 6.44102 27.2293 6.0543 26.8211 5.90391L14.7684 1.55117C14.4418 1.43516 14.0981 1.375 13.7501 1.375ZM5.50005 17.5312C5.50005 19.048 9.19536 20.625 13.7501 20.625C18.3047 20.625 22 19.048 22 17.5312L21.3426 11.2836L15.2325 13.4922C14.7555 13.6641 14.2528 13.75 13.7501 13.75C13.2473 13.75 12.7403 13.6641 12.2676 13.4922L6.15747 11.2836L5.50005 17.5312Z" fill="#FF7900"/></g><defs><clipPath id="clip0_865_2094"><path d="M0 0H27.5V22H0V0Z" fill="white"/></clipPath></defs></svg>},
     { title: "Prototype Actifs", value: 20, icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><g clip-path="url(#clip0_865_2107)"><path d="M7.5 0C8.32969 0 9 0.670312 9 1.5V3H15V1.5C15 0.670312 15.6703 0 16.5 0C17.3297 0 18 0.670312 18 1.5V3H20.25C21.4922 3 22.5 4.00781 22.5 5.25V7.5H1.5V5.25C1.5 4.00781 2.50781 3 3.75 3H6V1.5C6 0.670312 6.67031 0 7.5 0ZM1.5 9H22.5V21.75C22.5 22.9922 21.4922 24 20.25 24H3.75C2.50781 24 1.5 22.9922 1.5 21.75V9ZM15.7969 14.2969C16.2375 13.8562 16.2375 13.1438 15.7969 12.7078C15.3562 12.2719 14.6438 12.2672 14.2078 12.7078L12.0047 14.9109L9.80156 12.7078C9.36094 12.2672 8.64844 12.2672 8.2125 12.7078C7.77656 13.1484 7.77187 13.8609 8.2125 14.2969L10.4156 16.5L8.2125 18.7031C7.77187 19.1437 7.77187 19.8562 8.2125 20.2922C8.65312 20.7281 9.36563 20.7328 9.80156 20.2922L12.0047 18.0891L14.2078 20.2922C14.6484 20.7328 15.3609 20.7328 15.7969 20.2922C16.2328 19.8516 16.2375 19.1391 15.7969 18.7031L13.5938 16.5L15.7969 14.2969Z" fill="#FF7900"/></g><defs><clipPath id="clip0_865_2107"><path d="M0 0H24V24H0V0Z" fill="white"/></clipPath></defs></svg> },
-    
-    
-  ]
-  const equipements: Equipement[] = [
+  ];
+ const equipements: Equipement[] = [
     { id: "1", nom: "Imprimante Ultimaker S5", etat: "Disponible",image:"https://s3-alpha-sig.figma.com/img/5ad0/64a0/4ee203edabf0bc43cd0ce02e3edbd95b?Expires=1744588800&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=BF~48qHiygqJXcRl4Z97IwDpVmTzzdTciiPJmcfwf9jU-hHMKbHjn2jkq2igjft~E1gNFlC7rZkSG94yJ-Ln~YbcVLdxSWefi8~h8DdE-GITOZvS0fITeo53u~lIzWwzuWpaZBFisS54ANhdO3r1ekKsfu56CLqorx39SSLCwCxM3UrKyksVMH-DQ4c6MRtrwxBuhu4f5WTfOd80guPutxd8z96oAEdvBPCd6DtSuvN-vLJk98X5LWYlD7L5FCgu7v9WJGLeFjH6lXliRMJt9fzH0fKOcuKTwsGCh~i~qniG0TMxeOfEbUVu2-a57qbmraTJG89UvotJdd92Er~8GA__" },
     { id: "2", nom: "Imprimante 3D S5", etat: "En maintenance", image:"https://s3-alpha-sig.figma.com/img/5ad0/64a0/4ee203edabf0bc43cd0ce02e3edbd95b?Expires=1744588800&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=BF~48qHiygqJXcRl4Z97IwDpVmTzzdTciiPJmcfwf9jU-hHMKbHjn2jkq2igjft~E1gNFlC7rZkSG94yJ-Ln~YbcVLdxSWefi8~h8DdE-GITOZvS0fITeo53u~lIzWwzuWpaZBFisS54ANhdO3r1ekKsfu56CLqorx39SSLCwCxM3UrKyksVMH-DQ4c6MRtrwxBuhu4f5WTfOd80guPutxd8z96oAEdvBPCd6DtSuvN-vLJk98X5LWYlD7L5FCgu7v9WJGLeFjH6lXliRMJt9fzH0fKOcuKTwsGCh~i~qniG0TMxeOfEbUVu2-a57qbmraTJG89UvotJdd92Er~8GA__" },
     { id: "3", nom: "Imprimante Ultimaker S5", etat: "Disponible", image:"https://s3-alpha-sig.figma.com/img/5ad0/64a0/4ee203edabf0bc43cd0ce02e3edbd95b?Expires=1744588800&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=BF~48qHiygqJXcRl4Z97IwDpVmTzzdTciiPJmcfwf9jU-hHMKbHjn2jkq2igjft~E1gNFlC7rZkSG94yJ-Ln~YbcVLdxSWefi8~h8DdE-GITOZvS0fITeo53u~lIzWwzuWpaZBFisS54ANhdO3r1ekKsfu56CLqorx39SSLCwCxM3UrKyksVMH-DQ4c6MRtrwxBuhu4f5WTfOd80guPutxd8z96oAEdvBPCd6DtSuvN-vLJk98X5LWYlD7L5FCgu7v9WJGLeFjH6lXliRMJt9fzH0fKOcuKTwsGCh~i~qniG0TMxeOfEbUVu2-a57qbmraTJG89UvotJdd92Er~8GA__" },
     { id: "4", nom: "Imprimante Ultimaker S5", etat: "Disponible" , image:"https://s3-alpha-sig.figma.com/img/5ad0/64a0/4ee203edabf0bc43cd0ce02e3edbd95b?Expires=1744588800&Key-Pair-Id=APKAQ4GOSFWCW27IBOMQ&Signature=BF~48qHiygqJXcRl4Z97IwDpVmTzzdTciiPJmcfwf9jU-hHMKbHjn2jkq2igjft~E1gNFlC7rZkSG94yJ-Ln~YbcVLdxSWefi8~h8DdE-GITOZvS0fITeo53u~lIzWwzuWpaZBFisS54ANhdO3r1ekKsfu56CLqorx39SSLCwCxM3UrKyksVMH-DQ4c6MRtrwxBuhu4f5WTfOd80guPutxd8z96oAEdvBPCd6DtSuvN-vLJk98X5LWYlD7L5FCgu7v9WJGLeFjH6lXliRMJt9fzH0fKOcuKTwsGCh~i~qniG0TMxeOfEbUVu2-a57qbmraTJG89UvotJdd92Er~8GA__" }
   ];
-
-  const StatCard = ({ icon, number, label, color = "bg-orange-500" }) => (
-    <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200 flex">
-      <div className={`${color} p-3 rounded-md mr-4 text-white flex items-center justify-center`}>
-        {icon}
-      </div>
-      <div>
-        <div className="text-3xl font-bold">{number}</div>
-        <div className="text-gray-600">{label}</div>
-      </div>
-    </div>
-  );
-
-  const StatusBadge = ({ status }) => {
-    let bgColor = "bg-orange-100 text-orange-500 rounded-full";
-    
-    if (status === "Disponible") {
-      bgColor = "bg-green-100 text-green-500";
-    } else if (status === "En maintenance") {
-      bgColor = "bg-red-100 text-red-800";
-    }
-    
-    return (
-      <span className={`px-2 py-1 text-sm rounded-md ${bgColor}`}>
-        {status}
-      </span>
-    );
-  };
-
-  const ProgressBar = ({ percentage, color = "bg-green-500" }) => (
-    <div className="w-full bg-green-100 rounded-full h-2 mb-2">
-      <div className={`${color} h-2 rounded-full`} style={{ width: `${percentage}%` }}></div>
-    </div>
-  );
-
-  const FilterButton = ({ label, active, onClick }) => (
+ const FilterButton = ({ label, active, onClick }) => (
     <button 
       className={`px-4 py-1 text-sm rounded-[4px] ${active ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-600'}`}
       onClick={onClick}
@@ -209,191 +47,62 @@ const FablabSolidaire = () => {
           <h1 className="text-2xl font-bold">Fablab Solidaire</h1>
           <div className="flex items-center gap-4">
             <div className="flex items-center">
-            <Button variant="ghost" className="text-[#333] flex items-center gap-2 font-bold">
-              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M0 3C0 2.44772 0.447715 2 1 2H19C19.5523 2 20 2.44772 20 3V5C20 5.26522 19.8946 5.51957 19.7071 5.70711L13 12.4142V19C13 19.5523 12.5523 20 12 20H8C7.44772 20 7 19.5523 7 19V12.4142L0.292893 5.70711C0.105357 5.51957 0 5.26522 0 5V3Z" fill="#000"/>
-              </svg>
-              Filtres
-            </Button>
+              <Button variant="ghost" className="text-[#333] flex items-center gap-2 font-bold">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M0 3C0 2.44772 0.447715 2 1 2H19C19.5523 2 20 2.44772 20 3V5C20 5.26522 19.8946 5.51957 19.7071 5.70711L13 12.4142V19C13 19.5523 12.5523 20 12 20H8C7.44772 20 7 19.5523 7 19V12.4142L0.292893 5.70711C0.105357 5.51957 0 5.26522 0 5V3Z" fill="#000"/>
+                </svg>
+                Filtres
+              </Button>
             </div>
             <Button
-      variant="ghost"
-      className="bg-black text-white flex items-center gap-2"
-      onClick={() => navigate('/manager/calendriermanager')}>  
-      Ce mois ci    
-       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-<path fill-rule="evenodd" clip-rule="evenodd" d="M14.8306 6.33861C14.8303 5.8435 15.0633 5.37732 15.4594 5.08056V6.33861C15.4594 6.85963 15.882 7.28223 16.4031 7.28223C16.9244 7.28223 17.347 6.85963 17.347 6.33861L17.3467 6.02418H17.347V5.09305C17.7425 5.38464 17.9758 5.84715 17.9758 6.33861C17.9758 7.20728 17.2717 7.91111 16.4031 7.91111C15.535 7.91111 14.8306 7.20728 14.8306 6.33861ZM6.02415 6.33861C6.02385 5.8435 6.25693 5.37732 6.65303 5.08056V6.33861C6.65303 6.85963 7.07563 7.28223 7.59695 7.28223C8.11797 7.28223 8.54026 6.85963 8.54026 6.33861V6.02418H8.54057V5.08086C9.23525 5.60188 9.37602 6.58754 8.8547 7.28254C8.33338 7.97692 7.34741 8.11768 6.65303 7.59636C6.25693 7.29929 6.02415 6.83343 6.02415 6.33861ZM20.4919 20.4919H4.45164C3.93063 20.4919 3.50803 20.0693 3.50803 19.5483V9.79831H19.5483C20.0693 9.79831 20.4919 10.2206 20.4919 10.7419V20.4919ZM19.8631 4.13693H17.347V3.18082C17.347 2.6598 16.9244 2.25 16.403 2.25C15.882 2.25 15.4594 2.6723 15.4594 3.19331V4.13693H8.54058L8.54027 3.19331C8.54027 2.6723 8.11798 2.25 7.59696 2.25C7.07564 2.25 6.65304 2.6723 6.65304 3.19331V4.13693H2.25V19.8628C2.25 20.9051 3.09459 21.75 4.13693 21.75H21.75V6.02416C21.75 4.98183 20.9051 4.13693 19.8631 4.13693Z" fill="white"/></svg>
-    </Button>
+              variant="ghost"
+              className="bg-black text-white flex items-center gap-2"
+              onClick={() => navigate('/manager/calendriermanager')}>  
+              Ce mois ci    
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M14.8306 6.33861C14.8303 5.8435 15.0633 5.37732 15.4594 5.08056V6.33861C15.4594 6.85963 15.882 7.28223 16.4031 7.28223C16.9244 7.28223 17.347 6.85963 17.347 6.33861L17.3467 6.02418H17.347V5.09305C17.7425 5.38464 17.9758 5.84715 17.9758 6.33861C17.9758 7.20728 17.2717 7.91111 16.4031 7.91111C15.535 7.91111 14.8306 7.20728 14.8306 6.33861ZM6.02415 6.33861C6.02385 5.8435 6.25693 5.37732 6.65303 5.08056V6.33861C6.65303 6.85963 7.07563 7.28223 7.59695 7.28223C8.11797 7.28223 8.54026 6.85963 8.54026 6.33861V6.02418H8.54057V5.08086C9.23525 5.60188 9.37602 6.58754 8.8547 7.28254C8.33338 7.97692 7.34741 8.11768 6.65303 7.59636C6.25693 7.29929 6.02415 6.83343 6.02415 6.33861ZM20.4919 20.4919H4.45164C3.93063 20.4919 3.50803 20.0693 3.50803 19.5483V9.79831H19.5483C20.0693 9.79831 20.4919 10.2206 20.4919 10.7419V20.4919ZM19.8631 4.13693H17.347V3.18082C17.347 2.6598 16.9244 2.25 16.403 2.25C15.882 2.25 15.4594 2.6723 15.4594 3.19331V4.13693H8.54058L8.54027 3.19331C8.54027 2.6723 8.11798 2.25 7.59696 2.25C7.07564 2.25 6.65304 2.6723 6.65304 3.19331V4.13693H2.25V19.8628C2.25 20.9051 3.09459 21.75 4.13693 21.75H21.75V6.02416C21.75 4.98183 20.9051 4.13693 19.8631 4.13693Z" fill="white"/>
+              </svg>
+            </Button>
             <Link to="/manager/GestionFormationManager" className="bg-orange-500 text-white px-4 py-2 rounded-[4px] shadow-md hover:bg-orange-600">
-            Calendrier Formations
+              Calendrier Formations
             </Link>
           </div>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            {stats.map((stat, index) => (
-              <div key={index} className="bg-white p-4  rounded-[4px] border border-gray-200 flex items-start">
-                <div className="bg-[#FF79001A] p-3 rounded-full flex items-center justify-center mr-3">
+          {stats.map((stat, index) => (
+            <div key={index} className="bg-white p-4 rounded-[4px] border border-gray-200 flex items-start">
+              <div className="bg-[#FF79001A] p-3 rounded-full flex items-center justify-center mr-3">
                 {stat.icon}
               </div>
-                <div>
-                <p className="text-xl font-bold font-inter"style={{color: 'var(--Neutral-600, #595959)',fontSize: '20px',fontStyle: 'normal',fontWeight: 700,lineHeight: '26px',}}>
-                          {stat.title}
-                        </p>
-
-                  <p className="text-2xl font-bold">{stat.value}</p>
-                  <p
-                    className={`text-sm font-inter ${
-                      index < 2 ? "text-[#10B981]" : index === 2 ? "text-gray-500" : "text-red-500"
-                    }`}
-                  >
-                  </p>
-                </div>
+              <div>
+                <p className="text-xl font-bold font-inter" style={{color: '#595959', fontSize: '20px', fontStyle: 'normal', fontWeight: 700, lineHeight: '26px'}}>
+                  {stat.title}
+                </p>
+                <p className="text-2xl font-bold">{stat.value}</p>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Main Content */}
         <div className="flex justify-between space-x-4">
-  {/* Section Formations Fablab */}
-  <div className="bg-white rounded-[4px] p-3 mb-5 shadow-sm border border-gray-200 max-w-[990px] flex-1">
-    <div className="flex justify-between items-center mb-4">
-      <h2 className="text-xl font-bold">Formations Fablab</h2>
-      <button className="bg-orange-500 text-white px-4 py-1 rounded-[4px]">
-        Découvrir
-      </button>
-    </div>
-    
-    <div className="flex mb-3 gap-2 "style={{ width: '60%', height:'10%' }}>
-      <FilterButton 
-        label="En cours" 
-        active={formationFilter === 'En cours'} 
-        onClick={() => setFormationFilter('En cours')} 
-      />
-      <FilterButton 
-        label="À venir"
-        active={formationFilter === 'À venir'} 
-        onClick={() => setFormationFilter('À venir')} 
-      />
-      <FilterButton 
-        label="Terminée" 
-        active={formationFilter === 'Terminée'} 
-        onClick={() => setFormationFilter('Terminée')} 
-      />
-        <Button variant="ghost" className="text-[#333] flex items-center gap-2 font-bold rounded-[4px]">
-                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M0 3C0 2.44772 0.447715 2 1 2H19C19.5523 2 20 2.44772 20 3V5C20 5.26522 19.8946 5.51957 19.7071 5.70711L13 12.4142V19C13 19.5523 12.5523 20 12 20H8C7.44772 20 7 19.5523 7 19V12.4142L0.292893 5.70711C0.105357 5.51957 0 5.26522 0 5V3Z" fill="#000"/>
-                </svg>
-      </Button>
-    </div>
-    <table className="w-full">
-    <thead className="bg-gray-100 text-left w-90%" style={{ height: '40px' }}>
-  <tr>
-    <th className="font-bold font-inter text-black" style={{ width: '30%' }}>Titre Formation</th>
-    <th className="font-bold font-inter text-black" style={{ width: '20%' }}>Encadrant</th>
-    <th className="font-bold font-inter text-black" style={{ width: '18%' }}>Date</th>
-    <th className="font-bold font-inter text-black" style={{ width: '20%' }}>Status</th>
-    <th className="font-bold font-inter text-black" style={{ width: '80%' }}>Participants</th>
-    <th className="font-bold font-inter text-black" style={{ width: '20%' }}>Action</th>
-  </tr>
-</thead>
-
-
-      <tbody>
-        {formations.map((formation, index) => (
+          <FormationsFablab />
           
-          <tr key={formation.image} className="border-t border-gray-200">
-            <td className="p-2 flex items-center" style={{
-    color: 'var(--Neutral-700, #333)',
-    fontFeatureSettings: "'dlig' on",
-    fontFamily: 'Inter',
-    fontSize: '16px',
-    fontStyle: 'normal',
-    fontWeight: '600',
-    lineHeight: '21px'
-}}>
-  <div className=" p-2  mr-2">
-  <img src={formation.image}  className="w-[70px] h-[40px] object-cover" />
-  
-  </div> 
-  {formation.titre}
-  </td>
-  <td className="p-2 font-inter" style={{
-    color: 'var(--Neutral-700, #333)',
-    fontFeatureSettings: "'dlig' on",
-    fontSize: '16px',
-    fontStyle: 'normal',
-    fontWeight: '600',
-    lineHeight: '21px',
-}}>
-            <div
-                    style={{color: 'var(--Neutral-700, #333)',fontFeatureSettings: "'dlig' on",fontFamily: 'inter',fontSize: '16px',fontStyle: 'normal',fontWeight: 600, lineHeight: '21px', }}>
-                        {formation.encadrant}
-                  </div>
-                    <div className="bg-gray-200 text-black px-2 py-1 rounded-full text-xs font-medium inline-block mt-1">
-                      {formation.ville}
-                    </div>
-              </td>
-            <td className="p-2">
-              {formation.datedebut}<br />
-              {formation.datefin}
-            </td>
-
-            <td className="p-2 text-center">
-  <div
-    style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      color: '#FF7A00',
-      fontFeatureSettings: "'dlig' on",
-      fontFamily: 'Inter',
-      fontSize: '13px',
-      fontStyle: 'normal',
-      fontWeight: '500',
-      lineHeight: '21px',
-      minWidth: '20px',
-      maxWidth: '480px',
-      padding: '0px 8px',
-      height: '24px',
-      borderRadius: '12px',
-      background: 'rgba(255, 122, 0, 0.10)',
-      margin: '0 auto' // ✅ centre le bloc dans le `td`
-    }}
-  >
-    {formation.status}
-  </div>
-</td>
-
-
-
-            <td className="p-2 font-bold" style={{color: 'var(--Neutral-700, #333)',fontFeatureSettings: "'dlig' on",fontFamily: 'Inter',fontSize: '16px',fontStyle: 'normal',fontWeight: '600',lineHeight: '21px',}}>
-              {formation.participants}</td>
-            <td className="p-2">
-              <button className="bg-black text-white px-3 py-1 text-sm rounded-[4px]">
-                Accéder
-              </button>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-
-  {/* Section Accès */}
-  <div className="top-30 right-9 w-[24%] max-w-[800px] bg-black text-white rounded-[4px] shadow-lg overflow-hidden h-[364px]">
-  <div className="p-4 bg-black text-white font-bold text-left rounded-[4px] w-full text-xl">
-  Accès
-</div>
-  <div className="space-y-2 p-2">
-
-    <a href="#" className=" flex items-center bg-white text-black rounded-[4px] hover:bg-gray-100" style={{ padding: '0.45rem' }}>
-      <div className="mr-2 text-blue-500">
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="16" viewBox="0 0 20 16" fill="none"><path d="M3 4C3 2.93913 3.42143 1.92172 4.17157 1.17157C4.92172 0.421427 5.93913 0 7 0C8.06087 0 9.07828 0.421427 9.82843 1.17157C10.5786 1.92172 11 2.93913 11 4C11 5.06087 10.5786 6.07828 9.82843 6.82843C9.07828 7.57857 8.06087 8 7 8C5.93913 8 4.92172 7.57857 4.17157 6.82843C3.42143 6.07828 3 5.06087 3 4ZM0 15.0719C0 11.9937 2.49375 9.5 5.57188 9.5H8.42813C11.5063 9.5 14 11.9937 14 15.0719C14 15.5844 13.5844 16 13.0719 16H0.928125C0.415625 16 0 15.5844 0 15.0719ZM15.75 9.75V7.75H13.75C13.3344 7.75 13 7.41563 13 7C13 6.58437 13.3344 6.25 13.75 6.25H15.75V4.25C15.75 3.83437 16.0844 3.5 16.5 3.5C16.9156 3.5 17.25 3.83437 17.25 4.25V6.25H19.25C19.6656 6.25 20 6.58437 20 7C20 7.41563 19.6656 7.75 19.25 7.75H17.25V9.75C17.25 10.1656 16.9156 10.5 16.5 10.5C16.0844 10.5 15.75 10.1656 15.75 9.75Z" fill="black"/></svg>      </div>
-      Gestion des Réservations
-    </a>
-    <a href="#" className=" flex items-center bg-white text-black rounded-[4px] hover:bg-gray-100"style={{ padding: '0.40rem' }}>
+          {/* Section Accès */}
+          <div className="top-30 right-9 w-[24%] max-w-[800px] bg-black text-white rounded-[4px] shadow-lg overflow-hidden h-[364px]">
+            <div className="p-4 bg-black text-white font-bold text-left rounded-[4px] w-full text-xl">
+              Accès
+            </div>
+            <div className="space-y-2 p-2">
+              <a href="#" className="flex items-center bg-white text-black rounded-[4px] hover:bg-gray-100" style={{ padding: '0.45rem' }}>
+                <div className="mr-2 text-blue-500">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="16" viewBox="0 0 20 16" fill="none"><path d="M0 3C0 2.43906 0.439063 2 1 2H4C4.56094 2 5 2.43906 5 3V4H15V3C15 2.43906 15.4391 2 16 2H19C19.5609 2 20 2.43906 20 3V6C20 6.56094 19.5609 7 19 7H16C15.4391 7 15 6.56094 15 6V5H5V6C5 6.56094 4.56094 7 4 7H1C0.439063 7 0 6.56094 0 6V3ZM1.25 9H18.75C19.4406 9 20 9.55937 20 10.25V15.75C20 16.4406 19.4406 17 18.75 17H1.25C0.559375 17 0 16.4406 0 15.75V10.25C0 9.55937 0.559375 9 1.25 9ZM13 12C13 12.8281 13.6719 13.5 14.5 13.5C15.3281 13.5 16 12.8281 16 12C16 11.1719 15.3281 10.5 14.5 10.5C13.6719 10.5 13 11.1719 13 12Z" fill="black"/></svg>
+                </div>
+                Gestion des Réservations
+              </a>
+              <a href="#" className=" flex items-center bg-white text-black rounded-[4px] hover:bg-gray-100"style={{ padding: '0.40rem' }}>
       <div className="mr-3 text-blue-500">
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
 <path d="M2.45714 0.156626C2.16026 -0.0746243 1.73839 -0.0464993 1.46964 0.219126L0.219636 1.46913C-0.0459894 1.73475 -0.0741144 2.15663 0.154011 2.45663L2.65401 5.70663C2.79464 5.891 3.01651 6.00038 3.24776 6.00038H4.93839L8.34464 9.40663C7.88526 10.3129 8.03214 11.4504 8.79151 12.2066L12.2915 15.7066C12.6821 16.0973 13.3165 16.0973 13.7071 15.7066L15.7071 13.7066C16.0978 13.316 16.0978 12.6816 15.7071 12.291L12.2071 8.791C11.4509 8.03475 10.3134 7.88475 9.40714 8.34413L6.00089 4.93788V3.25038C6.00089 3.016 5.89151 2.79725 5.70714 2.65663L2.45714 0.156626ZM0.622761 12.3785C0.225886 12.7754 0.000885559 13.316 0.000885559 13.8785C0.000885559 15.0504 0.950886 16.0004 2.12276 16.0004C2.68526 16.0004 3.22589 15.7754 3.62276 15.3785L7.30401 11.6973C7.06026 11.0441 7.02276 10.3348 7.19151 9.66288L5.26339 7.73475L0.622761 12.3785ZM16.0009 4.50038C16.0009 4.17225 15.9665 3.8535 15.9009 3.54725C15.8259 3.19725 15.3978 3.10663 15.1446 3.35975L13.1478 5.35663C13.054 5.45038 12.9259 5.5035 12.7946 5.5035H11.0009C10.7259 5.5035 10.5009 5.2785 10.5009 5.0035V3.20663C10.5009 3.07538 10.554 2.94725 10.6478 2.8535L12.6446 0.856626C12.8978 0.603501 12.8071 0.175376 12.4571 0.100376C12.1478 0.0347507 11.829 0.000375663 11.5009 0.000375663C9.01651 0.000375663 7.00089 2.016 7.00089 4.50038V4.52538L9.66651 7.191C10.7915 6.90663 12.0353 7.20663 12.9165 8.08788L13.4071 8.5785C14.9384 7.85975 16.0009 6.3035 16.0009 4.50038ZM1.75089 13.5004C1.75089 13.3015 1.8299 13.1107 1.97056 12.97C2.11121 12.8294 2.30197 12.7504 2.50089 12.7504C2.6998 12.7504 2.89056 12.8294 3.03122 12.97C3.17187 13.1107 3.25089 13.3015 3.25089 13.5004C3.25089 13.6993 3.17187 13.8901 3.03122 14.0307C2.89056 14.1714 2.6998 14.2504 2.50089 14.2504C2.30197 14.2504 2.11121 14.1714 1.97056 14.0307C1.8299 13.8901 1.75089 13.6993 1.75089 13.5004Z" fill="black"/>
@@ -429,123 +138,23 @@ const FablabSolidaire = () => {
 </svg>      </div>
       Planifier une formation
     </a>
-  </div>
-</div>
-</div>
-
-
-
-
-        {/* Two-column layout for Projets and Équipements */}
-        <div className="flex flex-wrap gap-6">
-  {/* Projets Section - Largeur fixe */}
-  <div className="flex-1 max-w-[800px] bg-white rounded-[4px] p-4 shadow-sm border border-gray-200">
-    <div className="flex justify-between items-center mb-4">
-      <h2 className="text-xl font-bold">Projets Fablab</h2>
-      <button className="bg-orange-500 text-white px-4 py-1 rounded-[4px]">
-        Découvrir
-      </button>
-    </div>
-    
-    <div className="flex mb-3 gap-2 "style={{ width: '50%', height:'7%' }}>
-      <FilterButton 
-        label="En cours" 
-        active={formationFilter === 'En cours'} 
-        onClick={() => setFormationFilter('En cours')} 
-      />
-      <FilterButton 
-        label="À venir"
-        active={formationFilter === 'À venir'} 
-        onClick={() => setFormationFilter('À venir')} 
-      />
-      <FilterButton 
-        label="Terminée" 
-        active={formationFilter === 'Terminée'} 
-        onClick={() => setFormationFilter('Terminée')} 
-      />
-        <Button variant="ghost" className="text-[#333] flex items-center gap-2 font-bold rounded-[4px]">
-                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M0 3C0 2.44772 0.447715 2 1 2H19C19.5523 2 20 2.44772 20 3V5C20 5.26522 19.8946 5.51957 19.7071 5.70711L13 12.4142V19C13 19.5523 12.5523 20 12 20H8C7.44772 20 7 19.5523 7 19V12.4142L0.292893 5.70711C0.105357 5.51957 0 5.26522 0 5V3Z" fill="#000"/>
-                </svg>
-      </Button>
-    </div>
-    
-    <div className="grid grid-cols-2 gap-4">
-    {currentProjets.map((projet) => (
-              <div key={projet.id} className="border border-gray-200 rounded-[4px] p-3">
-          <div className="flex items-center mb-2">
-  <div className="w-20 h-20 bg-gray-200 rounded-[4px] mr-3 overflow-hidden">
-    <img src={projet.image}  className="w-full h-full object-cover" />
-  </div>
-  <div>
-    <h3 className="font-medium">{projet.titre}</h3>
-    
-    <div
-      className="p-2 rounded-full mb-1" style={{display: 'flex',WebkitBoxOrient: 'vertical',WebkitLineClamp: 1,overflow: 'hidden',textOverflow: 'ellipsis',color: '#FF7A00',textAlign: 'center',fontFeatureSettings: "'dlig' on",fontFamily: 'Inter',fontSize: '13px',fontStyle: 'normal',fontWeight: '300',lineHeight: '10px',width: '10px',height: '19px',minWidth: '84px',maxWidth: '480px',padding: '0px 16px',justifyContent: 'center',alignItems: 'center',flexShrink: 0,borderRadius: '12px',background: 'rgba(255, 122, 0, 0.10)'}} >
-      {projet.status}
-    </div>
-
-    <div
-  style={{color: 'var(--Neutral-500, #666)',fontFeatureSettings: "'dlig' on",fontFamily: 'Inter',fontSize: '16px',fontStyle: 'normal',fontWeight: '500',lineHeight: '21px'}}>
-  {projet.participants} participants
-</div>
-
-  </div>
-</div>
-          <div className="mb-2">
-            <div className="flex justify-between text-xs mb-1 text-gray-600">
-              <span>Progress</span>
-              <span>{projet.progress}%</span>
             </div>
-            <ProgressBar percentage={projet.progress}  />
           </div>
         </div>
-      ))}
-    </div>
-    
-    <div className="flex justify-center mt-4 gap-2">
-  <button 
-    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
-    disabled={currentPage === 1}
-    className="px-3 py-1 bg-white rounded-[4px] text-sm border border-gray-200 disabled:opacity-50"
-  >
-    Précédent
-  </button>
-  
-  {Array.from({ length: Math.ceil(projets.length / projetsPerPage) }).map((_, index) => (
-    <button
-      key={index}
-      onClick={() => paginate(index + 1)}
-      className={`px-3 py-1 rounded-[4px] text-sm ${
-        currentPage === index + 1 
-          ? 'bg-gray-100 text-black border border-gray-200' 
-          : 'bg-white border border-gray-200 rounded-[4px]'
-      }`}
-    >
-      {index + 1}
-    </button>
-  ))}
-  
-  <button 
-    onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(projets.length / projetsPerPage)))}
-    disabled={currentPage === Math.ceil(projets.length / projetsPerPage)}
-    className="px-3 py-1 bg-white rounded-[4px] text-sm border border-gray-200 disabled:opacity-50"
-  >
-    Suivant
-  </button>
-</div>
-  </div>
 
-  {/* Équipements Section - Largeur fixe */}
-  <div className="flex-1 max-w-[500px] bg-white rounded-[4px] p-4 shadow-sm border border-gray-200">
-  <div className="flex justify-between items-center mb-4">
-    <h2 className="text-xl font-bold">État des équipements</h2>
-    <button className="bg-orange-500 text-white px-4 py-1 rounded-[4px]">
-      Découvrir
-    </button>
-  </div>
-
-  {/* Filtres */}
+        {/* Projets et Équipements */}
+        <div className="flex flex-wrap gap-6">
+          <ProjetsFablab />
+          
+          {/* Équipements Section */}
+          <div className="flex-1 max-w-[500px] bg-white rounded-[4px] p-4 shadow-sm border border-gray-200">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">État des équipements</h2>
+              <button className="bg-orange-500 text-white px-4 py-1 rounded-[4px]">
+                Découvrir
+              </button>
+            </div>
+            {/* Filtres */}
   <div className="flex mb-4 gap-2  rounded-[4px]">
     <FilterButton label="Imprimantes 3D" active={true} onClick={() => {}} />
     <FilterButton label="Découpe Laser" active={false} onClick={() => {}} />
@@ -586,11 +195,8 @@ const FablabSolidaire = () => {
       </div>
     ))}
   </div>
-</div>
-
-</div>
-
-        
+          </div>
+        </div>
       </div>
     </div>
   );

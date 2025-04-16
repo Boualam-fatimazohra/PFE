@@ -37,9 +37,15 @@ const evaluationSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
-  recommandation:{type:String,enum :["Oui","Non"] ,required:true},
+  recommandation: { type: String, required: function() { 
+    // Only required for submissions, not for creation
+    return this.statut === 'submitted'; 
+  }},
   commentaire:{type:String,required:false},
-  formation:{type:mongoose.Schema.Types.ObjectId,ref:"Formation",required:true}
+  formation:{type:mongoose.Schema.Types.ObjectId,ref:"Formation",required:true},
+  dateFin: String, // doit être présent
+  nombreParticipants: Number // doit être présent
+
 });
 
 const Evaluation = mongoose.model('Evaluation', evaluationSchema);
