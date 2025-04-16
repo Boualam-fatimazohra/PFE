@@ -99,7 +99,6 @@ const listFormationsWithEncadrants = async (req, res) => {
   }
 };
 
-
 /**
  * Assign an encadrant to a formation
  */

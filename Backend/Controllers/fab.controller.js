@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const fabLabUtils = require('../utils/fabLabUtils');
 const FormationFab = require('../Models/formationFab.model');
 
+
 /**
  * Create a new Fab entity
  * @route POST /api/fabs
@@ -209,7 +210,7 @@ const getFabStats = async (req, res) => {
       totalFormations: allFormations.length,
       totalBeneficiaires: beneficiaires.length,
       activeFormations: activeFormations.length,
-            
+        
     };
 
     res.status(200).json({
@@ -221,7 +222,6 @@ const getFabStats = async (req, res) => {
     res.status(500).json({ message: "Error fetching Fab statistics", error: error.message });
   }
 };
-
 const getFormationsFab = async (req, res) => {
   try {
     const { id } = req.params;

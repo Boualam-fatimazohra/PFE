@@ -36,7 +36,6 @@ const createFormationFab = async (req, res) => {
       // Single encadrant ID for assignment
       encadrantId
     } = req.body;
-    
     // Validate required fields
     if (!nom || !dateDebut || !dateFin) {
       return res.status(400).json({ message: "Le nom, dateDebut, dateFin de la formation est obligatoire" });
@@ -44,18 +43,19 @@ const createFormationFab = async (req, res) => {
     
     // Récupérer l'URL de l'image depuis le fichier téléchargé par multer
     const imageUrl = req.file ? req.file.path : null;
-    
+
     // 1. Create the base formation
     const formationBase = new FormationBase({
       nom,
       dateDebut: dateDebut,
       dateFin: dateFin,
       description: description || "Aucune description",
+
       image: imageUrl // Utiliser l'URL de l'image téléchargée
     });
     
     const savedBaseFormation = await formationBase.save({ session });
-    
+
     // 2. Create the FormationFab that references the base
     const formationFab = new FormationFab({
       baseFormation: savedBaseFormation._id,
@@ -68,7 +68,7 @@ const createFormationFab = async (req, res) => {
     });
     
     const savedFormationFab = await formationFab.save({ session });
-    
+
     // 3. Assign a single encadrant if provided
     if (encadrantId) {
       // Validate encadrant ID
@@ -104,7 +104,6 @@ const createFormationFab = async (req, res) => {
         select: 'nom prenom email'
       }
     }) : null;
-    
     res.status(201).json({
       message: "Formation Fab créée avec succès",
       formationFab: result,
@@ -119,6 +118,7 @@ const createFormationFab = async (req, res) => {
     res.status(500).json({
       message: "Erreur lors de la création de la formation Fab",
       error: error.message
+
     });
   }
 };

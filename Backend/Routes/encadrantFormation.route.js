@@ -42,6 +42,7 @@ router.get(
   authenticated, 
   authorizeRoles('Admin', 'Manager', 'Formateur', 'Coordinateur'),
   listFormationsWithEncadrants
+
 );
 
 /**
