@@ -227,20 +227,20 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
         </div>
         
         {isLoading ? (
-          <div className="flex justify-center py-8">
-            <RefreshCw size={24} className="animate-spin" />
-            <span className="ml-2">Chargement des données...</span>
-          </div>
-        ) : (
-          <>
-            <ParticipantsSection
-              participants={participants}
-              currentPage={participantsPage}
-              formation={formation} 
-            />
-          </>
-        )}
-        
+        <div className="flex justify-center py-8">
+          <RefreshCw size={24} className="animate-spin" />
+          <span className="ml-2">Chargement des données...</span>
+        </div>
+) : (
+  <>
+  
+<ParticipantsSection
+  participants={participants}
+  currentPage={participantsPage}
+  formation={formation} 
+/>
+  </>
+)}
         {/* Utilisation de CustomPagination pour naviguer entre les pages de participants */}
         {totalParticipantsPages > 1 && (
           <CustomPagination
