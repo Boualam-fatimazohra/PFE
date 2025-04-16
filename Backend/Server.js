@@ -52,7 +52,6 @@ const io = socketIo(server, {
   }
 });
 
-
 // Make io accessible to routes
 app.set('io', io);
 
@@ -101,7 +100,6 @@ const uploadsDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadsDir)){
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
-
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
@@ -154,7 +152,7 @@ app.use((err, req, res, next) => {
 });
 app.use('/api/beneficiaire-files', beneficiaireFileRoutes);
 
+// Démarrage du serveur (using server instance instead of app for Socket.io)
 server.listen(PORT, () => {
-    // console.log(` Serveur démarré sur http://localhost:${PORT}`);
-    console.log("c'est bon serveur est démarré");
+    console.log(`✅ Serveur démarré sur http://localhost:${PORT}`);
 });

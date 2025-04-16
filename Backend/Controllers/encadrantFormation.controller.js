@@ -3,6 +3,103 @@ const Encadrant = require('../Models/encadrant.model');
 const FormationBase = require('../Models/formationBase.model');
 const mongoose = require('mongoose');
 
+const FormationFab = require('../Models/formationFab.model');
+const { UtilisateurEntity } = require('../Models/utilisateurEntity');
+
+
+const listFormationsWithEncadrants = async (req, res) => {
+  try {
+    // 1. Récupérer toutes les formations Fab avec leur base
+    const formationsFab = await FormationFab.find()
+      .populate({
+        path: 'baseFormation',
+        select: 'nom dateDebut dateFin description image' 
+      })
+      .lean();
+    
+    // 2. Récupérer les relations encadrants
+    const formationIds = formationsFab.map(f => f.baseFormation._id);
+    const relations = await EncadrantFormation.find({
+      formationBase: { $in: formationIds }
+    })
+    .populate({
+      path: 'encadrant',
+      populate: {
+        path: 'utilisateur',
+        select: 'nom prenom email'
+      }
+    })
+    .lean();
+    
+    // 3. Récupérer les IDs des utilisateurs (encadrants)
+    const utilisateurIds = relations.map(rel => rel.encadrant?.utilisateur?._id).filter(Boolean);
+    
+    // 4. Récupérer les relations utilisateur-entité avec les détails de l'entité
+    const utilisateurEntities = await UtilisateurEntity.find({
+      id_utilisateur: { $in: utilisateurIds }
+    })
+    .populate({
+      path: 'id_entity',
+      select: 'nom description ville adresse'
+    })
+    .lean();
+    
+    // 5. Fusionner les données
+    const result = formationsFab.map(fab => {
+      const base = fab.baseFormation;
+      const encadrants = relations
+        .filter(rel => rel.formationBase.equals(base._id))
+        .map(rel => {
+          const utilisateurId = rel.encadrant?.utilisateur?._id;
+          const entityRelation = utilisateurId ? 
+            utilisateurEntities.find(ue => ue.id_utilisateur.equals(utilisateurId)) : 
+            null;
+          
+          const entity = entityRelation?.id_entity || null;
+          
+          return {
+            nom: rel.encadrant?.utilisateur?.nom,
+            prenom: rel.encadrant?.utilisateur?.prenom,
+            email: rel.encadrant?.utilisateur?.email,
+            type: rel.encadrant?.type,
+            specialite: rel.encadrant?.specialite,
+            dateAssignment: rel.dateAssignment,
+            entity: entity ? {
+              id: entity._id,
+              nom: entity.nom,
+              description: entity.description,
+              ville: entity.ville,
+              adresse: entity.adresse
+            } : null
+          };
+        });
+      
+      return {
+        ...base,
+        image: base.image, // Inclure l'URL de l'image
+        status: fab.status,
+        categorie: fab.categorie,
+        niveau: fab.niveau,
+        encadrants
+      };
+    });
+    
+    res.status(200).json({
+      success: true,
+      count: result.length,
+      data: result
+    });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Erreur lors de la récupération des formations",
+      error: error.message
+    });
+  }
+};
+
+
 /**
  * Assign an encadrant to a formation
  */
@@ -332,5 +429,6 @@ module.exports = {
   updateAssignment,
   deleteAssignment,
   getFormationsByEncadrant,
-  getEncadrantsByFormation
+  getEncadrantsByFormation,
+  listFormationsWithEncadrants
 };

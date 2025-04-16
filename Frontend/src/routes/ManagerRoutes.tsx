@@ -28,6 +28,7 @@ import CreatFormationFablab from "@/components/dashboardElement/CreatFormationFa
 import TrainingHub from "@/pages/TrainingHub";
 import GestionProjetFab from "@/components/dashboardElement/GestionProjetFab";
 import GestionEquipement from "@/components/dashboardElement/GestionEquipementFab";
+import { EncadrantFormationProvider } from "@/contexts/EncadrantFormationContext ";
 
 
 const ManagerRoutes = () => {
@@ -37,6 +38,7 @@ const ManagerRoutes = () => {
     <NotificationProvider>
     <EdcProvider>
     <FormateurProvider> 
+    <EncadrantFormationProvider>
     <Routes>
       <Route path="/dashboardManager" element={<DashboardManager />} />
       <Route path="*" element={<NotFound />} />
@@ -69,6 +71,7 @@ const ManagerRoutes = () => {
 
 
     </Routes>
+    </EncadrantFormationProvider>
     </FormateurProvider>
     </EdcProvider>
     </NotificationProvider>
