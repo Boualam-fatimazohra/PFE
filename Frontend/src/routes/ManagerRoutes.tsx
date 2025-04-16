@@ -26,6 +26,8 @@ import DetailFormateur from "@/components/dashboardElement/DetailFormateur";
 import CalendrierFablab from "@/components/dashboardElement/CalendrierFabLab";
 import CreatFormationFablab from "@/components/dashboardElement/CreatFormationFablab";
 import TrainingHub from "@/pages/TrainingHub";
+import GestionProjetFab from "@/components/dashboardElement/GestionProjetFab";
+import GestionEquipement from "@/components/dashboardElement/GestionEquipementFab";
 
 
 const ManagerRoutes = () => {
@@ -43,6 +45,10 @@ const ManagerRoutes = () => {
           <Route path="/FablabSolidaire" element={<FablabSolidaire/>}/>
           <Route path="/OrangeFab" element={<OrangeFab/>}/>
           <Route path="/Coordination" element={<Coordination/>}/>
+          <Route path="/GestionProjetFab" element={<GestionProjetFab/>}/>
+          <Route path="/GestionEquipement" element={<GestionEquipement/>}/>
+
+
 
 
           <Route path="/CalendrierManager" element={<CalendrierManager />} />
