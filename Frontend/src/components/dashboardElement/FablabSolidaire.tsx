@@ -142,21 +142,6 @@ const FablabSolidaire = () => {
   Gestion des Encadrants
 </Link>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     <a href="#" className="p-1.4 flex items-center bg-white text-black rounded-[4px] hover:bg-gray-100"style={{ padding: '0.40rem' }}>
       <div className="mr-3 text-blue-500">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -190,9 +175,12 @@ const FablabSolidaire = () => {
           <div className="flex-1 max-w-[500px] bg-white rounded-[4px] p-4 shadow-sm border border-gray-200">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">État des équipements</h2>
-              <button className="bg-orange-500 text-white px-4 py-1 rounded-[4px]">
-                Découvrir
-              </button>
+              <Link
+      to="/manager/GestionEquipement"
+      className="bg-orange-500 text-white px-4 py-1 rounded-[4px]"
+    >
+      Découvrir
+    </Link>
             </div>
             {/* Filtres */}
   <div className="flex mb-4 gap-2  rounded-[4px]">

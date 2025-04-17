@@ -13,6 +13,8 @@ interface CarouselItem {
 
 interface FeaturedCarouselProps {
   items: CarouselItem[];
+  onItemClick: (appId: string) => void; // Ajouter cette prop pour gérer le clic
+
 }
 
 const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ items }) => {
@@ -49,26 +51,43 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ items }) => {
       Formateur: {
         workflow: "/formateur/DashboardFormateur",
         management: "/formateur/DashboardFormateur",
-        pictoria: "/formateur/DashboardFormateur",
-        shortner: "/formateur/DashboardFormateur"
+        pictoria: " https://pictoria-kappa.vercel.app/dashboard",
+        shortner: " https://url-shortener-sage-seven.vercel.app/",
+        AiInterview : "https://interview-blush-eight.vercel.app/",
+        Scheduller :"https://shedulrr-gfvggh.vercel.app/availability",
+        PairFinder:" https://pair-finder-jade.vercel.app/",
+        Stream:" https://odc-stream.vercel.app/"
       },
       Manager: {
         workflow: "/manager/DashboardManager",
         management: "/manager/DashboardManager",
-        pictoria: "/manager/DashboardManager",
-        shortner: "/manager/DashboardManager"
+        pictoria: " https://pictoria-kappa.vercel.app/dashboard",
+        shortner: "https://url-shortener-sage-seven.vercel.app/",
+        AiInterview : "https://interview-blush-eight.vercel.app/",
+        Scheduller :" https://shedulrr-gfvggh.vercel.app/availability",
+        PairFinder:" https://pair-finder-jade.vercel.app/",
+        Stream:" https://odc-stream.vercel.app/"
+
       },
       Coordinateur: {
         workflow: "/coordinateur/DashboardCoordinateur",
         management: "/coordinateur/DashboardCoordinateur",
-        pictoria: "/coordinateur/DashboardCoordinateur",
-        shortner: "/coordinateur/DashboardCoordinateur"
+        pictoria: " https://pictoria-kappa.vercel.app/dashboard",
+        shortner: " https://url-shortener-sage-seven.vercel.app/",
+        AiInterview : "https://interview-blush-eight.vercel.app/",
+        Scheduller :" https://shedulrr-gfvggh.vercel.app/availability",
+        PairFinder:" https://pair-finder-jade.vercel.app/",
+        Stream:" https://odc-stream.vercel.app/"
       },
       Technicien: {
         workflow: "/technicien/workflow",
         management: "/technicien/management",
-        pictoria: "/technicien/pictoria",
-        shortner: "/technicien/shortner"
+        pictoria: " https://pictoria-kappa.vercel.app/dashboard",
+        shortner: " https://url-shortener-sage-seven.vercel.app/",
+        AiInterview : "https://interview-blush-eight.vercel.app/",
+        Scheduller :" https://shedulrr-gfvggh.vercel.app/availability",
+        PairFinder:" https://pair-finder-jade.vercel.app/",
+        Stream:" https://odc-stream.vercel.app/"
       }
     };
 
@@ -92,8 +111,8 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ items }) => {
               <p className="text-white/80 mt-2 max-w-md">{item.description}</p>
               <button 
                 className="mt-4 bg-orange hover:bg-orange-700 text-orange-700 font-medium py-2 px-6 rounded-full w-fit transition-colors"
-                onClick={() => handleCarouselClick(item.appId)}
-              >
+                onClick={() => onItemClick(item.appId)}  // Utiliser la prop au lieu de handleCarouselClick
+                >
                 Activer
               </button>
             </div>
@@ -134,3 +153,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ items }) => {
 };
 
 export default FeaturedCarousel;
+function onItemClick(appId: string): void {
+  throw new Error('Function not implemented.');
+}
+

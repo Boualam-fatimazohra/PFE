@@ -26,6 +26,7 @@ import Ecolecode from "./components/dashboardElement/Ecolcode";
 import { ProtectedRoute, AccessDenied } from "./components/ProtectedRoute";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import AppDescription from "./pages/AppHubDescription";
 
 
 const queryClient = new QueryClient();
@@ -34,23 +35,23 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const isLoginPage = location.pathname === "/";
   const isTrainingHub = location.pathname === "/training-hub";
+  const isAppdescription = location.pathname.startsWith("/AppDescription/");
 
-  // Si sur /training-hub, on affiche le Header classique
-  const showDashboardLayout = !isLoginPage && !isTrainingHub;
+  // Si sur /training-hub ou /AppDescription, on affiche le Header simple
+  const showDashboardLayout = !isLoginPage && !isTrainingHub && !isAppdescription;
 
-  // Définir la classe de fond en fonction de la page
-  const bgColorClass = isTrainingHub ? "bg-[#0A0A0A]" : "bg-white";
+  const bgColorClass = isTrainingHub || isAppdescription ? "bg-[#0A0A0A]" : "bg-white";
 
   return (
     <div className={`min-h-screen flex flex-col ${bgColorClass}`}>
-      {isTrainingHub && <Header />}
+      {(isTrainingHub || isAppdescription) && <Header />}
       {showDashboardLayout && <DashboardHeader />}
 
-      <div className={(showDashboardLayout || isTrainingHub) ? "pt-[70px] pb-[60px] flex-grow" : "flex-grow"}>
+      <div className={(showDashboardLayout || isTrainingHub || isAppdescription) ? "pt-[70px] pb-[60px] flex-grow" : "flex-grow"}>
         {children}
       </div>
 
-      {(showDashboardLayout || isTrainingHub) && <Footer />}
+      {(showDashboardLayout || isTrainingHub || isAppdescription) && <Footer />}
     </div>
   );
 };
@@ -89,7 +90,7 @@ const App = () => (
                 {/* Route pour TrainingHub - Protégée */}
                 <Route element={<ProtectedRoute />}>
                   <Route path="/training-hub" element={<TrainingHub />} />
-
+                  <Route path="/AppDescription/:id" element={<AppDescription />} />
                 </Route>
 
                 {/* Routes protégées pour tous les utilisateurs authentifiés */}

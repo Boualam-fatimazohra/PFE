@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 interface Projet {
   id: string;
@@ -74,9 +75,12 @@ const ProjetsFablab = () => {
     <div className="flex-1 max-w-[800px] bg-white rounded-[4px] p-4 shadow-sm border border-gray-200">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold">Projets Fablab</h2>
-        <button className="bg-orange-500 text-white px-4 py-1 rounded-[4px]">
-          Découvrir
-        </button>
+        <Link
+      to="/manager/GestionProjetFab"
+      className="bg-orange-500 text-white px-4 py-1 rounded-[4px]"
+    >
+      Découvrir
+    </Link>
       </div>
       
       <div className="flex mb-3 gap-2" style={{ width: '50%', height:'7%' }}>
