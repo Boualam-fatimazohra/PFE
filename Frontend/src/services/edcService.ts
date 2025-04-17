@@ -79,3 +79,11 @@ export const getNbrBeneficiairesByFormation = async (id: string) => {
     throw error;
   }
 };
+
+export function getCalendarEvents(startDate: any, endDate: any) {
+    throw new Error('Function not implemented.');
+}
+export function updateEvent(eventId: any, arg1: { dateDebut: any; dateFin: any; }) {
+    throw new Error('Function not implemented.');
+}
+

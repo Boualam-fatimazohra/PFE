@@ -28,7 +28,15 @@ interface EdcContextType {
 
 // Create the context with a default value
 const EdcContext = createContext<EdcContextType | undefined>(undefined);
+const FormationContext = createContext<EdcContextType | undefined>(undefined);
 
+export const useFormations = (): EdcContextType => {
+  const context = useContext(FormationContext);
+  if (!context) {
+    throw new Error('useFormations doit être utilisé dans un FormationProvider');
+  }
+  return context;
+};
 // Provider props interface
 interface EdcProviderProps {
   children: ReactNode;

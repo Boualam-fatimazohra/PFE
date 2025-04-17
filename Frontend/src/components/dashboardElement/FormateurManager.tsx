@@ -113,7 +113,7 @@ export const FormateurList = ({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredFormateurs.map((formateur) => (
+          {filteredFormateurs.slice(0, 12).map((formateur) => (
             <div key={formateur._id} className="border border-gray-300 rounded-[4px] p-4 flex flex-col font-inter">
               <div className="flex items-start mb-2">
                 {/* Remplacez l'avatar par défaut par notre composant Avatar */}

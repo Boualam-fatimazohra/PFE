@@ -141,9 +141,7 @@ const projetFabController = {
       },
   
     // Récupérer tous les projets de fabrication
-    // Récupérer tous les projets de fabrication avec leurs encadrants
-// Récupérer tous les projets de fabrication avec leurs encadrants
-getAll: async (req, res) => {
+    getAll: async (req, res) => {
     try {
       // Récupérer tous les projets avec la formation de base
       const projets = await ProjetFab.find()
@@ -153,7 +151,6 @@ getAll: async (req, res) => {
         })
         .sort({ createdAt: -1 });
       
-      console.log(`Nombre de projets trouvés: ${projets.length}`);
       
       // Pour chaque projet, récupérer les encadrants via EncadrantFormation
       const projetsAvecEncadrants = await Promise.all(
@@ -175,7 +172,6 @@ getAll: async (req, res) => {
           if (encadrants.length === 0) {
             // Vérifiez si des encadrants existent dans la collection
             const totalCount = await EncadrantFormation.countDocuments();
-            console.log(`Total des encadrants dans la base: ${totalCount}`);
           }
           
           return {
@@ -205,8 +201,7 @@ getAll: async (req, res) => {
   },
   
     // Récupérer un projet de fabrication par son ID
-    // Récupérer un projet de fabrication spécifique avec ses encadrants
-getById: async (req, res) => {
+    getById: async (req, res) => {
     try {
       const projetId = req.params.id;
       
