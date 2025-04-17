@@ -11,7 +11,8 @@ const {
   deleteAssignment,
   getFormationsByEncadrant,
   getEncadrantsByFormation,
-  listFormationsWithEncadrants
+  listFormationsWithEncadrants,
+  listProjetsFabWithEncadrants
 } = require("../Controllers/encadrantFormation.controller");
 
 /**
@@ -42,6 +43,13 @@ router.get(
   authenticated, 
   authorizeRoles('Admin', 'Manager', 'Formateur', 'Coordinateur'),
   listFormationsWithEncadrants
+
+);
+router.get(
+  "/listProjetFab", 
+  authenticated, 
+  authorizeRoles('Admin', 'Manager', 'Formateur', 'Coordinateur'),
+  listProjetsFabWithEncadrants
 
 );
 

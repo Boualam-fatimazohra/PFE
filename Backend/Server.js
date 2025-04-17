@@ -33,6 +33,8 @@ const fabRoutes = require("./Routes/fab.route.js");
 const formationBaseRoutes = require('./Routes/formationBase.route.js');
 const formationFabRoutes = require('./Routes/formationFab.route.js');
 const encadrantFormationRoutes = require('./Routes/encadrantFormation.route.js');
+const projetFabControllerRoutes = require('./Routes/projetFab.route.js');
+const equipementControllerRoutes = require('./Routes/equipement.route.js');
 
 
 dotenv.config();
@@ -136,6 +138,8 @@ app.use("/api/encadrants", encadrantRoutes);
 app.use("/api/formation-base", formationBaseRoutes);
 app.use("/api/formation-fabs", formationFabRoutes);
 app.use('/api/encadrant-formations', encadrantFormationRoutes);
+app.use('/api/projetfab', projetFabControllerRoutes);
+app.use('/api/equipement', equipementControllerRoutes);
 
 // Edc routes
 app.use("/api/edc",edcRoutes);
