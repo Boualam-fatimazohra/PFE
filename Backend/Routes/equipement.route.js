@@ -3,6 +3,14 @@ const router = express.Router();
 const equipementController = require('../Controllers/equipement.controller');
 const authenticated = require('../Middlewares/Authmiddleware.js');
 const authorizeRoles = require('../Middlewares/RoleMiddleware.js');
+const { uploadProjetFabImage } = require('../Config/cloudinaryConfig.js');
+
+    router.post('/', 
+        authenticated, 
+        authorizeRoles('Admin', 'Manager'), 
+        uploadProjetFabImage.single('image'),
+        equipementController.createEquipement
+    );
 
     // Routes de base CRUD
     router.get('/', 
@@ -15,11 +23,7 @@ const authorizeRoles = require('../Middlewares/RoleMiddleware.js');
         authorizeRoles('Admin', 'Manager'), 
         equipementController.getEquipementById
     );
-    router.post('/', 
-        authenticated, 
-        authorizeRoles('Admin', 'Manager'), 
-        equipementController.createEquipement
-    );
+    
     router.put('/:id', 
         authenticated, 
         authorizeRoles('Admin', 'Manager'), 
