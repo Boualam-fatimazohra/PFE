@@ -27,6 +27,7 @@ const FormateurRoutes = () => {
 
       <Route path="*" element={<NotFound />} />
       <Route path="BeneficiairesList"element={<BeneficiairesList/>}/>
+
       <Route path="EvaluationPages"element={<EvaluationPages/>}/>
       <Route path="CalendarView"element={<CalendarView/>}/>
       <Route path="CreatEvent"element={<CreatEvent/>}/>

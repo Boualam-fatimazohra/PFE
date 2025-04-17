@@ -33,6 +33,8 @@ const fabRoutes = require("./Routes/fab.route.js");
 const formationBaseRoutes = require('./Routes/formationBase.route.js');
 const formationFabRoutes = require('./Routes/formationFab.route.js');
 const encadrantFormationRoutes = require('./Routes/encadrantFormation.route.js');
+const projetFabControllerRoutes = require('./Routes/projetFab.route.js');
+const equipementControllerRoutes = require('./Routes/equipement.route.js');
 
 
 dotenv.config();
@@ -51,6 +53,7 @@ const io = socketIo(server, {
     credentials: true
   }
 });
+
 
 // Make io accessible to routes
 app.set('io', io);
@@ -101,6 +104,7 @@ if (!fs.existsSync(uploadsDir)){
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
+
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Configuration du stockage multer
@@ -134,6 +138,8 @@ app.use("/api/encadrants", encadrantRoutes);
 app.use("/api/formation-base", formationBaseRoutes);
 app.use("/api/formation-fabs", formationFabRoutes);
 app.use('/api/encadrant-formations', encadrantFormationRoutes);
+app.use('/api/projetfab', projetFabControllerRoutes);
+app.use('/api/equipement', equipementControllerRoutes);
 
 // Edc routes
 app.use("/api/edc",edcRoutes);
@@ -152,7 +158,7 @@ app.use((err, req, res, next) => {
 });
 app.use('/api/beneficiaire-files', beneficiaireFileRoutes);
 
-// Démarrage du serveur (using server instance instead of app for Socket.io)
 server.listen(PORT, () => {
-    console.log(`✅ Serveur démarré sur http://localhost:${PORT}`);
+    // console.log(` Serveur démarré sur http://localhost:${PORT}`);
+    console.log("c'est bon serveur est démarré");
 });

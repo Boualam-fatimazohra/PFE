@@ -67,16 +67,8 @@ export function LoginForm() {
 
     try {
       await login(email, password);
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
-
-      const roleRoutes: Record<string, string> = {
-        Formateur: "/formateur/dashboardFormateur",
-        Manager: "/manager/dashboardManager",
-        Coordinateur: "/coordinateur/dashboardCoordinateur",
-        Technicien: "/technicien/dashboardTechnicien",
-      };
-
-      navigate(roleRoutes[user.role] || "/");
+      // Rediriger vers TrainingHub au lieu des tableaux de bord spécifiques aux rôles
+      navigate("/training-hub");
     } catch (error: any) {
       console.error("Login error:", error);
       

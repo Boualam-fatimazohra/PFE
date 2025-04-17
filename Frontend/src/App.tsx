@@ -14,8 +14,11 @@ import ManagerRoutes from "./routes/ManagerRoutes";
 import TechnicienRoutes from "./routes/TechnecienRoutes";
 import GenerateLink from "./components/dashboardElement/GenerationLien";
 import FormulaireEvaluation from "./pages/FormulaireEvaluation";
+import { Header } from "@/components/layout/Header";
+
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { Footer } from "@/components/layout/Footer";
+import TrainingHub from "./pages/TrainingHub"; // Importer le composant TrainingHub
 import Chatbot from "./pages/Chatbot";
 import { AuthProvider } from "./contexts/AuthContext";
 import CalendrierManager from "./components/dashboardElement/CalendrierManager";
@@ -23,24 +26,36 @@ import Ecolecode from "./components/dashboardElement/Ecolcode";
 import { ProtectedRoute, AccessDenied } from "./components/ProtectedRoute";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import AppDescription from "./pages/AppHubDescription";
 
 
 const queryClient = new QueryClient();
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
-  const isLoginPage = location.pathname === "/"; 
+  const isLoginPage = location.pathname === "/";
+  const isTrainingHub = location.pathname === "/training-hub";
+  const isAppdescription = location.pathname.startsWith("/AppDescription/");
+
+  // Si sur /training-hub ou /AppDescription, on affiche le Header simple
+  const showDashboardLayout = !isLoginPage && !isTrainingHub && !isAppdescription;
+
+  const bgColorClass = isTrainingHub || isAppdescription ? "bg-[#0A0A0A]" : "bg-white";
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {!isLoginPage && <DashboardHeader />}
-      <div className={!isLoginPage ? "pt-[70px] pb-[60px] flex-grow" : "flex-grow"}>
+    <div className={`min-h-screen flex flex-col ${bgColorClass}`}>
+      {(isTrainingHub || isAppdescription) && <Header />}
+      {showDashboardLayout && <DashboardHeader />}
+
+      <div className={(showDashboardLayout || isTrainingHub || isAppdescription) ? "pt-[70px] pb-[60px] flex-grow" : "flex-grow"}>
         {children}
       </div>
-      {!isLoginPage && <Footer />}
+
+      {(showDashboardLayout || isTrainingHub || isAppdescription) && <Footer />}
     </div>
   );
 };
+
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -71,6 +86,12 @@ const App = () => (
                 <Route path="/evaluation/:id/:token" element={<EvaluationForm />} />
                 <Route path="/access-denied" element={<AccessDenied />} />
                 <Route path="*" element={<NotFound />} />
+
+                {/* Route pour TrainingHub - Protégée */}
+                <Route element={<ProtectedRoute />}>
+                  <Route path="/training-hub" element={<TrainingHub />} />
+                  <Route path="/AppDescription/:id" element={<AppDescription />} />
+                </Route>
 
                 {/* Routes protégées pour tous les utilisateurs authentifiés */}
                 <Route element={<ProtectedRoute />}>
@@ -108,9 +129,6 @@ const App = () => (
                     <TechnicienRoutes />
                   </ProtectedRoute>
                 } />
-
-                {/* Route spécifique aux managers */}
-                
               </Routes>
             </Layout>
           </BrowserRouter>

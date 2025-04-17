@@ -1,19 +1,26 @@
-import  { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface CarouselItem {
   id: number;
   image: string;
   title: string;
   description: string;
+  appId: string;
 }
 
 interface FeaturedCarouselProps {
   items: CarouselItem[];
+  onItemClick: (appId: string) => void; // Ajouter cette prop pour gérer le clic
+
 }
 
 const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ items }) => {
   const [current, setCurrent] = useState(0);
+  const navigate = useNavigate();
+  const { user } = useAuth();
   
   const next = () => {
     setCurrent((current + 1) % items.length);
@@ -29,24 +36,84 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ items }) => {
     }, 5000);
     
     return () => clearInterval(timer);
-  }, [current]);
+  }, [current, items.length]);
+
+  // Handle redirect when clicking on a carousel item
+  const handleCarouselClick = (appId: string) => {
+    if (!user || !user.role) {
+      // If user is not logged in, redirect to login page
+      navigate("/");
+      return;
+    }
+
+    // Define paths based on role and application
+    const roleRoutes: Record<string, Record<string, string>> = {
+      Formateur: {
+        workflow: "/formateur/DashboardFormateur",
+        management: "/formateur/DashboardFormateur",
+        pictoria: " https://pictoria-kappa.vercel.app/dashboard",
+        shortner: " https://url-shortener-sage-seven.vercel.app/",
+        AiInterview : "https://interview-blush-eight.vercel.app/",
+        Scheduller :"https://shedulrr-gfvggh.vercel.app/availability",
+        PairFinder:" https://pair-finder-jade.vercel.app/",
+        Stream:" https://odc-stream.vercel.app/"
+      },
+      Manager: {
+        workflow: "/manager/DashboardManager",
+        management: "/manager/DashboardManager",
+        pictoria: " https://pictoria-kappa.vercel.app/dashboard",
+        shortner: "https://url-shortener-sage-seven.vercel.app/",
+        AiInterview : "https://interview-blush-eight.vercel.app/",
+        Scheduller :" https://shedulrr-gfvggh.vercel.app/availability",
+        PairFinder:" https://pair-finder-jade.vercel.app/",
+        Stream:" https://odc-stream.vercel.app/"
+
+      },
+      Coordinateur: {
+        workflow: "/coordinateur/DashboardCoordinateur",
+        management: "/coordinateur/DashboardCoordinateur",
+        pictoria: " https://pictoria-kappa.vercel.app/dashboard",
+        shortner: " https://url-shortener-sage-seven.vercel.app/",
+        AiInterview : "https://interview-blush-eight.vercel.app/",
+        Scheduller :" https://shedulrr-gfvggh.vercel.app/availability",
+        PairFinder:" https://pair-finder-jade.vercel.app/",
+        Stream:" https://odc-stream.vercel.app/"
+      },
+      Technicien: {
+        workflow: "/technicien/workflow",
+        management: "/technicien/management",
+        pictoria: " https://pictoria-kappa.vercel.app/dashboard",
+        shortner: " https://url-shortener-sage-seven.vercel.app/",
+        AiInterview : "https://interview-blush-eight.vercel.app/",
+        Scheduller :" https://shedulrr-gfvggh.vercel.app/availability",
+        PairFinder:" https://pair-finder-jade.vercel.app/",
+        Stream:" https://odc-stream.vercel.app/"
+      }
+    };
+
+    const route = roleRoutes[user.role]?.[appId] || "/";
+    navigate(route);
+  };
   
   return (
     <div className="relative overflow-hidden rounded-xl h-[350px] my-6">
-      <div className="absolute inset-0 flex transition-transform duration-500 ease-in-out" 
-           style={{ transform: `translateX(-${current * 100}%)` }}>
+      <div className="absolute inset-0 flex transition-transform duration-500 ease-in-out"
+            style={{ transform: `translateX(-${current * 100}%)` }}>
         {items.map((item) => (
           <div key={item.id} className="min-w-full h-full relative">
-            <img 
-              src={item.image} 
+            <img
+              src={item.image}
               alt={item.title}
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end p-8">
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent flex flex-col justify-end p-8">
               <h2 className="text-white text-3xl font-bold">{item.title}</h2>
               <p className="text-white/80 mt-2 max-w-md">{item.description}</p>
-              <button className="mt-4 bg-orange hover:bg-orange-700 text-white font-medium py-2 px-6 rounded-full w-fit">
-                Télécharger
+              <button 
+                className="mt-4 bg-orange hover:bg-orange-700 text-orange-700 font-medium py-2 px-6 rounded-full w-fit transition-colors"
+                onClick={() => onItemClick(item.appId)}  // Utiliser la prop au lieu de handleCarouselClick
+                >
+                Activer
               </button>
             </div>
           </div>
@@ -75,7 +142,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ items }) => {
             key={index}
             onClick={() => setCurrent(index)}
             className={`w-2 h-2 rounded-full transition-all ${
-              index === current ? "bg-white w-6" : "bg-white/50"
+              index === current ? "bg-orange w-6" : "bg-white/50"
             }`}
             aria-label={`Go to slide ${index + 1}`}
           />
@@ -86,3 +153,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ items }) => {
 };
 
 export default FeaturedCarousel;
+function onItemClick(appId: string): void {
+  throw new Error('Function not implemented.');
+}
+

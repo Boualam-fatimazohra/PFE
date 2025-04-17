@@ -77,6 +77,7 @@ const CreateEvaluationForm = () => {
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
   const [sendingLinks, setSendingLinks] = useState(false);
   const [search, setSearch] = React.useState("");
+
   const [selectAll, setSelectAll] = React.useState(false);
   const [currentPage, setCurrentPage] = React.useState(1);
   const itemsPerPage = 11;
@@ -777,6 +778,7 @@ const handleSubmit = async (e: React.FormEvent) => {
               <button 
                 type="submit" 
                 className="px-4 py-2 bg-orange-500 text-white rounded"
+
               >
                 Enregistrer
               </button>
