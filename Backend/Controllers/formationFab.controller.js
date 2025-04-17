@@ -2,17 +2,14 @@ const FormationFab = require('../Models/formationFab.model');
 const FormationBase = require('../Models/formationBase.model');
 const EncadrantFormation = require('../Models/encadrantFormation.model');
 const mongoose = require('mongoose');
+
 const validateFile = (file, allowedTypes, maxSize) => {
   if (!file) return false;
   if (file.size > maxSize) return false;
   return allowedTypes.includes(file.mimetype);
 };
 
-/**
- * Create a new FormationFab
- * Creates both a FormationBase and links it to a FormationFab
- */
- const createFormationFab = async (req, res) => {
+const createFormationFab = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -22,7 +19,6 @@ const validateFile = (file, allowedTypes, maxSize) => {
       if (req.files.image && !validateFile(req.files.image[0], ['image/jpeg', 'image/png'], 2 * 1024 * 1024)) {
         return res.status(400).json({ message: "L'image doit être un JPEG ou PNG de moins de 2MB" });
       }
-      
       if (req.files.participants && !validateFile(req.files.participants[0], ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'], 5 * 1024 * 1024)) {
         return res.status(400).json({ message: "La liste des participants doit être un fichier Excel (.xlsx) de moins de 5MB" });
       }
@@ -37,7 +33,8 @@ const validateFile = (file, allowedTypes, maxSize) => {
       categorie,
       niveau,
       tags,
-      lienInscription: registrationLink
+      lienInscription: registrationLink,
+      encadrantId
     } = req.body;
 
     // Validation des champs requis
@@ -45,7 +42,7 @@ const validateFile = (file, allowedTypes, maxSize) => {
       return res.status(400).json({ message: "Tous les champs obligatoires doivent être remplis" });
     }
 
-    // 1. Créer la formation de base
+    // Créer la formation de base
     const formationBase = new FormationBase({
       nom: title,
       dateDebut: new Date(dateDebut),
@@ -56,37 +53,50 @@ const validateFile = (file, allowedTypes, maxSize) => {
 
     const savedBaseFormation = await formationBase.save({ session });
 
-    // 2. Créer la FormationFab
+    // Créer la FormationFab
     const formationFab = new FormationFab({
       baseFormation: savedBaseFormation._id,
       status,
       categorie,
       niveau,
       tags: tags || "",
-      tauxSatisfaction: 0, // Valeur par défaut
+      tauxSatisfaction: 0,
       lienInscription: registrationLink
     });
 
     const savedFormationFab = await formationFab.save({ session });
 
-    // 3. Traiter le fichier participants si présent
+    // Traitement du fichier participants si présent
     if (req.files?.participants) {
-      // Ici vous devriez ajouter la logique pour traiter le fichier Excel
-      // et créer les bénéficiaires associés à la formation
+      // TODO: traitement du fichier Excel
     }
 
     await session.commitTransaction();
     session.endSession();
 
+    // Récupération des infos complètes
+    const result = await FormationFab.findById(savedFormationFab._id).populate('baseFormation');
+
+    // Récupérer l'encadrant associé s'il y en a un
+    const encadrantAssignment = encadrantId ? await EncadrantFormation.findOne({
+      formationBase: savedBaseFormation._id
+    }).populate({
+      path: 'encadrant',
+      populate: {
+        path: 'utilisateur',
+        select: 'nom prenom email'
+      }
+    }) : null;
+
     res.status(201).json({
       message: "Formation créée avec succès",
-      formation: await FormationFab.findById(savedFormationFab._id).populate('baseFormation')
+      formation: result,
+      encadrant: encadrantAssignment
     });
 
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
-    
     console.error("Erreur:", error);
     res.status(500).json({ 
       message: "Erreur serveur", 
@@ -94,6 +104,7 @@ const validateFile = (file, allowedTypes, maxSize) => {
     });
   }
 };
+
 /**
  * Get all FormationFabs with populated references
  */

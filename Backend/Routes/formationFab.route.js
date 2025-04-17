@@ -3,7 +3,7 @@ const router = express.Router();
 const authenticated = require('../Middlewares/Authmiddleware.js');
 const authorizeRoles = require('../Middlewares/RoleMiddleware.js');
 const upload = require('../Middlewares/uploadMiddleware');
-
+const { uploadFormationFabImage } = require('../Config/cloudinaryConfig.js');
 const {
   createFormationFab,
   getAllFormationFabs,

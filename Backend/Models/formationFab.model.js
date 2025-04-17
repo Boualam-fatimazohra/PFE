@@ -48,3 +48,9 @@ const formationFabSchema = new mongoose.Schema({
 }, { 
   timestamps: true 
 });
+
+// Create indexes for faster lookups
+formationFabSchema.index({ baseFormation: 1 }, { unique: true });
+
+module.exports = mongoose.model("FormationFab", formationFabSchema);
+

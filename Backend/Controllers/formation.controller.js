@@ -8,6 +8,8 @@ const FormationDraft = require('../Models/formationDraft.model'); // Assurez-vou
 const { determineFormationStatus } = require('../utils/formationUtils.js')
 const BeneficiaireFormation = require("../Models/beneficiairesFormation.js");
 const mongoose=require("mongoose");
+
+
 //  debut : creation d'un formation par un formateur bien précis :
 const createFormation = async (req, res) => {
   console.log("Create Formation")

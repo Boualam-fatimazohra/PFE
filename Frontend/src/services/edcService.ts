@@ -79,7 +79,3 @@ export const getNbrBeneficiairesByFormation = async (id: string) => {
     throw error;
   }
 };
-
-export function getFabLabEncadrants() {
-    throw new Error('Function not implemented.');
-}

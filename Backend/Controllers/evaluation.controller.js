@@ -3,7 +3,6 @@ const  BeneficiareFormation=require("../Models/beneficiairesFormation.js");
 const {sendEvaluationLinkWithToken}=require("../utils/sendEvaluationLinkWithToken.js");
 const Beneficiaire=require("../Models/beneficiaire.model");
 const Formateur  = require('../Models/formateur.model.js');
-
 const mongoose = require('mongoose');
 // debut fct : enregistrer la réponse du beneficiare
 const SubmitEvaluation = async (req, res) => {
@@ -96,6 +95,7 @@ const createEvaluation = async (req, res) => {
       startDate,
       endDate,
       dateFin,
+      trainer,
       participants,
       nombreParticipants,
       anonymousResponses,
