@@ -122,7 +122,40 @@ const AppDescription: React.FC = () => {
       ],
       image: Logo,
       externalUrl: "https://shedulrr-gfvggh.vercel.app/availability"
-    }
+    },
+    PairFinder: {
+        title: "PairFinder",
+        description: "Mise en relation intelligente basée sur les compétences et besoins",
+        longDescription: "PairFinder est une application conçue pour mettre en relation des collaborateurs en fonction de leurs compétences, centres d'intérêt ou objectifs. Elle facilite le travail collaboratif et le mentorat à l’intérieur des équipes.",
+        category: "Collaboration",
+        rating: 4.2,
+        features: [
+          "Matching intelligent de profils",
+          "Interface intuitive de mise en relation",
+          "Système de filtres personnalisés",
+          "Suggestions basées sur l’IA",
+          "Suivi des interactions"
+        ],
+        image: Logo,
+        externalUrl: "https://pair-finder-jade.vercel.app/"
+      },
+    
+      Stream: {
+        title: "Stream",
+        description: "Plateforme de streaming interne pour la formation et la communication",
+        longDescription: "Stream est une plateforme de streaming vidéo destinée aux entreprises, idéale pour diffuser des formations, des annonces ou des événements internes. Elle favorise l’apprentissage et la communication visuelle.",
+        category: "Communication",
+        rating: 4.6,
+        features: [
+          "Diffusion de contenu vidéo en direct ou à la demande",
+          "Organisation par catégories et thèmes",
+          "Interface simple et responsive",
+          "Contrôle d’accès sécurisé",
+          "Intégration facile dans l’écosystème interne"
+        ],
+        image: Logo,
+        externalUrl: "https://odc-stream.vercel.app/"
+      }    
   };
   
   

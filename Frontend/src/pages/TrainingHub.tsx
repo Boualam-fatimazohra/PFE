@@ -21,7 +21,8 @@ const TrainingHub: React.FC = () => {
   
   // État pour contrôler la visibilité du carousel - initialement visible
   const [showCarousel, setShowCarousel] = React.useState(true);
-  
+  const [showAllApps, setShowAllApps] = React.useState(false);
+
   // Données pour les formations
   const trainings: Training[] = [
     {
@@ -67,6 +68,20 @@ const TrainingHub: React.FC = () => {
       description: "Gestion de données et intégration avec les outils Talend",
       icon: <Database className="w-10 h-10 text-orange" />,
       appId: "Scheduller"
+    },
+    {
+      id: 7,
+      title: "PairFinder",
+      description: "Gestion de données et intégration avec les outils Talend",
+      icon: <Database className="w-10 h-10 text-orange" />,
+      appId: "PairFinder"
+    },
+    {
+      id: 8,
+      title: "Stream",
+      description: "Gestion de données et intégration avec les outils Talend",
+      icon: <Database className="w-10 h-10 text-orange" />,
+      appId: "Stream"
     }
   ];
 
@@ -101,7 +116,6 @@ const TrainingHub: React.FC = () => {
       appId: "shortner"
     },
     {
-      
       id: 5,
       image: "http://localhost:8080/src/assets/images/odc_workflow.png",
       title: "AiInterview generation",
@@ -114,38 +128,50 @@ const TrainingHub: React.FC = () => {
       title: "Scheduller",
       description: "Passer votre entretin avec notre AI",
       appId: "Scheduller"
+    },
+    {
+      id: 7,
+      image: "http://localhost:8080/src/assets/images/odc_workflow.png",
+      title: "PairFinder",
+      description: "Passer votre entretin avec notre AI",
+      appId: "PairFinder"
+    },
+    {
+      id: 8,
+      image: "http://localhost:8080/src/assets/images/odc_workflow.png",
+      title: "Stream",
+      description: "Passer votre entretin avec notre AI",
+      appId: "Stream"
     }
-
   ];
 
-  // Fonction pour basculer l'affichage du carousel
-  const toggleCarousel = (e: React.MouseEvent) => {
+  // Fonction pour basculer l'affichage du carousel et afficher toutes les apps
+  const toggleShowAll = (e: React.MouseEvent) => {
     e.preventDefault();
-    setShowCarousel(!showCarousel);
+    setShowCarousel(false);
+    setShowAllApps(true);
   };
-
-  // Gérer le clic sur une formation/application - MODIFIÉ
+  
+  // Gérer le clic sur une formation/application
   const handleAppClick = (appId: string) => {
     if (!user || !user.role) {
-      // Si l'utilisateur n'est pas connecté, rediriger vers la page de connexion
       navigate("/");
       return;
     }
-
-    // Rediriger vers la page de description de l'application
     navigate(`/AppDescription/${appId}`);
   };
 
-  // Gérer le clic sur une formation du carousel - AJOUTÉ
+  // Gérer le clic sur une formation du carousel
   const handleCarouselAppClick = (appId: string) => {
     if (!user || !user.role) {
       navigate("/");
       return;
     }
-    
-    // Rediriger vers la page de description de l'application
     navigate(`/AppDescription/${appId}`);
   };
+
+  // Filtrer les applications à afficher (4 premières si showAllApps est false)
+  const displayedApps = showAllApps ? trainings : trainings.slice(0, 4);
 
   return (
     <div className="min-h-[300px] max-h-[1600px] max-w-[1300px] mx-auto bg-[#0A0A0A] text-white px-4">
@@ -175,15 +201,13 @@ const TrainingHub: React.FC = () => {
       <main className="container px-4 py-8">
         {/* Section de formations en vedette avec toggle */}
         <div className="mb-10">
-          <div className="flex items-center justify-between mb-6">
-           
-          </div>
+         
           
           {/* Carrousel de formations - afficher uniquement si showCarousel est true */}
           {showCarousel && (
             <FeaturedCarousel 
               items={carouselItems} 
-              onItemClick={handleCarouselAppClick} // Passer la fonction de clic
+              onItemClick={handleCarouselAppClick}
             />
           )}
         </div>
@@ -195,174 +219,52 @@ const TrainingHub: React.FC = () => {
               Essential Applications
               <ChevronRight className="ml-2 text-orange" />
             </h2>
-            <a href="#" className="text-orange hover:underline text-sm" onClick={toggleCarousel}>
-              Voir tout
-            </a>
+            {!showAllApps && (
+              <a href="#" className="text-orange hover:underline text-sm" onClick={toggleShowAll}>
+                Voir tout
+              </a>
+              
+            )}
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* App 1 */}
-            <div 
-              className="flex items-start space-x-4 cursor-pointer hover:bg-gray-900 p-4 rounded-lg transition-colors" 
-              onClick={() => handleAppClick('pictoria')}
-            >
-              <div className="relative text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-orange-400">
-                <img src={Logo} alt="Orange logo" className="w-16 h-16 object-contain" />
-              </div>
-              <div className="flex-1">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-bold">Pictoria AI</h3>
-                  <div className="flex items-center">
-                    <span className="mr-2">3.4</span>
-                    <svg className="w-4 h-4 text-orange fill-current" viewBox="0 0 24 24">
-                      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                    </svg>
+            {displayedApps.map((app) => (
+              <div 
+                key={app.id}
+                className="flex items-start space-x-4 cursor-pointer hover:bg-gray-900 p-4 rounded-lg transition-colors" 
+                onClick={() => handleAppClick(app.appId)}
+              >
+                <div className="relative text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-orange">
+                  <img src={Logo} alt="Orange logo" className="w-16 h-16 object-contain" />
+                  <div className="absolute inset-0 overflow-hidden">
+                    {app.icon}
                   </div>
                 </div>
-                <p className="text-gray-400 mt-1">AI & Machine Learning</p>
-                <p className="mt-3">Intelligence artificielle appliquée au traitement d'images</p>
-                <div className="flex justify-between mt-2">
-                  <span className="text-orange">Free</span>
-                  <span className="bg-orange text-black text-xs px-2 py-1 rounded-full">Nouveau</span>
-                </div>
-              </div>
-            </div>
-
-            {/* App 2 */}
-            <div 
-              className="flex items-start space-x-4 cursor-pointer hover:bg-gray-900 p-4 rounded-lg transition-colors" 
-              onClick={() => handleAppClick('workflow')}
-            >
-              <div className="relative text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-orange">
-                <img src={Logo} alt="Orange logo" className="w-16 h-16 object-contain" />
-                <div className="absolute inset-0 overflow-hidden">
-                  <Briefcase className="w-16 h-16 text-orange absolute bottom-0 right-0 transform translate-x-2 translate-y-1" />
-                </div>
-              </div>
-              <div className="flex-1">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-bold">Workflow</h3>
-                  <div className="flex items-center">
-                    <span className="mr-2">4.5</span>
-                    <svg className="w-4 h-4 text-orange fill-current" viewBox="0 0 24 24">
-                      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                    </svg>
+                <div className="flex-1">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-xl font-bold">{app.title}</h3>
+                    <div className="flex items-center">
+                      <span className="mr-2">4.5</span>
+                      <svg className="w-4 h-4 text-orange fill-current" viewBox="0 0 24 24">
+                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                      </svg>
+                    </div>
+                  </div>
+                  <p className="text-gray-400 mt-1">{app.title.includes('AI') ? 'AI & Machine Learning' : 
+                    app.title.includes('Management') ? 'Management' : 
+                    app.title.includes('Workflow') ? 'Productivity' : 'Data Integration'}</p>
+                  <p className="mt-3">{app.description}</p>
+                  <div className="flex justify-between mt-2">
+                    <span className="text-orange">Free</span>
+                    {app.badge && (
+                      <span className="bg-orange text-black text-xs px-2 py-1 rounded-full">
+                        {app.badge}
+                      </span>
+                    )}
                   </div>
                 </div>
-                <p className="text-gray-400 mt-1">Productivity</p>
-                <p className="mt-3">Optimisation des processus métier et automatisation des workflows</p>
-                <span className="inline-block mt-2 text-orange">Free</span>
               </div>
-            </div>
-
-            {/* App 3 */}
-            <div 
-              className="flex items-start space-x-4 cursor-pointer hover:bg-gray-900 p-4 rounded-lg transition-colors" 
-              onClick={() => handleAppClick('management')}
-            >
-              <div className="relative text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-orange">
-                <img src={Logo} alt="Orange logo" className="w-16 h-16 object-contain" />
-                <div className="absolute inset-0 overflow-hidden">
-                  <Briefcase className="w-16 h-16 text-orange absolute bottom-0 right-0 transform translate-x-2 translate-y-1" />
-                </div>
-              </div>
-              <div className="flex-1">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-bold">Management</h3>
-                  <div className="flex items-center">
-                    <span className="mr-2">3.4</span>
-                    <svg className="w-4 h-4 text-orange fill-current" viewBox="0 0 24 24">
-                      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                    </svg>
-                  </div>
-                </div>
-                <p className="text-gray-400 mt-1">Management</p>
-                <p className="mt-3">Formation complète sur les méthodes de management moderne et leadership</p>
-                <div className="flex justify-between mt-2">
-                  <span className="text-orange">Free</span>
-                  <span className="bg-orange text-black text-xs px-2 py-1 rounded-full">Populaire</span>
-                </div>
-              </div>
-            </div>
-
-            {/* App 4 */}
-            <div 
-              className="flex items-start space-x-4 cursor-pointer hover:bg-gray-900 p-4 rounded-lg transition-colors" 
-              onClick={() => handleAppClick('shortner')}
-            >
-              <div className="relative text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-orange">
-                <img src={Logo} alt="Orange logo" className="w-16 h-16 object-contain" />
-                <div className="absolute inset-0 overflow-hidden">
-                  <Briefcase className="w-16 h-16 text-orange absolute bottom-0 right-0 transform translate-x-2 translate-y-1" />
-                </div>
-              </div>
-              <div className="flex-1">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-bold">ShortnerLink & Talend</h3>
-                  <div className="flex items-center">
-                    <span className="mr-2">4.5</span>
-                    <svg className="w-4 h-4 text-orange fill-current" viewBox="0 0 24 24">
-                      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                    </svg>
-                  </div>
-                </div>
-                <p className="text-gray-400 mt-1">Data Integration</p>
-                <p className="mt-3">Gestion de données et intégration avec les outils Talend</p>
-                <span className="inline-block mt-2 text-orange">Free</span>
-              </div>
-            </div>
-             {/* App 5 */}
-             <div 
-              className="flex items-start space-x-4 cursor-pointer hover:bg-gray-900 p-4 rounded-lg transition-colors" 
-              onClick={() => handleAppClick('AiInterview')}
-            >
-              <div className="relative text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-orange">
-                <img src={Logo} alt="Orange logo" className="w-16 h-16 object-contain" />
-                <div className="absolute inset-0 overflow-hidden">
-                  <Briefcase className="w-16 h-16 text-orange absolute bottom-0 right-0 transform translate-x-2 translate-y-1" />
-                </div>
-              </div>
-              <div className="flex-1">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-bold">AI Interview</h3>
-                  <div className="flex items-center">
-                    <span className="mr-2">4.5</span>
-                    <svg className="w-4 h-4 text-orange fill-current" viewBox="0 0 24 24">
-                      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                    </svg>
-                  </div>
-                </div>
-                <p className="text-gray-400 mt-1">AiInterview</p>
-                <p className="mt-3">Gestion de données et intégration avec les outils Talend</p>
-                <span className="inline-block mt-2 text-orange">Free</span>
-              </div>
-            </div>
-             {/* App 6 */}
-             <div 
-              className="flex items-start space-x-4 cursor-pointer hover:bg-gray-900 p-4 rounded-lg transition-colors" 
-              onClick={() => handleAppClick('Scheduller')}
-            >
-              <div className="relative text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-orange">
-                <img src={Logo} alt="Orange logo" className="w-16 h-16 object-contain" />
-                <div className="absolute inset-0 overflow-hidden">
-                  <Briefcase className="w-16 h-16 text-orange absolute bottom-0 right-0 transform translate-x-2 translate-y-1" />
-                </div>
-              </div>
-              <div className="flex-1">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-bold"> Scheduller </h3>
-                  <div className="flex items-center">
-                    <span className="mr-2">4.5</span>
-                    <svg className="w-4 h-4 text-orange fill-current" viewBox="0 0 24 24">
-                      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                    </svg>
-                  </div>
-                </div>
-                <p className="text-gray-400 mt-1">Data Integration</p>
-                <p className="mt-3">Gestion de données et intégration avec les outils Talend</p>
-                <span className="inline-block mt-2 text-orange">Free</span>
-              </div>
-            </div>
+            ))}
           </div>
         </section>
       </main>
