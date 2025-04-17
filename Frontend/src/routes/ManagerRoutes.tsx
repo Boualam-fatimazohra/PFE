@@ -30,6 +30,7 @@ import GestionProjetFab from "@/components/dashboardElement/GestionProjetFab";
 import GestionEquipement from "@/components/dashboardElement/GestionEquipementFab";
 import GestionEncadrantFab from "@/components/dashboardElement/GestionEncadrantFab";
 import { EncadrantFormationProvider } from "@/contexts/EncadrantFormationContext ";
+import { ProjetFabProvider } from "@/contexts/projetFabContext";
 
 
 const ManagerRoutes = () => {
@@ -40,12 +41,13 @@ const ManagerRoutes = () => {
     <EdcProvider>
     <FormateurProvider> 
     <EncadrantFormationProvider>
+    <ProjetFabProvider>
     <Routes>
       <Route path="/dashboardManager" element={<DashboardManager />} />
       <Route path="*" element={<NotFound />} />
           
           <Route path="/Ecolcode" element={<Ecolcode/>}/>
-          <Route path="/FablabSolidaire" element={<FablabSolidaire/>}/>
+           <Route path="/FablabSolidaire" element={<FablabSolidaire/>}/> 
           <Route path="/OrangeFab" element={<OrangeFab/>}/>
           <Route path="/Coordination" element={<Coordination/>}/>
           <Route path="/GestionProjetFab" element={<GestionProjetFab/>}/>
@@ -73,6 +75,7 @@ const ManagerRoutes = () => {
 
 
     </Routes>
+    </ProjetFabProvider>
     </EncadrantFormationProvider>
     </FormateurProvider>
     </EdcProvider>

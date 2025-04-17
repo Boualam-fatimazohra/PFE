@@ -54,7 +54,18 @@ const formationFabImageStorage = new CloudinaryStorage({
     transformation: [{ width: 500, height: 500, crop: 'limit' }]
   }
 });
-const uploadFormationFabImage = multer({ storage: imageStorage });
+const uploadFormationFabImage = multer({ storage: formationFabImageStorage });
+
+// Ajout de la configuration pour les projets Fab
+const projetFabImageStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'projets-fab',
+    allowed_formats: ['jpg', 'jpeg', 'png'],
+    transformation: [{ width: 500, height: 500, crop: 'limit' }]
+  }
+});
+const uploadProjetFabImage = multer({ storage: projetFabImageStorage });
 
 // Set up Cloudinary storage for Excel files
 const excelStorage = new CloudinaryStorage({
@@ -126,6 +137,7 @@ module.exports = {
   cloudinary,
   uploadImage,
   uploadFormationFabImage,
+  uploadProjetFabImage, // Added export for projet fab
   uploadFormateurFiles: upload,
   uploadExcel,
   uploadToCloudinary,
