@@ -783,7 +783,6 @@ const getBeneficiairesWithPresence = async (req, res) => {
     }
     // Étape 1 : Récupérer les bénéficiaires associés à la formation
     const beneficiairesFormation = await getBeneficiairesByFormation(formationId);
-    console.log("Bénéficiaires Formation:", beneficiairesFormation);
     const beneficiairesFormationIds = beneficiairesFormation.map(bf => bf._id);
     
     // Étape 2 : Récupérer les présences associées
