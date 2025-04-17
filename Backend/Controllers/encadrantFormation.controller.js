@@ -1,6 +1,7 @@
 const EncadrantFormation = require('../Models/encadrantFormation.model');
 const Encadrant = require('../Models/encadrant.model');
 const FormationBase = require('../Models/formationBase.model');
+const ProjetFab = require('../Models/projetFab.model');
 const mongoose = require('mongoose');
 
 const FormationFab = require('../Models/formationFab.model');
@@ -94,6 +95,106 @@ const listFormationsWithEncadrants = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Erreur lors de la récupération des formations",
+      error: error.message
+    });
+  }
+};
+
+// Récupérer la liste des projets de fabrication avec leurs encadrants et détails d'entités
+const listProjetsFabWithEncadrants = async (req, res) => {
+  try {
+    // 1. Récupérer tous les projets Fab avec leur formation de base
+    const projetsFab = await ProjetFab.find()
+      .populate({
+        path: 'baseFormation',
+        select: 'nom dateDebut dateFin description image'
+      })
+      .lean();
+    
+    // 2. Récupérer les relations encadrants
+    const formationIds = projetsFab.map(p => p.baseFormation._id);
+    const relations = await EncadrantFormation.find({
+      formationBase: { $in: formationIds }
+    })
+    .populate({
+      path: 'encadrant',
+      populate: {
+        path: 'utilisateur',
+        select: 'nom prenom email'
+      }
+    })
+    .lean();
+    
+    // 3. Récupérer les IDs des utilisateurs (encadrants)
+    const utilisateurIds = relations.map(rel => rel.encadrant?.utilisateur?._id).filter(Boolean);
+    
+    // 4. Récupérer les relations utilisateur-entité avec les détails de l'entité
+    const utilisateurEntities = await UtilisateurEntity.find({
+      id_utilisateur: { $in: utilisateurIds }
+    })
+    .populate({
+      path: 'id_entity',
+      select: 'nom description ville adresse'
+    })
+    .lean();
+    
+    // 5. Fusionner les données
+    const result = projetsFab.map(projet => {
+      const base = projet.baseFormation;
+      const encadrants = relations
+        .filter(rel => rel.formationBase.equals(base._id))
+        .map(rel => {
+          const utilisateurId = rel.encadrant?.utilisateur?._id;
+          const entityRelation = utilisateurId ?
+            utilisateurEntities.find(ue => ue.id_utilisateur.equals(utilisateurId)) :
+            null;
+          
+          const entity = entityRelation?.id_entity || null;
+          
+          return {
+            nom: rel.encadrant?.utilisateur?.nom,
+            prenom: rel.encadrant?.utilisateur?.prenom,
+            email: rel.encadrant?.utilisateur?.email,
+            type: rel.encadrant?.type,
+            specialite: rel.encadrant?.specialite,
+            dateAssignment: rel.dateAssignment,
+            entity: entity ? {
+              id: entity._id,
+              nom: entity.nom,
+              description: entity.description,
+              ville: entity.ville,
+              adresse: entity.adresse
+            } : null
+          };
+        });
+      
+      return {
+        _id: projet._id,
+        baseFormation: {
+          _id: base._id,
+          nom: base.nom,
+          dateDebut: base.dateDebut,
+          dateFin: base.dateFin,
+          description: base.description,
+          image: base.image
+        },
+        status: projet.status,
+        progress: projet.progress,
+        nombreParticipants: projet.nombreParticipants,
+        encadrants
+      };
+    });
+    
+    res.status(200).json({
+      success: true,
+      count: result.length,
+      data: result
+    });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Erreur lors de la récupération des projets de fabrication",
       error: error.message
     });
   }
@@ -429,5 +530,6 @@ module.exports = {
   deleteAssignment,
   getFormationsByEncadrant,
   getEncadrantsByFormation,
-  listFormationsWithEncadrants
+  listFormationsWithEncadrants,
+  listProjetsFabWithEncadrants
 };
