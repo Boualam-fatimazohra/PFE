@@ -155,7 +155,6 @@ const projetFabController = {
       // Pour chaque projet, récupérer les encadrants via EncadrantFormation
       const projetsAvecEncadrants = await Promise.all(
         projets.map(async (projet) => {
-          console.log(`Recherche d'encadrants pour la formation: ${projet.baseFormation._id}`);
           
           const encadrants = await EncadrantFormation.find({
             formationBase: projet.baseFormation._id
@@ -167,8 +166,7 @@ const projetFabController = {
               select: 'nom prenom email'
             }
           });
-          
-          console.log(`Nombre d'encadrants trouvés pour ${projet.baseFormation.nom}: ${encadrants.length}`);
+        
           if (encadrants.length === 0) {
             // Vérifiez si des encadrants existent dans la collection
             const totalCount = await EncadrantFormation.countDocuments();

@@ -13,6 +13,7 @@ interface Equipement {
   nom: string;
   image:string;
   etat: 'Disponible' | 'En maintenance';
+  
 }
 
 
