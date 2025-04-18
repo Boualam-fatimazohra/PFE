@@ -12,7 +12,8 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
-import { toast } from "react-toastify";
+import Alert from '@mui/material/Alert';
+import Snackbar from '@mui/material/Snackbar';
 import { BeneficiaireWithPresenceResponse } from "../formation-modal/types";
 import { FormationItem } from "@/pages/types";
 
@@ -41,7 +42,14 @@ const ReglementInterieurModal: React.FC<ReglementInterieurModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectAll, setSelectAll] = useState(false);
   const [filteredParticipants, setFilteredParticipants] = useState<ParticipantWithStatus[]>(participants);
-
+  const [alertOpen, setAlertOpen] = React.useState(false);
+  const [alertMessage, setAlertMessage] = React.useState('');
+  const [alertSeverity, setAlertSeverity] = React.useState<'success'|'error'|'warning'|'info'>('success');
+  const showAlert = (message: string, severity: 'success'|'error'|'warning'|'info') => {
+    setAlertMessage(message);
+    setAlertSeverity(severity);
+    setAlertOpen(true);
+  };
   // Reset state when modal opens
   useEffect(() => {
     if (isOpen) {
@@ -98,7 +106,7 @@ const ReglementInterieurModal: React.FC<ReglementInterieurModalProps> = ({
   // Submit confirmation
   const handleConfirmation = async (action: "confirm" | "decline") => {
     if (selectedParticipants.length === 0) {
-      toast.error("Veuillez sélectionner au moins un participant");
+      showAlert("Veuillez sélectionner au moins un participant", 'warning');
       return;
     }
 
@@ -106,8 +114,7 @@ const ReglementInterieurModal: React.FC<ReglementInterieurModalProps> = ({
     try {
       await onConfirmReglement(selectedParticipants, action);
       const actionText = action === "confirm" ? "confirmé" : "refusé";
-      toast.success(`Règlement ${actionText} avec succès`);
-      
+      showAlert(`Règlement ${actionText} avec succès`, 'success');
       // Reset selections
       setSelectedParticipants([]);
       setSelectAll(false);
@@ -118,7 +125,7 @@ const ReglementInterieurModal: React.FC<ReglementInterieurModalProps> = ({
       }
     } catch (error) {
       console.error(`Error ${action === "confirm" ? "confirming" : "declining"} règlement:`, error);
-      toast.error(`Erreur lors de l'opération`);
+      showAlert("Erreur lors de l'opération", 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -163,6 +170,7 @@ const ReglementInterieurModal: React.FC<ReglementInterieurModalProps> = ({
   const confirmedPercentage = totalCount > 0 ? Math.round((confirmedCount / totalCount) * 100) : 0;
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
@@ -310,6 +318,25 @@ const ReglementInterieurModal: React.FC<ReglementInterieurModalProps> = ({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    <Snackbar
+      open={alertOpen}
+      autoHideDuration={2000}
+      onClose={() => setAlertOpen(false)}
+      anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+    >
+      <Alert 
+        severity={alertSeverity}
+        sx={{ 
+          width: '100%',
+          boxShadow: 3,
+          fontSize: '0.875rem',
+          '.MuiAlert-icon': { fontSize: '1.25rem' }
+        }}
+      >
+        {alertMessage}
+      </Alert>
+    </Snackbar>
+    </>
   );
 };
 
