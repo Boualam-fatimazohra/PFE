@@ -13,7 +13,8 @@ interface AppData {
   rating: number;
   features: string[];
   image: string;
-  externalUrl?: string; // Ajout d'un champ pour les URLs externes
+  externalUrl?: string;
+  skipActivation?: boolean; // Nouveau champ pour indiquer si l'activation doit être ignorée
 }
 
 const AppDescription: React.FC = () => {
@@ -46,8 +47,8 @@ const AppDescription: React.FC = () => {
     },
     workflow: {
       title: "Workflow",
-      description: "Supervisez et suivez l’avancement des formations en temps réel",
-      longDescription: "L’application Workflow est dédiée à l’organisation des parcours de formation. Elle permet aux formateurs, coordinateurs et managers de planifier, suivre et piloter les sessions de formation avec une vue complète sur le déroulement, les participants et les livrables attendus.",
+      description: "Supervisez et suivez l'avancement des formations en temps réel",
+      longDescription: "L'application Workflow est dédiée à l'organisation des parcours de formation. Elle permet aux formateurs, coordinateurs et managers de planifier, suivre et piloter les sessions de formation avec une vue complète sur le déroulement, les participants et les livrables attendus.",
       category: "Productivity",
       rating: 4.5,
       features: [
@@ -57,12 +58,13 @@ const AppDescription: React.FC = () => {
         "Rapports de performance en temps réel",
         "Notifications et alertes configurables"
       ],
-      image: Logo
+      image: Logo,
+      skipActivation: true // Workflow ignorera l'étape d'activation
     },
     pictoria: {
       title: "Pictoria AI",
       description: "Générez automatiquement des contenus visuels adaptés aux formations",
-      longDescription: "Pictoria AI est un outil intelligent conçu pour les formateurs et coordinateurs afin de créer des supports de cours visuellement attractifs. Grâce à l’intelligence artificielle, il permet la génération, l’optimisation et la personnalisation d’images pédagogiques.",
+      longDescription: "Pictoria AI est un outil intelligent conçu pour les formateurs et coordinateurs afin de créer des supports de cours visuellement attractifs. Grâce à l'intelligence artificielle, il permet la génération, l'optimisation et la personnalisation d'images pédagogiques.",
       category: "AI & Machine Learning",
       rating: 3.4,
       features: [
@@ -94,7 +96,7 @@ const AppDescription: React.FC = () => {
     AiInterview: {
       title: "AI Interview",
       description: "Préparez vos entretiens avec une IA simulant des recruteurs",
-      longDescription: "AI Interview est une solution innovante permettant aux apprenants de s’entraîner aux entretiens d’embauche avec une IA. Elle simule différents scénarios et fournit des retours constructifs, idéale pour les formateurs et les participants à des programmes d’employabilité.",
+      longDescription: "AI Interview est une solution innovante permettant aux apprenants de s'entraîner aux entretiens d'embauche avec une IA. Elle simule différents scénarios et fournit des retours constructifs, idéale pour les formateurs et les participants à des programmes d'employabilité.",
       category: "AI & Training",
       rating: 4.5,
       features: [
@@ -124,53 +126,57 @@ const AppDescription: React.FC = () => {
       externalUrl: "https://shedulrr-gfvggh.vercel.app/availability"
     },
     PairFinder: {
-        title: "PairFinder",
-        description: "Mise en relation intelligente basée sur les compétences et besoins",
-        longDescription: "PairFinder est une application conçue pour mettre en relation des collaborateurs en fonction de leurs compétences, centres d'intérêt ou objectifs. Elle facilite le travail collaboratif et le mentorat à l’intérieur des équipes.",
-        category: "Collaboration",
-        rating: 4.2,
-        features: [
-          "Matching intelligent de profils",
-          "Interface intuitive de mise en relation",
-          "Système de filtres personnalisés",
-          "Suggestions basées sur l’IA",
-          "Suivi des interactions"
-        ],
-        image: Logo,
-        externalUrl: "https://pair-finder-jade.vercel.app/"
-      },
-    
-      Stream: {
-        title: "Stream",
-        description: "Plateforme de streaming interne pour la formation et la communication",
-        longDescription: "Stream est une plateforme de streaming vidéo destinée aux entreprises, idéale pour diffuser des formations, des annonces ou des événements internes. Elle favorise l’apprentissage et la communication visuelle.",
-        category: "Communication",
-        rating: 4.6,
-        features: [
-          "Diffusion de contenu vidéo en direct ou à la demande",
-          "Organisation par catégories et thèmes",
-          "Interface simple et responsive",
-          "Contrôle d’accès sécurisé",
-          "Intégration facile dans l’écosystème interne"
-        ],
-        image: Logo,
-        externalUrl: "https://odc-stream.vercel.app/"
-      }    
+      title: "PairFinder",
+      description: "Mise en relation intelligente basée sur les compétences et besoins",
+      longDescription: "PairFinder est une application conçue pour mettre en relation des collaborateurs en fonction de leurs compétences, centres d'intérêt ou objectifs. Elle facilite le travail collaboratif et le mentorat à l'intérieur des équipes.",
+      category: "Collaboration",
+      rating: 4.2,
+      features: [
+        "Matching intelligent de profils",
+        "Interface intuitive de mise en relation",
+        "Système de filtres personnalisés",
+        "Suggestions basées sur l'IA",
+        "Suivi des interactions"
+      ],
+      image: Logo,
+      externalUrl: "https://pair-finder-jade.vercel.app/"
+    },
+    Stream: {
+      title: "Stream",
+      description: "Plateforme de streaming interne pour la formation et la communication",
+      longDescription: "Stream est une plateforme de streaming vidéo destinée aux entreprises, idéale pour diffuser des formations, des annonces ou des événements internes. Elle favorise l'apprentissage et la communication visuelle.",
+      category: "Communication",
+      rating: 4.6,
+      features: [
+        "Diffusion de contenu vidéo en direct ou à la demande",
+        "Organisation par catégories et thèmes",
+        "Interface simple et responsive",
+        "Contrôle d'accès sécurisé",
+        "Intégration facile dans l'écosystème interne"
+      ],
+      image: Logo,
+      externalUrl: "https://odc-stream.vercel.app/"
+    }    
   };
-  
   
   // Récupérer les données de l'application actuelle
   const currentApp = id ? appData[id] : null;
   
   // Vérifier si l'application est déjà activée au chargement du composant
   useEffect(() => {
-    if (id && user) {
-      // Créer une clé unique pour chaque utilisateur et application
+    if (id && user && currentApp) {
+      // Si l'application doit ignorer l'activation, la définir comme activée
+      if (currentApp.skipActivation) {
+        setIsActivated(true);
+        return;
+      }
+      
+      // Sinon, vérifier si elle a déjà été activée
       const activationKey = `app_${id}_activated_${user.userId}`;
       const isAppActivated = localStorage.getItem(activationKey) === 'true';
       setIsActivated(isAppActivated);
     }
-  }, [id, user]);
+  }, [id, user, currentApp]);
   
   // Simuler l'activation de l'application
   const handleActivate = () => {
