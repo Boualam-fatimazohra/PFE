@@ -11,8 +11,8 @@ import { FormationItem, Document, StatMetric } from "@/pages/types";
 import { getBeneficiairesWithPresence, updateReglementStatus } from "../../services/beneficiaireService";
 import { BeneficiaireWithPresenceResponse } from "../formation-modal/types";
 import ReglementInterieurModal from "../Formation/ReglementInterieurModal";
-import { toast } from "react-toastify";
-
+import Alert from '@mui/material/Alert';
+import Snackbar from '@mui/material/Snackbar';
 interface DetailsFormationProps {
   formation: FormationItem;
   onRetourClick: () => void; 
@@ -20,6 +20,9 @@ interface DetailsFormationProps {
 
 const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetourClick }) => {
   // State variables
+  const [alertOpen, setAlertOpen] = React.useState(false);
+  const [alertMessage, setAlertMessage] = React.useState('');
+  const [alertSeverity, setAlertSeverity] = React.useState<'success'|'error'|'warning'|'info'>('success');
   const [isLoading, setIsLoading] = useState(false);
   const [participantsPage, setParticipantsPage] = useState(1);
   const PARTICIPANTS_PER_PAGE = 11;
@@ -35,7 +38,11 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
     { label: "Taux Satisfaction", value: null },
     { label: "Heures", value: null },
   ]);
-  
+  const showAlert = (message: string, severity: 'success'|'error'|'warning'|'info') => {
+    setAlertMessage(message);
+    setAlertSeverity(severity);
+    setAlertOpen(true);
+  };
   // Règlement intérieur modal state
   const [isReglementModalOpen, setIsReglementModalOpen] = useState(false);
  
@@ -80,7 +87,7 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
       
     } catch (error) {
       console.error("Error loading formation data:", error);
-      toast.error("Erreur lors du chargement des données");
+      showAlert("Erreur lors du chargement des données", 'error');
     } finally {
       setIsLoading(false);
     }
@@ -102,7 +109,8 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
       localStorage.setItem(`formation_${formation.id}_lastUpdate`, formattedDate);
     } catch (error) {
       console.error("Erreur lors de l'actualisation des données:", error);
-      toast.error("Erreur lors de l'actualisation des données");
+      showAlert("Erreur lors de l'actualisation des données", 'error');
+      // toast.error("Erreur lors de l'actualisation des données");
     } finally {
       setIsRefreshing(false);
     }
@@ -139,12 +147,12 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
       );
       
       // Show success message
-      toast.success(`Statut de règlement intérieur mis à jour avec succès`);
+      showAlert(`Statut de réglement intérieur mis à jour avec succès`, "success");
       
       return Promise.resolve();
     } catch (error) {
       console.error("Error updating règlement status:", error);
-      toast.error("Erreur lors de la mise à jour du statut de règlement");
+      showAlert("Erreur lors de la mise à jour du statut de réglement", "error");
       return Promise.reject(error);
     }
   };
@@ -259,6 +267,24 @@ const DetailsFormation: React.FC<DetailsFormationProps> = ({ formation, onRetour
           onConfirmReglement={handleConfirmReglement}
         />
       </main>
+      <Snackbar
+      open={alertOpen}
+      autoHideDuration={2000}
+      onClose={() => setAlertOpen(false)}
+      anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+    >
+      <Alert 
+        severity={alertSeverity}
+        sx={{ 
+          width: '100%',
+          boxShadow: 3,
+          fontSize: '0.875rem',
+          '.MuiAlert-icon': { fontSize: '1.25rem' }
+        }}
+      >
+        {alertMessage}
+      </Alert>
+    </Snackbar>
     </div>
   );
 };
