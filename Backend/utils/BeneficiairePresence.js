@@ -2,6 +2,8 @@ const Presence = require("../Models/presence.model.js");
  const mongoose = require('mongoose');
  const Formation = require("../Models/formation.model.js");
 const BeneficiaireFormation = require("../Models/beneficiairesFormation.js");
+
+// Fonction pour récupérer les bénéficiaires d'une formation
 const getBeneficiairesByFormation = async (formationId) => {
   const results = await BeneficiaireFormation.find({ 
     formation: new mongoose.Types.ObjectId(formationId),
@@ -14,7 +16,6 @@ const getBeneficiairesByFormation = async (formationId) => {
   })
   .lean() // Convertir en objet JavaScript simple
   .exec();
-  console.log("resultat des béneficiaires retourné par getBenefciairesByFormation",results);
   
   return results;
 };
@@ -31,57 +32,67 @@ const getBeneficiairesByFormation = async (formationId) => {
    }).select('formation'); // Sélectionne uniquement le champ formation
  };
  // Fonction utilitaire pour générer les jours de formation
- const genererJoursFormation = (dateDebut, dateFin) => {
+// Fonction utilitaire pour générer les jours de formation
+const genererJoursFormation = (dateDebut, dateFin) => {
   const jours = [];
-  const dateActuelle = new Date(dateDebut);
-  const dateFinale = new Date(dateFin);
-
-  // Vérification des dates valides
-  if (isNaN(dateActuelle) || isNaN(dateFinale)) {
-    return jours;
-  }
-  // Boucle sur chaque jour entre dateDebut et dateFin
-  while (dateActuelle <= dateFinale) {
-   const jourSemaine = dateActuelle.getDay();
-   console.log("Jour de la semaine", jourSemaine);
-    if (jourSemaine !== 0 && jourSemaine !== 6) { // 0 = dimanche, 6 = samedi
-      jours.push(new Date(dateActuelle));
-    }
+  
+  // Convert dates to YYYY-MM-DD strings for consistent day-based comparison
+  const formatYMD = (date) => new Date(date).toISOString().split('T')[0];
+  
+  // Get the date ranges as strings
+  const startDate = formatYMD(dateDebut);
+  const endDate = formatYMD(dateFin);
+  
+  // Create date objects for iteration
+  const dateActuelle = new Date(startDate);
+  const dateFinale = new Date(endDate);
+  dateFinale.setDate(dateFinale.getDate() + 1); // Add one day to include end date
+  
+  console.log(`Generating days from ${startDate} to ${endDate}`);
+  
+  // Loop through each day
+  while (formatYMD(dateActuelle) < formatYMD(dateFinale)) {
+    // Store the date as an ISO string date (YYYY-MM-DD)
+    jours.push(formatYMD(dateActuelle));
+    
+    // Move to next day
     dateActuelle.setDate(dateActuelle.getDate() + 1);
   }
+  
+  console.log(`Generated ${jours.length} days between ${startDate} and ${endDate}`);
   return jours;
 };
 
 const creerPresencesBeneficiaires = async (formationId) => {
   try {
-    // Trouver la formation pour obtenir les dates
+    // Find the formation
     const formation = await Formation.findById(formationId);
     if (!formation) {
-      console.log("Formation non trouvée");
-      throw new Error("Formation non trouvée");
+      console.log("Formation not found");
+      throw new Error("Formation not found");
     }
     
-    // Trouver tous les BeneficiareFormation associés à cette formation
+    // Find all beneficiaries for this formation
     const beneficiairesFormation = await BeneficiaireFormation.find({ formation: formationId });
     
-    // Résultats pour suivi
+    // Track results
     const resultats = {
       beneficiairesConfirmes: 0,
       beneficiairesNonConfirmes: 0,
       presencesCreees: 0
     };
     
-    // Vérifier chaque bénéficiaire et créer des présences si nécessaire
+    // Process each beneficiary
     for (const beneficiaire of beneficiairesFormation) {
       if (beneficiaire.confirmationAppel && beneficiaire.confirmationEmail) {
-        // Calculer les jours de formation
+        // Generate the training days as YYYY-MM-DD strings
         const joursFormation = genererJoursFormation(formation.dateDebut, formation.dateFin);
         
-        // Créer une instance Presence pour chaque jour
-        for (const jour of joursFormation) {
+        // Create a presence record for each day
+        for (const jourStr of joursFormation) {
           await Presence.create({
             beneficiareFormation: beneficiaire._id,
-            jour: jour,
+            jour: jourStr, // Store as YYYY-MM-DD string directly
             isPresent: false
           });
           resultats.presencesCreees++;
@@ -91,22 +102,21 @@ const creerPresencesBeneficiaires = async (formationId) => {
         resultats.beneficiairesNonConfirmes++;
       }
     }
-    console.log("Formation trouvée et presences creees", resultats);
-
+    
+    console.log("Formation found and presences created:", resultats);
+    
     return {
       success: true,
       resultats
     };
   } catch (error) {
-
-    console.error("Erreur lors de la création des présences:", error);
+    console.error("Error creating presences:", error);
     return {
       success: false,
       error: error.message
     };
   }
 };
-
   module.exports = {
     getBeneficiairesByFormation,
     getPresencesByBeneficiaires,
