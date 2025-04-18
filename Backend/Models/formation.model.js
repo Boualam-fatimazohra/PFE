@@ -12,8 +12,8 @@ const formationSchema = new mongoose.Schema({
   tauxSatisfaction: { type: Number, min: 0, max: 100, required: false },
   formateur: { type: mongoose.Schema.Types.ObjectId, ref: "Formateur", required: true },
   // todo : définir les valeur de niveau et categorie
-  categorie: { type: String, default: "type1", enum: ["type1", "type2", "type3"] }, 
-  niveau:{type: String, default: "type1", enum: ["type1", "type2", "type3"] },
+  categorie: { type: String, default: "dev", enum: ["dev","design", "mobile"] }, 
+  niveau:{type: String, default: "debutant", enum: ["debutant", "intermediaire", "avance"] },
   image:{ type: String, required: false }
 }, { timestamps: true });
 

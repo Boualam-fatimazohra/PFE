@@ -35,6 +35,7 @@ interface BeneficiaireInscription {
   _id: string;
   confirmationAppel: boolean;
   confirmationEmail: boolean;
+  confirmationReglementInterieur:boolean;
   formation: string;
   beneficiaire: Beneficiaire;
 }
@@ -49,9 +50,12 @@ const BeneficiairesListe: React.FC<BeneficiairesListeProps> = ({ formationId }) 
   const [error, setError] = React.useState<string | null>(null);
   const [currentPage, setCurrentPage] = React.useState(1);
   const itemsPerPage = 11;
-
-  // Extraction des bénéficiaires à partir des inscriptions
-  const beneficiaires = inscriptions.map(inscription => inscription.beneficiaire);
+  const inscriptionsFiltrees = inscriptions.filter(inscription => 
+    inscription.confirmationAppel === true && 
+    inscription.confirmationEmail === true && 
+    inscription.confirmationReglementInterieur === true
+  );  // Extraction des bénéficiaires à partir des inscriptions
+  const beneficiaires = inscriptionsFiltrees.map(inscription => inscription.beneficiaire);
   
   // Filtrage avec vérification de sécurité
   const filteredBeneficiaires = beneficiaires.filter(b =>
@@ -65,7 +69,7 @@ const BeneficiairesListe: React.FC<BeneficiairesListeProps> = ({ formationId }) 
   const endIndex = startIndex + itemsPerPage;
   const displayedBeneficiaires = filteredBeneficiaires.slice(startIndex, endIndex);
   const totalPages = Math.ceil(filteredBeneficiaires.length / itemsPerPage);
-const [alertOpen, setAlertOpen] = React.useState(false);
+  const [alertOpen, setAlertOpen] = React.useState(false);
   const [alertMessage, setAlertMessage] = React.useState('');
   const [alertSeverity, setAlertSeverity] = React.useState<'success'|'error'|'warning'|'info'>('success');
   
