@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, Plus, Filter, Settings, AlertTriangle } from 'lucide-react';
 import LoadingSpinner from "../layout/LoadingSpinner";
+import { useEquipement } from "@/contexts/equipementContext";
 
 export interface Equipement {
   _id: string;
@@ -16,6 +17,9 @@ export interface Equipement {
   description?: string;
   numeroSerie?: string;
   dateAcquisition?: string;
+  fab?: any;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 const FilterButton = ({ label, active, onClick }) => (
@@ -41,101 +45,18 @@ const GestionEquipement = () => {
     "Robotique"
   ]);
 
-  const [equipements, setEquipements] = useState([
-    { 
-      _id: "1", 
-      nom: "Imprimante 3D Ultimaker", 
-      categorie: "Imprimantes 3D", 
-      etat: "Disponible", 
-      dernierEntretien: "2024-03-15",
-      prochainEntretien: "2024-06-15",
-      localisation: "Salle 101",
-      description: "Imprimante 3D haute précision avec double extrudeur",
-      numeroSerie: "ULT-2023-5678",
-      dateAcquisition: "2023-01-15",
-      image: "/api/placeholder/50/40"
-    },
-    { 
-      _id: "2", 
-      nom: "Imprimante 3D Prusa i3", 
-      categorie: "Imprimantes 3D", 
-      etat: "En maintenance", 
-      dernierEntretien: "2024-02-20",
-      prochainEntretien: "2024-05-20",
-      localisation: "Salle 101",
-      description: "Imprimante 3D open-source fiable",
-      numeroSerie: "PR-2022-1234",
-      dateAcquisition: "2022-11-05",
-      image: "/api/placeholder/50/40"
-    },
-    { 
-      _id: "3", 
-      nom: "Découpeuse Laser Epilog", 
-      categorie: "Découpe Laser", 
-      etat: "Disponible", 
-      dernierEntretien: "2024-04-01",
-      prochainEntretien: "2024-07-01",
-      localisation: "Salle 102",
-      description: "Découpeuse laser précise pour matériaux divers",
-      numeroSerie: "EP-2023-9876",
-      dateAcquisition: "2023-03-10",
-      image: "/api/placeholder/50/40"
-    },
-    { 
-      _id: "4", 
-      nom: "Scanner 3D Artec", 
-      categorie: "Scanner 3D", 
-      etat: "Disponible", 
-      dernierEntretien: "2024-03-25",
-      prochainEntretien: "2024-06-25",
-      localisation: "Salle 103",
-      description: "Scanner 3D portable haute résolution",
-      numeroSerie: "AR-2023-4321",
-      dateAcquisition: "2023-05-12",
-      image: "/api/placeholder/50/40"
-    },
-    { 
-      _id: "5", 
-      nom: "CNC Roland", 
-      categorie: "CNC", 
-      etat: "Hors service", 
-      dernierEntretien: "2024-01-10",
-      prochainEntretien: "2024-04-10",
-      localisation: "Salle 102",
-      description: "Machine CNC de précision pour usinage",
-      numeroSerie: "RO-2022-8765",
-      dateAcquisition: "2022-07-20",
-      image: "/api/placeholder/50/40"
-    },
-    { 
-      _id: "6", 
-      nom: "Kit Arduino Pro", 
-      categorie: "Électronique", 
-      etat: "Disponible", 
-      dernierEntretien: "2024-04-05",
-      prochainEntretien: "2024-07-05",
-      localisation: "Salle 104",
-      description: "Kit complet Arduino pour prototypage électronique",
-      numeroSerie: "ARD-2023-1122",
-      dateAcquisition: "2023-06-15",
-      image: "/api/placeholder/50/40"
-    },
-    { 
-      _id: "7", 
-      nom: "Bras robotique KUKA", 
-      categorie: "Robotique", 
-      etat: "En maintenance", 
-      dernierEntretien: "2024-02-28",
-      prochainEntretien: "2024-05-28",
-      localisation: "Salle 105",
-      description: "Bras robotique programmable pour automatisation",
-      numeroSerie: "KU-2022-3344",
-      dateAcquisition: "2022-12-10",
-      image: "/api/placeholder/50/40"
-    }
-  ]);
-  
-  const [activeCategory, setActiveCategory] = useState("Imprimantes 3D");
+  const {
+    equipements,
+    loading,
+    error,
+    getAllEquipements,
+    createEquipement,
+    updateEquipement,
+    deleteEquipement,
+    refreshData
+  } = useEquipement();
+
+  const [activeCategory, setActiveCategory] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [showAddForm, setShowAddForm] = useState(false);
@@ -150,15 +71,27 @@ const GestionEquipement = () => {
     description: "",
     numeroSerie: "",
     dateAcquisition: "",
-    image: "/api/placeholder/50/40"
+    image: ""
   });
   
   const equipementsPerPage = 5;
   const navigate = useNavigate();
   
+  useEffect(() => {
+    loadEquipements();
+  }, []);
+
+  const loadEquipements = async () => {
+    try {
+      await getAllEquipements();
+    } catch (err) {
+      console.error("Erreur lors du chargement des équipements:", err);
+    }
+  };
+  
   // Filtered equipements based on search, category and status filters
   const filteredEquipements = equipements.filter(equipement => {
-    const matchesSearch = equipement.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = equipement.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           equipement.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           equipement.numeroSerie?.toLowerCase().includes(searchTerm.toLowerCase());
     
@@ -175,29 +108,45 @@ const GestionEquipement = () => {
   
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
   
-  const handleAddEquipement = (e) => {
+  const handleAddEquipement = async (e) => {
     e.preventDefault();
     
-    const newId = (parseInt(equipements[equipements.length - 1]._id) + 1).toString();
-    const createdEquipement = {
-      ...newEquipement,
-      _id: newId,
-    };
-    
-    setEquipements([...equipements, createdEquipement]);
-    setShowAddForm(false);
-    setNewEquipement({
-      nom: "",
-      categorie: "Imprimantes 3D",
-      etat: "Disponible",
-      dernierEntretien: "",
-      prochainEntretien: "",
-      localisation: "",
-      description: "",
-      numeroSerie: "",
-      dateAcquisition: "",
-      image: "/api/placeholder/50/40"
-    });
+    try {
+      // Créer FormData pour l'upload d'image
+      const formData = new FormData();
+      
+      // Ajouter tous les champs du nouvel équipement
+      Object.keys(newEquipement).forEach(key => {
+        if (newEquipement[key]) {
+          formData.append(key, newEquipement[key]);
+        }
+      });
+      
+      // Upload de l'image si sélectionnée
+      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      if (fileInput && fileInput.files && fileInput.files[0]) {
+        formData.append('image', fileInput.files[0]);
+      }
+      
+      await createEquipement(formData);
+      await refreshData();
+      
+      setShowAddForm(false);
+      setNewEquipement({
+        nom: "",
+        categorie: "Imprimantes 3D",
+        etat: "Disponible",
+        dernierEntretien: "",
+        prochainEntretien: "",
+        localisation: "",
+        description: "",
+        numeroSerie: "",
+        dateAcquisition: "",
+        image: ""
+      });
+    } catch (err) {
+      console.error("Erreur lors de l'ajout de l'équipement:", err);
+    }
   };
   
   const handleInputChange = (e) => {
@@ -208,17 +157,53 @@ const GestionEquipement = () => {
     });
   };
   
-  const handleUpdateStatus = (id, newStatus) => {
-    setEquipements(
-      equipements.map(equip => 
-        equip._id === id ? { ...equip, etat: newStatus } : equip
-      )
-    );
+  const handleUpdateStatus = async (id, newStatus) => {
+    try {
+      await updateEquipement(id, { etat: newStatus });
+      await refreshData();
+    } catch (err) {
+      console.error(`Erreur lors de la mise à jour de l'état de l'équipement ${id}:`, err);
+    }
   };
   
   const handleEquipementDetail = (id) => {
     navigate(`/manager/DetailEquipement/${id}`);
   };
+
+  const getEquipmentImageUrl = (equipment) => {
+    // Si l'image est une URL complète ou commence par un slash
+    if (equipment.image && (equipment.image.startsWith('http') || equipment.image.startsWith('/'))) {
+      return equipment.image;
+    }
+    // Sinon, utilisez un placeholder
+    return "/api/placeholder/50/40";
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-red-500 text-center">
+          <AlertTriangle size={48} className="mx-auto mb-4" />
+          <h2 className="text-xl font-bold">Erreur de chargement</h2>
+          <p>{error}</p>
+          <button 
+            onClick={loadEquipements}
+            className="mt-4 px-4 py-2 bg-orange-500 text-white rounded"
+          >
+            Réessayer
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white p-6">
@@ -339,7 +324,7 @@ const GestionEquipement = () => {
                   <div className="col-span-5 flex items-center">
                     <div className="mr-3">
                       <img 
-                        src={equipement.image} 
+                        src={getEquipmentImageUrl(equipement)} 
                         alt={equipement.nom}
                         className="w-14 h-12 object-cover rounded"
                       />
@@ -554,6 +539,18 @@ const GestionEquipement = () => {
                     name="prochainEntretien"
                     value={newEquipement.prochainEntretien}
                     onChange={handleInputChange}
+                    className="w-full px-3 py-2 border rounded"
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-gray-700 text-sm font-bold mb-2">
+                    Image
+                  </label>
+                  <input
+                    type="file"
+                    name="image"
+                    accept="image/*"
                     className="w-full px-3 py-2 border rounded"
                   />
                 </div>

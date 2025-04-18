@@ -33,6 +33,7 @@ import { EncadrantFormationProvider } from "@/contexts/EncadrantFormationContext
 import CalendrierEcolecode from "@/components/dashboardElement/CalendrierEcolecode";
 import { ProjetFabProvider } from "@/contexts/projetFabContext";
 import { EquipementProvider } from "@/contexts/equipementContext";
+import CreatProjetFab from "@/components/dashboardElement/CreatProjetFab";
 
 
 const ManagerRoutes = () => {
@@ -59,6 +60,8 @@ const ManagerRoutes = () => {
 
 
           <Route path="/CalendrierEcolecode" element={<CalendrierEcolecode/>} />
+          <Route path="/CalendrierEcolecode" element={<CalendrierEcolecode/>} />
+          <Route path="/CreatProjetFab" element={<CreatProjetFab/>} />
 
           <Route path="/CalendrierManager" element={<CalendrierManager />} />
           <Route path="/CreatEvent" element={<CreatEvent />} />
