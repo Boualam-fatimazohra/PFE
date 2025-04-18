@@ -311,10 +311,13 @@ const [alertOpen, setAlertOpen] = React.useState(false);
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
+      showAlert("fichier télécharger avec success","success");
     } catch (error) {
       console.error('Export failed:', error);
       // Ajoutez ici votre système de notifications (toast, alert, etc.)
       alert(error.message || 'Erreur lors de l\'export');
+      showAlert('Erreur lors de l\'export',"error");
+
     }
   };
   
