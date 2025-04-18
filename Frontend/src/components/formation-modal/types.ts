@@ -237,3 +237,9 @@ export interface EDC {
   createdAt?: string;
   updatedAt?: string;
 }
+export interface Fab {
+  _id?: string;
+  entity?: Entity;
+  createdAt?: string;
+  updatedAt?: string;
+}
