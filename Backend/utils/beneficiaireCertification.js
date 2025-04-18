@@ -366,7 +366,7 @@
     //         }
     //     });
     // };
-    const genererPDF = (beneficiaire, formation, outputPath) => {
+const genererPDF = (beneficiaire, formation, outputPath) => {
         return new Promise((resolve, reject) => {
             try {
                 // Format rectangulaire comme l'image
@@ -442,15 +442,16 @@
                 // Position de départ pour le contenu (après la barre latérale)
                 const contentX = sidebarWidth + 60;
     
-                // Ajouter logo Orange
+                // Ajouter logo Orange - CORRECTION: Amélioré pour éviter la déformation
                 doc.save()
                    .translate(contentX, 60)
                    .rect(0, 0, 50, 50)
                    .fill('#FF4500');
                 
-                doc.fontSize(12)
+                // CORRECTION: Ajustement de la taille et position du texte "orange" dans le logo
+                doc.fontSize(10) // Taille de police réduite
                    .fill('white')
-                   .text('orange',8,13,{ width: 24, align: 'center' });
+                   .text('orange', 7, 18, { width: 36, align: 'center' }); // Position et largeur ajustées
                 doc.restore();
     
                 // Titre
@@ -478,49 +479,90 @@
     
                 // Ajout d'espace avant "Has actively participated"
                 doc.moveDown(1.5);
-    
-                // IMPORTANT: Tout le texte ci-dessous commence à partir de la marge de contenu
-                // pour éviter le chevauchement avec la barre latérale
                 
-                // Participation
+                // CORRECTION: Formater correctement la section de participation
                 doc.font('Helvetica')
                    .fontSize(14)
                    .fill('black')
                    .text('Has actively participated in', contentX, 350);
                 
-                // Nom de la formation - en rouge/rose italique à droite
-                doc.font('Helvetica-Oblique')
-                   .fontSize(18)
-                   .fill('#C06060')
-                   .text(`${formation.nom}`, contentX + 230, 350);
+                // CORRECTION: Gérer les longs titres de formation
+                const formationNom = formation.nom;
+                if (formationNom.length > 25) {
+                    // Pour les titres longs, placer sur une nouvelle ligne
+                    doc.font('Helvetica-Oblique')
+                       .fontSize(18)
+                       .fill('#C06060')
+                       .text(formationNom, contentX, 380, { width: 500, align: 'left' });
+                       
+                    // Décaler les éléments suivants
+                    doc.font('Helvetica')
+                       .fontSize(14)
+                       .fill('black')
+                       .text('training organized by the Orange Digital Center Agadir', contentX, 410);
+                       
+                    // Dates (décalées)
+                    doc.font('Helvetica')
+                       .fontSize(14)
+                       .fill('black')
+                       .text('From the', contentX, 440);
                 
-                // Organisateur
-                doc.font('Helvetica')
-                   .fontSize(14)
-                   .fill('black')
-                   .text('training organized by the Orange Digital Center Agadir', contentX, 380);
-                
-                // Dates 
-                doc.font('Helvetica')
-                   .fontSize(14)
-                   .fill('black')
-                   .text('From the', contentX, 420);
-                
-                // Format de date corrigé (01 mars 2025)
-                doc.font('Helvetica-Oblique')
-                   .fontSize(18)
-                   .fill('#C06060')
-                   .text(`${formation.dateDebut}`, contentX + 100, 420);
-                
-                doc.font('Helvetica')
-                   .fontSize(14)
-                   .fill('black')
-                   .text('to', contentX + 250, 420);
-                
-                doc.font('Helvetica-Oblique')
-                   .fontSize(18)
-                   .fill('#C06060')
-                   .text(`${formation.dateFin}`, contentX + 280, 420);
+                    
+                    doc.font('Helvetica-Oblique')
+                       .fontSize(18)
+                       .fill('#C06060')
+                       .text(formatDate(formation.dateDebut), contentX + 100, 440);
+                    
+                    doc.font('Helvetica')
+                       .fontSize(14)
+                       .fill('black')
+                       .text('to', contentX + 250, 440);
+                    
+                    doc.font('Helvetica-Oblique')
+                       .fontSize(18)
+                       .fill('#C06060')
+                       .text(formatDate(formation.dateFin), contentX + 280, 440);
+                } else {
+                    // Pour les titres courts, placer sur la même ligne
+                    doc.font('Helvetica-Oblique')
+                       .fontSize(18)
+                       .fill('#C06060')
+                       .text(formationNom, contentX + 230, 350);
+                    
+                    // Organisateur
+                    doc.font('Helvetica')
+                       .fontSize(14)
+                       .fill('black')
+                       .text('training organized by the Orange Digital Center Agadir', contentX, 380);
+                    
+                    // Dates
+                    doc.font('Helvetica')
+                       .fontSize(14)
+                       .fill('black')
+                       .text('From the', contentX, 420);
+                    
+                    // Formatage des dates
+                    const formatDate = (dateString) => {
+                        const date = new Date(dateString);
+                        const options = { day: '2-digit', month: 'long', year: 'numeric' };
+                        return date.toLocaleDateString('fr-FR', options);
+                    };
+                    
+                    doc.font('Helvetica-Oblique')
+                       .fontSize(18)
+                       .fill('#C06060')
+                       .text(formatDate(formation.dateDebut), contentX + 100, 420);
+                    
+                    doc.font('Helvetica')
+                       .fontSize(14)
+                       .fill('black')
+                       .text('to', contentX + 250, 420);
+                    
+                    doc.font('Helvetica-Oblique')
+                       .fontSize(18)
+                       .fill('#C06060')
+                       .text(formatDate(formation.dateFin), contentX + 280, 420);
+                }
                 
                 // URL en bas à gauche - maintenant placée après la barre latérale
                 doc.font('Helvetica')
@@ -528,27 +570,24 @@
                    .fill('#FF4500')
                    .text('www.orangedigitalcenters.com', contentX, 520);
                 
-                // PARTIE SIGNATURE - bien positionnée à droite sans chevauchement
-                const signatureX = 650;  // Position X de la signature
-                const signatureY = 480;  // Position Y de la signature, plus basse pour éviter le chevauchement
+                // CORRECTION: PARTIE SIGNATURE - bien positionnée et alignée
+                const signatureX = 560;  // Position X de la signature (ajustée)
+                const signatureY = 450;  // Position Y de la signature (ajustée)
                 
-                // Ligne de signature
-                doc.moveTo(signatureX, signatureY)
-                   .lineTo(signatureX + 120, signatureY)
-                   .lineWidth(1)
-                   .stroke();
-                
-               // Signature
+                // Signature
                 doc.fontSize(10)
                    .fill('black')
-                   .text('Mme.Nadia Mrabi', 450, 450, { align: 'right' });
+                   .text('Mme.Nadia Mrabi', signatureX, signatureY, { align: 'center' });
+                
                 
                 doc.fontSize(8)
-                   .text('Senior Manager CSR & Program', 450, 465, { align: 'right' })
-                   .text('Orange Digital Center Maroc', 450, 480, { align: 'right' });
-                
-                // Image de signature (à remplacer par une véritable image)
-                
+                   .text('Senior Manager CSR & Program', signatureX, signatureY + 25, { align: 'center' })
+                   .text('Orange Digital Center Maroc', signatureX, signatureY + 40, { align: 'center' });
+                   const lineWidth = 150; // Largeur de la ligne
+                // doc.moveTo(signatureX-lineWidth/2, signatureY+150)
+                //       .lineTo(signatureX+lineWidth/2, signatureY+150)
+                //       .lineWidth(1)
+                //       .stroke();
                 doc.end();
     
                 stream.on('finish', () => resolve());
