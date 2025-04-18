@@ -3,10 +3,8 @@ import apiClient from './apiClient';
 
 export interface Fab {
   _id: string;
-  // Autres propriétés de Fab qui seraient nécessaires
   entity: {
     _id: string;
-    // Propriétés de l'entité
   };
 }
 

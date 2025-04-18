@@ -91,14 +91,14 @@ export const EquipementFab: React.FC = () => {
                 <div className="mr-3">
                   {equip.image ? (
                     <img
-                      src={equip.image}
-                      alt={equip.type}
-                      className="w-[50px] h-[40px] object-cover rounded"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = "/api/placeholder/50/40";
-                      }}
-                    />
+                    src={equip.image?.startsWith('/https://') ? equip.image.substring(1) : equip.image}
+                    alt={equip.type}
+                    className="w-[50px] h-[40px] object-cover rounded"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = "/api/placeholder/50/40";
+                    }}
+                  />
                   ) : (
                     <div className="w-[50px] h-[40px] bg-gray-200 rounded flex items-center justify-center">
                       <span className="text-xs text-gray-500">No image</span>
