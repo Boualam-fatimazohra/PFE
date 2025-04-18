@@ -13,6 +13,7 @@ import GestionFormation from "@/components/dashboardElement/GestionFormationMana
 import GestionFormateurManager from "@/components/dashboardElement/GestionFormateurManager";
 import FormationManager from "@/components/Formation/FormationManager";
 import { EdcProvider } from "@/contexts/EdcContext";
+import { FabProvider } from "@/contexts/FablabContext";
 import { EvenementProvider } from "@/contexts/EvenementContext";
 import AjoutFormateur from "@/components/dashboardElement/AjoutFormateur";
 import ModifieFormateur from "@/components/dashboardElement/ModifieFormateur";
@@ -38,54 +39,50 @@ const ManagerRoutes = () => {
   return (
     <FormationProvider>
       <EvenementProvider>
-    <NotificationProvider>
-    <EdcProvider>
-    <FormateurProvider> 
-    <EncadrantFormationProvider>
-    <ProjetFabProvider>
-    <Routes>
-      <Route path="/dashboardManager" element={<DashboardManager />} />
-      <Route path="*" element={<NotFound />} />
-          
-          <Route path="/Ecolcode" element={<Ecolcode/>}/>
-           <Route path="/FablabSolidaire" element={<FablabSolidaire/>}/> 
-          <Route path="/OrangeFab" element={<OrangeFab/>}/>
-          <Route path="/Coordination" element={<Coordination/>}/>
-          <Route path="/GestionProjetFab" element={<GestionProjetFab/>}/>
-          <Route path="/GestionEquipement" element={<GestionEquipement/>}/>
+        <NotificationProvider>
+          <EdcProvider>
+            <FabProvider>
+              <FormateurProvider>
+                <EncadrantFormationProvider>
+                  <ProjetFabProvider>
+                    <Routes>
+                      <Route path="/dashboardManager" element={<DashboardManager />} />
+                      <Route path="*" element={<NotFound />} />
+                      
+                      <Route path="/Ecolcode" element={<Ecolcode />} />
+                      <Route path="/FablabSolidaire" element={<FablabSolidaire />} />
+                      <Route path="/OrangeFab" element={<OrangeFab />} />
+                      <Route path="/Coordination" element={<Coordination />} />
+                      <Route path="/GestionProjetFab" element={<GestionProjetFab />} />
+                      <Route path="/GestionEquipement" element={<GestionEquipement />} />
 
+                      <Route path="/CalendrierEcolecode" element={<CalendrierEcolecode />} />
+                      <Route path="/CalendrierFablab" element={<CalendrierFablab />} />
+                      <Route path="/CalendrierManager" element={<CalendrierManager />} />
+                      <Route path="/CreatEvent" element={<CreatEvent />} />
+                      <Route path="/GestionFormateurManager" element={<GestionFormateurManager />} />
+                      <Route path="/GestionFormation" element={<FormationManager />} />
+                      <Route path="/GestionFormationManager" element={<GestionFormationManager />} />
+                      <Route path="/CreatFormationFablab" element={<CreatFormationFablab />} />
+                      <Route path="/TrainingHub" element={<TrainingHub />} />
 
-
-          <Route path="/CalendrierEcolecode" element={<CalendrierEcolecode/>} />
-
-          <Route path="/CalendrierManager" element={<CalendrierManager />} />
-          <Route path="/CreatEvent" element={<CreatEvent />} />
-          <Route path="/GestionFormateurManager" element={<GestionFormateurManager/>} />
-          <Route path="/GestionFormation" element={<FormationManager/>} />
-          <Route path="/GestionFormationManager" element={<GestionFormationManager/>} />
-          <Route path="CalendrierFablab"element={<CalendrierFablab/>}/>
-          <Route path="CreatFormationFablab"element={<CreatFormationFablab/>}/>
-          <Route path="/TrainingHub" element={<TrainingHub />} />
-
-          <Route path="/AjoutFormateur" element={<AjoutFormateur/>} />
-          <Route path="/updateFormateur/:id" element={<UpdateFormateur/>} />
-          <Route path="/ModifieFormateur/:id" element={<ModifieFormateur />} />
-          <Route path="/DetailFormateur/:id" element={<DetailFormateur />} />
-          <Route path="GestionEncadrantFab"element={<GestionEncadrantFab/>}/>
-
-
-
-
-    </Routes>
-    </ProjetFabProvider>
-    </EncadrantFormationProvider>
-    </FormateurProvider>
-    </EdcProvider>
-    </NotificationProvider>
-    </EvenementProvider>
+                      <Route path="/AjoutFormateur" element={<AjoutFormateur />} />
+                      <Route path="/updateFormateur/:id" element={<UpdateFormateur />} />
+                      <Route path="/ModifieFormateur/:id" element={<ModifieFormateur />} />
+                      <Route path="/DetailFormateur/:id" element={<DetailFormateur />} />
+                      <Route path="/GestionEncadrantFab" element={<GestionEncadrantFab />} />
+                    </Routes>
+                  </ProjetFabProvider>
+                </EncadrantFormationProvider>
+              </FormateurProvider>
+            </FabProvider>
+          </EdcProvider>
+        </NotificationProvider>
+      </EvenementProvider>
     </FormationProvider>
-
   );
 };
 
-export default ManagerRoutes;
+export default ManagerRoutes;
+
+

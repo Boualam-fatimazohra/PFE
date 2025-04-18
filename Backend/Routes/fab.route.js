@@ -31,7 +31,7 @@ router.post(
  * @access Private - Admin, Manager
  */
 router.get(
-  "/", 
+  "/getFormationFab", 
   authenticated, 
   authorizeRoles('Admin', 'Manager'),
   getAllFabs
