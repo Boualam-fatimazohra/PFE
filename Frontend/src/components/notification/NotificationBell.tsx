@@ -100,6 +100,12 @@ const NotificationBell: React.FC = () => {
     }
   };
 
+  // Safely get sender name (handles null/undefined sender)
+  const getSenderName = (sender: any) => {
+    if (!sender) return 'Utilisateur inconnu';
+    return `${sender.prenom || ''} ${sender.nom || ''}`.trim() || 'Utilisateur inconnu';
+  };
+
   return (
     <div className="relative" ref={dropdownRef}>
       <button
@@ -123,84 +129,83 @@ const NotificationBell: React.FC = () => {
               <div className="p-4 text-center text-gray-500">Pas de notifications</div>
             ) : (
               notifications.map((notification) => (
-                <React.Fragment key={notification._id}>
-                  <div 
-                    className={`p-3 border-b hover:bg-gray-50 ${
-                      !notification.isRead ? 'bg-blue-50' : ''
-                    }`}
-                    onClick={() => handleMarkAsRead(notification._id)}
-                  >
-                    <div className="flex items-start">
-                      <div className="mr-3 mt-0.5">
-                        {getNotificationIcon(notification.type)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900">
-                          {notification.sender.prenom} {notification.sender.nom}
-                        </p>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {getNotificationTitle(notification.type)}
-                        </p>
-                        <div className="flex justify-between items-center mt-1">
-                          <span className="text-xs text-gray-500">
-                            {formatDate(notification.createdAt)}
+                <div 
+                  key={notification._id}
+                  className={`p-3 border-b hover:bg-gray-50 ${
+                    !notification.isRead ? 'bg-blue-50' : ''
+                  }`}
+                  onClick={() => handleMarkAsRead(notification._id)}
+                >
+                  <div className="flex items-start">
+                    <div className="mr-3 mt-0.5">
+                      {getNotificationIcon(notification.type)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900">
+                        {getSenderName(notification.sender)}
+                      </p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {getNotificationTitle(notification.type)}
+                      </p>
+                      <div className="flex justify-between items-center mt-1">
+                        <span className="text-xs text-gray-500">
+                          {formatDate(notification.createdAt)}
+                        </span>
+                        
+                        {/* Status indicator for non-pending notifications */}
+                        {notification.status !== 'pending' && (
+                          <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                            notification.status === 'accepted' 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {notification.status === 'accepted' ? 'Approuvé' : 'Refusé'}
                           </span>
-                          
-                          {/* Status indicator for non-pending notifications */}
-                          {notification.status !== 'pending' && (
-                            <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                              notification.status === 'accepted' 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-red-100 text-red-800'
-                            }`}>
-                              {notification.status === 'accepted' ? 'Approuvé' : 'Refusé'}
-                            </span>
-                          )}
-                        </div>
-                        
-                        {/* Reference to entityId - could be enhanced to show actual entity details */}
-                        <div className="mt-1 text-xs text-gray-500">
-                          ID: {notification.entityId ? notification.entityId.substring(0, 8) + '...' : 'N/A'}
-                        </div>
-                        
-                        {/* Action buttons - ONLY for Manager role & pending notifications */}
-                        {notification.status === 'pending' && isManager && (
-                          <div className="mt-2 flex justify-end space-x-2">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleAccept(notification._id);
-                              }}
-                              className="text-xs bg-green-500 text-white px-2 py-1 rounded flex items-center"
-                            >
-                              <Check size={12} className="mr-1" />
-                              Approuver
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDecline(notification._id);
-                              }}
-                              className="text-xs bg-red-500 text-white px-2 py-1 rounded flex items-center"
-                            >
-                              <X size={12} className="mr-1" />
-                              Refuser
-                            </button>
-                          </div>
-                        )}
-                        
-                        {/* For Formateur, show "En attente" for pending notifications */}
-                        {notification.status === 'pending' && !isManager && (
-                          <div className="mt-2 text-right">
-                            <span className="text-xs font-medium px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">
-                              En attente
-                            </span>
-                          </div>
                         )}
                       </div>
+                      
+                      {/* Reference to entityId - could be enhanced to show actual entity details */}
+                      <div className="mt-1 text-xs text-gray-500">
+                        ID: {notification.entityId ? notification.entityId.substring(0, 8) + '...' : 'N/A'}
+                      </div>
+                      
+                      {/* Action buttons - ONLY for Manager role & pending notifications */}
+                      {notification.status === 'pending' && isManager && (
+                        <div className="mt-2 flex justify-end space-x-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAccept(notification._id);
+                            }}
+                            className="text-xs bg-green-500 text-white px-2 py-1 rounded flex items-center"
+                          >
+                            <Check size={12} className="mr-1" />
+                            Approuver
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDecline(notification._id);
+                            }}
+                            className="text-xs bg-red-500 text-white px-2 py-1 rounded flex items-center"
+                          >
+                            <X size={12} className="mr-1" />
+                            Refuser
+                          </button>
+                        </div>
+                      )}
+                      
+                      {/* For Formateur, show "En attente" for pending notifications */}
+                      {notification.status === 'pending' && !isManager && (
+                        <div className="mt-2 text-right">
+                          <span className="text-xs font-medium px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">
+                            En attente
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
-                </React.Fragment>
+                </div>
               ))
             )}
           </div>
