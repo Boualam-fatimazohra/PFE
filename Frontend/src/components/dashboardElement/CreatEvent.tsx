@@ -10,6 +10,8 @@ import { fr } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import Select from "react-select";
 import { createEvenement } from '@/services/evenementService';
+import Alert from '@mui/material/Alert';
+import Snackbar from '@mui/material/Snackbar';
 
 // Move styled-components GlobalStyle outside of component
 const GlobalStyle = createGlobalStyle`
@@ -270,9 +272,16 @@ const CreatEvent = () => {
   const [participantOptions, setParticipantOptions] = useState<ParticipantOption[]>([]);
   const [isLoadingParticipants, setIsLoadingParticipants] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [alertOpen, setAlertOpen] = React.useState(false);
+  const [alertMessage, setAlertMessage] = React.useState('');
+  const [alertSeverity, setAlertSeverity] = React.useState<'success'|'error'|'warning'|'info'>('success');
 
   const [userId, setUserId] = useState<string>("user-id-actuel"); // This would typically come from auth context
-  
+  const showAlert = (message: string, severity: 'success'|'error'|'warning'|'info') => {
+    setAlertMessage(message);
+    setAlertSeverity(severity);
+    setAlertOpen(true);
+  };
   // Use effect to import mongoose dynamically (this avoids the Node.js require in browser context)
   const [mongoose, setMongoose] = useState(null);
   
@@ -402,8 +411,7 @@ const CreatEvent = () => {
       
       // Redirect or show success message
       console.log('Événement créé:', createdEvent);
-      navigate('/manager/Ecolcode');
-      
+      showAlert('Evenement Crée avec succées ','success');
       
     } catch (error) {
       console.error('Erreur lors de la création de l\'événement:', error);
@@ -492,6 +500,7 @@ const CreatEvent = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-white py-6 h-full w-full">
+        {/* Message de succès en haut de page */}
       <GlobalStyle />
       <div className="max-w-7xl mx-auto px-4 w-11/12">
         <div className="w-full mb-4 flex justify-start">
@@ -846,6 +855,25 @@ const CreatEvent = () => {
 </button>
         </div>
       </div>
+      <Snackbar
+  open={alertOpen}
+  autoHideDuration={2000}
+  onClose={() => setAlertOpen(false)}
+  anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+>
+  <Alert 
+    severity={alertSeverity}
+    onClose={() => setAlertOpen(false)}
+    sx={{ 
+      width: '100%',
+      boxShadow: 3,
+      fontSize: '0.875rem',
+      '.MuiAlert-icon': { fontSize: '1.25rem' }
+    }}
+  >
+    {alertMessage}
+  </Alert>
+</Snackbar>
     </div>
   );
 };
