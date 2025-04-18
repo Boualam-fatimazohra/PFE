@@ -135,14 +135,14 @@ const [alertSeverity, setAlertSeverity] = React.useState<'success'|'error'|'warn
     { label: "Replanifier", value: "Replanifier" }
   ];
   const categoryOptions: FormOption[] = [
-    { label: "type1", value: "type1" },
-    { label: "type2", value: "type2" },
-    { label: "type3", value: "type3" }
+    { label: "dev", value: "dev" },
+    { label: "design", value: "design" },
+    { label: "mobile", value: "mobile" }
   ];
   const levelOptions: FormOption[] = [
-    { label: "type1", value: "type1" },
-    { label: "type2", value: "type2" },
-    { label: "type3", value: "type3" }
+    { label: "débutant", value: "debutant" },
+    { label: "intermediaire", value: "intermediaire" },
+    { label: "avancé", value: "avance" }
   ];
   // Define steps
   const steps: Step[] = [
